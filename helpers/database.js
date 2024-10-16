@@ -1306,15 +1306,15 @@ const database = {
     getRelationshipsByUserId: async(user_id) => {
         try {
             const rows = await database.runQuery(`
-	        SELECT * FROM (
-		SELECT
-		    *,
-		    CASE r.user_id_1
-		        WHEN $1 THEN user_id_2
-		        ELSE user_id_1
-		    END AS id
-		FROM relationships
-		) r JOIN users u ON u.id=r.id`,[user_id])
+	            SELECT * FROM (
+		            SELECT
+		                *,
+		                CASE r.user_id_1
+		                    WHEN $1 THEN user_id_2
+		                    ELSE user_id_1
+		                END AS id
+		            FROM relationships
+		        ) r JOIN users u ON u.id=r.id`,[user_id])
 
             if (rows === null || rows.length === 0) {
                 return [];
@@ -1326,14 +1326,14 @@ const database = {
                 for(var relationship of rows) {
                     if (relationship.user_id_1 == user.id && relationship.type === 3) {
                         relationship.type = 4;
-		    }
+		            }
                     if (!(relationship.type === 2 && relationship.user_id_1 != user.id)) { //another user blocked this user, this user does not need to know that.
                         ret.push({
                             id: relationship.id,
                             type: relationship.type,
                             user: globalUtils.miniUserObject(relationship)
                         })
-		    }
+		            }
                 }
             }
             return ret;
@@ -1347,15 +1347,26 @@ const database = {
         try {
             if (relationship.type === 0) {
                 await database.runQuery(`DELETE FROM relationships WHERE (user_id_1 = $1 AND user_id_2 = $2) OR (user_id_2 = $1 AND user_id_1 = $2)`,[user_id,relationship.id]);
-	    } else {
+	        } else {
                 await database.runQuery(`UPDATE relationships SET type = $1 WHERE user_id_1 = $2 OR user_id_2 = $2`, [relationship.type, user_id]);
-	    }
+	        }
             return true;
         } catch (error) {
             logText(error, "error");
 
             return false;
-	}
+	    }
+    },
+    addRelationship: async (initator_id,type,target_id) => {
+        try {
+            await database.runQuery("INSERT INTO relationships (user_id_1, type, user_id_2) VALUES ($1, $2, $3)",[initiator_id, type, target_id]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
     },
     getGuildBans: async (id) => {
         try {
@@ -2574,11 +2585,9 @@ const database = {
 
                     if (guild != null) guilds.push(guild);
                 }
-
-                return guilds;
-            } else {
-                return [];
             }
+
+            return guilds;
         } catch(error) {
             logText(error, "error");
 
