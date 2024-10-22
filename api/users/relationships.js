@@ -67,24 +67,25 @@ router.delete("/:userid", async (req, res) => {
         }
 
         try {
-            relationship = account.relationships.filter(item => (item.id != req.user.id))[0];
+            relationship = account.relationships.find(item => (item.id === req.user.id));
         } catch (error) {
             return res.status(404).send({code: 404, message: "Unknown User"}); //relationship was not found, is this the correct response?
         }
 
-        relationship.type = 0 //this happens in all cases
-        await global.database.modifyRelationship(account.id,relationship);
         await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_REMOVE", {
                 id: relationship.id
         });
 
-        if (relationship.type === 1) {
+        if (relationship.type != 2) {
             //the only case where a user other than the requester receives an event
             await global.dispatcher.dispatchEventTo(relationship.id, "RELATIONSHIP_REMOVE", {
                 id: account.id
             });
 
         }
+
+        relationship.type = 0 //this happens in all cases
+        await global.database.modifyRelationship(account.id,relationship);
 
         return res.status(204).send();
 
@@ -127,24 +128,17 @@ router.put("/:userid", async (req, res) => {
         }
 
         let body = req.body;
-        try {
-            relationship = account.relationships.filter(item => (item.id != req.user.id))[0]; //catch error here. No relationship, so initiating one
+        var type = "SEND_FR"
+        let relationship = account.relationships.find(item => (item.id === user.id)) ?? {type:0};
 
-            if (JSON.stringify(body) == '{}' && relationship.type == 3) {
-                type = "ACCEPT_FR"
-            } else if (body.type == 2) {
-                type = "BLOCK";
-            }
-        } catch (error) {
-            let type = "SEND_FR";
-            relationship = {type:0}
+        if (JSON.stringify(body) == '{}' && relationship.type == 3) {
+            type = "ACCEPT_FR"
+        } else if (body.type == 2) {
+            type = "BLOCK";
         }
 
-        try {
-            targetRelationship = user.relationships.filter(item => (item.id != req.user.id))[0];
-        } catch (error) {
-            targetRelationship = {type:0}
-        }
+        let targetRelationship = user.relationships.find(item => (item.id === account.id)) ?? {type:0};
+        
         //The following can be expanded to:
         //if (relationship.type === 2 || relationship.type === 1) {return 403}
         //if (targetRelationship.type === 2) {return 403}
@@ -201,7 +195,7 @@ router.put("/:userid", async (req, res) => {
                 if (user.settings.friend_source_flags.mutual_friends) {
                     let sharedFriends = [];
 
-                    for (var friend of account.relationships.filter(item => (item.type != 1))) {
+                    for (var friend of account.relationships.find(item => (item.type === 1))) {
                         if (user.relationships.map(i => i.id).includes(friend.id)) {
                             sharedFriends.push(friend);
                         }
@@ -348,17 +342,9 @@ router.post("/", async (req, res) => {
                 }); 
             } //be very vague to protect the users privacy
 
-            try {
-                let relationship = account.relationships.filter(item => (item.id != user.id))[0];
-            } catch (error) {
-                let relationship = {type:0}
-            }
+            let relationship = account.relationships.find(item => (item.id === user.id)) ?? {type:0};
 
-            try {
-                let targetRelationship = user.relationships.filter(item => (item.id != account.id))[0];
-            } catch (error) {
-                let targetRelationship = {type:0}
-            }
+            let targetRelationship = user.relationships.find(item => (item.id === account.id)) ?? {type:0};
 
             if (relationship.type === 2 || relaionship.type === 1 || targetRelationship.type === 2) {
                 return res.status(403).json({
@@ -401,19 +387,11 @@ router.post("/", async (req, res) => {
                 });
             }
 
-            try {
-                let relationship = account.relationships.filter(item => (item.id != user.id))[0];
-            } catch (error) {
-                let relationship = {type:0}
-            }
+            let relationship = account.relationships.find(item => (item.id === user.id)) ?? {type:0};
 
-            try {
-                let targetRelationship = user.relationships.filter(item => (item.id != account.id))[0];
-            } catch (error) {
-                let targetRelationship = {type:0}
-            }
+            let targetRelationship = user.relationships.find(item => (item.id === account.id)) ?? {type:0};
 
-            if (relationship.type === 2 || relaionship.type === 1 || targetRelationship.type === 2) {
+            if (relationship.type === 2 || relationship.type === 1 || targetRelationship.type === 2) {
                 return res.status(403).json({
                     code: 403,
                     message: "Failed to send friend request"
@@ -475,7 +453,7 @@ router.post("/", async (req, res) => {
                 if (user.settings.friend_source_flags.mutual_friends) {
                     let sharedFriends = [];
 
-                    for (var friend of account.relationships.filter(item => (item.type != 1))) {
+                    for (var friend of account.relationships.find(item => (item.type === 1))) {
                         if (user.relationships.map(i => i.id).includes(friend.id)) {
                             sharedFriends.push(friend);
                         }
