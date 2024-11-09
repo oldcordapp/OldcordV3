@@ -5,3 +5,4 @@ package.json
 www_dynamic
 *.un~
 *.swp
+*.pem
