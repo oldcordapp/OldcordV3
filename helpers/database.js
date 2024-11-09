@@ -91,7 +91,7 @@ const database = {
             v = await database.runQuery(`SELECT * FROM instance_info;`);
 
             if (v[0].version != database.version) { //auto migrate for the time being
-                logText(`Found outdated database setup, migrating to newer version... (${database.version})`,"OLDCORD")
+                logText(`Found outdated database setup, migrating to newer version... (${database.version})`,"OLDCORD");
                 await migrate(); //TODO: Call a separate script to check how many versions out of date the current database is and run the required migration scripts
             }
 
