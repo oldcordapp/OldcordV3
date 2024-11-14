@@ -190,6 +190,8 @@ class Bootloader {
     this.setupDOM(body, styles, head);
     this.setLoadingText("READY");
 
+    await utils.timer(1000);
+
     await this.executeScripts(scripts);
     await this.waitForMount();
 
