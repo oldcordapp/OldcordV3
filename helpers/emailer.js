@@ -84,7 +84,7 @@ class emailer {
 
             htmlContent = globalUtils.replaceAll(htmlContent, "[username]", account.username);
             htmlContent = globalUtils.replaceAll(htmlContent, "[discriminator]", account.discriminator);
-            htmlContent = globalUtils.replaceAll(htmlContent, "[instance]", global.config.instance_name);
+            htmlContent = globalUtils.replaceAll(htmlContent, "[instance]", global.config.instance.name);
             htmlContent = globalUtils.replaceAll(htmlContent, "[protocol]", global.config.secure ? "https" : "http");
             htmlContent = globalUtils.replaceAll(htmlContent, "[cdn_url]", global.config.cdn_url === "" ? "cdn.oldcordapp.com" : global.config.cdn_url);
             htmlContent = globalUtils.replaceAll(htmlContent, "[domain]", global.full_url);
@@ -108,7 +108,7 @@ class emailer {
 
             htmlContent = globalUtils.replaceAll(htmlContent, "[username]", account.username);
             htmlContent = globalUtils.replaceAll(htmlContent, "[discriminator]", account.discriminator);
-            htmlContent = globalUtils.replaceAll(htmlContent, "[instance]", global.config.instance_name);
+            htmlContent = globalUtils.replaceAll(htmlContent, "[instance]", global.config.instance.name);
             htmlContent = globalUtils.replaceAll(htmlContent, "[protocol]", global.config.secure ? "https" : "http");
             htmlContent = globalUtils.replaceAll(htmlContent, "[cdn_url]", global.config.cdn_url === "" ? "cdn.oldcordapp.com" : global.config.cdn_url);
             htmlContent = globalUtils.replaceAll(htmlContent, "[domain]", global.full_url);
@@ -117,7 +117,7 @@ class emailer {
             htmlContent = globalUtils.replaceAll(htmlContent, "[fftext]", "The bushes and clouds in the original Super Mario Bros are the same sprite recolored.");
             htmlContent = globalUtils.replaceAll(htmlContent, "[address]", "401 California Dr, Burlingame, CA 94010");
     
-            let res = await global.emailer.trySendEmail(to, `Password Reset Request for ${global.config.instance_name}`, htmlContent);
+            let res = await global.emailer.trySendEmail(to, `Password Reset Request for ${global.config.instance.name}`, htmlContent);
 
             return res;
         } catch (error) {

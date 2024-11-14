@@ -342,7 +342,7 @@ async function authMiddleware(req, res, next) {
 
 function instanceMiddleware(flag_check) {
     return function (req, res, next) {
-        let check = config.instance_flags.includes(flag_check);
+        let check = config.instance.flags.includes(flag_check);
 
         if (check) {
             if (flag_check === "VERIFIED_EMAIL_REQUIRED") {

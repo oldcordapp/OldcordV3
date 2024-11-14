@@ -240,7 +240,7 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
             });
         }
 
-        if (config.instance_flags.includes("NO_INVITE_CREATION")) {
+        if (config.instance.flags.includes("NO_INVITE_CREATION")) {
             return res.status(400).json({
                 code: 400,
                 message: "Creating invites is not allowed."

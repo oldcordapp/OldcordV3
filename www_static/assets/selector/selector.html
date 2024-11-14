@@ -1,101 +1,74 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>OLDCORD SELECTOR</title>
-        <link rel="stylesheet" href="/assets/selector/selector.css">
-    </head>
-    <body>
-        <script>
-            function launch() {
-                event.preventDefault();
-                location.href = `launch?release_date=${document.querySelector("#launcher > select").value}`;
-            }
-
-            document.addEventListener('DOMContentLoaded', (event) => {
-                const builds = [
-                    "june_12_2015",
-                    "july_10_2015",
-                    "august_10_2015",
-                    "september_2_2015",
-                    "november_6_2015",
-                    "december_23_2015",
-                    "january_22_2016",
-                    "february_9_2016",
-                    "february_18_2016",
-                    "march_4_2016",
-                    "march_18_2016",
-                    "april_8_2016",
-                    "may_5_2016",
-                    "may_19_2016",
-                    "june_3_2016",
-                    "june_23_2016",
-                    "july_11_2016",
-                    "july_28_2016",
-                    "august_24_2016",
-                    "september_8_2016",
-                    "september_26_2016",
-                    "october_13_2016",
-                    "november_3_2016",
-                    "november_22_2016",
-                    "december_22_2016",
-                    "january_23_2017",
-                    "january_31_2017",
-                    "march_30_2017",
-                    "may_3_2017",
-                    "may_17_2017",
-                    "july_20_2017",
-                    "august_17_2017",
-                    "september_28_2017",
-                    "october_5_2017",
-                    "november_16_2017",
-                    "december_21_2017",
-                    "january_25_2018",
-                    "march_7_2018",
-                    "april_1_2018",
-                    "april_23_2018",
-                    "may_28_2018",
-                    "june_29_2018",
-                    "august_28_2018",
-                    "september_29_2018",
-                    "november_30_2018",
-                    "december_31_2018",
-                ];
-
-                const selectElement = document.querySelector("#launcher > select");
-
-                builds.forEach(build => {
-                    const option = document.createElement("option");
-                    const formattedDate = build.replace(/_/g, ' ').replace(/(\d+)(st|nd|rd|th)/g, (match, p1, p2) => p1 + ' ' + p2);
-                    option.value = build;
-                    option.textContent = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
-                    selectElement.appendChild(option);
-                });
-
-                selectElement.value = "october_5_2017";
-            });
-        </script>
-        <div id="main">
-            <div id="background"></div>
-            <div class="center">
-                <div id="decision">
-                    <div id="decision-header">
-                        <h1>OLDCORD BUILD SELECTOR</h1>
-                    </div>
-                    <div id="decision-body">
-                        <p>Please choose your flavor of Old Discord below, please note that earlier versions may be lacking some functionality defined in later builds. Also, 2016+ is still a work in progress.</p>
-                        <div id="launcher">
-                            <select>
-                            </select>
-                            <a href="" class="launch" onclick="launch()">LAUNCH!</a>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oldcord Selector</title>
+    <link rel="stylesheet" href="/assets/selector/selector.css">
+</head>
+<body>
+    <div class="background"></div>
+    <main class="container">
+        <div class="selector-grid">
+            <section class="card selector-card">
+                <div class="selector-header text-center">
+                    <h1 class="mb-xs">Oldcord Build Selector</h1>
+                    <p class="text-muted">Choose your preferred Discord build below</p>
+                </div>
+                
+                <div class="selector-content mb-md">
+                    <div class="build-select">
+                        <h2>Build Version</h2>
+                        <select id="buildSelect"></select>
+                        <button type="button" class="build-select-button"></button>
+                        <div class="build-select-menu">
+                            <!-- Options will be inserted here by JavaScript -->
                         </div>
-                        <hr>
-                        <p class="notice">
-                            While there is only a few official instances running with Oldcord (2015, 2016, etc), <b>please keep in mind the defined rules that may exist in 3rd party OldCord instances.</b><br>
-                            Please be mindful of what you post, <b>illegal content is reported.</b>
-                        </p>
+                    </div>
+                    
+                    <h2>Quality of Life Patches</h2>
+                    <section class="qol-section">
+                        <div id="qolOptions">
+                            <!-- QoL options will be dynamically inserted here -->
+                        </div>
+                    </section>
+                </div>
+
+                <div class="notice-section text-center">
+                    <p class="notice mb-xs">While there is only an official instance running with Oldcord, please keep in mind the defined rules that may exist in 3rd party Oldcord instances.</p>
+                    <p class="notice-warning">Please be mindful of what you post; illegal content is reported.</p>
+                </div>
+
+                <div id="instanceContent" class="instance-content" style="display: none;">
+                    <div id="instanceWelcome" class="instance-welcome mb-xs"></div>
+                    <div id="instanceDescription" class="instance-description"></div>
+                    <div id="legalLinks" class="legal-links mt-md">
+                        <a href="#" id="termsLink" style="display: none;">Terms</a>
+                        <a href="#" id="privacyLink" style="display: none;">Privacy</a>
+                        <a href="#" id="rulesLink" style="display: none;">Rules</a>
                     </div>
                 </div>
-            </div>
+
+                <button id="launchButton" class="button button-primary button-full">LAUNCH!</button>
+            </section>
+
+            <section class="card changelog-card">
+                <div class="changelog-header">
+                    <h2>Build changelog</h2>
+                </div>
+                <div id="changelogContent" class="changelog-content">
+                    <!-- Content will be inserted here by JavaScript -->
+                </div>
+            </section>
         </div>
-    </body>
+    </main>
+
+    <div id="dialogBox" class="dialog-box">
+        <div class="dialog-content">
+            <!-- Dialog content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script type="module" src="/assets/selector/js/main.js"></script>
+</body>
 </html>
