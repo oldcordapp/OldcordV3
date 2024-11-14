@@ -332,11 +332,13 @@ export class Launcher {
         return new Promise(resolve => {
             const background = document.querySelector('.background');
             const selectorGrid = document.querySelector('.selector-grid');
+            const logo = document.querySelector('.logo-container');
             const dialogBox = document.getElementById('dialogBox');
 
             dialogBox.style.display = 'none';
             background.classList.add('fade');
             selectorGrid.classList.add('fade');
+            logo.classList.add('fade');
 
             setTimeout(() => {
                 background.classList.remove('loaded');

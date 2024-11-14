@@ -104,6 +104,28 @@ body {
     padding: 20px;
 }
 
+/* Logo */
+.logo-container {
+    position: fixed;
+    top: 45px;
+    left: 45px;
+    z-index: 1;
+    text-decoration: none;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.logo-container.fade {
+    opacity: 0;
+}
+
+.logo-svg {
+    width: 140px;
+    height: auto;
+}
+
+
 /* Card components */
 .card {
     background-color: var(--background-primary);
