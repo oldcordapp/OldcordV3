@@ -77,7 +77,7 @@ class Bootloader {
   async checkEnvironment() {
     // Check for desktop client incompatibility
     if (window.DiscordNative && this.release_date === "april_1_2018") {
-      utils.loadLog("This build does not work on desktop client.", true, true);
+      utils.loadLog("This build does not work on desktop client.", true, false);
       await utils.timer(3000);
       window.location.replace("/selector");
       return { status: "fatal" };
@@ -124,7 +124,7 @@ class Bootloader {
     if (hasLoginIssues) {
       utils.loadLog(
         `Warning: Login issues detected in the build you're trying to use. Switching to February 25 2018 temporarily...`,
-        true,
+        false,
         true
       );
       this.originalBuild = this.release_date;
