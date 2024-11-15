@@ -143,7 +143,7 @@ export const LOADING_QUOTES = [
     text: "HypeSquad Brilliance since day one",
     submittedBy: "Anthropic Claude",
   },
-  { text: "dark theme supremacy since 2016", submittedBy: "Anthropic Claude" },
+  { text: "dark theme supremacy since 2015", submittedBy: "Anthropic Claude" },
   {
     text: "checking if my old gaming group is still alive...",
     submittedBy: "Anthropic Claude",
