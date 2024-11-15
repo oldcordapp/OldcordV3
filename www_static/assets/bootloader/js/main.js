@@ -5,7 +5,8 @@ import { LOADING_QUOTES } from "./modules/quotes.js";
 
 class Bootloader {
   constructor() {
-    this.loader = new ResourceLoader();
+    this.patchedResources = new WeakMap();
+    this.loader = new ResourceLoader(this.patchedResources);
     window.__require = window.require;
     window.__OVERLAY__ = window.overlay != null;
     window.cdn_url = Config.cdn_url;
@@ -17,6 +18,7 @@ class Bootloader {
     this.originalChildren = [...document.body.children];
     this.setLoadingBackground();
     this.showRandomQuote();
+    this.patchedResources = new WeakMap();
   }
 
   getYearFromRelease(release) {
@@ -52,9 +54,9 @@ class Bootloader {
   async initialize() {
     try {
       // Clean up invalid tokens
-      const token = this.localStorage?.getItem('token');
-      if (token === 'null' || token === 'undefined') {
-        this.localStorage.removeItem('token');
+      const token = this.localStorage?.getItem("token");
+      if (token === "null" || token === "undefined") {
+        this.localStorage.removeItem("token");
       }
 
       utils.loadLog("Build: " + this.release_date);
@@ -70,7 +72,7 @@ class Bootloader {
         window.location.href = window.location.href; // Force full page reload
       }
     } catch (e) {
-      utils.loadLog("Fatal error occurred. Please check the console.", 'error');
+      utils.loadLog("Fatal error occurred. Please check the console.", "error");
       throw e;
     }
   }
@@ -78,7 +80,7 @@ class Bootloader {
   async checkEnvironment() {
     // Check for desktop client incompatibility
     if (window.DiscordNative && this.release_date === "april_1_2018") {
-      utils.loadLog("This build does not work on desktop client.", 'error');
+      utils.loadLog("This build does not work on desktop client.", "error");
       await utils.timer(3000);
       window.location.replace("/selector");
       return { status: "fatal" };
@@ -125,7 +127,7 @@ class Bootloader {
     if (hasLoginIssues) {
       utils.loadLog(
         `Warning: Login issues detected in the build you're trying to use. Switching to February 25 2018 temporarily...`,
-        'warning'
+        "warning"
       );
       this.originalBuild = this.release_date;
       utils.setCookie("original_build", this.originalBuild);
@@ -137,7 +139,7 @@ class Bootloader {
   }
 
   startTokenMonitor() {
-    utils.loadLog("Starting token monitor...", 'warning');
+    utils.loadLog("Starting token monitor...", "warning");
 
     // Create iframe and get its localStorage only when monitoring starts
     this.storageFrame = document.body.appendChild(
@@ -151,7 +153,7 @@ class Bootloader {
           this.handleLoginDetected();
         }
       } catch (e) {
-        utils.loadLog("Error in token monitor: " + e, 'error');
+        utils.loadLog("Error in token monitor: " + e, "error");
       }
     }, 100);
   }
@@ -160,7 +162,7 @@ class Bootloader {
     try {
       return Boolean(this.localStorage?.token);
     } catch (e) {
-      utils.loadLog("Token check error: " + e, 'error');
+      utils.loadLog("Token check error: " + e, "error");
       return false;
     }
   }
@@ -168,7 +170,7 @@ class Bootloader {
   handleLoginDetected() {
     utils.loadLog(
       "Token detected! Switching back to: " + this.originalBuild,
-      'warning'
+      "warning"
     );
     // Clean up the iframe before reload
     this.storageFrame?.remove();
@@ -191,6 +193,9 @@ class Bootloader {
 
     await utils.timer(1000);
 
+    // Setup resource interceptor before executing scripts
+    this.setupResourceInterceptor();
+
     await this.executeScripts(scripts);
     await this.waitForMount();
 
@@ -204,28 +209,15 @@ class Bootloader {
         .map((m) => m[1])
         .filter((url) => url.startsWith("/")); // Only allow relative/absolute paths
 
-    const styleUrls = getUrls(/<link[^>]+href="([^"]+)"[^>]*>/g)
-      .filter(url => !url.endsWith('.ico')); // Skip ico files
+    const styleUrls = getUrls(/<link[^>]+href="([^"]+)"[^>]*>/g).filter(
+      (url) => !url.endsWith(".ico")
+    ); // Skip ico files
     const scriptUrls = getUrls(/<script[^>]+src="([^"]+)"[^>]*>/g);
 
     try {
       return await Promise.all([
-        Promise.all(
-          styleUrls.map((url) =>
-            this.loader.loadCSS(url).catch((e) => {
-              utils.loadLog(`Failed to load CSS: ${url}`, 'error');
-              return null;
-            })
-          )
-        ),
-        Promise.all(
-          scriptUrls.map((url) =>
-            this.loader.loadScript(url).catch((e) => {
-              utils.loadLog(`Failed to load Script: ${url}`, 'error');
-              return null;
-            })
-          )
-        ),
+        Promise.all(styleUrls.map(url => this.loader.loadCSS(url))),
+        Promise.all(scriptUrls.map(url => this.loader.loadScript(url)))
       ]);
     } catch (e) {
       throw e;
@@ -245,19 +237,22 @@ class Bootloader {
     if (icon) {
       let newIcon = head.match(/<link rel="icon" href="([^"]+)"[^>]*>/i);
       if (newIcon && newIcon[1]) {
-        if (newIcon[1].startsWith('data:')) {
+        if (newIcon[1].startsWith("data:")) {
           icon.href = newIcon[1];
         } else {
-          this.loader.loadIcon(newIcon[1])
-            .then(iconUrl => icon.href = iconUrl)
-            .catch(e => utils.loadLog(`Failed to load icon: ${newIcon[1]}`, 'error'));
+          this.loader
+            .loadIcon(newIcon[1])
+            .then((iconUrl) => (icon.href = iconUrl))
+            .catch((e) =>
+              utils.loadLog(`Failed to load icon: ${newIcon[1]}`, "error")
+            );
         }
       }
     }
 
     // Create temporary container to parse HTML
-    const temp = document.createElement('div');
-    temp.innerHTML = body;
+    const temp = document.createElement("div");
+    temp.innerHTML = body.replace(/<script[^>]*src=[^>]*><\/script>/g, "");
 
     // Add all children to body
     while (temp.firstChild) {
@@ -272,7 +267,7 @@ class Bootloader {
         if (mount?.children.length) {
           clearInterval(check);
           // Remove original children along with loading screen
-          this.originalChildren.forEach(child => child.remove());
+          this.originalChildren.forEach((child) => child.remove());
           resolve();
         }
       }, 100);
@@ -304,10 +299,7 @@ class Bootloader {
           await fetch(`${cdn_url}/assets/clients/${this.release_date}/app.html`)
         ).text();
     } catch (e) {
-      utils.loadLog(
-        "Fatal error occurred. Please check the console.",
-        'error'
-      );
+      utils.loadLog("Fatal error occurred. Please check the console.", "error");
       throw e;
     }
     return html;
@@ -329,13 +321,14 @@ class Bootloader {
     for (const blobUrl of scripts) {
       await new Promise((resolve, reject) => {
         const script = document.createElement("script");
+        script.charset = "utf-8";
         script.src = blobUrl;
         script.onload = () => {
           URL.revokeObjectURL(blobUrl);
           resolve();
         };
         script.onerror = reject;
-        document.head.appendChild(script);
+        document.body.appendChild(script);
       });
     }
   }
@@ -344,12 +337,22 @@ class Bootloader {
     const parseDate = (build) => {
       const [month, day, year] = build.split("_");
       const months = {
-        january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
-        july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+        january: 0,
+        february: 1,
+        march: 2,
+        april: 3,
+        may: 4,
+        june: 5,
+        july: 6,
+        august: 7,
+        september: 8,
+        october: 9,
+        november: 10,
+        december: 11,
       };
       return new Date(year, months[month], parseInt(day));
     };
-    
+
     return parseDate(currentBuild) > parseDate(compareBuild);
   }
 
@@ -357,8 +360,12 @@ class Bootloader {
     const container = document.getElementById("oldcord-loading-container");
     if (container && this.isAfterBuild(this.release_date, "october_5_2017")) {
       // Small delay to ensure the transition is visible
-      setTimeout(() => container.classList.add('new-bg'), 50);
+      setTimeout(() => container.classList.add("new-bg"), 50);
     }
+  }
+
+  setupResourceInterceptor() {
+    this.loader.setupInterceptors();
   }
 }
 

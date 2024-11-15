@@ -308,6 +308,11 @@ const patcher = {
       script = script.replace(/user-select:\s*none;/g, "user-select: text;");
     }
 
+    // Patching happened twice for some reason
+    if (!script.includes("//Oldcord Patched")) {
+      script += "\n//Oldcord Patched";
+    }
+
     return script;
   },
 };

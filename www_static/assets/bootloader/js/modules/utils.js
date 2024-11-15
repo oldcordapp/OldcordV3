@@ -9,6 +9,8 @@ export const utils = {
 
     // Only show logs if it's not info or debug mode is enabled
     const shouldShow = status !== 'info' || this.isDebugMode();
+
+    shouldShow && console.log(`[Oldcord bootloader] ${message}`);
     
     const logElement = document.createElement('div');
     logElement.textContent = message;
