@@ -171,7 +171,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
             }
         }
 
-        const autoJoinGuild = config.instance_flags.filter(x => x.toLowerCase().includes("autojoin:"));
+        const autoJoinGuild = config.instance.flags.filter(x => x.toLowerCase().includes("autojoin:"));
 
         if (autoJoinGuild.length > 0) {
             let guildId = autoJoinGuild[0].split(':')[1];

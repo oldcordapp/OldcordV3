@@ -465,16 +465,15 @@ app.get("/channels/:guildid/:channelid", (_, res) => {
     return res.redirect("/");
 });
 
-app.get("/bootloaderConfig", (req, res) => {
+app.get("/instance", (req, res) => {
     const portAppend = globalUtils.nonStandardPort ? ":" + config.port : "";
     const base_url = config.base_url + portAppend;
 
     res.json({
-        instance_name: config.instance_name,
-        instance_description: config.instance_description,
+        instance: config.instance,
         custom_invite_url: config.custom_invite_url == "" ? base_url + "/invite" : config.custom_invite_url,
         gateway: globalUtils.generateGatewayURL(req),
-        captcha_options: config.captcha_config
+        captcha_options: config.captcha_config,
     });
 });
 

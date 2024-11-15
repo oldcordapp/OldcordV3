@@ -8,9 +8,18 @@
     "ws_port": 1337,
     "cache404s": false,
     "serve_selector": true,
-    "instance_name": "Staging",
-    "instance_description": "An oldcord v3 instance",
-    "instance_flags": [],
+    "instance": {
+        "name": "Staging",
+        "description": "An oldcord v3 instance",
+        "environment": "staging",
+        "legal": {
+            "terms": "url",
+            "privacy": "url",
+            "instanceRules": "url",
+            "extras": {}
+        },
+        "flags": []
+    },
     "cert_path": "",
     "key_path": "",
     "captcha_config" : {

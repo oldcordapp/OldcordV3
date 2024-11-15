@@ -1,7 +1,7 @@
 ![Herple...](/hurple.png)
 
-# OldCordV3
-Current code for OldCord (Rewritten) as typescript sucks for this kinda project.
+# OldcordV3
+Current code for Oldcord (Rewritten) as typescript sucks for this kinda project.
 
 # Resources & External Contributors
 ziad87 (Hummus2 private source code for token generation, permissions, sessions references, and some middleware references) <br>
@@ -39,7 +39,7 @@ Example integration configuration:
 
 trusted_users bypass short term rate-limits, use this to add specific users like bots from being blocked by the wacky rate-limits scattered across the project. <br>
 
-instance_flags are kinda limited at the moment, but you can lock down an instance with these entries:
+instance.flags are kinda limited at the moment, but you can lock down an instance with these entries:
 
 NO_REGISTRATION - Block all future users from creating an account on your instance. <br>
 NO_GUILD_CREATION - Block future guilds from being created. <br>
