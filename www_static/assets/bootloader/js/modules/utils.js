@@ -3,17 +3,17 @@ export const utils = {
     return document.cookie.includes('debug_mode=true');
   },
 
-  loadLog(message, isError = false, isWarning = false) {
+  loadLog(message, status = 'info') {
     const logsElement = document.getElementById('oldcord-loading-logs');
     if (!logsElement) return;
 
-    // Only show logs if it's an error/warning or debug mode is enabled
-    const shouldShow = isError || isWarning || this.isDebugMode();
+    // Only show logs if it's not info or debug mode is enabled
+    const shouldShow = status !== 'info' || this.isDebugMode();
     
     const logElement = document.createElement('div');
     logElement.textContent = message;
-    if (isError) logElement.className = 'error-log';
-    else if (isWarning) logElement.className = 'warning-log';
+    if (status === 'error') logElement.className = 'error-log';
+    else if (status === 'warning') logElement.className = 'warning-log';
     
     logsElement.appendChild(logElement);
     logsElement.scrollTop = logsElement.scrollHeight;
@@ -49,7 +49,7 @@ export const utils = {
     try {
       return await action();
     } catch (error) {
-      this.loadLog(errorMessage || error.message, true);
+      this.loadLog(errorMessage || error.message, 'error');
       throw error;
     }
   },

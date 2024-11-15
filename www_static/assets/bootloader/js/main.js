@@ -58,6 +58,7 @@ class Bootloader {
       }
 
       utils.loadLog("Build: " + this.release_date);
+      utils.loadLog("Loading instance config...");
       window.config = await Config.load();
       document.title = window.config.instance.name;
 
@@ -69,7 +70,7 @@ class Bootloader {
         window.location.href = window.location.href; // Force full page reload
       }
     } catch (e) {
-      utils.loadLog("Fatal error occurred. Please check the console.", true);
+      utils.loadLog("Fatal error occurred. Please check the console.", 'error');
       throw e;
     }
   }
@@ -77,7 +78,7 @@ class Bootloader {
   async checkEnvironment() {
     // Check for desktop client incompatibility
     if (window.DiscordNative && this.release_date === "april_1_2018") {
-      utils.loadLog("This build does not work on desktop client.", true, false);
+      utils.loadLog("This build does not work on desktop client.", 'error');
       await utils.timer(3000);
       window.location.replace("/selector");
       return { status: "fatal" };
@@ -124,8 +125,7 @@ class Bootloader {
     if (hasLoginIssues) {
       utils.loadLog(
         `Warning: Login issues detected in the build you're trying to use. Switching to February 25 2018 temporarily...`,
-        false,
-        true
+        'warning'
       );
       this.originalBuild = this.release_date;
       utils.setCookie("original_build", this.originalBuild);
@@ -137,7 +137,7 @@ class Bootloader {
   }
 
   startTokenMonitor() {
-    utils.loadLog("Starting token monitor...", false, true);
+    utils.loadLog("Starting token monitor...", 'warning');
 
     // Create iframe and get its localStorage only when monitoring starts
     this.storageFrame = document.body.appendChild(
@@ -151,7 +151,7 @@ class Bootloader {
           this.handleLoginDetected();
         }
       } catch (e) {
-        utils.loadLog("Error in token monitor: " + e, true);
+        utils.loadLog("Error in token monitor: " + e, 'error');
       }
     }, 100);
   }
@@ -160,7 +160,7 @@ class Bootloader {
     try {
       return Boolean(this.localStorage?.token);
     } catch (e) {
-      utils.loadLog("Token check error: " + e, true);
+      utils.loadLog("Token check error: " + e, 'error');
       return false;
     }
   }
@@ -168,8 +168,7 @@ class Bootloader {
   handleLoginDetected() {
     utils.loadLog(
       "Token detected! Switching back to: " + this.originalBuild,
-      false,
-      true
+      'warning'
     );
     // Clean up the iframe before reload
     this.storageFrame?.remove();
@@ -214,7 +213,7 @@ class Bootloader {
         Promise.all(
           styleUrls.map((url) =>
             this.loader.loadCSS(url).catch((e) => {
-              utils.loadLog(`Failed to load CSS: ${url}`, true);
+              utils.loadLog(`Failed to load CSS: ${url}`, 'error');
               return null;
             })
           )
@@ -222,7 +221,7 @@ class Bootloader {
         Promise.all(
           scriptUrls.map((url) =>
             this.loader.loadScript(url).catch((e) => {
-              utils.loadLog(`Failed to load Script: ${url}`, true);
+              utils.loadLog(`Failed to load Script: ${url}`, 'error');
               return null;
             })
           )
@@ -251,7 +250,7 @@ class Bootloader {
         } else {
           this.loader.loadIcon(newIcon[1])
             .then(iconUrl => icon.href = iconUrl)
-            .catch(e => utils.loadLog(`Failed to load icon: ${newIcon[1]}`, true));
+            .catch(e => utils.loadLog(`Failed to load icon: ${newIcon[1]}`, 'error'));
         }
       }
     }
@@ -307,8 +306,7 @@ class Bootloader {
     } catch (e) {
       utils.loadLog(
         "Fatal error occurred. Please check the console.",
-        true,
-        true
+        'error'
       );
       throw e;
     }
@@ -364,4 +362,5 @@ class Bootloader {
   }
 }
 
+utils.loadLog("Initializing bootloader...");
 new Bootloader().initialize().catch(console.error);
