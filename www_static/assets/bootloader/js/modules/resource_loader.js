@@ -8,23 +8,20 @@ export class ResourceLoader {
   }
 
   async loadResource(path, type) {
-    // Skip processing if it's a base64 encoded image
-    if (type === 'ico' && path.startsWith('data:')) {
-      return path;
-    }
-
     const normalizedPath = this.normalizeScriptPath(path);
     utils.loadLog(`Downloading ${type}: ${normalizedPath}`);
 
     return utils.safeExecute(async () => {
       // For newer versions, just return the full URL for icons
       if (type === 'ico') {
-        return normalizedPath.startsWith('http') ? 
+        const fullUrl = normalizedPath.startsWith('http') ? 
           normalizedPath : 
           `${Config.cdn_url}${normalizedPath}`;
+        return fullUrl;
       }
 
-      const response = await fetch(`${Config.cdn_url}${normalizedPath}`);
+      const fullUrl = `${Config.cdn_url}${normalizedPath}`;
+      const response = await fetch(fullUrl);
       
       if (!response.ok) {
         if (response.status === 404 && normalizedPath.startsWith("/assets/")) {
@@ -47,7 +44,7 @@ export class ResourceLoader {
       const blobUrl = URL.createObjectURL(blob);
 
       utils.loadLog(`Successfully loaded ${type} ${normalizedPath} as blob URL: ${blobUrl}`);
-      return blobUrl;
+      return { url: fullUrl, blob: blobUrl };
     }, `${type} load error: ${normalizedPath}`);
   }
 
@@ -57,10 +54,6 @@ export class ResourceLoader {
 
   loadCSS(path) {
     return this.loadResource(path, 'css');
-  }
-
-  loadIcon(path) {
-    return this.loadResource(path, 'ico');
   }
 
   normalizeScriptPath(path) {

@@ -188,7 +188,7 @@ class Bootloader {
     const { head, body } = this.parseHtml(html);
 
     const [styles, scripts] = await this.loadResources(head, body);
-    this.setupDOM(body, styles, head);
+    this.setupDOM(head, body, styles, scripts);
     this.setLoadingText("READY");
 
     await utils.timer(1000);
@@ -196,7 +196,7 @@ class Bootloader {
     // Setup resource interceptor before executing scripts
     this.setupResourceInterceptor();
 
-    await this.executeScripts(scripts);
+    await this.executeScripts();
     await this.waitForMount();
 
     // Start monitoring when original_build is set
@@ -224,40 +224,91 @@ class Bootloader {
     }
   }
 
-  setupDOM(body, styles, head) {
-    // First apply new styles (Discord's CSS)
-    styles.filter(Boolean).forEach((blob) => {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = blob;
-      document.head.appendChild(link);
+  setupDOM(head, body, styles, scripts) {
+    this.currentHead = head;
+    this.currentBody = body;
+    
+    // Create a document fragment for batch DOM updates
+    const headFragment = document.createDocumentFragment();
+    const bodyFragment = document.createDocumentFragment();
+    
+    // Process head
+    const tempHead = document.createElement("div");
+    tempHead.innerHTML = head;
+    
+    // Create lookup maps for faster resource matching
+    const styleMap = new Map(styles.map(s => [s.url, s.blob]));
+    const scriptMap = new Map(scripts.map(s => [s.url, s.blob]));
+    
+    // Cache existing elements' attributes for faster comparison
+    const existingElements = new Set();
+    document.head.querySelectorAll('link, script').forEach(elem => {
+      existingElements.add(Array.from(elem.attributes)
+        .map(a => `${a.name}=${a.value}`)
+        .sort()
+        .join('|'));
     });
 
-    let icon = document.getElementById("icon");
-    if (icon) {
-      let newIcon = head.match(/<link rel="icon" href="([^"]+)"[^>]*>/i);
-      if (newIcon && newIcon[1]) {
-        if (newIcon[1].startsWith("data:")) {
-          icon.href = newIcon[1];
-        } else {
-          this.loader
-            .loadIcon(newIcon[1])
-            .then((iconUrl) => (icon.href = iconUrl))
-            .catch((e) =>
-              utils.loadLog(`Failed to load icon: ${newIcon[1]}`, "error")
-            );
+    // Process head elements
+    for (const elem of [...tempHead.children]) {
+      if (elem.tagName === 'TITLE') continue;
+
+      // Skip if element with same attributes already exists in document.head
+      const elemAttrs = Array.from(elem.attributes)
+        .map(a => `${a.name}=${a.value}`)
+        .sort()
+        .join('|');
+      const existingElem = [...document.head.children].some(child => 
+        Array.from(child.attributes)
+          .map(a => `${a.name}=${a.value}`)
+          .sort()
+          .join('|') === elemAttrs
+      );
+      if (existingElem) continue;
+
+      if (elem.tagName === 'LINK' && elem.rel === 'stylesheet') {
+        const href = elem.getAttribute('href');
+        const blob = Array.from(styleMap.keys()).find(url => url.includes(href));
+        if (blob) {
+          elem.href = styleMap.get(blob);
+          headFragment.appendChild(elem);
         }
+        continue;
       }
+
+      if (elem.tagName === 'SCRIPT' && elem.src) {
+        const src = elem.getAttribute('src');
+        const blob = Array.from(scriptMap.keys()).find(url => url.includes(src));
+        if (blob) {
+          elem.src = scriptMap.get(blob);
+          headFragment.appendChild(elem);
+        }
+        continue;
+      }
+
+      headFragment.appendChild(elem);
     }
 
-    // Create temporary container to parse HTML
-    const temp = document.createElement("div");
-    temp.innerHTML = body.replace(/<script[^>]*src=[^>]*><\/script>/g, "");
+    // Process body
+    const tempBody = document.createElement("div");
+    tempBody.innerHTML = body;
 
-    // Add all children to body
-    while (temp.firstChild) {
-      document.body.appendChild(temp.firstChild);
+    // Update script sources
+    tempBody.querySelectorAll('script[src]').forEach(elem => {
+      const src = elem.getAttribute('src');
+      const blob = Array.from(scriptMap.keys()).find(url => url.includes(src));
+      if (blob) {
+        elem.src = scriptMap.get(blob);
+      }
+    });
+
+    while (tempBody.firstChild) {
+      bodyFragment.appendChild(tempBody.firstChild);
     }
+
+    // Batch DOM updates
+    document.head.appendChild(headFragment);
+    document.body.appendChild(bodyFragment);
   }
 
   async waitForMount() {
@@ -317,18 +368,43 @@ class Bootloader {
     return { head: doc.head.innerHTML, body: doc.body.innerHTML };
   }
 
-  async executeScripts(scripts) {
-    for (const blobUrl of scripts) {
+  async executeScripts() {
+    const scriptElements = [...document.getElementsByTagName('script')]
+      .filter(script => script.src.startsWith('blob:'));
+
+    for (const scriptElem of scriptElements) {
       await new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.charset = "utf-8";
-        script.src = blobUrl;
-        script.onload = () => {
+        const blobUrl = scriptElem.src;
+        const newScript = document.createElement('script');
+        
+        // Preserve attribute order by getting the original element's outerHTML
+        const originalAttrs = scriptElem.outerHTML
+          .match(/<script([^>]*)>/i)[1]
+          .match(/\s+(?:[a-zA-Z-]+(?:=(?:"[^"]*"|'[^']*'|[^"'\s]+))?)/g) || [];
+        
+        // Apply attributes in original order, replacing src with blob URL
+        originalAttrs.forEach(attr => {
+          const [name, value] = attr.trim().split('=');
+          const attrValue = value ? value.replace(/['"]/g, '') : '';
+          newScript.setAttribute(name, name === 'src' ? blobUrl : attrValue);
+        });
+        
+        const appendTarget = scriptElem.closest('head') ? document.head : document.body;
+        
+        newScript.onload = () => {
           URL.revokeObjectURL(blobUrl);
           resolve();
         };
-        script.onerror = reject;
-        document.body.appendChild(script);
+        newScript.onerror = reject;
+        
+        // Try to maintain position
+        const nextSibling = scriptElem.nextSibling;
+        scriptElem.remove();
+        if (nextSibling) {
+          appendTarget.insertBefore(newScript, nextSibling);
+        } else {
+          appendTarget.appendChild(newScript);
+        }
       });
     }
   }
