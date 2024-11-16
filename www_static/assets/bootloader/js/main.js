@@ -199,6 +199,8 @@ class Bootloader {
 
     // Start monitoring when original_build is set
     this.originalBuild && this.startTokenMonitor();
+
+    this.startHeadCleanup(); // Add cleanup after mount
   }
 
   loadResources(head, body) {
@@ -325,6 +327,25 @@ class Bootloader {
       }
       }, 100);
     });
+  }
+
+  startHeadCleanup() {
+    setInterval(() => {
+      // Remove duplicates based on attributes
+      const seen = new Set();
+      document.head.querySelectorAll('link, script').forEach(element => {
+        const attrs = Array.from(element.attributes)
+          .map(attr => `${attr.name}=${attr.value}`)
+          .sort()
+          .join('|');
+        
+        if (seen.has(attrs)) {
+          element.remove();
+        } else {
+          seen.add(attrs);
+        }
+      });
+    }, 1000);
   }
 
   async fetchAppHtml() {
