@@ -314,13 +314,16 @@ class Bootloader {
   async waitForMount() {
     await new Promise((resolve) => {
       const check = setInterval(() => {
-        const mount = document.getElementById("app-mount");
-        if (mount?.children.length) {
-          clearInterval(check);
-          // Remove original children along with loading screen
-          this.originalChildren.forEach((child) => child.remove());
-          resolve();
-        }
+      const mount = document.getElementById("app-mount");
+      if (mount?.children.length) {
+        clearInterval(check);
+        // Remove original children along with loading screen
+        this.originalChildren.forEach((child) => child.remove());
+        // Remove loading.css
+        const loadingCss = document.querySelector('link[href*="loading.css"]');
+        loadingCss?.remove();
+        resolve();
+      }
       }, 100);
     });
   }

@@ -97,6 +97,7 @@ const patcher = {
         config.captcha_options.site_key
       );
 
+    //Disable telemetry
     script = script.replace(/track:function\([^)]*\){/, "$&return;");
     script = script.replace(
       /(function \w+\(e\)){[^p]*post\({.*url:\w\.Endpoints\.TRACK[^}]*}\)}/,
@@ -308,7 +309,7 @@ const patcher = {
       script = script.replace(/user-select:\s*none;/g, "user-select: text;");
     }
 
-    // Patching happened twice for some reason
+    // Check if the script is patched by Oldcord, although found out that patching happened twice for some reason
     if (!script.includes("//Oldcord Patched")) {
       script += "\n//Oldcord Patched";
     }
