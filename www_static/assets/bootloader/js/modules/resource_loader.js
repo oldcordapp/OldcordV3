@@ -6,11 +6,12 @@ export class ResourceLoader {
   constructor() {
     // Single cache for all resource types
     this.patchedUrls = new Map();
+    this.chunkRegex = /[{,]\s*(?:"|')?(\d+)(?:"|')?\s*:\s*(?:"|')([0-9a-f]{20,})(?:"|')/g;
   }
 
   async loadResource(path, type) {
     const normalizedPath = this.normalizeScriptPath(path);
-    
+
     // Check cache first
     if (this.patchedUrls.has(normalizedPath)) {
       utils.loadLog(`Using cached ${type}: ${normalizedPath}`);
@@ -21,215 +22,223 @@ export class ResourceLoader {
 
     return utils.safeExecute(async () => {
       // For newer versions, just return the full URL for icons
-      if (type === 'ico') {
-        const fullUrl = normalizedPath.startsWith('http') ? 
-          normalizedPath : 
-          `${Config.cdn_url}${normalizedPath}`;
+      if (type === "ico") {
+        const fullUrl = normalizedPath.startsWith("http")
+          ? normalizedPath
+          : `${Config.cdn_url}${normalizedPath}`;
         return fullUrl;
       }
 
       const fullUrl = `${Config.cdn_url}${normalizedPath}`;
-      const response = await fetch(fullUrl);
-      
-      if (!response.ok) {
-        if (response.status === 404 && normalizedPath.startsWith("/assets/")) {
-          return this.loadResource(normalizedPath.substring(8), type);
+      try {
+        const response = await fetch(fullUrl);
+
+        if (!response.ok) {
+          if (response.status === 404 && normalizedPath.startsWith("/assets/")) {
+            return this.loadResource(normalizedPath.substring(8), type);
+          }
+          throw new Error(`HTTP ${response.status}`);
         }
-        throw new Error(`Failed to download ${type} (HTTP ${response.status}): ${normalizedPath}`);
+
+        utils.loadLog(`Patching ${type}: ${normalizedPath}`);
+
+        const content = await response.text();
+        const processed =
+          type === "script"
+            ? patcher.js(content, "root", window.config)
+            : patcher.css(content);
+
+        // Preload chunks if this is a script
+        if (type === "script") {
+          await this.preloadChunks(content);
+        }
+
+        const blob = new Blob([processed], {
+          type: type === "script" ? "application/javascript" : "text/css",
+        });
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Cache the result using normalizedPath
+        const result = { url: fullUrl, blob: blobUrl };
+        this.patchedUrls.set(normalizedPath, result);
+
+        utils.loadLog(
+          `Successfully loaded ${type} ${normalizedPath} as blob URL: ${blobUrl}`
+        );
+        return result;
+      } catch (error) {
+        // Silently fail for any HTTP error
+        if (error.message.startsWith('HTTP ')) return null;
+        // Re-throw other errors (network, etc)
+        throw error;
       }
-
-      utils.loadLog(`Patching ${type}: ${normalizedPath}`);
-
-      const content = await response.text();
-      const processed = type === 'script' 
-        ? patcher.js(content, "root", window.config)
-        : patcher.css(content);
-
-      const blob = new Blob([processed], { 
-        type: type === 'script' ? 'application/javascript' : 'text/css' 
-      });
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Cache the result using normalizedPath
-      const result = { url: fullUrl, blob: blobUrl };
-      this.patchedUrls.set(normalizedPath, result);
-
-      utils.loadLog(`Successfully loaded ${type} ${normalizedPath} as blob URL: ${blobUrl}`);
-      return result;
     }, `${type} load error: ${normalizedPath}`);
   }
 
   loadScript(path) {
-    return this.loadResource(path, 'script');
+    return this.loadResource(path, "script");
   }
 
   loadCSS(path) {
-    return this.loadResource(path, 'css');
+    return this.loadResource(path, "css");
   }
 
   normalizeScriptPath(path) {
     if (path.startsWith("http")) {
       return new URL(path).pathname;
     }
-    return path.startsWith("/") ? path : "/assets/" + path;
+    const url = path.startsWith("/") ? path : "/assets/" + path;
+    return url;
   }
 
   setupInterceptors() {
     utils.loadLog("Setting up resource interceptor...");
-    
-    const shouldIntercept = (url) => 
-      typeof url === 'string' && !url.includes('/bootloader/') && !url.startsWith('blob:');
 
-    // Intercept createElement
+    const shouldIntercept = (url) =>
+      typeof url === "string" &&
+      !url.includes("/bootloader/") &&
+      !url.startsWith("blob:");
+
     const originalCreateElement = document.createElement.bind(document);
     document.createElement = (tagName) => {
       const element = originalCreateElement(tagName);
-      
-      if (tagName.toLowerCase() === 'script') {
-        Object.defineProperty(element, 'src', {
-          set: (url) => this.handleScriptSrc(element, url, shouldIntercept)
+
+      if (tagName.toLowerCase() === "script") {
+        let srcValue = "";
+        Object.defineProperty(element, "src", {
+          get: () => srcValue,
+          set: (url) => {
+            srcValue = this.handleScriptSrc(element, url, shouldIntercept);
+            return true;
+          },
+          configurable: true,
         });
       }
-      
-      if (tagName.toLowerCase() === 'link') {
-        const originalSetAttribute = element.setAttribute.bind(element);
-        element.setAttribute = (name, value) => 
-          this.handleLinkAttribute(element, name, value, originalSetAttribute, shouldIntercept);
+
+      if (tagName.toLowerCase() === "link") {
+        let hrefValue = "";
+        Object.defineProperty(element, "href", {
+          get: () => hrefValue,
+          set: (url) => {
+            hrefValue = this.handleLinkAttribute(
+              element,
+              "href",
+              url,
+              (_, val) => {
+                element.setAttribute("href", val);
+              },
+              shouldIntercept
+            );
+            return true;
+          },
+          configurable: true,
+        });
       }
-      
+
       return element;
     };
-
-    // Intercept XHR
-    this.setupXHRIntercept(shouldIntercept);
-
-    // Intercept fetch
-    this.setupFetchIntercept(shouldIntercept);
   }
 
   handleScriptSrc(element, url, shouldIntercept) {
     if (!shouldIntercept(url)) {
-      element.setAttribute('src', url);
-      return;
+      element.setAttribute("src", url);
+      return url;
     }
 
     const normalizedUrl = this.normalizeScriptPath(url);
     if (this.patchedUrls.has(normalizedUrl)) {
       utils.loadLog(`Using cached script: ${normalizedUrl}`);
-      element.setAttribute('src', this.patchedUrls.get(normalizedUrl).blob);
-      return;
+      const cached = this.patchedUrls.get(normalizedUrl);
+      element.setAttribute("src", cached.blob);
+      return cached.blob;
+    } else {
+      element.setAttribute("src", "https://missing.discord.b3BlcmF0");
+      return "https://missing.discord.b3BlcmF0";
     }
-
-    const xhr = new XMLHttpRequest();
-    utils.loadLog(`Intercepting script: ${url}`);
-    xhr.open('GET', url, false);
-    xhr.send();
-    
-    const processed = patcher.js(xhr.responseText, 'inline', window.config);
-    const blob = new Blob([processed], { type: 'application/javascript' });
-    const blobUrl = URL.createObjectURL(blob);
-    
-    this.patchedUrls.set(normalizedUrl, { url, blob: blobUrl });
-    element.setAttribute('src', blobUrl);
   }
 
-  handleLinkAttribute(element, name, value, originalSetAttribute, shouldIntercept) {
-    if (name !== 'href' || !value.endsWith('.css') || !shouldIntercept(value)) {
+  handleLinkAttribute(
+    element,
+    name,
+    value,
+    originalSetAttribute,
+    shouldIntercept
+  ) {
+    if (name !== "href" || !value.endsWith(".css") || !shouldIntercept(value)) {
       originalSetAttribute.call(element, name, value);
-      return;
+      return value;
     }
 
     const normalizedUrl = this.normalizeScriptPath(value);
     if (this.patchedUrls.has(normalizedUrl)) {
       utils.loadLog(`Using cached CSS: ${normalizedUrl}`);
-      originalSetAttribute.call(element, name, this.patchedUrls.get(normalizedUrl).blob);
-      return;
+      const cached = this.patchedUrls.get(normalizedUrl);
+      originalSetAttribute.call(element, name, cached.blob);
+      return cached.blob;
+    } else {
+      originalSetAttribute.call(element, name, "https://missing.discord.b3BlcmF0");
+      return "https://missing.discord.b3BlcmF0";
     }
-
-    utils.loadLog(`Intercepting CSS: ${value}`);
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', value, false);
-    xhr.send();
-    
-    const processed = patcher.css(xhr.responseText);
-    const blob = new Blob([processed], { type: 'text/css' });
-    const blobUrl = URL.createObjectURL(blob);
-    
-    this.patchedUrls.set(normalizedUrl, { url: value, blob: blobUrl });
-    originalSetAttribute.call(element, name, blobUrl);
   }
 
-  setupXHRIntercept(shouldIntercept) {
-    const XHR = XMLHttpRequest.prototype;
-    const originalOpen = XHR.open;
-    const originalSend = XHR.send;
-    const patchedUrls = this.patchedUrls; // Store reference to cache
+  extractChunkUrls(content) {
+    const urls = new Set();
+    let match;
     
-    XHR.open = function(_method, url) {
-      this._url = url;
-      return originalOpen.apply(this, arguments);
-    };
-
-    XHR.send = function() {
-      if (!shouldIntercept(this._url) || patchedUrls.has(this._url)) {
-        return originalSend.apply(this, arguments);
-      }
-
-      const isJS = this._url.endsWith('.js');
-      const isCSS = this._url.endsWith('.css');
+    while ((match = this.chunkRegex.exec(content)) !== null) {
+      const [_, id, hash] = match;
+      const variations = [
+        `/assets/${id}.${hash}.js`,
+        `/assets/${hash}.js`,
+        `/assets/${hash}.css`
+      ];
       
-      if (isJS || isCSS) {
-        this.addEventListener('load', function() {
-          if (this.status === 200) {
-            const patched = isJS 
-              ? patcher.js(this.responseText, 'inline', window.config)
-              : patcher.css(this.responseText);
-            Object.defineProperty(this, 'response', { value: patched });
-            Object.defineProperty(this, 'responseText', { value: patched });
-            patchedUrls.set(this._url, { url: this._url, blob: null, content: patched });
-          }
-        });
-      }
-      return originalSend.apply(this, arguments);
-    };
+      variations.forEach(url => urls.add(url));
+    }
+    
+    return Array.from(urls);
   }
 
-  setupFetchIntercept(shouldIntercept) {
-    const originalFetch = window.fetch;
-    const patchedUrls = this.patchedUrls;
+  async preloadChunks(content) {
+    const urls = this.extractChunkUrls(content);
+    utils.loadLog(`Found ${urls.length} potential chunk URLs`);
 
-    window.fetch = async function(input, init) {
-      const url = typeof input === 'string' ? input : input.url;
-      
-      if (!shouldIntercept(url) || patchedUrls.has(url)) {
-        return originalFetch.apply(this, arguments);
-      }
+    // Keep track of processed hashes to avoid duplicates
+    const processedHashes = new Set();
 
-      const response = await originalFetch.apply(this, arguments);
-      
-      if (!response.ok) {
-        return response;
-      }
+    // Fetch all URLs in parallel
+    await Promise.all(
+      urls.map(async (url) => {
+        try {
+          const normalizedUrl = this.normalizeScriptPath(url);
+          if (this.patchedUrls.has(normalizedUrl)) return;
 
-      const isJS = url.endsWith('.js');
-      const isCSS = url.endsWith('.css');
+          // Skip if we already processed a URL with this hash
+          const hash = url.match(/[0-9a-f]{8,}/)?.[0];
+          if (hash && processedHashes.has(hash)) return;
 
-      if (!isJS && !isCSS) {
-        return response;
-      }
+          const fullUrl = `${Config.cdn_url}${normalizedUrl}`;
+          const response = await fetch(fullUrl).catch(() => ({ ok: false })); // Catch network errors
 
-      const text = await response.text();
-      const patched = isJS 
-        ? patcher.js(text, 'inline', window.config)
-        : patcher.css(text);
+          if (!response.ok) return;
 
-      patchedUrls.set(url, { url, blob: null, content: patched });
+          // If successful, mark this hash as processed
+          if (hash) processedHashes.add(hash);
 
-      return new Response(patched, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers
-      });
-    };
+          utils.loadLog(`Found chunk: ${normalizedUrl}`);
+          const text = await response.text();
+          const processed = patcher.js(text, "chunk", window.config);
+          const blob = new Blob([processed], {
+            type: "application/javascript",
+          });
+          const blobUrl = URL.createObjectURL(blob);
+
+          this.patchedUrls.set(normalizedUrl, { url: fullUrl, blob: blobUrl });
+
+        } catch {
+          // Completely silent for any error
+        }
+      })
+    );
   }
 }
