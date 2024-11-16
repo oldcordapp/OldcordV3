@@ -98,6 +98,9 @@ export class ResourceLoader {
 
     // Intercept XHR
     this.setupXHRIntercept(shouldIntercept);
+
+    // Intercept fetch
+    this.setupFetchIntercept(shouldIntercept);
   }
 
   handleScriptSrc(element, url, shouldIntercept) {
@@ -161,6 +164,45 @@ export class ResourceLoader {
         }
       }
       return originalSend.apply(this, arguments);
+    };
+  }
+
+  setupFetchIntercept(shouldIntercept) {
+    const originalFetch = window.fetch;
+    const patchedResources = this.patchedResources;
+
+    window.fetch = async function(input, init) {
+      const url = typeof input === 'string' ? input : input.url;
+      
+      if (!shouldIntercept(url)) {
+        return originalFetch.apply(this, arguments);
+      }
+
+      const response = await originalFetch.apply(this, arguments);
+      
+      if (!response.ok || !patchedResources.has(response)) {
+        return response;
+      }
+
+      const isJS = url.endsWith('.js');
+      const isCSS = url.endsWith('.css');
+
+      if (!isJS && !isCSS) {
+        return response;
+      }
+
+      const text = await response.text();
+      const patched = isJS 
+        ? patcher.js(text, 'inline', window.config)
+        : patcher.css(text);
+
+      patchedResources.set(response, true);
+
+      return new Response(patched, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers
+      });
     };
   }
 }
