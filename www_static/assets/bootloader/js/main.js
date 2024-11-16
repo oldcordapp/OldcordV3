@@ -5,8 +5,7 @@ import { LOADING_QUOTES } from "./modules/quotes.js";
 
 class Bootloader {
   constructor() {
-    this.patchedResources = new WeakMap();
-    this.loader = new ResourceLoader(this.patchedResources);
+    this.loader = new ResourceLoader();
     window.__require = window.require;
     window.__OVERLAY__ = window.overlay != null;
     window.cdn_url = Config.cdn_url;
@@ -18,7 +17,6 @@ class Bootloader {
     this.originalChildren = [...document.body.children];
     this.setLoadingBackground();
     this.showRandomQuote();
-    this.patchedResources = new WeakMap();
   }
 
   getYearFromRelease(release) {
@@ -203,19 +201,20 @@ class Bootloader {
     this.originalBuild && this.startTokenMonitor();
   }
 
-  async loadResources(head, body) {
+  loadResources(head, body) {
     const getUrls = (regex) =>
       [...(head + body).matchAll(regex)]
         .map((m) => m[1])
-        .filter((url) => url.startsWith("/")); // Only allow relative/absolute paths
+        .filter((url) => url.startsWith("/")); 
 
     const styleUrls = getUrls(/<link[^>]+href="([^"]+)"[^>]*>/g).filter(
       (url) => !url.endsWith(".ico")
-    ); // Skip ico files
+    );
     const scriptUrls = getUrls(/<script[^>]+src="([^"]+)"[^>]*>/g);
 
     try {
-      return await Promise.all([
+      // Direct calls to loader methods which now handle their own caching
+      return Promise.all([
         Promise.all(styleUrls.map(url => this.loader.loadCSS(url))),
         Promise.all(scriptUrls.map(url => this.loader.loadScript(url)))
       ]);
