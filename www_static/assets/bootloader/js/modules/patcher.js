@@ -309,10 +309,8 @@ const patcher = {
       script = script.replace(/user-select:\s*none;/g, "user-select: text;");
     }
 
-    // Check if the script is patched by Oldcord, although found out that patching happened twice for some reason
-    if (!script.includes("//Oldcord Patched")) {
-      script += "\n//Oldcord Patched";
-    }
+    // Just for visual verification that it is patched by Oldcord LMAO
+    script += "\n//Oldcord Patched";
 
     return script;
   },

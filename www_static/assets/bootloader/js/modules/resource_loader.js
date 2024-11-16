@@ -102,8 +102,7 @@ export class ResourceLoader {
       utils.loadLog(`Intercepting script: ${url}`);
       xhr.open('GET', url, false);
       xhr.send();
-      const patched = patcher.js(xhr.responseText, 'inline', window.config);
-      const blob = new Blob([patched], { type: 'application/javascript' });
+      const blob = new Blob([xhr.responseText], { type: 'application/javascript' });
       this.patchedResources.set(element, true);
       element.setAttribute('src', URL.createObjectURL(blob));
     } else {
@@ -118,7 +117,6 @@ export class ResourceLoader {
       const xhr = new XMLHttpRequest();
       xhr.open('GET', value, false);
       xhr.send();
-      const patched = patcher.css(xhr.responseText);
       const blob = new Blob([patched], { type: 'text/css' });
       this.patchedResources.set(element, true);
       originalSetAttribute.call(element, name, URL.createObjectURL(blob));
