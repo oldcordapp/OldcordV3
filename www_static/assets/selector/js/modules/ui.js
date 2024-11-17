@@ -252,6 +252,56 @@ export class UI {
                 </iframe>
             </div>`;
     }
+
+    static toggleAdvancedSettings(show) {
+        const selectorGrid = document.querySelector('.selector-grid');
+        const advancedGrid = document.querySelector('.advanced-settings-grid');
+        
+        if (show) {
+            document.getElementById('clearFailedUrlsButton').addEventListener('click', this.handleClearFailedUrls);
+            selectorGrid.classList.add('card-exit');
+            advancedGrid.style.display = 'grid';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    advancedGrid.classList.add('show');
+                    setTimeout(() => {
+                        selectorGrid.style.display = 'none';
+                    }, 300);
+                });
+            });
+        } else {
+            document.getElementById('clearFailedUrlsButton').removeEventListener('click', this.handleClearFailedUrls);
+            selectorGrid.style.display = 'grid';
+            advancedGrid.classList.add('card-exit');
+            selectorGrid.classList.remove('card-exit');
+            setTimeout(() => {
+                advancedGrid.classList.remove('show');
+                advancedGrid.classList.remove('card-exit');
+                advancedGrid.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    static handleClearFailedUrls() {
+        Dialog.show({
+            title: 'Are you sure?',
+            content: `
+                <p>If there is a new chunk uploaded to the CDN this should be used to remove all stored failed chunk URLs and refetch the chunks.</p>
+                <p class="dialog-notice mt-md">DO NOT USE THIS FEATURE AS A 'NOT WORKING FIX' SOLUTION, THIS WILL REMOVE ALL OF THE FAILED CHUNK URLS FROM EVERY BUILD!</p>
+            `,
+            buttons: [
+                { id: 'textButton', label: 'Cancel', onClick: () => Dialog.hide() },
+                { 
+                    id: 'positiveButton', 
+                    label: 'Sure', 
+                    onClick: () => {
+                        localStorage.removeItem('oldcord_failed_urls');
+                        Dialog.hide();
+                    }
+                }
+            ]
+        });
+    }
 }
 
 export class Launcher {
