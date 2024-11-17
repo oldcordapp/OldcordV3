@@ -182,63 +182,87 @@ export class ResourceLoader {
   }
 
   extractChunkUrls(content) {
-    const urls = new Set();
+    const urlsByHash = new Map();
     let match;
     
     while ((match = this.chunkRegex.exec(content)) !== null) {
       const [_, id, hash] = match;
-      const variations = [
-        `/assets/${id}.${hash}.js`,
-        `/assets/${hash}.js`,
-        `/assets/${hash}.css`
-      ];
-      
-      variations.forEach(url => urls.add(url));
+      if (!urlsByHash.has(hash)) {
+        urlsByHash.set(hash, [
+          `/assets/${id}.${hash}.js`,
+          `/assets/${hash}.js`,
+          `/assets/${hash}.css`
+        ]);
+      }
     }
     
-    return Array.from(urls);
+    return urlsByHash;
   }
 
   async preloadChunks(content) {
-    const urls = this.extractChunkUrls(content);
-    utils.loadLog(`Found ${urls.length} potential chunk URLs`);
+    const urlsByHash = this.extractChunkUrls(content);
+    utils.loadLog(`Found ${urlsByHash.size} unique chunk hashes`);
 
-    // Keep track of processed hashes to avoid duplicates
-    const processedHashes = new Set();
+    const loadPromises = Array.from(urlsByHash.entries()).map(async ([hash, urls]) => {
+      // Skip if already in memory
+      if (urls.some(url => this.patchedUrls.has(this.normalizeScriptPath(url)))) {
+        return;
+      }
 
-    // Fetch all URLs in parallel
-    await Promise.all(
-      urls.map(async (url) => {
-        try {
-          const normalizedUrl = this.normalizeScriptPath(url);
-          if (this.patchedUrls.has(normalizedUrl)) return;
-
-          // Skip if we already processed a URL with this hash
-          const hash = url.match(/[0-9a-f]{8,}/)?.[0];
-          if (hash && processedHashes.has(hash)) return;
-
-          const fullUrl = `${Config.cdn_url}${normalizedUrl}`;
-          const response = await fetch(fullUrl).catch(() => ({ ok: false })); // Catch network errors
-
-          if (!response.ok) return;
-
-          // If successful, mark this hash as processed
-          if (hash) processedHashes.add(hash);
-
-          utils.loadLog(`Found chunk: ${normalizedUrl}`);
-          const text = await response.text();
-          const processed = patcher.js(text, "chunk", window.config);
-          const blob = new Blob([processed], {
-            type: "application/javascript",
-          });
-          const blobUrl = URL.createObjectURL(blob);
-
-          this.patchedUrls.set(normalizedUrl, { url: fullUrl, blob: blobUrl });
-
-        } catch {
-          // Completely silent for any error
+      // Check localStorage cache first
+      const cachedUrl = utils.getChunkUrls(window.release_date, hash)?.[0];
+      if (cachedUrl) {
+        // If we have a cached URL, use it directly
+        await this.loadChunk(cachedUrl, hash);
+      } else {
+        // No cache exists, try all variants and save the working one
+        for (const url of urls) {
+          if (await this.loadChunk(url, hash)) {
+            utils.saveChunkCache(window.release_date, hash, [url]);
+            break;
+          }
         }
-      })
-    );
+      }
+    });
+
+    await Promise.all(loadPromises);
+  }
+
+  async loadChunk(url, hash) {
+    const normalizedUrl = this.normalizeScriptPath(url);
+    const failedUrls = utils.getFailedChunks(window.release_date);
+    
+    // Skip if URL is known to fail
+    if (failedUrls.includes(normalizedUrl)) {
+      utils.loadLog(`Skipping known failed URL: ${normalizedUrl}`, 'info');
+      return false;
+    }
+
+    try {
+      const fullUrl = `${Config.cdn_url}${normalizedUrl}`;
+      utils.loadLog(`Loading chunk ${hash}: ${normalizedUrl}`);
+      
+      const response = await fetch(fullUrl);
+      if (!response.ok) {
+        // Only cache as failed for non-HTTP errors or permanent failures
+        if (!response.status.toString().startsWith('5')) {
+          utils.saveFailedChunk(window.release_date, normalizedUrl);
+        }
+        return false;
+      }
+
+      const text = await response.text();
+      const processed = patcher.js(text, "chunk", window.config);
+      const blob = new Blob([processed], { type: "application/javascript" });
+      const blobUrl = URL.createObjectURL(blob);
+
+      this.patchedUrls.set(normalizedUrl, { url: fullUrl, blob: blobUrl });
+      utils.loadLog(`Successfully loaded chunk: ${normalizedUrl}`);
+      return true;
+    } catch (error) {
+      // Cache network errors as failed URLs
+      utils.saveFailedChunk(window.release_date, normalizedUrl);
+      return false;
+    }
   }
 }
