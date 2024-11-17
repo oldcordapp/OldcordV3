@@ -141,7 +141,7 @@ class Bootloader {
 
     // Create iframe and get its localStorage only when monitoring starts
     this.storageFrame = document.body.appendChild(
-      document.createElement`iframe`
+      document.createElement("iframe")
     );
     this.localStorage = this.storageFrame.contentWindow.localStorage;
 
