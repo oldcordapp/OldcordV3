@@ -1,27 +1,26 @@
 export const utils = {
   isDebugMode() {
-    return document.cookie.includes('debug_mode=true');
+    return document.cookie.includes("debug_mode=true");
   },
 
-  loadLog(message, status = 'info') {
-    const logsElement = document.getElementById('oldcord-loading-logs');
+  loadLog(message, status = "info") {
+    const logsElement = document.getElementById("oldcord-loading-logs");
     if (!logsElement) return;
 
-    // Only show logs if it's not info or debug mode is enabled
-    const shouldShow = status !== 'info' || this.isDebugMode();
+    const shouldShow = status !== "info" || this.isDebugMode();
 
     shouldShow && console.log(`[Oldcord bootloader] ${message}`);
-    
-    const logElement = document.createElement('div');
+
+    const logElement = document.createElement("div");
     logElement.textContent = message;
-    if (status === 'error') logElement.className = 'error-log';
-    else if (status === 'warning') logElement.className = 'warning-log';
-    
+    if (status === "error") logElement.className = "error-log";
+    else if (status === "warning") logElement.className = "warning-log";
+
     logsElement.appendChild(logElement);
     logsElement.scrollTop = logsElement.scrollHeight;
 
-    if (shouldShow && !logsElement.classList.contains('visible')) {
-      logsElement.classList.add('visible');
+    if (shouldShow && !logsElement.classList.contains("visible")) {
+      logsElement.classList.add("visible");
     }
   },
 
@@ -51,7 +50,7 @@ export const utils = {
     try {
       return await action();
     } catch (error) {
-      this.loadLog(errorMessage || error.message, 'error');
+      this.loadLog(errorMessage || error.message, "error");
       throw error;
     }
   },
@@ -62,7 +61,7 @@ export const utils = {
 
   getChunkCache() {
     try {
-      const cache = localStorage.getItem('oldcord_chunk_cache');
+      const cache = localStorage.getItem("oldcord_chunk_cache");
       return cache ? JSON.parse(cache) : {};
     } catch {
       return {};
@@ -74,7 +73,7 @@ export const utils = {
       const cache = this.getChunkCache();
       if (!cache[buildId]) cache[buildId] = {};
       cache[buildId][hash] = urls;
-      localStorage.setItem('oldcord_chunk_cache', JSON.stringify(cache));
+      localStorage.setItem("oldcord_chunk_cache", JSON.stringify(cache));
     } catch {
       // Ignore storage errors
     }
@@ -90,7 +89,7 @@ export const utils = {
 
   getFailedChunks(buildId) {
     try {
-      const failed = localStorage.getItem('oldcord_failed_urls');
+      const failed = localStorage.getItem("oldcord_failed_urls");
       return failed ? JSON.parse(failed)?.[buildId] || [] : [];
     } catch {
       return [];
@@ -99,14 +98,16 @@ export const utils = {
 
   saveFailedChunk(buildId, url) {
     try {
-      const failed = JSON.parse(localStorage.getItem('oldcord_failed_urls') || '{}');
+      const failed = JSON.parse(
+        localStorage.getItem("oldcord_failed_urls") || "{}"
+      );
       if (!failed[buildId]) failed[buildId] = [];
       if (!failed[buildId].includes(url)) {
         failed[buildId].push(url);
-        localStorage.setItem('oldcord_failed_urls', JSON.stringify(failed));
+        localStorage.setItem("oldcord_failed_urls", JSON.stringify(failed));
       }
     } catch {
       // Ignore storage errors
     }
-  }
+  },
 };

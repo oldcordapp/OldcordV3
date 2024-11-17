@@ -4,15 +4,15 @@ import { Config } from "./config.js";
 
 export class ResourceLoader {
   constructor() {
-    // Single cache for all resource types
     this.patchedUrls = new Map();
-    this.chunkRegex = /[{,]\s*(?:"|')?(\d+)(?:"|')?\s*:\s*(?:"|')([0-9a-f]{20,})(?:"|')/g;
+    this.chunkRegex =
+      /[{,]\s*(?:"|')?(\d+)(?:"|')?\s*:\s*(?:"|')([0-9a-f]{20,})(?:"|')/g;
+    this.onChunkProgress = null;
   }
 
   async loadResource(path, type) {
     const normalizedPath = this.normalizeScriptPath(path);
 
-    // Check cache first
     if (this.patchedUrls.has(normalizedPath)) {
       utils.loadLog(`Using cached ${type}: ${normalizedPath}`);
       return this.patchedUrls.get(normalizedPath);
@@ -34,7 +34,10 @@ export class ResourceLoader {
         const response = await fetch(fullUrl);
 
         if (!response.ok) {
-          if (response.status === 404 && normalizedPath.startsWith("/assets/")) {
+          if (
+            response.status === 404 &&
+            normalizedPath.startsWith("/assets/")
+          ) {
             return this.loadResource(normalizedPath.substring(8), type);
           }
           throw new Error(`HTTP ${response.status}`);
@@ -48,7 +51,7 @@ export class ResourceLoader {
             ? patcher.js(content, "root", window.config)
             : patcher.css(content);
 
-        // Preload chunks if this is a script
+        // Find if a script has chunks
         if (type === "script") {
           await this.preloadChunks(content);
         }
@@ -58,7 +61,6 @@ export class ResourceLoader {
         });
         const blobUrl = URL.createObjectURL(blob);
 
-        // Cache the result using normalizedPath
         const result = { url: fullUrl, blob: blobUrl };
         this.patchedUrls.set(normalizedPath, result);
 
@@ -67,9 +69,7 @@ export class ResourceLoader {
         );
         return result;
       } catch (error) {
-        // Silently fail for any HTTP error
-        if (error.message.startsWith('HTTP ')) return null;
-        // Re-throw other errors (network, etc)
+        if (error.message.startsWith("HTTP ")) return null;
         throw error;
       }
     }, `${type} load error: ${normalizedPath}`);
@@ -105,10 +105,17 @@ export class ResourceLoader {
 
       if (tagName.toLowerCase() === "script") {
         let srcValue = "";
+        let blobUrl = null;
         Object.defineProperty(element, "src", {
           get: () => srcValue,
           set: (url) => {
+            if (blobUrl) {
+              URL.revokeObjectURL(blobUrl);
+            }
             srcValue = this.handleScriptSrc(element, url, shouldIntercept);
+            if (srcValue.startsWith("blob:")) {
+              blobUrl = srcValue;
+            }
             return true;
           },
           configurable: true,
@@ -117,9 +124,13 @@ export class ResourceLoader {
 
       if (tagName.toLowerCase() === "link") {
         let hrefValue = "";
+        let blobUrl = null;
         Object.defineProperty(element, "href", {
           get: () => hrefValue,
           set: (url) => {
+            if (blobUrl) {
+              URL.revokeObjectURL(blobUrl);
+            }
             hrefValue = this.handleLinkAttribute(
               element,
               "href",
@@ -129,6 +140,9 @@ export class ResourceLoader {
               },
               shouldIntercept
             );
+            if (hrefValue.startsWith("blob:")) {
+              blobUrl = hrefValue;
+            }
             return true;
           },
           configurable: true,
@@ -176,7 +190,11 @@ export class ResourceLoader {
       originalSetAttribute.call(element, name, cached.blob);
       return cached.blob;
     } else {
-      originalSetAttribute.call(element, name, "https://missing.discord.b3BlcmF0");
+      originalSetAttribute.call(
+        element,
+        name,
+        "https://missing.discord.b3BlcmF0"
+      );
       return "https://missing.discord.b3BlcmF0";
     }
   }
@@ -184,85 +202,134 @@ export class ResourceLoader {
   extractChunkUrls(content) {
     const urlsByHash = new Map();
     let match;
-    
+
     while ((match = this.chunkRegex.exec(content)) !== null) {
       const [_, id, hash] = match;
       if (!urlsByHash.has(hash)) {
         urlsByHash.set(hash, [
           `/assets/${id}.${hash}.js`,
           `/assets/${hash}.js`,
-          `/assets/${hash}.css`
+          `/assets/${hash}.css`,
         ]);
       }
     }
-    
+
     return urlsByHash;
   }
 
-  async preloadChunks(content) {
-    const urlsByHash = this.extractChunkUrls(content);
-    utils.loadLog(`Found ${urlsByHash.size} unique chunk hashes`);
+  async findChunk(urls, hash) {
+    const timeout = 10000;
 
-    const loadPromises = Array.from(urlsByHash.entries()).map(async ([hash, urls]) => {
-      // Skip if already in memory
-      if (urls.some(url => this.patchedUrls.has(this.normalizeScriptPath(url)))) {
-        return;
+    for (const url of urls) {
+      const normalizedUrl = this.normalizeScriptPath(url);
+
+      if (utils.getFailedChunks(window.release_date).includes(normalizedUrl)) {
+        continue;
       }
 
-      // Check localStorage cache first
-      const cachedUrl = utils.getChunkUrls(window.release_date, hash)?.[0];
-      if (cachedUrl) {
-        // If we have a cached URL, use it directly
-        await this.loadChunk(cachedUrl, hash);
-      } else {
-        // No cache exists, try all variants and save the working one
-        for (const url of urls) {
-          if (await this.loadChunk(url, hash)) {
-            utils.saveChunkCache(window.release_date, hash, [url]);
-            break;
-          }
+      try {
+        const fullUrl = `${Config.cdn_url}${normalizedUrl}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        const response = await fetch(fullUrl, {
+          method: "HEAD",
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.status === 200) {
+          utils.saveChunkCache(window.release_date, hash, [normalizedUrl]);
+          return normalizedUrl;
+        } else {
+          utils.saveFailedChunk(window.release_date, normalizedUrl);
         }
+      } catch (error) {
+        if (error.name === "AbortError") {
+          utils.loadLog(`Chunk request timeout: ${normalizedUrl}`, "warning");
+        }
+        utils.saveFailedChunk(window.release_date, normalizedUrl);
       }
-    });
-
-    await Promise.all(loadPromises);
+    }
+    return null;
   }
 
   async loadChunk(url, hash) {
     const normalizedUrl = this.normalizeScriptPath(url);
-    const failedUrls = utils.getFailedChunks(window.release_date);
-    
-    // Skip if URL is known to fail
-    if (failedUrls.includes(normalizedUrl)) {
-      utils.loadLog(`Skipping known failed URL: ${normalizedUrl}`, 'info');
-      return false;
-    }
 
     try {
       const fullUrl = `${Config.cdn_url}${normalizedUrl}`;
       utils.loadLog(`Loading chunk ${hash}: ${normalizedUrl}`);
-      
-      const response = await fetch(fullUrl);
-      if (!response.ok) {
-        // Only cache as failed for non-HTTP errors or permanent failures
-        if (!response.status.toString().startsWith('5')) {
-          utils.saveFailedChunk(window.release_date, normalizedUrl);
-        }
-        return false;
-      }
 
+      const response = await fetch(fullUrl);
       const text = await response.text();
       const processed = patcher.js(text, "chunk", window.config);
       const blob = new Blob([processed], { type: "application/javascript" });
       const blobUrl = URL.createObjectURL(blob);
 
       this.patchedUrls.set(normalizedUrl, { url: fullUrl, blob: blobUrl });
-      utils.loadLog(`Successfully loaded chunk: ${normalizedUrl}`);
+      utils.loadLog(`Successfully patched chunk: ${normalizedUrl}`);
       return true;
     } catch (error) {
-      // Cache network errors as failed URLs
-      utils.saveFailedChunk(window.release_date, normalizedUrl);
+      utils.loadLog(`Failed to load chunk ${normalizedUrl}`, "error");
       return false;
+    }
+  }
+
+  async preloadChunks(content) {
+    const urlsByHash = this.extractChunkUrls(content);
+    if (urlsByHash.size === 0) {
+      this.onChunkProgress?.(1, 1, "find");
+      return;
+    }
+
+    utils.loadLog(`Found ${urlsByHash.size} potential chunks`);
+
+    let findProgress = 0;
+    const chunksToLoad = [];
+    const chunks = [...urlsByHash.entries()];
+
+    // Process chunks in smaller batches to avoid overwhelming
+    const batchSize = 5;
+    for (let i = 0; i < chunks.length; i += batchSize) {
+      const batch = chunks.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map(async ([hash, urls]) => {
+          try {
+            const cachedUrl = utils.getChunkUrls(
+              window.release_date,
+              hash
+            )?.[0];
+            if (cachedUrl) {
+              chunksToLoad.push([hash, cachedUrl]);
+            } else {
+              const validUrl = await this.findChunk(urls, hash);
+              if (validUrl) {
+                chunksToLoad.push([hash, validUrl]);
+              }
+            }
+          } catch (error) {
+            utils.loadLog(`Failed to process chunk ${hash}: ${error}`, "error");
+          } finally {
+            findProgress++;
+            this.onChunkProgress?.(findProgress, urlsByHash.size, "find");
+          }
+        })
+      );
+    }
+
+    utils.loadLog(`Found ${chunksToLoad.length} loadable chunks`);
+
+    if (chunksToLoad.length > 0) {
+      let loadProgress = 0;
+      await Promise.all(
+        chunksToLoad.map(async ([hash, url]) => {
+          await this.loadChunk(url, hash);
+          loadProgress++;
+          this.onChunkProgress?.(loadProgress, chunksToLoad.length, "load");
+        })
+      );
     }
   }
 }

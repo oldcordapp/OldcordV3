@@ -17,6 +17,11 @@ class Bootloader {
     this.originalChildren = [...document.body.children];
     this.setLoadingBackground();
     this.showRandomQuote();
+
+    this.progressBar = document.getElementById("oldcord-loading-progress");
+    this.progressInner = document.getElementById(
+      "oldcord-loading-progress-inner"
+    );
   }
 
   getYearFromRelease(release) {
@@ -49,6 +54,16 @@ class Bootloader {
     if (loadingElement) loadingElement.textContent = text;
   }
 
+  setProgress(current, total, show = true) {
+    if (show) {
+      this.progressBar.classList.add("active");
+      const percent = (current / total) * 100;
+      this.progressInner.style.width = `${percent}%`;
+    } else {
+      this.progressBar.classList.remove("active");
+    }
+  }
+
   async initialize() {
     try {
       // Clean up invalid tokens
@@ -67,7 +82,7 @@ class Bootloader {
         await this.loadApplication();
       } else if (envCheck.status === "temp_build") {
         await utils.timer(3000);
-        window.location.href = window.location.href; // Force full page reload
+        window.location.href = window.location.href;
       }
     } catch (e) {
       utils.loadLog("Fatal error occurred. Please check the console.", "error");
@@ -76,7 +91,6 @@ class Bootloader {
   }
 
   async checkEnvironment() {
-    // Check for desktop client incompatibility
     if (window.DiscordNative && this.release_date === "april_1_2018") {
       utils.loadLog("This build does not work on desktop client.", "error");
       await utils.timer(3000);
@@ -84,13 +98,11 @@ class Bootloader {
       return { status: "fatal" };
     }
 
-    // Check if we need temporary build for login
     const needsTempBuild = this.checkLoginCompatibility();
     if (needsTempBuild) {
       return { status: "temp_build" };
     }
 
-    // Set up environment variables
     window.BetterDiscord = true;
     window.Firebug = { chrome: { isInitialized: false } };
     window.GLOBAL_ENV = window.config.globalEnv;
@@ -139,7 +151,7 @@ class Bootloader {
   startTokenMonitor() {
     utils.loadLog("Starting token monitor...", "warning");
 
-    // Create iframe and get its localStorage only when monitoring starts
+    // Workaround for Discord's monkey patching of localStorage
     this.storageFrame = document.body.appendChild(
       document.createElement("iframe")
     );
@@ -177,99 +189,130 @@ class Bootloader {
     utils.setCookie("release_date", this.originalBuild);
     utils.removeCookie("original_build");
 
-    // Force a hard reload
     window.location.href = window.location.pathname;
   }
 
   async loadApplication() {
+    // Set up chunk loading progress tracking first
+    this.loader.onChunkProgress = (current, total, type) => {
+      if (type === "find") {
+        this.setLoadingText(`DETERMINING CHUNKS (${current}/${total})`);
+      } else if (type === "load") {
+        this.setLoadingText(
+          `LOADING AND PATCHING CHUNKS (${current}/${total})`
+        );
+      }
+      this.setProgress(current, total);
+    };
+
+    this.setLoadingText("DOWNLOADING APPLICATION");
     const html = await this.fetchAppHtml();
+
     const { head, body } = this.parseHtml(html);
+    const [styleUrls, scriptUrls] = this.extractResourceUrls(head, body);
 
-    const [styles, scripts] = await this.loadResources(head, body);
+    const totalFiles = styleUrls.length + scriptUrls.length;
+    let loadedFiles = 0;
+    this.setLoadingText(`DOWNLOADING CSS AND JS FILES (0/${totalFiles})`);
+    this.setProgress(0, totalFiles);
+
+    const styles = await Promise.all(
+      styleUrls.map(async (url) => {
+        const result = await this.loader.loadCSS(url);
+        loadedFiles++;
+        this.setLoadingText(
+          `DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`
+        );
+        this.setProgress(loadedFiles, totalFiles);
+        return result;
+      })
+    );
+
+    const scripts = [];
+    for (const url of scriptUrls) {
+      const result = await this.loader.loadScript(url);
+      if (result) scripts.push(result);
+      loadedFiles++;
+      this.setLoadingText(
+        `DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`
+      );
+      this.setProgress(loadedFiles, totalFiles);
+    }
+
     this.setupDOM(head, body, styles, scripts);
-    this.setLoadingText("READY");
-
-    await utils.timer(1000);
-
-    // Setup resource interceptor before executing scripts
     this.setupResourceInterceptor();
+
+    this.setProgress(0, 1, false);
+    this.setLoadingText("READY");
+    await utils.timer(1000);
 
     await this.executeScripts();
     await this.waitForMount();
-
-    // Start monitoring when original_build is set
     this.originalBuild && this.startTokenMonitor();
-
-    this.startHeadCleanup(); // Add cleanup after mount
+    this.startHeadCleanup();
   }
 
-  loadResources(head, body) {
+  extractResourceUrls(head, body) {
     const getUrls = (regex) =>
       [...(head + body).matchAll(regex)]
         .map((m) => m[1])
-        .filter((url) => url.startsWith("/")); 
+        .filter((url) => url.startsWith("/"));
 
     const styleUrls = getUrls(/<link[^>]+href="([^"]+)"[^>]*>/g).filter(
       (url) => !url.endsWith(".ico")
     );
     const scriptUrls = getUrls(/<script[^>]+src="([^"]+)"[^>]*>/g);
 
-    try {
-      // Direct calls to loader methods which now handle their own caching
-      return Promise.all([
-        Promise.all(styleUrls.map(url => this.loader.loadCSS(url))),
-        Promise.all(scriptUrls.map(url => this.loader.loadScript(url)))
-      ]);
-    } catch (e) {
-      throw e;
-    }
+    return [styleUrls, scriptUrls];
   }
 
   setupDOM(head, body, styles, scripts) {
     this.currentHead = head;
     this.currentBody = body;
-    
+
     // Create a document fragment for batch DOM updates
     const headFragment = document.createDocumentFragment();
     const bodyFragment = document.createDocumentFragment();
-    
-    // Process head
+
     const tempHead = document.createElement("div");
     tempHead.innerHTML = head;
-    
-    // Create lookup maps for faster resource matching
-    const styleMap = new Map(styles.map(s => [s.url, s.blob]));
-    const scriptMap = new Map(scripts.map(s => [s.url, s.blob]));
-    
+
+    const styleMap = new Map(styles.map((s) => [s.url, s.blob]));
+    const scriptMap = new Map(scripts.map((s) => [s.url, s.blob]));
+
     // Cache existing elements' attributes for faster comparison
     const existingElements = new Set();
-    document.head.querySelectorAll('link, script').forEach(elem => {
-      existingElements.add(Array.from(elem.attributes)
-        .map(a => `${a.name}=${a.value}`)
-        .sort()
-        .join('|'));
+    document.head.querySelectorAll("link, script").forEach((elem) => {
+      existingElements.add(
+        Array.from(elem.attributes)
+          .map((a) => `${a.name}=${a.value}`)
+          .sort()
+          .join("|")
+      );
     });
 
-    // Process head elements
     for (const elem of [...tempHead.children]) {
-      if (elem.tagName === 'TITLE') continue;
+      if (elem.tagName === "TITLE") continue;
 
       // Skip if element with same attributes already exists in document.head
       const elemAttrs = Array.from(elem.attributes)
-        .map(a => `${a.name}=${a.value}`)
+        .map((a) => `${a.name}=${a.value}`)
         .sort()
-        .join('|');
-      const existingElem = [...document.head.children].some(child => 
-        Array.from(child.attributes)
-          .map(a => `${a.name}=${a.value}`)
-          .sort()
-          .join('|') === elemAttrs
+        .join("|");
+      const existingElem = [...document.head.children].some(
+        (child) =>
+          Array.from(child.attributes)
+            .map((a) => `${a.name}=${a.value}`)
+            .sort()
+            .join("|") === elemAttrs
       );
       if (existingElem) continue;
 
-      if (elem.tagName === 'LINK' && elem.rel === 'stylesheet') {
-        const href = elem.getAttribute('href');
-        const blob = Array.from(styleMap.keys()).find(url => url.includes(href));
+      if (elem.tagName === "LINK" && elem.rel === "stylesheet") {
+        const href = elem.getAttribute("href");
+        const blob = Array.from(styleMap.keys()).find((url) =>
+          url.includes(href)
+        );
         if (blob) {
           elem.href = styleMap.get(blob);
           headFragment.appendChild(elem);
@@ -277,9 +320,11 @@ class Bootloader {
         continue;
       }
 
-      if (elem.tagName === 'SCRIPT' && elem.src) {
-        const src = elem.getAttribute('src');
-        const blob = Array.from(scriptMap.keys()).find(url => url.includes(src));
+      if (elem.tagName === "SCRIPT" && elem.src) {
+        const src = elem.getAttribute("src");
+        const blob = Array.from(scriptMap.keys()).find((url) =>
+          url.includes(src)
+        );
         if (blob) {
           elem.src = scriptMap.get(blob);
           headFragment.appendChild(elem);
@@ -290,14 +335,14 @@ class Bootloader {
       headFragment.appendChild(elem);
     }
 
-    // Process body
     const tempBody = document.createElement("div");
     tempBody.innerHTML = body;
 
-    // Update script sources
-    tempBody.querySelectorAll('script[src]').forEach(elem => {
-      const src = elem.getAttribute('src');
-      const blob = Array.from(scriptMap.keys()).find(url => url.includes(src));
+    tempBody.querySelectorAll("script[src]").forEach((elem) => {
+      const src = elem.getAttribute("src");
+      const blob = Array.from(scriptMap.keys()).find((url) =>
+        url.includes(src)
+      );
       if (blob) {
         elem.src = scriptMap.get(blob);
       }
@@ -315,30 +360,31 @@ class Bootloader {
   async waitForMount() {
     await new Promise((resolve) => {
       const check = setInterval(() => {
-      const mount = document.getElementById("app-mount");
-      if (mount?.children.length) {
-        clearInterval(check);
-        // Remove original children along with loading screen
-        this.originalChildren.forEach((child) => child.remove());
-        // Remove loading.css
-        const loadingCss = document.querySelector('link[href*="loading.css"]');
-        loadingCss?.remove();
-        resolve();
-      }
+        const mount = document.getElementById("app-mount");
+        if (mount?.children.length) {
+          clearInterval(check);
+
+          this.originalChildren.forEach((child) => child.remove());
+
+          const loadingCss = document.querySelector(
+            'link[href*="loading.css"]'
+          );
+          loadingCss?.remove();
+          resolve();
+        }
       }, 100);
     });
   }
 
   startHeadCleanup() {
     setInterval(() => {
-      // Remove duplicates based on attributes
       const seen = new Set();
-      document.head.querySelectorAll('link, script').forEach(element => {
+      document.head.querySelectorAll("link, script").forEach((element) => {
         const attrs = Array.from(element.attributes)
-          .map(attr => `${attr.name}=${attr.value}`)
+          .map((attr) => `${attr.name}=${attr.value}`)
           .sort()
-          .join('|');
-        
+          .join("|");
+
         if (seen.has(attrs)) {
           element.remove();
         } else {
@@ -392,35 +438,38 @@ class Bootloader {
   }
 
   async executeScripts() {
-    const scriptElements = [...document.getElementsByTagName('script')]
-      .filter(script => script.src.startsWith('blob:'));
+    const scriptElements = [...document.getElementsByTagName("script")].filter(
+      (script) => script.src.startsWith("blob:")
+    );
 
     for (const scriptElem of scriptElements) {
       await new Promise((resolve, reject) => {
         const blobUrl = scriptElem.src;
-        const newScript = document.createElement('script');
-        
+        const newScript = document.createElement("script");
+
         // Preserve attribute order by getting the original element's outerHTML
-        const originalAttrs = scriptElem.outerHTML
-          .match(/<script([^>]*)>/i)[1]
-          .match(/\s+(?:[a-zA-Z-]+(?:=(?:"[^"]*"|'[^']*'|[^"'\s]+))?)/g) || [];
-        
-        // Apply attributes in original order, replacing src with blob URL
-        originalAttrs.forEach(attr => {
-          const [name, value] = attr.trim().split('=');
-          const attrValue = value ? value.replace(/['"]/g, '') : '';
-          newScript.setAttribute(name, name === 'src' ? blobUrl : attrValue);
+        const originalAttrs =
+          scriptElem.outerHTML
+            .match(/<script([^>]*)>/i)[1]
+            .match(/\s+(?:[a-zA-Z-]+(?:=(?:"[^"]*"|'[^']*'|[^"'\s]+))?)/g) ||
+          [];
+
+        originalAttrs.forEach((attr) => {
+          const [name, value] = attr.trim().split("=");
+          const attrValue = value ? value.replace(/['"]/g, "") : "";
+          newScript.setAttribute(name, name === "src" ? blobUrl : attrValue);
         });
-        
-        const appendTarget = scriptElem.closest('head') ? document.head : document.body;
-        
+
+        const appendTarget = scriptElem.closest("head")
+          ? document.head
+          : document.body;
+
         newScript.onload = () => {
           URL.revokeObjectURL(blobUrl);
           resolve();
         };
         newScript.onerror = reject;
-        
-        // Try to maintain position
+
         const nextSibling = scriptElem.nextSibling;
         scriptElem.remove();
         if (nextSibling) {
@@ -458,7 +507,6 @@ class Bootloader {
   setLoadingBackground() {
     const container = document.getElementById("oldcord-loading-container");
     if (container && this.isAfterBuild(this.release_date, "october_5_2017")) {
-      // Small delay to ensure the transition is visible
       setTimeout(() => container.classList.add("new-bg"), 50);
     }
   }
