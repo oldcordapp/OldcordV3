@@ -57,6 +57,26 @@
     to { opacity: 0; transform: translateY(-120px) scale(1.04); }
 }
 
+@keyframes logoEntrance {
+    from { 
+        opacity: 0; 
+        transform: translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes logoExit {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
 /* Common card animations */
 .card-exit {
     animation: cardExit 0.3s cubic-bezier(0.3, 0.86, 0.36, 1.4) forwards;
@@ -121,12 +141,15 @@ body {
     z-index: 1;
     text-decoration: none;
     cursor: pointer;
-    opacity: 1;
-    transition: opacity 0.3s ease-in-out;
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: logoEntrance 0.3s cubic-bezier(0.3, 0.86, 0.36, 1.4) 0.2s forwards;
+    will-change: opacity;
 }
 
 .logo-container.fade {
-    opacity: 0;
+    animation: logoExit 0.3s ease-out forwards;
+    transform: translateY(0);
 }
 
 .logo-svg {
