@@ -233,6 +233,11 @@ select, .build-select-button {
     align-items: center;
     cursor: pointer;
     position: relative;
+    width: 100%;
+}
+
+.toggle-label {
+    margin-right: 8px;
 }
 
 input[type="checkbox"] {
@@ -350,6 +355,26 @@ input[type="checkbox"]:checked + .toggle-slider:before {
     display: flex;
     align-items: center;
     margin-bottom: var(--spacing-xs);
+}
+
+.qol-option .toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    width: 100%;
+}
+
+.qol-option .toggle-label {
+    margin-right: 8px;
+}
+
+.qol-option .info-tooltip {
+    margin-left: 4px;
+}
+
+.qol-option .tooltip-text {
+    left: 24px;  /* Adjust this value as needed */
 }
 
 .info-tooltip {
@@ -877,6 +902,23 @@ li::before {
 .legal-agreement-link:hover {
     background: rgba(255, 255, 255, 0.1);
     text-decoration: none;
+}
+
+
+/* Setting item */
+.setting-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.setting-item .toggle {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.setting-item .info-tooltip {
+    margin-left: 4px;
 }
 
 /* Text styles */

@@ -25,10 +25,11 @@ export class UI {
                        ${checked ? 'checked' : ''}>
                 <span class="toggle-slider"></span>
                 <span class="toggle-label text-normal">${patch.label}</span>
+                <div class="info-tooltip">
+                    <i class="info-icon">i</i>
+                    <span class="tooltip-text">${patch.description}</span>
+                </div>
             </label>
-            <div class="info-tooltip">
-                <i class="info-icon">i</i>
-            </div>
         `;
 
         const tooltipWrapper = document.createElement('div');
@@ -259,6 +260,7 @@ export class UI {
         
         if (show) {
             document.getElementById('clearFailedUrlsButton').addEventListener('click', this.handleClearFailedUrls);
+            this.initializeDebugMode();
             selectorGrid.classList.add('card-exit');
             advancedGrid.style.display = 'grid';
             requestAnimationFrame(() => {
@@ -280,6 +282,19 @@ export class UI {
                 advancedGrid.style.display = 'none';
             }, 300);
         }
+    }
+
+    static initializeDebugMode() {
+        const debugSwitch = document.getElementById('debugModeSwitch');
+        debugSwitch.checked = document.cookie.includes('debug_mode=true');
+        
+        debugSwitch.addEventListener('change', () => {
+            if (debugSwitch.checked) {
+                document.cookie = 'debug_mode=true;path=/';
+            } else {
+                document.cookie = 'debug_mode=false;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
+            }
+        });
     }
 
     static handleClearFailedUrls() {

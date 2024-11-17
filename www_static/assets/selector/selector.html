@@ -81,7 +81,18 @@
                 
                 <div class="selector-content">
                     <h2>Client Settings</h2>
-                    <button id="clearFailedUrlsButton" class="button button-primary button-full">
+                    <div class="setting-item">
+                        <label class="toggle mb-sm">
+                            <input type="checkbox" id="debugModeSwitch">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label text-normal">Debug Mode</span>
+                            <div class="info-tooltip">
+                                <i class="info-icon">i</i>
+                                <span class="tooltip-text">Enable debug mode for additional logging and development features.</span>
+                            </div>
+                        </label>
+                    </div>
+                    <button id="clearFailedUrlsButton" class="button button-primary button-full mt-md">
                         Remove stored failed chunk URLs
                     </button>
                 </div>
