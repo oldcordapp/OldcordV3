@@ -287,47 +287,42 @@ export class ResourceLoader {
     utils.loadLog(`Found ${urlsByHash.size} potential chunks`);
 
     let findProgress = 0;
-    const chunksToLoad = [];
     const chunks = [...urlsByHash.entries()];
+    const chunksToLoad = new Map();
 
-    // Process chunks in smaller batches to avoid overwhelming
-    const batchSize = 5;
-    for (let i = 0; i < chunks.length; i += batchSize) {
-      const batch = chunks.slice(i, i + batchSize);
-      await Promise.all(
-        batch.map(async ([hash, urls]) => {
-          try {
-            const cachedUrl = utils.getChunkUrls(
-              window.release_date,
-              hash
-            )?.[0];
-            if (cachedUrl) {
-              chunksToLoad.push([hash, cachedUrl]);
-            } else {
-              const validUrl = await this.findChunk(urls, hash);
-              if (validUrl) {
-                chunksToLoad.push([hash, validUrl]);
-              }
+    await Promise.all(
+      chunks.map(async ([hash, urls]) => {
+        try {
+          const cachedUrl = utils.getChunkUrls(window.release_date, hash)?.[0];
+          if (cachedUrl) {
+            chunksToLoad.set(hash, cachedUrl);
+          } else {
+            const validUrl = await this.findChunk(urls, hash);
+            if (validUrl) {
+              chunksToLoad.set(hash, validUrl);
             }
-          } catch (error) {
-            utils.loadLog(`Failed to process chunk ${hash}: ${error}`, "error");
-          } finally {
-            findProgress++;
-            this.onChunkProgress?.(findProgress, urlsByHash.size, "find");
           }
-        })
-      );
-    }
+        } catch (error) {
+          utils.loadLog(`Failed to process chunk ${hash}: ${error}`, "error");
+        } finally {
+          findProgress++;
+          this.onChunkProgress?.(findProgress, urlsByHash.size, "find");
+        }
+      })
+    );
 
-    utils.loadLog(`Found ${chunksToLoad.length} loadable chunks`);
+    utils.loadLog(`Found ${chunksToLoad.size} loadable chunks`);
 
-    if (chunksToLoad.length > 0) {
+    if (chunksToLoad.size > 0) {
       let loadProgress = 0;
       await Promise.all(
-        chunksToLoad.map(async ([hash, url]) => {
-          await this.loadChunk(url, hash);
-          loadProgress++;
-          this.onChunkProgress?.(loadProgress, chunksToLoad.length, "load");
+        Array.from(chunksToLoad.entries()).map(async ([hash, url]) => {
+          try {
+            await this.loadChunk(url, hash);
+          } finally {
+            loadProgress++;
+            this.onChunkProgress?.(loadProgress, chunksToLoad.size, "load");
+          }
         })
       );
     }
