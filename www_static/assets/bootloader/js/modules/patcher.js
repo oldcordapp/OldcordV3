@@ -1,7 +1,7 @@
 function getEnabledPatches() {
   const cookie = document.cookie
     .split("; ")
-    .find((row) => row.startsWith("enable_patches="));
+    .find((row) => row.startsWith("enabled_patches="));
   if (!cookie) return [];
   try {
     return JSON.parse(decodeURIComponent(cookie.split("=")[1]));
@@ -12,14 +12,30 @@ function getEnabledPatches() {
 
 const patcher = {
   css(css) {
-    return css
+    css = css
       .replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host)
-      .replaceAll(/url\(\/assets\//g, `url(${cdn_url}/assets/`);
+      .replaceAll(/url\(\/assets\//g, `url(${cdn_url}/assets/`)
+
+    // User select patch for 2015 if enabled
+    if (
+      getEnabledPatches().includes("userSelect") &&
+      release_date.endsWith("_2015")
+    ) {
+      css = css.replaceAll(
+      /-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;/g,
+      ""
+      );
+      css = css.replaceAll(/-webkit-user-select:none;/g, "");
+      css = css.replaceAll(/user-select:none;/g, "");
+      css = css.replaceAll(/-moz-user-select:none;/g, "");
+      css = css.replaceAll(/-ms-user-select:none;/g, "");
+    }
+
+    css += "\n/* Oldcord Patched */";
+    return css;
   },
 
   js(script, kind, config) {
-    const enabledPatches = getEnabledPatches();
-
     function escapeRegExp(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
     }
@@ -83,7 +99,7 @@ const patcher = {
       );
 
     // Allow emojis anywhere if patch enabled
-    if (enabledPatches.includes("emojiAnywhere")) {
+    if (getEnabledPatches().includes("emojiAnywhere")) {
       script = script.replace(
         /isEmojiDisabled:function\([^)]*\){/,
         "$&return false;"
@@ -297,18 +313,6 @@ const patcher = {
     script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
     script = script.replaceAll(/discord.media/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
-
-    // User select patch for 2015 if enabled
-    if (
-      enabledPatches.includes("userSelect") &&
-      release_date.endsWith("_2015")
-    ) {
-      script = script.replace(
-        /-webkit-user-select:\s*none;/g,
-        "-webkit-user-select: text;"
-      );
-      script = script.replace(/user-select:\s*none;/g, "user-select: text;");
-    }
 
     // Just for visual verification that it is patched by Oldcord LMAO
     script += "\n//Oldcord Patched";

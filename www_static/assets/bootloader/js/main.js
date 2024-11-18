@@ -2,6 +2,7 @@ import { ResourceLoader } from "./modules/resource_loader.js";
 import { utils } from "./modules/utils.js";
 import { Config } from "./modules/config.js";
 import { LOADING_QUOTES } from "./modules/quotes.js";
+import { prefill } from "./modules/prefill.js";
 
 class Bootloader {
   constructor() {
@@ -241,6 +242,8 @@ class Bootloader {
 
     this.setupDOM(head, body, styles, scripts);
     this.setupResourceInterceptor();
+
+    prefill();
 
     this.setProgress(0, 1, false);
     this.setLoadingText("READY");
