@@ -476,3 +476,18 @@ app.get("/instance", (req, res) => {
         captcha_options: config.captcha_config ? { ...config.captcha_config, secret_key: undefined } : {},
     });
 });
+
+app.get("*", (req, res) => {
+    try {
+        if (!req.client_build) {
+            return res.redirect("/selector");
+        }
+
+        res.sendFile(path.join(__dirname, "www_static/assets/bootloader/index.html"));
+    }
+    catch(error) {
+        logText(error, "error");
+
+        return res.redirect("/selector");
+    }
+});
