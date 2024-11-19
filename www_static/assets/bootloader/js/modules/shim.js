@@ -1,5 +1,5 @@
 function noop () {}
 
-export function prefill () {
+export function shim () {
     window.noop = noop;
 }
