@@ -1,8 +1,10 @@
 function getEnabledPatches() {
-  const cookie = document.cookie.split('; ').find(row => row.startsWith('enable_patches='));
+  const cookie = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("enabled_patches="));
   if (!cookie) return [];
   try {
-    return JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+    return JSON.parse(decodeURIComponent(cookie.split("=")[1]));
   } catch {
     return [];
   }
@@ -10,23 +12,38 @@ function getEnabledPatches() {
 
 const patcher = {
   css(css) {
-    return css
+    css = css
       .replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host)
-      .replaceAll(/url\(\/assets\//g, `url(${cdn_url}/assets/`);
+      .replaceAll(/url\(\/assets\//g, `url(${cdn_url}/assets/`)
+
+    // User select patch for 2015 if enabled
+    if (
+      getEnabledPatches().includes("userSelect") &&
+      release_date.endsWith("_2015")
+    ) {
+      css = css.replaceAll(
+      /-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;/g,
+      ""
+      );
+      css = css.replaceAll(/-webkit-user-select:none;/g, "");
+      css = css.replaceAll(/user-select:none;/g, "");
+      css = css.replaceAll(/-moz-user-select:none;/g, "");
+      css = css.replaceAll(/-ms-user-select:none;/g, "");
+    }
+
+    css += "\n/* Oldcord Patched */";
+    return css;
   },
 
   js(script, kind, config) {
-    // Get enabled patches from cookie instead of Settings
-    const enabledPatches = getEnabledPatches();
-
     function escapeRegExp(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
     }
 
-    //Fix client misidentification
+    // Fix client misidentification
     script = script.replace("__[STANDALONE]__", "");
 
-    //Apply patches conditionally based on enabled state
+    // Apply patches conditionally based on enabled state
     if (!release_date.endsWith("_2018") && !release_date.endsWith("_2019")) {
       function sanitize(js) {
         return js.replaceAll(/"/g, '"').replaceAll(/\n|\r/g, "");
@@ -37,19 +54,19 @@ const patcher = {
       );
     }
 
-    //Disable HTTPS in insecure mode (for local testing)
+    // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");
 
-    //Make fields consistent
+    // Make fields consistent
     if (release_date.endsWith("_2015"))
       script = script.replaceAll(".presence.", ".presences.");
 
-    //Set URLs
+    // Set URLs
     script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
     script = script.replaceAll(/status.discordapp.com/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
-    script = script.replaceAll(/discordcdn.com/g, location.host); //??? DISCORDCDN.COM?!!11
+    script = script.replaceAll(/discordcdn.com/g, location.host); // ??? DISCORDCDN.COM?!!11
     script = script.replaceAll(/discord.gg/g, config.custom_invite_url);
     script = script.replaceAll(/discordapp.com/g, location.host);
     script = script.replaceAll(/([a-z]+\.)?discord.media/g, location.host);
@@ -59,10 +76,10 @@ const patcher = {
       `e.exports="${cdn_url}/assets/"`
     );
 
-    //Do NOT interact with sentry. Better to error than send telemetry.
+    // Do NOT interact with sentry. Better to error than send telemetry.
     script = script.replaceAll("sentry.io", "0.0.0.0");
 
-    //Use unified UserSearch worker script
+    // Use unified UserSearch worker script
     window.userSearchWorker = function (url) {
       const wwScript = `importScripts("${cdn_url}/assets/UserSearch.worker.js");`;
       return URL.createObjectURL(
@@ -74,15 +91,15 @@ const patcher = {
       `window.userSearchWorker()`
     );
 
-    //Enable april fools @someone experiment
+    // Enable april fools @someone experiment
     if (release_date == "april_1_2018" || release_date == "april_23_2018")
       script = script.replaceAll(
         "null!=e&&e.bucket!==f.ExperimentBuckets.CONTROL",
         "true"
       );
 
-    //Allow emojis anywhere if patch enabled
-    if (enabledPatches.includes("emojiAnywhere")) {
+    // Allow emojis anywhere if patch enabled
+    if (getEnabledPatches().includes("emojiAnywhere")) {
       script = script.replace(
         /isEmojiDisabled:function\([^)]*\){/,
         "$&return false;"
@@ -90,13 +107,14 @@ const patcher = {
       script = script.replaceAll(/=t.invalidEmojis/g, "=[]");
     }
 
-    //Recaptcha support
+    // Recaptcha support
     if (config.captcha_options.enabled)
       script = script.replaceAll(
         "6Lef5iQTAAAAAKeIvIY-DeexoO3gj7ryl9rLMEnn",
         config.captcha_options.site_key
       );
 
+    // Disable telemetry
     script = script.replace(/track:function\([^)]*\){/, "$&return;");
     script = script.replace(
       /(function \w+\(e\)){[^p]*post\({.*url:\w\.Endpoints\.TRACK[^}]*}\)}/,
@@ -115,7 +133,7 @@ const patcher = {
       "t.analyticsTrackingStoreMaker=function(e){return;"
     );
 
-    //Replace text
+    // Replace text
     function replaceMessage(name, oldValue, value) {
       script = script.replaceAll(
         new RegExp(`${name}:".*?"`, "g"),
@@ -141,7 +159,7 @@ const patcher = {
     );
     replaceMessage("NOTIFICATION_TITLE_DISCORD", null, "Oldcord");
 
-    //Custom flags patch
+    // Custom flags patch
     if (!release_date.endsWith("_2015")) {
       script = script.replace(
         /("\.\/sydney\.png".*?e\.exports=)\w/,
@@ -149,16 +167,16 @@ const patcher = {
       );
     }
 
-    //Remove useless unknown-field error
+    // Remove useless unknown-field error
     if (kind == "root")
       script = script.replace(
         "if(!this.has(e))throw new Error('",
         "if(!this.has(e))return noop('"
       );
 
-    //Electron patches if enabled
+    // Electron patches if enabled
     if (window.DiscordNative) {
-      //Polyfilling Desktop Native API on <April 2018  (Not entirely complete!)
+      // Polyfilling Desktop Native API on <April 2018  (Not entirely complete!)
       if (
         release_date.endsWith("_2015") ||
         release_date.endsWith("_2016") ||
@@ -254,7 +272,7 @@ const patcher = {
         );
       }
 
-      //Desktop Native API fix for 2018+ (Not entirely complete!)
+      // Desktop Native API fix for 2018+ (Not entirely complete!)
       if (release_date.endsWith("_2018")) {
         script = script.replace(
           /(\w)\.globals\.releaseChannel/,
@@ -277,11 +295,11 @@ const patcher = {
       }
     }
 
-    //Electron compatibility (Universal)
+    // Electron compatibility (Universal)
     script = script.replaceAll(/"discord:\/\/"/g, `"oldcord://"`);
 
     if (release_date.endsWith("_2019")) {
-      //Lazily fix 2019. We don't implement user affinities.
+      // Lazily fix 2019. We don't implement user affinities.
       script = script.replaceAll(
         "f.default.getUserAffinitiesUserIds().has(t.id)",
         "false"
@@ -289,24 +307,15 @@ const patcher = {
       script = script.replaceAll(/\w\.userAffinties/g, "[]");
     }
 
-    //Remove VIDEO_PROVIDER_CHECK_UNIX_TIMESTAMP hack
+    // Remove VIDEO_PROVIDER_CHECK_UNIX_TIMESTAMP hack
     script = script.replace("1492472454139", "0");
 
     script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
     script = script.replaceAll(/discord.media/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
 
-    //User select patch for 2015 if enabled
-    if (
-      enabledPatches.includes("userSelect") &&
-      release_date.endsWith("_2015")
-    ) {
-      script = script.replace(
-        /-webkit-user-select:\s*none;/g,
-        "-webkit-user-select: text;"
-      );
-      script = script.replace(/user-select:\s*none;/g, "user-select: text;");
-    }
+    // Just for visual verification that it is patched by Oldcord LMAO
+    script += "\n//Oldcord Patched";
 
     return script;
   },

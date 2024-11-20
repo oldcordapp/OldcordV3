@@ -2,6 +2,7 @@ import { ResourceLoader } from "./modules/resource_loader.js";
 import { utils } from "./modules/utils.js";
 import { Config } from "./modules/config.js";
 import { LOADING_QUOTES } from "./modules/quotes.js";
+import { shim } from "./modules/shim.js";
 
 class Bootloader {
   constructor() {
@@ -17,6 +18,11 @@ class Bootloader {
     this.originalChildren = [...document.body.children];
     this.setLoadingBackground();
     this.showRandomQuote();
+
+    this.progressBar = document.getElementById("oldcord-loading-progress");
+    this.progressInner = document.getElementById(
+      "oldcord-loading-progress-inner"
+    );
   }
 
   getYearFromRelease(release) {
@@ -49,15 +55,26 @@ class Bootloader {
     if (loadingElement) loadingElement.textContent = text;
   }
 
+  setProgress(current, total, show = true) {
+    if (show) {
+      this.progressBar.classList.add("active");
+      const percent = (current / total) * 100;
+      this.progressInner.style.width = `${percent}%`;
+    } else {
+      this.progressBar.classList.remove("active");
+    }
+  }
+
   async initialize() {
     try {
       // Clean up invalid tokens
-      const token = this.localStorage?.getItem('token');
-      if (token === 'null' || token === 'undefined') {
-        this.localStorage.removeItem('token');
+      const token = this.localStorage?.getItem("token");
+      if (token === "null" || token === "undefined") {
+        this.localStorage.removeItem("token");
       }
 
       utils.loadLog("Build: " + this.release_date);
+      utils.loadLog("Loading instance config...");
       window.config = await Config.load();
       document.title = window.config.instance.name;
 
@@ -66,30 +83,27 @@ class Bootloader {
         await this.loadApplication();
       } else if (envCheck.status === "temp_build") {
         await utils.timer(3000);
-        window.location.href = window.location.href; // Force full page reload
+        window.location.href = window.location.href;
       }
     } catch (e) {
-      utils.loadLog("Fatal error occurred. Please check the console.", true);
+      utils.loadLog("Fatal error occurred. Please check the console.", "error");
       throw e;
     }
   }
 
   async checkEnvironment() {
-    // Check for desktop client incompatibility
     if (window.DiscordNative && this.release_date === "april_1_2018") {
-      utils.loadLog("This build does not work on desktop client.", true, false);
+      utils.loadLog("This build does not work on desktop client.", "error");
       await utils.timer(3000);
       window.location.replace("/selector");
       return { status: "fatal" };
     }
 
-    // Check if we need temporary build for login
     const needsTempBuild = this.checkLoginCompatibility();
     if (needsTempBuild) {
       return { status: "temp_build" };
     }
 
-    // Set up environment variables
     window.BetterDiscord = true;
     window.Firebug = { chrome: { isInitialized: false } };
     window.GLOBAL_ENV = window.config.globalEnv;
@@ -124,8 +138,7 @@ class Bootloader {
     if (hasLoginIssues) {
       utils.loadLog(
         `Warning: Login issues detected in the build you're trying to use. Switching to February 25 2018 temporarily...`,
-        false,
-        true
+        "warning"
       );
       this.originalBuild = this.release_date;
       utils.setCookie("original_build", this.originalBuild);
@@ -137,11 +150,11 @@ class Bootloader {
   }
 
   startTokenMonitor() {
-    utils.loadLog("Starting token monitor...", false, true);
+    utils.loadLog("Starting token monitor...", "warning");
 
-    // Create iframe and get its localStorage only when monitoring starts
+    // Workaround for Discord's monkey patching of localStorage
     this.storageFrame = document.body.appendChild(
-      document.createElement`iframe`
+      document.createElement("iframe")
     );
     this.localStorage = this.storageFrame.contentWindow.localStorage;
 
@@ -151,7 +164,7 @@ class Bootloader {
           this.handleLoginDetected();
         }
       } catch (e) {
-        utils.loadLog("Error in token monitor: " + e, true);
+        utils.loadLog("Error in token monitor: " + e, "error");
       }
     }, 100);
   }
@@ -160,7 +173,7 @@ class Bootloader {
     try {
       return Boolean(this.localStorage?.token);
     } catch (e) {
-      utils.loadLog("Token check error: " + e, true);
+      utils.loadLog("Token check error: " + e, "error");
       return false;
     }
   }
@@ -168,8 +181,7 @@ class Bootloader {
   handleLoginDetected() {
     utils.loadLog(
       "Token detected! Switching back to: " + this.originalBuild,
-      false,
-      true
+      "warning"
     );
     // Clean up the iframe before reload
     this.storageFrame?.remove();
@@ -178,92 +190,174 @@ class Bootloader {
     utils.setCookie("release_date", this.originalBuild);
     utils.removeCookie("original_build");
 
-    // Force a hard reload
     window.location.href = window.location.pathname;
   }
 
   async loadApplication() {
+    // Set up chunk loading progress tracking first
+    this.loader.onChunkProgress = (current, total, type) => {
+      if (type === "find") {
+        this.setLoadingText(`DETERMINING CHUNKS (${current}/${total})`);
+      } else if (type === "load") {
+        this.setLoadingText(
+          `LOADING AND PATCHING CHUNKS (${current}/${total})`
+        );
+      }
+      this.setProgress(current, total);
+    };
+
+    this.setLoadingText("DOWNLOADING APPLICATION");
     const html = await this.fetchAppHtml();
+
     const { head, body } = this.parseHtml(html);
+    const [styleUrls, scriptUrls] = this.extractResourceUrls(head, body);
 
-    const [styles, scripts] = await this.loadResources(head, body);
-    this.setupDOM(body, styles, head);
+    const totalFiles = styleUrls.length + scriptUrls.length;
+    let loadedFiles = 0;
+    this.setLoadingText(`DOWNLOADING CSS AND JS FILES (0/${totalFiles})`);
+    this.setProgress(0, totalFiles);
+
+    const styles = await Promise.all(
+      styleUrls.map(async (url) => {
+        const result = await this.loader.loadCSS(url);
+        loadedFiles++;
+        this.setLoadingText(
+          `DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`
+        );
+        this.setProgress(loadedFiles, totalFiles);
+        return result;
+      })
+    );
+
+    const scripts = [];
+    for (const url of scriptUrls) {
+      const result = await this.loader.loadScript(url);
+      if (result) scripts.push(result);
+      loadedFiles++;
+      this.setLoadingText(
+        `DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`
+      );
+      this.setProgress(loadedFiles, totalFiles);
+    }
+
+    this.setupDOM(head, body, styles, scripts);
+    this.setupResourceInterceptor();
+
+    shim();
+
+    this.setProgress(0, 1, false);
     this.setLoadingText("READY");
-
     await utils.timer(1000);
 
-    await this.executeScripts(scripts);
+    await this.executeScripts();
     await this.waitForMount();
-
-    // Start monitoring when original_build is set
     this.originalBuild && this.startTokenMonitor();
+    this.startHeadCleanup();
   }
 
-  async loadResources(head, body) {
+  extractResourceUrls(head, body) {
     const getUrls = (regex) =>
       [...(head + body).matchAll(regex)]
         .map((m) => m[1])
-        .filter((url) => url.startsWith("/")); // Only allow relative/absolute paths
+        .filter((url) => url.startsWith("/"));
 
-    const styleUrls = getUrls(/<link[^>]+href="([^"]+)"[^>]*>/g)
-      .filter(url => !url.endsWith('.ico')); // Skip ico files
+    const styleUrls = getUrls(/<link[^>]+href="([^"]+)"[^>]*>/g).filter(
+      (url) => !url.endsWith(".ico")
+    );
     const scriptUrls = getUrls(/<script[^>]+src="([^"]+)"[^>]*>/g);
 
-    try {
-      return await Promise.all([
-        Promise.all(
-          styleUrls.map((url) =>
-            this.loader.loadCSS(url).catch((e) => {
-              utils.loadLog(`Failed to load CSS: ${url}`, true);
-              return null;
-            })
-          )
-        ),
-        Promise.all(
-          scriptUrls.map((url) =>
-            this.loader.loadScript(url).catch((e) => {
-              utils.loadLog(`Failed to load Script: ${url}`, true);
-              return null;
-            })
-          )
-        ),
-      ]);
-    } catch (e) {
-      throw e;
-    }
+    return [styleUrls, scriptUrls];
   }
 
-  setupDOM(body, styles, head) {
-    // First apply new styles (Discord's CSS)
-    styles.filter(Boolean).forEach((blob) => {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = blob;
-      document.head.appendChild(link);
+  setupDOM(head, body, styles, scripts) {
+    this.currentHead = head;
+    this.currentBody = body;
+
+    // Create a document fragment for batch DOM updates
+    const headFragment = document.createDocumentFragment();
+    const bodyFragment = document.createDocumentFragment();
+
+    const tempHead = document.createElement("div");
+    tempHead.innerHTML = head;
+
+    const styleMap = new Map(styles.map((s) => [s.url, s.blob]));
+    const scriptMap = new Map(scripts.map((s) => [s.url, s.blob]));
+
+    // Cache existing elements' attributes for faster comparison
+    const existingElements = new Set();
+    document.head.querySelectorAll("link, script").forEach((elem) => {
+      existingElements.add(
+        Array.from(elem.attributes)
+          .map((a) => `${a.name}=${a.value}`)
+          .sort()
+          .join("|")
+      );
     });
 
-    let icon = document.getElementById("icon");
-    if (icon) {
-      let newIcon = head.match(/<link rel="icon" href="([^"]+)"[^>]*>/i);
-      if (newIcon && newIcon[1]) {
-        if (newIcon[1].startsWith('data:')) {
-          icon.href = newIcon[1];
-        } else {
-          this.loader.loadIcon(newIcon[1])
-            .then(iconUrl => icon.href = iconUrl)
-            .catch(e => utils.loadLog(`Failed to load icon: ${newIcon[1]}`, true));
+    for (const elem of [...tempHead.children]) {
+      if (elem.tagName === "TITLE") continue;
+
+      // Skip if element with same attributes already exists in document.head
+      const elemAttrs = Array.from(elem.attributes)
+        .map((a) => `${a.name}=${a.value}`)
+        .sort()
+        .join("|");
+      const existingElem = [...document.head.children].some(
+        (child) =>
+          Array.from(child.attributes)
+            .map((a) => `${a.name}=${a.value}`)
+            .sort()
+            .join("|") === elemAttrs
+      );
+      if (existingElem) continue;
+
+      if (elem.tagName === "LINK" && elem.rel === "stylesheet") {
+        const href = elem.getAttribute("href");
+        const blob = Array.from(styleMap.keys()).find((url) =>
+          url.includes(href)
+        );
+        if (blob) {
+          elem.href = styleMap.get(blob);
+          headFragment.appendChild(elem);
         }
+        continue;
       }
+
+      if (elem.tagName === "SCRIPT" && elem.src) {
+        const src = elem.getAttribute("src");
+        const blob = Array.from(scriptMap.keys()).find((url) =>
+          url.includes(src)
+        );
+        if (blob) {
+          elem.src = scriptMap.get(blob);
+          headFragment.appendChild(elem);
+        }
+        continue;
+      }
+
+      headFragment.appendChild(elem);
     }
 
-    // Create temporary container to parse HTML
-    const temp = document.createElement('div');
-    temp.innerHTML = body;
+    const tempBody = document.createElement("div");
+    tempBody.innerHTML = body;
 
-    // Add all children to body
-    while (temp.firstChild) {
-      document.body.appendChild(temp.firstChild);
+    tempBody.querySelectorAll("script[src]").forEach((elem) => {
+      const src = elem.getAttribute("src");
+      const blob = Array.from(scriptMap.keys()).find((url) =>
+        url.includes(src)
+      );
+      if (blob) {
+        elem.src = scriptMap.get(blob);
+      }
+    });
+
+    while (tempBody.firstChild) {
+      bodyFragment.appendChild(tempBody.firstChild);
     }
+
+    // Batch DOM updates
+    document.head.appendChild(headFragment);
+    document.body.appendChild(bodyFragment);
   }
 
   async waitForMount() {
@@ -272,12 +366,35 @@ class Bootloader {
         const mount = document.getElementById("app-mount");
         if (mount?.children.length) {
           clearInterval(check);
-          // Remove original children along with loading screen
-          this.originalChildren.forEach(child => child.remove());
+
+          this.originalChildren.forEach((child) => child.remove());
+
+          const loadingCss = document.querySelector(
+            'link[href*="loading.css"]'
+          );
+          loadingCss?.remove();
           resolve();
         }
       }, 100);
     });
+  }
+
+  startHeadCleanup() {
+    setInterval(() => {
+      const seen = new Set();
+      document.head.querySelectorAll("link, script").forEach((element) => {
+        const attrs = Array.from(element.attributes)
+          .map((attr) => `${attr.name}=${attr.value}`)
+          .sort()
+          .join("|");
+
+        if (seen.has(attrs)) {
+          element.remove();
+        } else {
+          seen.add(attrs);
+        }
+      });
+    }, 1000);
   }
 
   async fetchAppHtml() {
@@ -305,11 +422,7 @@ class Bootloader {
           await fetch(`${cdn_url}/assets/clients/${this.release_date}/app.html`)
         ).text();
     } catch (e) {
-      utils.loadLog(
-        "Fatal error occurred. Please check the console.",
-        true,
-        true
-      );
+      utils.loadLog("Fatal error occurred. Please check the console.", "error");
       throw e;
     }
     return html;
@@ -327,17 +440,46 @@ class Bootloader {
     return { head: doc.head.innerHTML, body: doc.body.innerHTML };
   }
 
-  async executeScripts(scripts) {
-    for (const blobUrl of scripts) {
+  async executeScripts() {
+    const scriptElements = [...document.getElementsByTagName("script")].filter(
+      (script) => script.src.startsWith("blob:")
+    );
+
+    for (const scriptElem of scriptElements) {
       await new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = blobUrl;
-        script.onload = () => {
+        const blobUrl = scriptElem.src;
+        const newScript = document.createElement("script");
+
+        // Preserve attribute order by getting the original element's outerHTML
+        const originalAttrs =
+          scriptElem.outerHTML
+            .match(/<script([^>]*)>/i)[1]
+            .match(/\s+(?:[a-zA-Z-]+(?:=(?:"[^"]*"|'[^']*'|[^"'\s]+))?)/g) ||
+          [];
+
+        originalAttrs.forEach((attr) => {
+          const [name, value] = attr.trim().split("=");
+          const attrValue = value ? value.replace(/['"]/g, "") : "";
+          newScript.setAttribute(name, name === "src" ? blobUrl : attrValue);
+        });
+
+        const appendTarget = scriptElem.closest("head")
+          ? document.head
+          : document.body;
+
+        newScript.onload = () => {
           URL.revokeObjectURL(blobUrl);
           resolve();
         };
-        script.onerror = reject;
-        document.head.appendChild(script);
+        newScript.onerror = reject;
+
+        const nextSibling = scriptElem.nextSibling;
+        scriptElem.remove();
+        if (nextSibling) {
+          appendTarget.insertBefore(newScript, nextSibling);
+        } else {
+          appendTarget.appendChild(newScript);
+        }
       });
     }
   }
@@ -346,22 +488,36 @@ class Bootloader {
     const parseDate = (build) => {
       const [month, day, year] = build.split("_");
       const months = {
-        january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
-        july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+        january: 0,
+        february: 1,
+        march: 2,
+        april: 3,
+        may: 4,
+        june: 5,
+        july: 6,
+        august: 7,
+        september: 8,
+        october: 9,
+        november: 10,
+        december: 11,
       };
       return new Date(year, months[month], parseInt(day));
     };
-    
+
     return parseDate(currentBuild) > parseDate(compareBuild);
   }
 
   setLoadingBackground() {
     const container = document.getElementById("oldcord-loading-container");
     if (container && this.isAfterBuild(this.release_date, "october_5_2017")) {
-      // Small delay to ensure the transition is visible
-      setTimeout(() => container.classList.add('new-bg'), 50);
+      setTimeout(() => container.classList.add("new-bg"), 50);
     }
+  }
+
+  setupResourceInterceptor() {
+    this.loader.setupInterceptors();
   }
 }
 
+utils.loadLog("Initializing bootloader...");
 new Bootloader().initialize().catch(console.error);

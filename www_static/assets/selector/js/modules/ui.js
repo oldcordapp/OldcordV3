@@ -25,10 +25,11 @@ export class UI {
                        ${checked ? 'checked' : ''}>
                 <span class="toggle-slider"></span>
                 <span class="toggle-label text-normal">${patch.label}</span>
+                <div class="info-tooltip">
+                    <i class="info-icon">i</i>
+                    <span class="tooltip-text">${patch.description}</span>
+                </div>
             </label>
-            <div class="info-tooltip">
-                <i class="info-icon">i</i>
-            </div>
         `;
 
         const tooltipWrapper = document.createElement('div');
@@ -251,6 +252,70 @@ export class UI {
                     allowfullscreen>
                 </iframe>
             </div>`;
+    }
+
+    static toggleAdvancedSettings(show) {
+        const selectorGrid = document.querySelector('.selector-grid');
+        const advancedGrid = document.querySelector('.advanced-settings-grid');
+        
+        if (show) {
+            document.getElementById('clearFailedUrlsButton').addEventListener('click', this.handleClearFailedUrls);
+            this.initializeDebugMode();
+            selectorGrid.classList.add('card-exit');
+            advancedGrid.style.display = 'grid';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    advancedGrid.classList.add('show');
+                    setTimeout(() => {
+                        selectorGrid.style.display = 'none';
+                    }, 300);
+                });
+            });
+        } else {
+            document.getElementById('clearFailedUrlsButton').removeEventListener('click', this.handleClearFailedUrls);
+            selectorGrid.style.display = 'grid';
+            advancedGrid.classList.add('card-exit');
+            selectorGrid.classList.remove('card-exit');
+            setTimeout(() => {
+                advancedGrid.classList.remove('show');
+                advancedGrid.classList.remove('card-exit');
+                advancedGrid.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    static initializeDebugMode() {
+        const debugSwitch = document.getElementById('debugModeSwitch');
+        debugSwitch.checked = document.cookie.includes('debug_mode=true');
+        
+        debugSwitch.addEventListener('change', () => {
+            if (debugSwitch.checked) {
+                document.cookie = 'debug_mode=true;path=/';
+            } else {
+                document.cookie = 'debug_mode=false;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
+            }
+        });
+    }
+
+    static handleClearFailedUrls() {
+        Dialog.show({
+            title: 'Are you sure?',
+            content: `
+                <p>If there is a new chunk uploaded to the CDN this should be used to remove all stored failed chunk URLs and refetch the chunks.</p>
+                <p class="dialog-notice mt-md">DO NOT USE THIS FEATURE AS A 'NOT WORKING FIX' SOLUTION, THIS WILL REMOVE ALL OF THE FAILED CHUNK URLS FROM EVERY BUILD!</p>
+            `,
+            buttons: [
+                { id: 'textButton', label: 'Cancel', onClick: () => Dialog.hide() },
+                { 
+                    id: 'positiveButton', 
+                    label: 'Sure', 
+                    onClick: () => {
+                        localStorage.removeItem('oldcord_failed_urls');
+                        Dialog.hide();
+                    }
+                }
+            ]
+        });
     }
 }
 

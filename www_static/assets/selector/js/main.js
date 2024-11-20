@@ -19,6 +19,13 @@ function initializeEventListeners() {
         Launcher.showDialogs(selectedBuild, enabledMods);
     });
 
+    document.getElementById('advancedSettingsButton').addEventListener('click', () => {
+        UI.toggleAdvancedSettings(true);
+    });
+
+    document.getElementById('backToSelectorButton').addEventListener('click', () => {
+        UI.toggleAdvancedSettings(false);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

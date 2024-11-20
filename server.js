@@ -473,7 +473,7 @@ app.get("/instance", (req, res) => {
         instance: config.instance,
         custom_invite_url: config.custom_invite_url == "" ? base_url + "/invite" : config.custom_invite_url,
         gateway: globalUtils.generateGatewayURL(req),
-        captcha_options: config.captcha_config,
+        captcha_options: config.captcha_config ? { ...config.captcha_config, secret_key: undefined } : {},
     });
 });
 
