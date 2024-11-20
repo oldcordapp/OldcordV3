@@ -8,6 +8,7 @@ const md5 = require('md5');
 const path = require('path');
 const embedder = require('./embedder');
 const fsPromises = require('fs').promises;
+const migrate = require('../migrate.js');
 
 let db_config = globalUtils.config.db_config;
 let config = globalUtils.config;
@@ -17,6 +18,7 @@ const pool = new Pool(db_config);
 let cache = {};
 
 const database = {
+    version: 0.2,
     runQuery: async (queryString, values) => {
         //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
 
@@ -82,6 +84,17 @@ const database = {
     },
     setupDatabase: async () => {
         try {
+            await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`,[]);
+
+            await database.runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,[0.1]); //for the people who update their instance but do not manually run the relationships migration script
+
+            v = await database.runQuery(`SELECT * FROM instance_info;`);
+
+            if (v[0].version != database.version) { //auto migrate for the time being
+                logText(`Found outdated database setup, migrating to newer version... (${database.version})`,"OLDCORD");
+                await migrate(); //TODO: Call a separate script to check how many versions out of date the current database is and run the required migration scripts
+            }
+
             await database.runQuery(`
                 CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -108,9 +121,9 @@ const database = {
            await database.runQuery(`
             CREATE TABLE IF NOT EXISTS relationships (
 	        user_id_1 TEXT,
-		type INT,
-		user_id_2 TEXT
-	    );`, []); //User ID 1 will always be the user that initially establishes the relationship. Internally, the type will always be 3 for both incoming and outgoing FRs to avoid inserting 2 columns for one relationship. Checking whether the user id is in column 1 will also be the way to determine blocked users.
+            type INT,
+            user_id_2 TEXT
+            );`, []); //User ID 1 will always be the user that initially establishes the relationship. Internally, the type will always be 3 for both incoming and outgoing FRs to avoid inserting 2 columns for one relationship. Checking whether the user id is in column 1 will also be the way to determine blocked users.
 
            await database.runQuery(`
             CREATE TABLE IF NOT EXISTS user_notes (
