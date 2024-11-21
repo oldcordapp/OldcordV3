@@ -163,7 +163,7 @@ const patcher = {
     if (!release_date.endsWith("_2015")) {
       script = script.replace(
         /("\.\/sydney\.png".*?e\.exports=)\w/,
-        "$1(f)=>`${window.cdn_url}/assets/flags/${f.substring(2)}`"
+        "$1(f)=>`${window.cdn_url}/flags/${f.substring(2)}`"
       );
     }
 
