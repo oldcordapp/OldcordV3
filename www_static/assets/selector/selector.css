@@ -180,7 +180,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 0;
-    height: 90vh; /* Make changelog card taller */
+    height: 100%; /* Make changelog card match same height as selector */
     min-height: 700px; /* Ensure minimum height */
     position: relative;
 }
