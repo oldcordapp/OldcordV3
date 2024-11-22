@@ -161,53 +161,72 @@ export class UI {
         const changelog = CHANGELOGS[build];
         if (!changelog) return '<p class="text-muted">No changelog available for this build.</p>';
 
-        // First handle any top-level changelog items
-        const lines = changelog.split('\n');
+        // Split into lines and remove empty ones
+        const lines = changelog.split('\n').filter(line => line.trim());
         let html = '';
-        let currentItems = [];
-
-        // Process initial items before any section headers
-        while (lines.length && !lines[0].includes('===') && !lines[0].match(/\{changelog-/)) {
-            const line = lines[0].trim();
-            if (line.startsWith('*')) {
-                currentItems.push(line);
-            }
-            lines.shift();
-        }
-
-        // If we found any top-level items, render them
-        if (currentItems.length) {
-            const formattedItems = currentItems.map(item => this.formatChangelogItem(item));
-            html += this.renderSection('', formattedItems);
-        }
-
-        // Process remaining sections
-        const sections = [];
+        
+        // Process the changelog content
         let currentSection = { title: '', items: [] };
-
-        for (const line of lines) {
-            const trimmedLine = line.trim();
+        let sections = [];
+        let inFrontmatter = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
             
-            if (trimmedLine.match(/^=+$/)) {
-                continue; // Skip separator lines
+            // Skip frontmatter and formatting tags
+            if (line === '---changelog---' || line === '---' || line.match(/^\{.*\}$/)) {
+                inFrontmatter = line.includes('changelog');
+                continue;
+            }
+            if (inFrontmatter) continue;
+
+            // Skip CTA blocks
+            if (line.startsWith('[cta:')) continue;
+
+            // Clean up section headers
+            const cleanLine = line.replace(/\{.*?\}/g, '').trim();
+            
+            // Check for section headers
+            const isHeader = cleanLine.match(/^([^=\n]+?)$/);
+            const isSeparator = line.match(/^=+$/);
+            
+            if ((isHeader && i + 1 < lines.length && lines[i + 1].match(/^=+$/)) || 
+                line.match(/\{changelog-[^}]+\}$/)) {
+                
+                // Save previous section if it has items
+                if (currentSection.items.length > 0) {
+                    sections.push({ ...currentSection });
+                }
+
+                // Start new section
+                currentSection = {
+                    title: cleanLine,
+                    items: []
+                };
+                
+                // Skip the separator line
+                if (isSeparator) i++;
+                
+                continue;
             }
 
-            // Check for new section
-            if (trimmedLine && (trimmedLine.includes('{changelog-') || currentSection.items.length > 0 && line.match(/\n=[=]+$/))) {
-                if (currentSection.items.length) {
-                    sections.push({ ...currentSection });
-                    currentSection = { title: '', items: [] };
+            // Handle list items and text
+            if (cleanLine && !isSeparator) {
+                if (cleanLine.startsWith('*')) {
+                    currentSection.items.push(cleanLine);
+                } else {
+                    // If it's not a list item and we don't have a current section,
+                    // create a blank-titled section
+                    if (currentSection.items.length === 0 && currentSection.title === '') {
+                        currentSection.title = '';
+                    }
+                    currentSection.items.push(`* ${cleanLine}`);
                 }
-                // Extract title, removing the changelog markup if present
-                const titleMatch = trimmedLine.match(/^(.*?)(?:\s*\{changelog-[^}]+\})?$/);
-                currentSection.title = titleMatch[1].trim();
-            } else if (trimmedLine.startsWith('*')) {
-                currentSection.items.push(trimmedLine);
             }
         }
 
         // Add the last section if it has items
-        if (currentSection.items.length) {
+        if (currentSection.items.length > 0) {
             sections.push(currentSection);
         }
 
@@ -222,11 +241,12 @@ export class UI {
 
     static formatChangelogItem(item) {
         return item
+            .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>') // Bold - improved regex to properly match pairs
             .replace(/^\s*\*\s*/, '') // Remove asterisk
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Bold
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>') // Links
             .replace(/~~~(.+?)~~~/g, '<del>$1</del>') // Strikethrough
-            .replace(/_([^_]+)_/g, '<em>$1</em>'); // Italics
+            .replace(/_([^_]+)_/g, '<em>$1</em>') // Italics
+            .replace(/\{.*?\}/g, ''); // Remove any remaining formatting tags
     }
 
     static renderSection(title, items) {
