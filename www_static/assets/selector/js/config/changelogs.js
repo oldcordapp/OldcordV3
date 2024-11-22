@@ -49,7 +49,7 @@ export const CHANGELOGS = {
 };
 
 export const videos = {
-    "june_12_2015" : "kzKYzdTs6jo",
+    "july_10_2015" : "kzKYzdTs6jo",
     "december_23_2015": "sm2S6eFymoI",
     "january_22_2016": "HhrwPMtv8p4",
     "march_4_2016": "hiuhkusxLJQ",
