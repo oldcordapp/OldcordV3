@@ -32,6 +32,15 @@ export class Dialog {
             });
         });
 
+        // Add ESC key handler
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.hide(dialog);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+
         dialog.addEventListener('click', (e) => {
             if (e.target === dialog) {
                 this.hide(dialog);
@@ -40,6 +49,7 @@ export class Dialog {
     }
 
     static hide(dialog, callback) {
+        dialog = dialog || document.getElementById('dialogBox');
         const dialogContent = dialog.querySelector('.dialog-content');
         dialog.classList.remove('show');
         dialogContent.classList.remove('show');
