@@ -11,7 +11,8 @@ export class Dialog {
                     <button id="${button.id}" class="button ${
                         button.id === 'positiveButton' ? 'button-primary' : 
                         button.id === 'generalButton' ? 'button-secondary' :
-                        button.id === 'textButton' ? 'button-text' : ''
+                        button.id === 'textButton' ? 'button-text' :
+                        button.id === 'negativeButton' ? 'button-danger' : ''
                     }">${button.label}</button>
                 `).join('')}
             </div>

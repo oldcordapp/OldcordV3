@@ -319,16 +319,21 @@ export class UI {
 
     static handleClearFailedUrls() {
         Dialog.show({
-            title: 'Are you sure?',
+            title: 'Reset Failed Chunk Cache?',
             content: `
-                <p>If there is a new chunk uploaded to the CDN this should be used to remove all stored failed chunk URLs and refetch the chunks.</p>
-                <p class="dialog-notice mt-md">DO NOT USE THIS FEATURE AS A 'NOT WORKING FIX' SOLUTION, THIS WILL REMOVE ALL OF THE FAILED CHUNK URLS FROM EVERY BUILD!</p>
+                <p>This will clear the list of all previously failed chunk downloads, allowing the bootloader to retry downloading missing chunks from the CDN.</p>
+                <p class="mt-md">Only use this if:</p>
+                <ul>
+                    <li>New chunks have been uploaded to the CDN</li>
+                    <li>You want to retry downloading previously unavailable chunks</li>
+                </ul>
+                <p class="dialog-notice mt-md">⚠️ Warning: This will reset the failed chunk cache for ALL builds. The bootloader will attempt to redownload chunks that were previously marked as missing, which may slow down loading times if the chunks are still unavailable.</p>
             `,
             buttons: [
                 { id: 'textButton', label: 'Cancel', onClick: () => Dialog.hide() },
                 { 
-                    id: 'positiveButton', 
-                    label: 'Sure', 
+                    id: 'negativeButton', 
+                    label: 'Delete', 
                     onClick: () => {
                         localStorage.removeItem('oldcord_failed_urls');
                         Dialog.hide();

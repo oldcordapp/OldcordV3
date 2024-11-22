@@ -29,6 +29,7 @@
     --button-primary: #7289da;
     --button-primary-hover: #5b6eae;
     --button-secondary: #4f545c;
+    --button-danger: #f04747;
     
     /* Utility colors */
     --warning: #ed4245;
@@ -521,6 +522,11 @@ input[type="checkbox"]:checked + .toggle-slider:before {
 
 .button-secondary {
     background: var(--button-secondary);
+    color: white;
+}
+
+.button-danger {
+    background: var(--button-danger);
     color: white;
 }
 
