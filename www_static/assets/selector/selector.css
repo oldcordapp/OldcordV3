@@ -170,28 +170,27 @@ body {
 
 .selector-card {
     padding: var(--spacing-xl);
-    height: auto;
-    max-height: 85vh;
+    height: 800px;
     display: flex;
     flex-direction: column;
+    overflow: auto;
 }
 
 .changelog-card {
     display: flex;
     flex-direction: column;
     padding: 0;
-    height: 100%; /* Make changelog card match same height as selector */
-    min-height: 700px; /* Ensure minimum height */
+    height: 800px;
     position: relative;
 }
 
 .selector-grid {
     display: grid;
-    grid-template-columns: 1fr 450px; /* Increased from 400px for wider changelog */
+    grid-template-columns: 1fr 450px;
     gap: 24px;
     width: 100%;
     max-width: 1200px;
-    align-items: center; /* Change from stretch to center */
+    align-items: stretch;
     opacity: 1;
     transition: opacity 0.3s ease-in-out;
 }
