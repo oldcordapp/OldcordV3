@@ -87,8 +87,6 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
         let tryPin = await global.database.setPinState(req.message.id, true);
 
         if (!tryPin) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while pinning a message");
-        
             return res.status(500).json({
               code: 500,
               message: "Internal Server Error"
@@ -153,8 +151,6 @@ router.delete("/:messageid", channelMiddleware, async (req, res) => {
         let tryPin = await global.database.setPinState(req.message.id, false);
 
         if (!tryPin) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while unpinning a message");
-        
             return res.status(500).json({
               code: 500,
               message: "Internal Server Error"

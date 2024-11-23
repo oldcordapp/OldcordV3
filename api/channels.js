@@ -219,8 +219,6 @@ router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
         return res.status(200).json(invites);
       } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -247,7 +245,7 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
             })
         }
 
-        let invites = await global.database.getGuildInvites(req.guild.id);
+        let invites = await global.database.getChannelInvites(req.params.channelid);
 
         if (invites.length >= global.config.limits['invites_per_guild'].max) {
             return res.status(400).json({
@@ -285,8 +283,6 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
         const invite = await global.database.createInvite(req.params.guildid, req.params.channelid, sender.id, temporary, max_uses, max_age, xkcdpass, regenerate);
 
         if (invite == null) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while creating an invite");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -340,15 +336,11 @@ router.get("/:channelid/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
         return res.status(200).json(webhooks);
     } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"
         });
-
-        //updateGuildWebhook:
     } 
 });
 
@@ -399,8 +391,6 @@ router.post("/:channelid/webhooks",  instanceMiddleware("VERIFIED_EMAIL_REQUIRED
         return res.status(200).json(webhook);
     } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -513,8 +503,6 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
         return res.status(204).send();
     } catch(error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -825,8 +813,6 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
             });
 
             if (!await global.database.deleteChannel(channel.id)) {
-                await globalUtils.unavailableGuild(req.guild, "Something went wrong while deleting a channel");
-
                 return res.status(500).json({
                     code: 500,
                     message: "Internal Server Error"
@@ -837,10 +823,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
         return res.status(204).send();
     } catch(error) {
         logText(error, "error");
-        
-        if (req.guild)
-            
-        
+
         return res.status(500).json({
             code: 500,
             message: "Internal Server Error"

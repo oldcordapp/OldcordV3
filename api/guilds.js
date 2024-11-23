@@ -49,7 +49,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
             });
         }
 
-        if (req.body.region != "everything" && globalUtils.canUseServer(req.client_build_date.getFullYear(), req.body.region)) {
+        if (req.body.region != "everything" && !globalUtils.canUseServer(req.client_build_date.getFullYear(), req.body.region)) {
             return res.status(400).json({
                 name: "Year must be your current client build year or pick everything."
             });
@@ -146,8 +146,6 @@ async function guildDeleteRequest(req, res) {
             const leave = await global.database.leaveGuild(user.id, guild.id);
 
             if (!leave) {
-                await globalUtils.unavailableGuild(guild, `Something went wrong with ${user.id} leaving the guild`);
-
                 return res.status(500).json({
                     code: 500,
                     message: "Internal Server Error"
@@ -314,8 +312,6 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
             let tryTransferOwner = await global.database.transferGuildOwnership(what.id, req.body.owner_id);
             
             if (!tryTransferOwner) {
-                await globalUtils.unavailableGuild(req.guild, "Something went wrong transferring server ownership");
-
                 return res.status(500).json({
                     code: 500,
                     message: "Internal Server Error"
@@ -339,8 +335,6 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
         const update = await global.database.updateGuild(req.params.guildid, req.body.afk_channel_id, req.body.afk_timeout, req.body.icon, req.body.splash, req.body.banner, req.body.name, req.body.default_message_notifications, req.body.verification_level);
 
         if (!update) {
-            await globalUtils.unavailableGuild(what, "Something went wrong while updating guild");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -393,8 +387,6 @@ router.get("/:guildid/embed", guildMiddleware, async (req, res) => {
         const widget = await global.database.getGuildWidget(req.params.guildid);
 
         if (widget == null) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while fetching guild widget");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -428,8 +420,6 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
         const update = await global.database.updateGuildWidget(req.params.guildid, req.body.channel_id, req.body.enabled);
 
         if (!update) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while updating guild widget");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -439,8 +429,6 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
         const widget = await global.database.getGuildWidget(req.params.guildid);
 
         if (widget == null) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong fetching guild widget");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -458,6 +446,65 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
           message: "Internal Server Error"
         });
     }
+});
+
+router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("MAANGE_GUILD"), async (req, res) => {
+    const sender = req.account;
+
+    if (sender == null) {
+        return res.status(401).json({
+            code: 401,
+            message: "Unauthorized"
+        });
+    }
+
+    /*
+    ALL: null,
+        GUILD_UPDATE: 1,
+        CHANNEL_CREATE: 10,
+        CHANNEL_UPDATE: 11,
+        CHANNEL_DELETE: 12,
+        CHANNEL_OVERWRITE_CREATE: 13,
+        CHANNEL_OVERWRITE_UPDATE: 14,
+        CHANNEL_OVERWRITE_DELETE: 15,
+        MEMBER_KICK: 20,
+        MEMBER_PRUNE: 21,
+        MEMBER_BAN_ADD: 22,
+        MEMBER_BAN_REMOVE: 23,
+        MEMBER_UPDATE: 24,
+        MEMBER_ROLE_UPDATE: 25,
+        ROLE_CREATE: 30,
+        ROLE_UPDATE: 31,
+        ROLE_DELETE: 32,
+        INVITE_CREATE: 40,
+        INVITE_UPDATE: 41,
+        INVITE_DELETE: 42,
+        WEBHOOK_CREATE: 50,
+        WEBHOOK_UPDATE: 51,
+        WEBHOOK_DELETE: 52,
+        EMOJI_CREATE: 60,
+        EMOJI_UPDATE: 61,
+        EMOJI_DELETE: 62,
+        MESSAGE_DELETE: 72
+    */ //action_type for audit log
+
+    let limit = (req.query.limit > 50 ? 50 : req.query.limit) || 50;
+
+    return res.status(200).json({
+        audit_log_entries: [{
+            action_type: 11,
+            id: "1309778313816047740",
+            target_id: req.guild.channels[2].id,
+            user_id: sender.id,
+            changes: [{
+                key: "name",
+                old_value: req.guild.channels[2].name,
+                new_value: "the_bad_channel"
+            }]
+        }],
+        users: [globalUtils.miniUserObject(sender)],
+        webhooks: []
+    })
 });
 
 router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (req, res) => {
@@ -565,8 +612,6 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
         const channel = await global.database.createChannel(req.params.guildid, req.body.name, number_type, req.guild.channels.length + 1, [], null, send_parent_id);
 
         if (channel == null) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while creating a channel");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -611,8 +656,6 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
             const channel = req.guild.channels.find(x => x.id === channel_id);
 
             if (channel == null) {
-                await globalUtils.unavailableGuild(req.guild, "Channel not found?");
-
                 return res.status(500).json({
                     code: 500,
                     message: "Internal Server Error"
@@ -630,7 +673,6 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
             const outcome = await global.database.updateChannel(channel_id, channel);
 
             if (!outcome) {
-                await globalUtils.unavailableGuild(req.guild, "Updating channel failed");
 
                 return res.status(500).json({
                     code: 500,
@@ -744,8 +786,6 @@ router.patch("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware
                 code: "Vanity URL is taken or invalid."
             });
         } else if (tryUpdate === -1) {
-            await globalUtils.unavailableGuild(req.guild, "Vanity url update failed");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"

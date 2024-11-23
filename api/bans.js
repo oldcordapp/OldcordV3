@@ -66,8 +66,6 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
         const tryBan = await global.database.banMember(req.params.guildid, member.id);
 
         if (!attempt || !tryBan) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while banning a user");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -167,8 +165,6 @@ router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimit
         const attempt = await global.database.unbanMember(req.params.guildid, req.params.memberid);
 
         if (!attempt) {
-            await globalUtils.unavailableGuild(req.guild, "Something went wrong while unbanning a user");
-
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"

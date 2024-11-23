@@ -139,19 +139,18 @@ const globalUtils = {
     },
     canUseServer: (year, region) => {
         let serverRegion = globalUtils.serverRegionToYear(region);
-
+    
         if (serverRegion.toLowerCase() === "everything") {
             return true;
         }
+    
+        let [firstYear, lastYear] = serverRegion.split('-').map(year => parseInt(year));
 
-        let firstYear = serverRegion.split('-')[0];
-        let lastYear = serverRegion.split('-')[1];
-
-        if (year > parseInt(lastYear) || year < parseInt(firstYear)) {
-            return false;
+        if (year >= firstYear && year <= lastYear) {
+            return true;
         }
-
-        return true;
+    
+        return false;
     },
     generateToken: (user_id, password_hash) => {
         //sorry ziad but im stealing this from hummus source, love you

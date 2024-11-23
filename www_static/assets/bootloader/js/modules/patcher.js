@@ -151,11 +151,11 @@ const patcher = {
       "Server Region",
       "Server Era"
     );
-    replaceMessage("REGION_SELECT_HEADER", null, "Select a server era");
+    replaceMessage("REGION_SELECT_HEADER", null, "Select a server era (build compatibility range)");
     replaceMessage(
       "REGION_SELECT_FOOTER",
       null,
-      "Select which year was this server is created for. The features enabled in the server will be limited to this year."
+      "The client's build year must match the selected era (e.g., 2015-2016, 2015-2017, 2015-2018) to enable server features. Unsure? Select 'Everything' to allow all client builds to access your server."
     );
     replaceMessage("NOTIFICATION_TITLE_DISCORD", null, "Oldcord");
 

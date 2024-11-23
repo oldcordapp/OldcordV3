@@ -298,8 +298,8 @@ class session {
     
                         continue;
                     }
-    
-                    if (guild.region != "everything" && globalUtils.canUseServer(year, guild.region)) {
+
+                    if (guild.region != "everything" && !globalUtils.canUseServer(year, guild.region)) {
                         guild.channels = [{
                             type: this.socket.channel_types_are_ints ? 0 : "text",
                             name: guild.name.replace(/" "/g, "_"),
