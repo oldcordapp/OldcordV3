@@ -9,7 +9,7 @@ let config = globalUtils.config;
 const pool = new Pool(db_config);
 
 let cache = {};
-async function runQuery(queryString, values) {
+async function runQuery(queryString, values, suppressErrors = false) {
     //ok so i copied this from /helpers/database.js, yeah very original
     const query = {
         text: queryString,
@@ -64,7 +64,9 @@ async function runQuery(queryString, values) {
             await client.query('ROLLBACK');
         }
 
-        logText(`Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`, "error");
+        if (!suppressErrors) {
+            logText(`Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`, "error");
+        }  
 
         return null;
     } finally {
@@ -72,15 +74,21 @@ async function runQuery(queryString, values) {
     }
 }
 
-async function migrate() {
-    value = await runQuery(`SELECT * FROM users;`,[]);
+async function migrate(databaseVersion) {
+    value = await runQuery(`SELECT * FROM users;`,[], true);
+
+    if (value == null) {
+        return; //cant migrate a blank DB bucko, just continue to setup
+    }
+
     if (!value[0].relationships) {
         await runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`,[]);
         await runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,[0.2]); //safeguards, in case the script is run outside of the instance executing it
         await runQuery(`UPDATE instance_info SET version = $1 WHERE version = 0.1`,[0.2]);
-        console.log("Already migrated relationships.");
-        return;
+        return; //Dont log existing migrations.
     }
+
+    logText(`Found outdated database setup, migrating to newer version... (${databaseVersion})`,"OLDCORD"); //im lazy
 
     console.log("Preparing data...");
 
