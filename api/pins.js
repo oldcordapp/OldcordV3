@@ -96,9 +96,21 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
         message.pinned = true;
 
         if (channel.type == 1 || channel.type == 3)
+        {
             await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_UPDATE", message);
+            await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_PINS_UPDATE", {
+                channel_id: channel.id,
+                last_pin_timestamp: new Date().toISOString()
+            });
+        }
         else
+        {
             await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_UPDATE", message);
+            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_PINS_UPDATE", {
+                channel_id: channel.id,
+                last_pin_timestamp: new Date().toISOString()
+            });
+        }
 
         return res.status(204).send();
     } catch(error) {

@@ -77,7 +77,7 @@ router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
             channel_id: req.params.channelid,
             guild_id: channel.guild_id,
             user_id: typer.id,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             member: req.member,
         };
         
