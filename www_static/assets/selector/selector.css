@@ -35,8 +35,8 @@
     --warning: #ed4245;
     --scrollbar: #1a1b1e;
 
-    --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-primary: 'Nebula Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-display: 'Nebula Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 
     /* Common values */
     --border-radius-sm: 4px;
@@ -82,6 +82,103 @@
 .card-exit {
     animation: cardExit 0.3s cubic-bezier(0.3, 0.86, 0.36, 1.4) forwards;
 }
+
+/* Nebula Sans Font Declarations - Based of 2018 Discord Whitney Declarations, 92.5% scale down is required since Nebula Sans is larger than Whitney */
+@font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-LightItalic.woff2') format('woff2');
+    font-weight: 300;
+    font-style: italic;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-Book.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-BookItalic.woff2') format('woff2');
+    font-weight: 500;
+    font-style: italic;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-Medium.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-MediumItalic.woff2') format('woff2');
+    font-weight: 600;
+    font-style: italic;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-Semibold.woff2') format('woff2');
+    font-weight: 650;
+    font-style: normal;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-SemiboldItalic.woff2') format('woff2');
+    font-weight: 650;
+    font-style: italic;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-BoldItalic.woff2') format('woff2');
+    font-weight: 700;
+    font-style: italic;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+    size-adjust: 92.5%;
+  }
+  
+  @font-face {
+    font-family: 'Nebula Sans';
+    src: url('/assets/fonts/NebulaSans-BlackItalic.woff2') format('woff2');
+    font-weight: 900;
+    font-style: italic;
+    size-adjust: 92.5%;
+  }
 
 /* Base styles */
 * {
