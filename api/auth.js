@@ -44,6 +44,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                     email: `Must be between ${global.config.limits['email'].min} and ${global.config.limits['email'].max} characters.`,
                 });
             }
+		let badEmail = await globalUtils.badEmail(req.body.email);
 
             if (badEmail) {
                 return res.status(400).json({
@@ -91,7 +92,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
             return res.status(goodUsername.code).json(goodUsername);
         }
 
-        let badEmail = await globalUtils.badEmail(req.body.email);
+        
 
         //Before July 2016 Discord had no support for Recaptcha.
         //We get around this by redirecting clients on 2015/2016 who wish to make an account to a working 2018 client then back to their original clients after they make their account/whatever.
