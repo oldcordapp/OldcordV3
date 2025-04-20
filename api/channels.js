@@ -5,7 +5,6 @@ const webhooks = require("./webhooks");
 const pins = require('./pins');
 const { channelPermissionsMiddleware, rateLimitMiddleware, guildPermissionsMiddleware, channelMiddleware, instanceMiddleware } = require('../helpers/middlewares');
 const globalUtils = require('../helpers/globalutils');
-
 const router = express.Router({ mergeParams: true });
 const config = globalUtils.config;
 

@@ -1,14 +1,11 @@
 const express = require('express');
 const { logText } = require('../../helpers/logger');
-const Snowflake = require('../../helpers/snowflake');
 const router = express.Router({ mergeParams: true });
 const applications = require('./applications');
 const tokens = require('./tokens');
 const globalUtils = require('../../helpers/globalutils');
-const permissions = require('../../helpers/permissions');
 
 router.use("/applications", applications);
-
 router.use("/tokens", tokens);
 
 router.get("/authorize", async (req, res) => {

@@ -66,12 +66,12 @@ router.delete("/:userid", async (req, res) => {
             return res.status(204).send(); //bots cannot add users
         }
 
-        try {
-            relationship = account.relationships.find(item => (item.id === req.user.id));
-        } catch (error) {
+        let relationship = account.relationships.find(item => (item.id === req.user.id));
+
+        if (!relationship) {
             return res.status(404).send({code: 404, message: "Unknown User"}); //relationship was not found, is this the correct response?
         }
-
+        
         await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_REMOVE", {
                 id: relationship.id
         });

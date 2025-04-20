@@ -2,7 +2,6 @@ const express = require('express');
 const { logText } = require('../helpers/logger');
 const globalUtils = require('../helpers/globalutils');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
-
 const router = express.Router({ mergeParams: true });
 
 router.param('memberid', async (req, res, next, memberid) => {

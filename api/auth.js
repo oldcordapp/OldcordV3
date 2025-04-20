@@ -6,7 +6,6 @@ const rateLimitMiddleware = require("../helpers/middlewares").rateLimitMiddlewar
 const { logText } = require('../helpers/logger');
 const Snowflake = require('../helpers/snowflake');
 const recaptcha = require('../helpers/recaptcha');
-const fs = require('fs');
 
 global.config = globalUtils.config;
 

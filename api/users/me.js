@@ -4,7 +4,6 @@ const { rateLimitMiddleware, guildMiddleware } = require('../../helpers/middlewa
 const { logText } = require('../../helpers/logger');
 const router = express.Router();
 const relationships = require('./relationships');
-const Snowflake = require('../../helpers/snowflake');
 
 router.use("/relationships", relationships);
 

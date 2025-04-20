@@ -234,7 +234,6 @@ async function authMiddleware(req, res, next) {
         req.cannot_pass = false;
         
         if (!token) {
-            console.log('no token')
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"

@@ -232,43 +232,6 @@ const globalUtils = {
 
         return guild;
     },
-    unavailableGuild: async (guild, error) => {
-        //danger zone buddy
-
-        if (globalUtils.unavailableGuildsStore.includes(guild.id)) {
-            return false;
-        }
-
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
-            id: guild.id,
-            unavailable: true
-        });
-
-        globalUtils.unavailableGuildsStore.push(guild.id);
-
-        logText(`[GUILD UNAVAILABLE] ${guild.id} (${guild.name}) -> ${error.toString()}`, "debug");
-
-        setTimeout(async () => {
-            await globalUtils.availableGuild(guild); //should we do this? we gotta bring it back to the user who fucked shit up eventually
-        }, 1000 * (Math.round(Math.random() * 300)));
-
-        return true;
-    },
-    availableGuild: async (guild) => {
-        //holy shit bucko
-
-        if (!globalUtils.unavailableGuildsStore.includes(guild.id)) {
-            return false;
-        }
-
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_CREATE", guild);
-
-        globalUtils.unavailableGuildsStore = globalUtils.unavailableGuildsStore.filter(x => x !== guild.id);
-
-        logText(`[GUILD AVAILABLE] ${guild.id} (${guild.name})`, "debug");
-
-        return true;
-    },
     checkUsername: (username) => {
         let allowed = /^[A-Za-z0-9А-Яа-яЁё\s.]+$/;
 
