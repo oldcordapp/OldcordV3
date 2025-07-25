@@ -438,38 +438,35 @@ const database = {
     },
     getGuildMemberByID: async (guild_id, user_id) => {
     	try {
-    	    const memberRows = await database.runQuery(`
-    		SELECT * FROM members WHERE guild_id = $1 AND user_id = $2
-    		`, [user_id, guild_id]);
-
-	        if (memberRows === null || memberRows.length === 0) {
-                return null;
-                }
-
-	        const m = memberRows[0]
-            const user = await database.getAccountByUserId(m.user_id);
-    
-            if (user == null) {
+            const rows = await database.runQuery(`
+               SELECT m.guild_id, m.user_id, m.nick, m.roles, m.joined_at, m.deaf, m.mute, u.username, u.discriminator, u.id as user_id_real, u.avatar, u.bot, u.flags FROM members AS m INNER JOIN users AS u ON u.id = m.user_id WHERE m.guild_id = $1 AND m.user_id = $2
+            `, [guild_id, user_id]);
+            
+            if (rows === null || rows.length === 0) {
                 return null;
             }
 
-	    let member_roles = JSON.parse(row.roles) ?? [];
-    
-            member_roles = member_roles.filter(role_id => 
-                roles.find(guild_role => guild_role.id === role_id) !== undefined
-            );
+            const row = rows[0];
 
-	    const member = {
-                id: user.id,
-                nick: m.nick == 'NULL' ? null : m.nick,
-                deaf: ((m.deaf == 'TRUE' || m.deaf == 1) ? true : false),
-                mute: ((m.mute == 'TRUE' || m.mute == 1) ? true : false),
-                roles: member_roles,
+	        const member = {
+                id: row.user_id_real,
+                nick: row.nick == 'NULL' ? null : row.nick,
+                deaf: row.deaf == 1,
+                mute: row.mute == 1,
+                roles: JSON.parse(row.roles) ?? [],
                 joined_at: new Date().toISOString(),
-                user: globalUtils.miniUserObject(user)
+                user: {
+                    username: row.username,
+                    discriminator: row.discriminator,
+                    id: row.user_id_real,
+                    avatar: row.avatar,
+                    bot: row.bot == 1,
+                    flags: row.flags,
+                    premium: true
+                }
             };
 
-            return member
+            return member;
     	} catch(error) {
     	    logText(error, "error");
     	    return null;
@@ -477,46 +474,56 @@ const database = {
     },
     op12getGuildMembersAndPresences: async (guild) => {
         try {
-            if (guild.members.length !== 0) {
+            if (guild && guild.members.length !== 0) {
                 return {
                     members: guild.members,
                     presences: guild.presences
                 }
             }
-    
-            const memberRows = await database.runQuery(`
-                SELECT * FROM members WHERE guild_id = $1
-            `, [guild.id]);
-    
-            if (memberRows === null || memberRows.length === 0) {
-                return null;
+
+            const rows = await database.runQuery(`SELECT m.guild_id, m.user_id, m.nick, m.roles, m.joined_at, m.deaf, m.mute, u.username, u.discriminator, u.id AS user_id_real, u.avatar, u.bot, u.flags FROM members AS m INNER JOIN users AS u ON u.id = m.user_id WHERE m.guild_id = $1`, [guild.id]);
+
+            if (rows === null || rows.length === 0) {
+                return { members: [], presences: [] };
             }
     
             let members = [];
             let presences = [];
             let offlineCount = 0;
-    
-            for (var row of memberRows) {
+
+            const guildRoles = guild.roles;
+
+            if (!guildRoles || guildRoles.length == 0) {
+                return { members: [], presences: [] };
+            }
+
+            for (var row of rows) {
+                const miniUser = {
+                    username: row.username,
+                    discriminator: row.discriminator,
+                    id: row.user_id_real,
+                    avatar: row.avatar,
+                    bot: row.bot == 1,
+                    flags: row.flags,
+                    premium: true
+                };
+
                 let member_roles = JSON.parse(row.roles) ?? [];
-    
-                member_roles = member_roles.filter(role_id => 
-                    roles.find(guild_role => guild_role.id === role_id) !== undefined
-                );
-    
-                const user = await database.getAccountByUserId(row.user_id);
-    
-                if (user == null) {
-                    continue;
+
+                if (guildRoles && guildRoles.length > 0) {
+                    member_roles = member_roles.filter(role_id =>
+                        guildRoles.find(guild_role => guild_role.id === role_id) !== undefined
+                    );
                 }
 
                 const member = {
-                    id: user.id,
+                    id: row.user_id_real,
                     nick: row.nick == 'NULL' ? null : row.nick,
-                    deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
-                    mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
+                    deaf: row.deaf == 1,
+                    mute: row.mute == 1,
                     roles: member_roles,
                     joined_at: new Date().toISOString(),
-                    user: globalUtils.miniUserObject(user)
+                    user: miniUser
                 };
     
                 let sessions = global.userSessions.get(member.id);
@@ -553,7 +560,8 @@ const database = {
             };
         } catch (error) {
             logText(error, "error");
-            return [];
+            
+            return { members: [], presences: [] };
         }
     },
     getPrivateChannels: async (user_id) => {
@@ -582,7 +590,7 @@ const database = {
             if (rows == null || rows.length == 0)
                 return null;
 
-            //TODO: Foul solution but more maintainable than copying and pasting
+            //TODO: Foul solution but more maintainable than copying and pasting -- fix up later
             return await database.getChannelById(rows[0].id);
         } catch(error) {
             logText(error, "error");
@@ -731,7 +739,7 @@ const database = {
             }
 
             let relationships = await global.database.getRelationshipsByUserId(rows[0].id)
-            return await globalUtils.prepareAccountObject(rows, relationships);
+            return await globalUtils.prepareAccountObject(rows, relationships); //to-do fix
         } catch (error) {
             logText(error, "error");
 
@@ -752,7 +760,7 @@ const database = {
             }
 
             let relationships = await global.database.getRelationshipsByUserId(rows[0].id)
-            return await globalUtils.prepareAccountObject(rows, relationships);
+            return await globalUtils.prepareAccountObject(rows, relationships); //to-do fix
 	} catch (error) {
             logText(error, "error");
 
@@ -950,7 +958,7 @@ const database = {
             logText(error, "error");
 
             return null;
-        }
+        } //to-do fix
     },
     banMember: async (guild_id, user_id) => {
         try {
