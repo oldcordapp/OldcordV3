@@ -1,9 +1,10 @@
 ![Herple...](/hurple.png)
 
-# **THIS REPOSITORY IS ARCHIVED.** <br>
-As life has mainly consumed us all, and we have other projects we've been working on, it has been decided that it is best we archive this repository for now. <br>
+# **THIS REPOSITORY IS SEMI-ARCHIVED.** <br>
+There are big re-works in the background on Oldcord, hopefully to improve efficiency.
+~~As life has mainly consumed us all, and we have other projects we've been working on, it has been decided that it is best we archive this repository for now. <br>
 V4 will be the successor to V3 however it is unknown when development will start on that. <br>
-If anyone wants to continue Oldcord's development, improve things, fix security issues - revamp the code, etc, feel free by forking & maybe we'll put a link to it on here. <br>
+If anyone wants to continue Oldcord's development, improve things, fix security issues - revamp the code, etc, feel free by forking & maybe we'll put a link to it on here.~~ <br>
 Thanks for supporting V3's development 🫡 <br>
 
 # OldCordV3
