@@ -1,7 +1,5 @@
 config.json*
 node_modules
-package-lock.json
-package.json
 www_dynamic
 *.un~
 *.swp
