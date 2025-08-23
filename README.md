@@ -25,7 +25,7 @@ Run `npm install` to install all the packages required to run Oldcord and then `
 
 Since V3 is hosted on my own server at home, I use cloudflared to bypass CG-NAT and have enabled Cloudflare's free SSL so the SSL stuff in the earlier configuration is kinda deprecated.
 
-`custom_invite_url` is used for invites in the app, putting "`oldcord.us`" will make it so every invite made has the prefix [oldcord.us](https://oldcord.us) - much like [discord.gg](https://discord.gg), etc.
+`custom_invite_url` is used for invites in the app, putting "`example.com`" will make it so every invite made has the prefix [example.com](https://example.com) - much like [discord.gg](https://discord.gg), etc.
 
 There are Google Recaptcha v2 demo site & secret keys in the config example which you may find useful to look at when looking to enable recaptcha on your instance. If you'd like to not have recaptcha enabled, just set `site_key` and `secret_key` to "" (blank). <br>
 Also <b>it is highly recommended you change those values if you do plan on using Recaptcha on production. Since it's a demo site key, all answers are valid.</b>⚠️
