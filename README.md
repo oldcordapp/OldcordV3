@@ -21,7 +21,7 @@ Also, if you created your Oldcord instance before November 14 (2024) and you are
 Download and setup a postgreSQL server with the database name of your choice.
 Download the `config.json` from the repository and modify the entries of your choice. Look below for a guide.
 
-Run `npm install` and then `node server.js` to start Oldcord.
+Run `npm install` to install all the packages required to run Oldcord and then `node server.js` to start Oldcord.
 
 Since V3 is hosted on my own server at home, I use cloudflared to bypass CG-NAT and have enabled Cloudflare's free SSL so the SSL stuff in the earlier configuration is kinda deprecated.
 
