@@ -23,6 +23,8 @@ const sodium = require('libsodium-wrappers');
 const sdpTransform = require('sdp-transform');
 const lodash = require('lodash');
 const mediasoup = require('mediasoup');
+const udp = require('dgram');
+const udpServer = udp.createSocket('udp4');
 
 let worker;
 let serve;
@@ -40,7 +42,6 @@ let serve;
 
 app.set('trust proxy', 1);
 
-
 database.setupDatabase();
 
 global.dispatcher = dispatcher;
@@ -57,6 +58,186 @@ global.permissions = permissions;
 global.config = globalUtils.config;
 global.rooms = [];
 global.signaling_sessions = [];
+global.signaling_clients = new Map();
+global.udp_sessions = new Map();
+global.encryptions = new Map();
+
+udpServer.on('listening', () => {
+    var address = udpServer.address();
+    var ipaddr = address.address;
+
+    logText(`Ready on ${ipaddr}:${config.udp_server_port}`, 'UDP_SERVER');
+});
+
+udpServer.on('error',function(error){
+    logText(`An unexpected error occurred: ${error.toString()}`, 'UDP_SERVER');
+    udpServer.close();
+});
+
+udpServer.sendBytes = (address, port, bytes) => {
+    udpServer.send(bytes, port, address, (err) => {
+        if (err) {
+            console.error('Error sending response:', err);
+        } else {
+            console.log(`Sent ${bytes.length} bytes to ${address}:${port}`);
+        }
+    });
+};
+
+udpServer.on('message', (msg, info) => {
+    if (msg.length < 4) {
+        console.log("msg length failed check")
+        return;
+    }
+
+    let ssrc = msg.readUInt32BE(0); //always in every packet, if its not here invalid packet
+
+    let session = global.udp_sessions.get(ssrc);
+
+    if (!session) {
+        let encryption = global.encryptions.get(ssrc);
+
+        if (!encryption) {
+            encryption = {
+                mode: "xsalsa20_poly1305",
+                key: [
+                    211,
+                    214,
+                    237,
+                    8,
+                    221,
+                    92,
+                    86,
+                    132,
+                    167,
+                    57,
+                    17,
+                    71,
+                    189,
+                    169,
+                    224,
+                    211,
+                    115,
+                    17,
+                    191,
+                    82,
+                    96,
+                    98,
+                    107,
+                    155,
+                    92,
+                    72,
+                    52,
+                    246,
+                    52,
+                    109,
+                    142,
+                    194
+                ]
+            }
+        }
+
+        let sesh = {
+            ip_addr: info.address,
+            ip_port: info.port,
+            encryption_mode: encryption.mode,
+            encryption_key: encryption.key
+        };
+
+        global.udp_sessions.set(ssrc, sesh);
+
+        session = sesh;
+    }
+
+    logText(`Incoming -> ${msg.length} bytes from ${info.address}:${info.port}`, 'UDP_SERVER');
+    logText(`Attempted deserialization -> ${msg.toString()} from ${info.address}:${info.port}`, 'UDP_SERVER');
+
+    if (msg.length === 70) {
+        //ip discovery
+
+        const ssrc = msg.readUInt32BE(0);
+        console.log(`Received SSRC: ${ssrc}`);
+
+        let ipDiscoveryResponse = Buffer.alloc(70);
+
+        ipDiscoveryResponse.writeUInt32LE(ssrc, 0);
+        ipDiscoveryResponse.write(info.address, 4, 'utf8');
+        ipDiscoveryResponse.writeUInt16LE(info.port, 68);
+
+        udpServer.sendBytes(info.address, info.port, ipDiscoveryResponse);
+    } else if (msg.length === 8) {
+        //ping packet(?)
+
+        udpServer.sendBytes(info.address, info.port, msg);
+    } else if (msg.length > 12) {
+        console.log('incoming voice data??');
+
+        const ssrc = msg.readUInt32BE(8);
+        const sequence = msg.readUInt16BE(2);
+        const timestamp = msg.readUInt32BE(4);
+
+        const session = global.udp_sessions.get(ssrc);
+
+        if (!session) {
+            console.error(`Received voice data for unknown SSRC: ${ssrc}`);
+            return;
+        }
+
+        const voiceKey = Buffer.from(session.encryption_key);
+        const rtpHeader = msg.slice(0, 12);
+
+        const nonce = Buffer.alloc(24).fill(0);
+        msg.slice(0, 12).copy(nonce, 0);
+
+        const encryptedPayload = msg.slice(12);
+
+        const decryptedOpusData = sodium.crypto_secretbox_open_easy(
+            encryptedPayload,
+            nonce,
+            voiceKey
+        );
+
+        if (!decryptedOpusData) {
+            console.error(`Failed to decrypt voice packet from SSRC: ${ssrc}`);
+            return;
+        }
+
+        global.udp_sessions.forEach((otherSession, otherSsrc) => {
+            if (otherSsrc !== ssrc) {
+                const otherKey = Buffer.from(otherSession.encryption_key);
+
+                const reEncryptionNonce = Buffer.alloc(24).fill(0);
+                msg.slice(0, 12).copy(reEncryptionNonce, 0);
+
+                const reEncryptedPayload = sodium.crypto_secretbox_easy(
+                    decryptedOpusData,
+                    reEncryptionNonce,
+                    otherKey
+                );
+
+                const reEncryptedPacket = Buffer.concat([
+                    msg.slice(0, 12),
+                    reEncryptedPayload
+                ]);
+
+                udpServer.send(reEncryptedPacket, otherSession.ip_port, otherSession.ip_addr);
+
+                global.signaling_clients.forEach((sg, index) => {
+                    sg.send(JSON.stringify({
+                        op: 5,
+                        d: {
+                            ssrc: ssrc,
+                            speaking: true,
+                            delay: 0
+                        }
+                    }))
+                })
+            }
+        });
+    }
+});
+
+udpServer.bind(config.udp_server_port);
 
 const signalingServer = new WebSocket.Server({
     port: config.signaling_server_port
@@ -98,21 +279,64 @@ signalingServer.on('connection', async (socket) => {
     socket.hostCandidate = iceCandidates.find(candidate => candidate.type === 'host');
     socket.hostPort = socket.hostCandidate.port;
 
+    //let ssrc = socket.sessions.size + 1;
+    let ssrc = 1;
+    //let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
+
+    let keyArry = [
+        211,
+        214,
+        237,
+        8,
+        221,
+        92,
+        86,
+        132,
+        167,
+        57,
+        17,
+        71,
+        189,
+        169,
+        224,
+        211,
+        115,
+        17,
+        191,
+        82,
+        96,
+        98,
+        107,
+        155,
+        92,
+        72,
+        52,
+        246,
+        52,
+        109,
+        142,
+        194
+    ];
+
+    global.signaling_clients.set(ssrc, socket);
+
     socket.on('message', async (data) => {
         let raw_data = Buffer.from(data).toString("utf-8");
         let jason = JSON.parse(raw_data);
 
-        logText(`Incoming -> ${raw_data}`, 'RTC_SERVER');
+        //logText(`Incoming -> ${raw_data}`, 'RTC_SERVER');
 
         if (jason.op === 0) {
+            let protocol = jason.d.protocol;
+
             logText(`A client's state has changed to -> RTC_CONNECTING`, 'RTC_SERVER');
 
             socket.send(JSON.stringify({
                 op: 2,
                 d: {
-                    ssrc: 1,
+                    ssrc: ssrc,
                     ip: "127.0.0.1",
-                    port: socket.hostPort,
+                    port: protocol === 'webrtc' ? socket.hostPort : config.udp_server_port,
                     modes: ["plain", "xsalsa20_poly1305"],
                     heartbeat_interval: 1
                 }
@@ -123,11 +347,38 @@ signalingServer.on('connection', async (socket) => {
                 d: jason.d
             }))
         } else if (jason.op === 1) {
-            let sdp = jason.d.sdp; 
-            let codecs = jason.d.codecs;
+            let protocol = jason.d.protocol;
 
-            let offer = sdpTransform.parse(sdp);
-            let isChrome = codecs.find((val) => val.name == "opus")?.payload_type === 111;
+            global.encryptions.set(ssrc, {
+                mode: "xsalsa20_poly1305",
+                key: keyArry //Array.from(keyBuffer)
+            });
+
+            if (protocol === 'webrtc') {
+                let sdp = jason.d.sdp || jason.d.data;
+                let codecs = jason.d.codecs || [ {
+                    name: "opus",
+                    type: "audio",
+                    priority: 1000,
+                    payload_type: 111
+                }]; //older clients dont have video/screensharing so its just voice yay
+
+                let offer = sdpTransform.parse(sdp);
+                let isChrome = codecs.find((val) => val.name == "opus")?.payload_type === 111;
+
+                console.log(offer);
+
+                return socket.send(JSON.stringify({
+                    op: 4,
+                    d: {
+                        sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:${iceParameters.usernameFragment}\na=ice-pwd:${iceParameters.password}\na=fingerprint:sha-256 ${socket.fingerprint}\na=candidate:1 1 UDP ${socket.candidate.priority} ${socket.candidate.address} ${socket.candidate.port} typ host`,
+                        mode: "xsalsa20_poly1305",
+                        secret_key: keyArry
+                    }
+                }))
+            }
+
+           
            /*
             a=ice-ufrag:4a/b
             a=ice-pwd:1msaOo+JhSsXIr+gxhqL282B
@@ -188,18 +439,13 @@ signalingServer.on('connection', async (socket) => {
 
             a=mid:0
            */ //The client is expecting an sdp like this from us, ice credentials are random
-
-            let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
-
             socket.send(JSON.stringify({
                 op: 4,
                 d: {
-                    sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:${iceParameters.usernameFragment}\na=ice-pwd:${iceParameters.password}\na=fingerprint:sha-256 ${socket.fingerprint}\na=candidate:1 1 UDP ${socket.candidate.priority} ${socket.candidate.address} ${socket.candidate.port} typ host`,
                     mode: "xsalsa20_poly1305",
-                    secret_key: Array.from(keyBuffer)
+                    secret_key: keyArry
                 }
             }))
-
         }
     });
 });
