@@ -22,5 +22,13 @@ export const QOL_PATCHES = {
         mandatory: false,
         defaultEnabled: true,
         compatibleVersions: 'all'
+    },
+    forceWebRtcFullSdp: {
+        id: 'forceWebRtcFullSdp',
+        label: 'Force WebRTC Full SDP',
+        description: 'Forces the client to send a non truncated sdp upon Select Protocol (Only use if you know what you are doing)',
+        mandatory: false,
+        defaultEnabled: false,
+        compatibleVersions: '2017'
     }
 };

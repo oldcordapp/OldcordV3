@@ -224,21 +224,83 @@ const gateway = {
                         let self_mute = packet.d.self_mute;
                         let self_deaf = packet.d.self_deaf;
 
-                        socket.session.dispatch("VOICE_STATE_UPDATE", {
+                        if (guild_id === null && channel_id === null) {
+                            /*
+                            await global.dispatcher.dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis("VOICE_STATE_UPDATE", {
+                                channel_id: channel_id,
+                                guild_id: guild_id,
+                                user_id: socket.user.id,
+                                //user: socket.user,
+                                session_id: socket.session.id,
+                                deaf: false,
+                                mute: false,
+                                self_deaf: self_deaf,
+                                self_mute: self_mute,
+                                self_video: false,
+                                suppress: false
+                            });
+                            */
+
+                            socket.current_guild = null;
+                        } else if (!socket.current_guild) {
+                            socket.current_guild = await global.database.getGuildById(guild_id);
+                        }
+
+                        let room = global.rooms.find(x => x.room_id === `${guild_id}:${channel_id}`);
+
+                        if (!room) {
+                            global.rooms.push({
+                                room_id: `${guild_id}:${channel_id}`,
+                                participants: [{
+                                    user: globalUtils.miniUserObject(socket.user),
+                                    ssrc: Math.round(Math.random() * 100000)
+                                }]
+                            });
+                        } else {
+                            if (!room.participants.find(x => x.user.id === socket.user.id)) {
+                                room.participants.push({
+                                    user: globalUtils.miniUserObject(socket.user),
+                                    ssrc: Math.round(Math.random() * 100000)
+                                });
+                            }
+                        }
+
+                        /*
+                        await global.dispatcher.dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis("VOICE_STATE_UPDATE", {
                             channel_id: channel_id,
+                            guild_id: guild_id,
                             user_id: socket.user.id,
-                            session_id: globalUtils.generateString(30),
+                            //user: socket.user,
+                            session_id: socket.session.id,
                             deaf: false,
                             mute: false,
                             self_deaf: self_deaf,
                             self_mute: self_mute,
+                            self_video: false,
+                            suppress: false
+                        });
+                        */ //bad practice, really really bad practice, but ive left it in for further webrtc testing
+
+                        socket.session.dispatch("VOICE_STATE_UPDATE", {
+                            channel_id: channel_id,
+                            guild_id: guild_id,
+                            user_id: socket.user.id,
+                            //user: socket.user,
+                            session_id: socket.session.id,
+                            deaf: false,
+                            mute: false,
+                            self_deaf: self_deaf,
+                            self_mute: self_mute,
+                            self_video: false,
                             suppress: false
                         });
 
                         socket.session.dispatch("VOICE_SERVER_UPDATE", {
                             token: globalUtils.generateString(30),
+                            //session_id: sesh_id,
                             guild_id: guild_id,
-                            endpoint: "ws://" + global.config.signaling_server_url
+                            channel_id: channel_id,
+                            endpoint: globalUtils.generateRTCServerURL()
                         });
                     } else if (packet.op == 12) {
                         if (!socket.session) return;

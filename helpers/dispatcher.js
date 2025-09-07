@@ -10,6 +10,13 @@ const dispatcher = {
             sessions[z].dispatch(type, payload);
         }
     },
+    dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis: async (type, payload) => {
+        global.userSessions.forEach((sessions, userId) => {
+            for(let z = 0; z < sessions.length; z++) {
+                sessions[z].dispatch(type, payload);
+            }
+        })
+    },
     dispatchGuildMemberUpdateToAllTheirGuilds: async (user_id, new_user) => {
         let sessions = global.userSessions.get(user_id);
         

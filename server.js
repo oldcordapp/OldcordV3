@@ -18,8 +18,28 @@ const config = globalUtils.config;
 const app = express();
 const emailer = require('./helpers/emailer');
 const fetch = require('node-fetch');
+const WebSocket = require('ws').WebSocket;
+const sodium = require('libsodium-wrappers');
+const sdpTransform = require('sdp-transform');
+const lodash = require('lodash');
+const mediasoup = require('mediasoup');
+
+let worker;
+let serve;
+
+(async () => {
+    worker = await mediasoup.createWorker();
+    const mediaCodecs = [{
+        kind: 'audio',
+        mimeType: 'audio/opus',
+        clockRate: 48000,
+        channels: 2
+    }];
+    serve = await worker.createRouter({ mediaCodecs });
+})();
 
 app.set('trust proxy', 1);
+
 
 database.setupDatabase();
 
@@ -35,6 +55,154 @@ global.userSessions = new Map();
 global.database = database;
 global.permissions = permissions;
 global.config = globalUtils.config;
+global.rooms = [];
+global.signaling_sessions = [];
+
+const signalingServer = new WebSocket.Server({
+    port: config.signaling_server_port
+});
+
+signalingServer.on('listening', async () => {
+    await sodium.ready;
+
+    logText(`Server up on port ${config.signaling_server_port}`, 'RTC_SERVER');
+});
+
+signalingServer.on('connection', async (socket) => {
+    logText(`Client has connected`, 'RTC_SERVER');
+
+    global.signaling_sessions.push(socket);
+
+    socket.send(JSON.stringify({
+        op: 8,
+        d: {
+            heartbeat_interval: 41250
+        }
+    }));
+
+    socket.transport = await serve.createWebRtcTransport({
+        listenIps: [{ ip: '127.0.0.1', announcedIp: null }],
+        enableUdp: true,
+        enableTcp: true,
+        initialAvailableOutgoingBitrate: 1000000,
+        portRange: { min: 10000, max: 20000 }
+    });
+
+    const dtlsParameters = socket.transport.dtlsParameters;
+    const iceParameters = socket.transport.iceParameters;
+    const iceCandidates = socket.transport.iceCandidates;
+
+    socket.candidate = iceCandidates[0];
+    socket.fingerprint = dtlsParameters.fingerprints.find(x => x.algorithm === 'sha-256').value;
+
+    socket.hostCandidate = iceCandidates.find(candidate => candidate.type === 'host');
+    socket.hostPort = socket.hostCandidate.port;
+
+    socket.on('message', async (data) => {
+        let raw_data = Buffer.from(data).toString("utf-8");
+        let jason = JSON.parse(raw_data);
+
+        logText(`Incoming -> ${raw_data}`, 'RTC_SERVER');
+
+        if (jason.op === 0) {
+            logText(`A client's state has changed to -> RTC_CONNECTING`, 'RTC_SERVER');
+
+            socket.send(JSON.stringify({
+                op: 2,
+                d: {
+                    ssrc: 1,
+                    ip: "127.0.0.1",
+                    port: socket.hostPort,
+                    modes: ["plain", "xsalsa20_poly1305"],
+                    heartbeat_interval: 1
+                }
+            }))
+        } else if (jason.op == 3) {
+            socket.send(JSON.stringify({
+                op: 6,
+                d: jason.d
+            }))
+        } else if (jason.op === 1) {
+            let sdp = jason.d.sdp; 
+            let codecs = jason.d.codecs;
+
+            let offer = sdpTransform.parse(sdp);
+            let isChrome = codecs.find((val) => val.name == "opus")?.payload_type === 111;
+           /*
+            a=ice-ufrag:4a/b
+            a=ice-pwd:1msaOo+JhSsXIr+gxhqL282B
+            a=ice-options:trickle
+            a=rtpmap:111 opus/48000/2
+            a=rtpmap:96 VP8/90000
+            a=rtpmap:97 rtx/90000
+           */
+            
+           /*
+            [
+                {
+                    "name": "opus",
+                    "type": "audio",
+                    "priority": 1000,
+                    "payload_type": 111
+                },
+                {
+                    "name": "VP8",
+                    "type": "video",
+                    "priority": 1000,
+                    "payload_type": 96,
+                    "rtx_payload_type": 97
+                },
+                {
+                    "name": "H264",
+                    "type": "video",
+                    "priority": 2000,
+                    "payload_type": 103,
+                    "rtx_payload_type": 104
+                },
+                {
+                    "name": "VP9",
+                    "type": "video",
+                    "priority": 3000,
+                    "payload_type": 98,
+                    "rtx_payload_type": 99
+                }
+            ]
+           */
+
+           //The 2017 discord client uses sdp-transform, which ONLY works to parse the truncated SDP (only ICE and RTP mappings) in this case
+           //to-do, should I use a media server?
+           /*
+           m=audio 50004 ICE/SDP
+
+            c=IN IP4 127.0.0.1
+
+            a=rtcp:50004
+
+            a=ice-ufrag:jha4
+
+            a=ice-pwd:qBVOne32T8X9VFENnh70ty
+
+            a=fingerprint:sha-256 4A:79:94:16:44:3F:BD:05:41:5A:C7:20:F3:12:54:70:00:73:5D:33:00:2D:2C:80:9B:39:E1:9F:2D:A7:49:87
+
+            a=candidate:1 1 UDP 4261412862 35.213.196.38 50004 typ host
+
+            a=mid:0
+           */ //The client is expecting an sdp like this from us, ice credentials are random
+
+            let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
+
+            socket.send(JSON.stringify({
+                op: 4,
+                d: {
+                    sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:${iceParameters.usernameFragment}\na=ice-pwd:${iceParameters.password}\na=fingerprint:sha-256 ${socket.fingerprint}\na=candidate:1 1 UDP ${socket.candidate.priority} ${socket.candidate.address} ${socket.candidate.port} typ host`,
+                    mode: "xsalsa20_poly1305",
+                    secret_key: Array.from(keyBuffer)
+                }
+            }))
+
+        }
+    });
+});
 
 const portAppend = globalUtils.nonStandardPort ? ":" + config.port : "";
 const base_url = config.base_url + portAppend;

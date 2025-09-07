@@ -54,6 +54,11 @@ const patcher = {
       );
     }
 
+    if (getEnabledPatches().includes("forceWebRtcFullSdp")) {
+      script = script.replaceAll(`truncateSDP=c`,`truncateSDP=(e)=>{return{sdp:e,codecs:l(e).codecs}}`);
+    }
+    //script = script.replaceAll(`t.sdp`, `t`);
+
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");
