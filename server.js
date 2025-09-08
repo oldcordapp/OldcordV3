@@ -380,8 +380,6 @@ signalingServer.on('connection', async (socket) => {
                 return socket.close(4005, 'You have already identified.');
             }
 
-            logText("New client connection", "GATEWAY");
-
             identified = true;
 
             let user = await global.database.getAccountByUserId(userid);
