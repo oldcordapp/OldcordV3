@@ -273,10 +273,13 @@ signalingServer.on('connection', async (socket) => {
             }, (45 * 1000) + 20 * 1000);
         },
         acknowledge: (d) => {
-            socket.session.send({
+            let session = socket.session;
+            let base = {
                 op: 6,
                 d: d
-            });
+            }
+            let payload = session ? base : JSON.stringify(base);
+            (session || socket).send(payload);
         }
     };
 
@@ -424,7 +427,7 @@ signalingServer.on('connection', async (socket) => {
                     heartbeat_interval: 1
                 }
             }))
-        } else if (jason.op == 3) {
+        } else if (jason.op === 3) {
             if (!socket.hb) return;
 
             socket.hb.acknowledge(jason.d);
@@ -498,6 +501,31 @@ signalingServer.on('connection', async (socket) => {
                             ssrc: jason.d.ssrc,
                             user_id: socket.userid
                         }
+                    }));
+                }
+            }
+        } else if (jason.op === 12) {
+            let video_ssrc = parseInt(jason.d.video_ssrc ?? "0");
+            let rtx_ssrc = parseInt(jason.d.rtx_ssrc ?? "0");
+            let audio_ssrc = socket.ssrc;
+            let response = {
+                audio_ssrc: audio_ssrc,
+                video_ssrc: video_ssrc,
+                rtx_ssrc: rtx_ssrc
+            }
+
+            socket.send(JSON.stringify({
+                op: 12,
+                d: response
+            }))
+
+             for (const [id, clientSocket] of global.signaling_clients) {
+                if (id !== socket.userid) {
+                    response.user_id = socket.userid;
+                    
+                    clientSocket.send(JSON.stringify({
+                        op: 12,
+                        d: response
                     }));
                 }
             }
