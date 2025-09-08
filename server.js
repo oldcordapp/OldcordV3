@@ -358,8 +358,10 @@ signalingServer.on('connection', async (socket) => {
                 }));
             }
         }
-        
-        global.signaling_clients.delete(socket.userid);
+
+        if (socket.userid) {
+            global.signaling_clients.delete(socket.userid);
+        }
     });
 
     socket.on('message', async (data) => {
