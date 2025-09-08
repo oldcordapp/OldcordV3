@@ -74,6 +74,16 @@ app.get("/gateway", (req, res) => {
     });
 });
 
+app.get("/voice/ice", (req, res) => {
+    return res.status(200).json({
+        servers: [{
+            url: 'stun:stun.l.google.com:19302',
+            username: '',
+            credential: ''
+        }]
+    })
+});
+
 app.use(authMiddleware);
 
 app.use("/admin", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), admin);
