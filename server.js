@@ -356,9 +356,10 @@ signalingServer.on('connection', async (socket) => {
                         user_id: socket.userid
                     }
                 }));
-                global.signaling_clients.delete(id);
             }
         }
+        
+        global.signaling_clients.delete(socket.userid);
     });
 
     socket.on('message', async (data) => {
