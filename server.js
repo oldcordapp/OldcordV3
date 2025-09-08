@@ -356,6 +356,7 @@ signalingServer.on('connection', async (socket) => {
                         user_id: socket.userid
                     }
                 }));
+                global.signaling_clients.delete(id);
             }
         }
     });
@@ -522,7 +523,7 @@ signalingServer.on('connection', async (socket) => {
              for (const [id, clientSocket] of global.signaling_clients) {
                 if (id !== socket.userid) {
                     response.user_id = socket.userid;
-                    
+
                     clientSocket.send(JSON.stringify({
                         op: 12,
                         d: response
