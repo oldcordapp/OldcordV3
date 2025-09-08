@@ -9,7 +9,7 @@ const BUFFER_LIMIT = 500; //max dispatch event backlog before terminating?
 const SESSION_TIMEOUT = 10 * 1000; //10 seconds brooo
 
 class session {
-    constructor(id, socket, user, token, ready, presence) {
+    constructor(id, socket, user, token, ready, presence, type = 'gateway') {
         this.id = id;
         this.socket = socket;
         this.token = token;
@@ -18,6 +18,7 @@ class session {
         this.time = Date.now();
         this.ready = ready;
         this.presence = presence;
+        this.type = type || 'gateway'; //or voice
         this.dead = false;
         this.lastMessage = Date.now();
         this.ratelimited = false;
@@ -38,9 +39,13 @@ class session {
         setTimeout(this.terminate.bind(this), SESSION_TIMEOUT);
     }
     subscribe(subscriptionType, parameters) {
+        if (this.type !== 'gateway') {
+            return;
+        }
+
         let valid_subs = [
             "GUILD_MEMBER_LIST_UPDATE"
-        ]   
+        ]
 
         if (!valid_subs.includes(subscriptionType)) {
             return false; //invalid event subscription type
@@ -61,6 +66,10 @@ class session {
         return true;
     }
     async updatePresence(status, game_id = null, save_presence = true) {
+        if (this.type !== 'gateway') {
+            return;
+        }
+
         try {
             if (this.presence.status.toLowerCase() === status.toLowerCase() && this.presence.game_id === game_id) {
                 return;
@@ -92,13 +101,17 @@ class session {
 
             this.presence.status = status.toLowerCase();
             this.presence.game_id = game_id;
-            
+
             await this.dispatchPresenceUpdate();
-        } catch(error) { 
+        } catch (error) {
             logText(error, "error");
         }
     }
     async dispatch(type, payload) {
+        if (this.type !== 'gateway') {
+            return;
+        }
+
         if (!this.ready) return;
         if (this.dead) return;
 
@@ -134,6 +147,10 @@ class session {
         }
     }
     async dispatchPresenceUpdate() {
+        if (this.type !== 'gateway') {
+            return;
+        }
+
         let current_guilds = await global.database.getUsersGuilds(this.user.id);
 
         this.guilds = current_guilds;
@@ -144,7 +161,7 @@ class session {
             return await this.dispatch("PRESENCE_UPDATE", this.presence);
         }
 
-        for(let i = 0; i < current_guilds.length; i++) {
+        for (let i = 0; i < current_guilds.length; i++) {
             let guild = current_guilds[i];
 
             this.presence.guild_id = guild.id;
@@ -159,13 +176,17 @@ class session {
         }
     }
     async dispatchSelfUpdate() {
+        if (this.type !== 'gateway') {
+            return;
+        }
+
         let current_guilds = await global.database.getUsersGuilds(this.user.id);
 
         this.guilds = current_guilds;
 
         if (current_guilds.length == 0) return;
 
-        for(let i = 0; i < current_guilds.length; i++) {
+        for (let i = 0; i < current_guilds.length; i++) {
             let guild = current_guilds[i];
 
             let our_member = guild.members.find(x => x.id === this.user.id);
@@ -186,39 +207,41 @@ class session {
 
         let uSessions = global.userSessions.get(this.user.id);
 
-		if (uSessions) {
-			uSessions.splice(uSessions.indexOf(this), 1);
+        if (uSessions) {
+            uSessions.splice(uSessions.indexOf(this), 1);
 
-			if (uSessions.length >= 1) {
-				global.userSessions.set(this.user.id, uSessions);
-			} else {
-				global.userSessions.delete(this.user.id);
-			}
-		}
+            if (uSessions.length >= 1) {
+                global.userSessions.set(this.user.id, uSessions);
+            } else {
+                global.userSessions.delete(this.user.id);
+            }
+        }
 
         global.sessions.delete(this.id);
 
-        if (!uSessions || uSessions.length == 0) {
-            await this.updatePresence("offline", null);
-        } else await this.updatePresence(uSessions[uSessions.length - 1].presence.status, uSessions[uSessions.length - 1].presence.game_id);
+        if (this.type === 'gateway') {
+            if (!uSessions || uSessions.length == 0) {
+                await this.updatePresence("offline", null);
+            } else await this.updatePresence(uSessions[uSessions.length - 1].presence.status, uSessions[uSessions.length - 1].presence.game_id);
+        }
     }
     send(payload) {
         if (this.dead) return;
         if (this.ratelimited) return;
 
-        if (this.socket.wantsZlib) {
+        if (this.socket.wantsZlib && this.type === 'gateway') {
             //Closely resembles Discord's zlib implementation from https://gist.github.com/devsnek/4e094812a4798d8f10428d04ee02cab7
             let stringifiedpayload = JSON.stringify(payload);
 
             let buffer;
 
-            buffer = zlib.deflateSync(stringifiedpayload, {chunkSize: 65535, flush: zlib.constants.Z_SYNC_FLUSH, finishFlush: zlib.constants.Z_SYNC_FLUSH, level: zlib.constants.Z_BEST_COMPRESSION})
+            buffer = zlib.deflateSync(stringifiedpayload, { chunkSize: 65535, flush: zlib.constants.Z_SYNC_FLUSH, finishFlush: zlib.constants.Z_SYNC_FLUSH, level: zlib.constants.Z_BEST_COMPRESSION })
 
             if (!this.socket.zlibHeader) {
                 buffer = buffer.subarray(2, buffer.length);
             }
             else this.socket.zlibHeader = false;
-            
+
             this.socket.send(buffer);
         } else this.socket.send(JSON.stringify(payload));
 
@@ -227,23 +250,26 @@ class session {
     start() {
         global.sessions.set(this.id, this);
 
-        let uSessions = global.userSessions.get(this.user.id);
+        if (this.type === 'gateway') {
+            let uSessions = global.userSessions.get(this.user.id);
 
-        if (!uSessions) {
-            uSessions = [];
+            if (!uSessions) {
+                uSessions = [];
+            }
+
+            uSessions.push(this);
+            global.userSessions.set(this.user.id, uSessions);
         }
-
-        uSessions.push(this);
-
-        global.userSessions.set(this.user.id, uSessions);
     }
     async readyUp(body) {
-        this.send({
-            op: 0,
-            s: ++this.seq,
-            t: "READY",
-            d: body
-        });
+        if (this.type === 'gateway') {
+            this.send({
+                op: 0,
+                s: ++this.seq,
+                t: "READY",
+                d: body
+            });
+        }
 
         this.ready = true;
     }
@@ -253,19 +279,25 @@ class session {
         this.socket = socket;
         this.dead = false;
 
-        let items = this.eventsBuffer.filter(s => s.seq > seq);
+        if (this.type === 'gateway') {
+            let items = this.eventsBuffer.filter(s => s.seq > seq);
 
-		for (var k of items) {
-			this.dispatch(k.type, k.payload);
-		}
+            for (var k of items) {
+                this.dispatch(k.type, k.payload);
+            }
 
-        this.dispatch("RESUMED", {
-            _trace: ["oldcord-v3"]
-        });
+            this.dispatch("RESUMED", {
+                _trace: ["oldcord-v3"]
+            });
 
-        this.updatePresence("online", null, false);
+            this.updatePresence("online", null, false);
+        }
     }
     async prepareReady() {
+        if (this.type !== 'gateway') {
+            return;
+        }
+
         try {
             let month = this.socket.client_build_date.getMonth();
             let year = this.socket.client_build_date.getFullYear();
@@ -273,7 +305,7 @@ class session {
             this.guilds = await global.database.getUsersGuilds(this.user.id);
 
             if (this.user.bot) {
-                for(var guild of this.guilds) {
+                for (var guild of this.guilds) {
                     this.guildCache.push(guild);
 
                     guild = {
@@ -282,20 +314,20 @@ class session {
                     }; //bots cant get this here idk
                 }
             } else {
-                for(var guild of this.guilds) {
+                for (var guild of this.guilds) {
                     if (guild.unavailable) {
                         this.guilds = this.guilds.filter(x => x.id !== guild.id);
-    
+
                         this.unavailable_guilds.push(guild.id);
-    
+
                         continue;
                     }
-                    
+
                     if (globalUtils.unavailableGuildsStore.includes(guild.id)) {
                         this.guilds = this.guilds.filter(x => x.id !== guild.id);
-    
+
                         this.unavailable_guilds.push(guild.id);
-    
+
                         continue;
                     }
 
@@ -310,7 +342,7 @@ class session {
                             guild_id: guild.id,
                             permission_overwrites: []
                         }];
-                
+
                         guild.roles = [{
                             id: guild.id,
                             name: "@everyone",
@@ -320,24 +352,24 @@ class session {
                             hoist: false,
                             mentionable: false
                         }]
-                
+
                         guild.name = `${globalUtils.serverRegionToYear(guild.region)} ONLY! CHANGE BUILD`;
                         guild.owner_id = "1279218211430105089";
-    
+
                         continue;
                     }
-    
+
                     let guild_presences = guild.presences;
-    
+
                     if (guild_presences.length == 0) continue;
-    
+
                     if (guild_presences.length >= 100) {
                         guild_presences = [
                             guild_presences.find(x => x.user.id === this.user.id)
                         ]
                     }
 
-                    for(var presence of guild_presences) {
+                    for (var presence of guild_presences) {
                         if (this.presences.find(x => x.user.id === presence.user.id)) continue;
 
                         this.presences.push({
@@ -349,39 +381,39 @@ class session {
                     }
 
                     //if (guild.members.length >= 100) {
-                        //guild.members = [
-                            //guild.members.find(x => x.id === this.user.id)
-                        //]
+                    //guild.members = [
+                    //guild.members.find(x => x.id === this.user.id)
+                    //]
                     //} //uh someone do this better?
-    
-                    for(var channel of guild.channels) {
+
+                    for (var channel of guild.channels) {
                         if ((year === 2017 && month < 9) || year < 2017) {
                             if (channel.type === 4) {
-                               guild.channels = guild.channels.filter(x => x.id !== channel.id);
+                                guild.channels = guild.channels.filter(x => x.id !== channel.id);
                             }
                         }
-                        
+
                         if (!this.socket.channel_types_are_ints) {
                             channel.type = channel.type == 2 ? "voice" : "text";
                         }
-    
+
                         let can_see = await global.permissions.hasChannelPermissionTo(channel, guild, this.user.id, "READ_MESSAGE_HISTORY");
-    
+
                         if (!can_see) {
                             guild.channels = guild.channels.filter(x => x.id !== channel.id);
-    
+
                             continue;
                         }
-    
+
                         let getLatestAcknowledgement = await global.database.getLatestAcknowledgement(this.user.id, channel.id);
-    
+
                         if (getLatestAcknowledgement) {
                             this.read_states.push(getLatestAcknowledgement);
                         }
                     }
                 }
             }
-            
+
             let tutorial = {
                 indicators_suppressed: true,
                 indicators_confirmed: [
@@ -400,25 +432,25 @@ class session {
 
             let chans = await database.getPrivateChannels(this.user.id);
             let filteredDMs = [];
-            
+
             for (var chan_id of chans) {
                 let chan = await database.getChannelById(chan_id);
 
                 if (!chan)
                     continue;
-                
+
                 chan = globalUtils.personalizeChannelObject(this.socket, chan);
 
                 if (!chan)
                     continue;
-                
+
                 filteredDMs.push(chan);
             }
-            
+
             let connectedAccounts = await global.database.getConnectedAccounts(this.user.id);
             let guildSettings = await global.database.getUsersGuildSettings(this.user.id);
             let notes = await global.database.getNotesByAuthorId(this.user.id);
-            
+
             this.relationships = this.user.relationships;
 
             this.readyUp({
@@ -451,7 +483,7 @@ class session {
                 _trace: ["oldcord-v3"]
             });
 
-            for(var guild of this.unavailable_guilds) {
+            for (var guild of this.unavailable_guilds) {
                 await this.dispatch("GUILD_DELETE", {
                     id: guild.id,
                     unavailable: true,
@@ -459,13 +491,13 @@ class session {
             }
 
             if (this.user.bot) {
-                for(var guild of this.guilds) {
+                for (var guild of this.guilds) {
                     if (guild.unavailable) {
                         await this.dispatch("GUILD_CREATE", this.guildCache.find(x => x.id == guild.id));
                     }
                 }
             } //ok
-        } catch(error) { 
+        } catch (error) {
             logText(error, "error");
         }
     }

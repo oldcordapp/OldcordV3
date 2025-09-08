@@ -24,6 +24,7 @@ const sdpTransform = require('sdp-transform');
 const lodash = require('lodash');
 const mediasoup = require('mediasoup');
 const udp = require('dgram');
+const session = require('./helpers/session');
 const udpServer = udp.createSocket('udp4');
 
 let worker;
@@ -57,7 +58,6 @@ global.database = database;
 global.permissions = permissions;
 global.config = globalUtils.config;
 global.rooms = [];
-global.signaling_sessions = [];
 global.signaling_clients = new Map();
 global.udp_sessions = new Map();
 global.encryptions = new Map();
@@ -252,14 +252,33 @@ signalingServer.on('listening', async () => {
 signalingServer.on('connection', async (socket) => {
     logText(`Client has connected`, 'RTC_SERVER');
 
-    global.signaling_sessions.push(socket);
-
     socket.send(JSON.stringify({
         op: 8,
         d: {
             heartbeat_interval: 41250
         }
     }));
+
+    socket.hb = {
+        timeout: setTimeout(async () => {
+            socket.close(4009, 'Session timed out');
+        }, (45 * 1000) + (20 * 1000)),
+        reset: () => {
+            if (socket.hb.timeout != null) {
+                clearInterval(socket.hb.timeout);
+            }
+
+            socket.hb.timeout = new setTimeout(async () => {
+                socket.close(4009, 'Session timed out');
+            }, (45 * 1000) + 20 * 1000);
+        },
+        acknowledge: (d) => {
+            socket.session.send({
+                op: 6,
+                d: d
+            });
+        }
+    };
 
     socket.transport = await serve.createWebRtcTransport({
         listenIps: [{ ip: '127.0.0.1', announcedIp: null }],
@@ -281,8 +300,9 @@ signalingServer.on('connection', async (socket) => {
 
     //let ssrc = socket.sessions.size + 1;
     let ssrc = 1;
-    //let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
+    let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
 
+    /*
     let keyArry = [
         211,
         214,
@@ -317,24 +337,87 @@ signalingServer.on('connection', async (socket) => {
         142,
         194
     ];
+    */
 
-    global.signaling_clients.set(ssrc, socket);
+    socket.ssrc = Math.round(Math.random() * 99999);
+
+    let identified = false;
+    let resumed = false;
+
+    socket.on('close', () => {
+        for (const [id, clientSocket] of global.signaling_clients) {
+            if (id !== socket.userid) {
+                clientSocket.send(JSON.stringify({
+                    op: 13,
+                    d: {
+                        user_id: socket.userid
+                    }
+                }));
+            }
+        }
+    });
 
     socket.on('message', async (data) => {
         let raw_data = Buffer.from(data).toString("utf-8");
         let jason = JSON.parse(raw_data);
 
-        //logText(`Incoming -> ${raw_data}`, 'RTC_SERVER');
+        logText(`Incoming -> ${raw_data}`, 'RTC_SERVER');
 
         if (jason.op === 0) {
             let protocol = jason.d.protocol;
+            let userid = jason.d.user_id;
+            let sessionid = jason.d.session_id;
+            let token = jason.d.token;
+
+            if (identified || socket.session) {
+                return socket.close(4005, 'You have already identified.');
+            }
+
+            logText("New client connection", "GATEWAY");
+
+            identified = true;
+
+            let user = await global.database.getAccountByUserId(userid);
+
+            if (user == null || user.disabled_until) {
+                return socket.close(4004, "Authentication failed");
+            }
+            
+            let gatewaySession = global.sessions.get(sessionid);
+
+            if (!gatewaySession || gatewaySession.user.id !== user.id) {
+                return socket.close(4004, "Authentication failed");
+            }
+
+            socket.user = user;
+
+            let sesh = new session(`voice:${sessionid}`, socket, user, token, false, {
+                game_id: null,
+                status: "online",
+                activities: [],
+                user: globalUtils.miniUserObject(socket.user)
+            }, 'voice');
+
+            socket.session = sesh;
+
+            socket.session.server_id = jason.d.server_id;
+
+            socket.session.start();
+
+            await socket.session.prepareReady();
 
             logText(`A client's state has changed to -> RTC_CONNECTING`, 'RTC_SERVER');
 
+            socket.userid = user.id;
+
+            global.signaling_clients.set(socket.userid, socket);
+
+            logText(`Client ${socket.userid} has identified.`, 'RTC_SERVER');
+        
             socket.send(JSON.stringify({
                 op: 2,
                 d: {
-                    ssrc: ssrc,
+                    ssrc: socket.ssrc,
                     ip: "127.0.0.1",
                     port: protocol === 'webrtc' ? socket.hostPort : config.udp_server_port,
                     modes: ["plain", "xsalsa20_poly1305"],
@@ -342,16 +425,16 @@ signalingServer.on('connection', async (socket) => {
                 }
             }))
         } else if (jason.op == 3) {
-            socket.send(JSON.stringify({
-                op: 6,
-                d: jason.d
-            }))
+            if (!socket.hb) return;
+
+            socket.hb.acknowledge(jason.d);
+            socket.hb.reset();
         } else if (jason.op === 1) {
             let protocol = jason.d.protocol;
 
             global.encryptions.set(ssrc, {
                 mode: "xsalsa20_poly1305",
-                key: keyArry //Array.from(keyBuffer)
+                key: Array.from(keyBuffer)
             });
 
             if (protocol === 'webrtc') {
@@ -366,85 +449,102 @@ signalingServer.on('connection', async (socket) => {
                 let offer = sdpTransform.parse(sdp);
                 let isChrome = codecs.find((val) => val.name == "opus")?.payload_type === 111;
 
-                console.log(offer);
-
                 return socket.send(JSON.stringify({
                     op: 4,
                     d: {
                         sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:${iceParameters.usernameFragment}\na=ice-pwd:${iceParameters.password}\na=fingerprint:sha-256 ${socket.fingerprint}\na=candidate:1 1 UDP ${socket.candidate.priority} ${socket.candidate.address} ${socket.candidate.port} typ host`,
                         mode: "xsalsa20_poly1305",
-                        secret_key: keyArry
+                        secret_key: Array.from(keyBuffer)
+                    }
+                }))
+            } else if (protocol === 'webrtc-p2p') {
+                //this doesnt support encryption
+
+                return socket.send(JSON.stringify({
+                    op: 4,
+                    d: {
+                        peers: Array.from(global.signaling_clients.keys()).filter(id => socket.userid != id)
+                    }
+                }))
+            } else {
+                return socket.send(JSON.stringify({
+                    op: 4,
+                    d: {
+                        mode: "xsalsa20_poly1305",
+                        secret_key: Array.from(keyBuffer)
                     }
                 }))
             }
+        } else if (jason.op === 10) {
+            const recipientId = jason.d.user_id;
+            const recipientSocket = global.signaling_clients.get(recipientId);
 
-           
-           /*
-            a=ice-ufrag:4a/b
-            a=ice-pwd:1msaOo+JhSsXIr+gxhqL282B
-            a=ice-options:trickle
-            a=rtpmap:111 opus/48000/2
-            a=rtpmap:96 VP8/90000
-            a=rtpmap:97 rtx/90000
-           */
-            
-           /*
-            [
-                {
-                    "name": "opus",
-                    "type": "audio",
-                    "priority": 1000,
-                    "payload_type": 111
-                },
-                {
-                    "name": "VP8",
-                    "type": "video",
-                    "priority": 1000,
-                    "payload_type": 96,
-                    "rtx_payload_type": 97
-                },
-                {
-                    "name": "H264",
-                    "type": "video",
-                    "priority": 2000,
-                    "payload_type": 103,
-                    "rtx_payload_type": 104
-                },
-                {
-                    "name": "VP9",
-                    "type": "video",
-                    "priority": 3000,
-                    "payload_type": 98,
-                    "rtx_payload_type": 99
+            if (recipientSocket) {
+                const forwardedPayload = { ...jason.d, user_id: socket.userid };
+                const forwardedMessage = { op: 10, d: forwardedPayload };
+
+                recipientSocket.send(JSON.stringify(forwardedMessage));
+                logText(`Forwarded op:10 message from ${socket.userid} to ${recipientId}`, 'RTC_SERVER');
+            } else {
+                logText(`Recipient ${recipientId} not found.`, 'RTC_SERVER');
+            }
+        } else if (jason.op === 5) {
+            for (const [id, clientSocket] of global.signaling_clients) {
+                if (id !== socket.userid) {
+                    clientSocket.send(JSON.stringify({
+                        op: 5,
+                        d: {
+                            speaking: jason.d.speaking,
+                            ssrc: jason.d.ssrc,
+                            user_id: socket.userid
+                        }
+                    }));
                 }
-            ]
-           */
+            }
+        } else if (jason.op === 7) {
+            let token = jason.d.token;
+            let session_id = jason.d.session_id;
+            let server_id = jason.d.server_id;
 
-           //The 2017 discord client uses sdp-transform, which ONLY works to parse the truncated SDP (only ICE and RTP mappings) in this case
-           //to-do, should I use a media server?
-           /*
-           m=audio 50004 ICE/SDP
+            if (!token || !session_id) return socket.close(4000, 'Invalid payload');
 
-            c=IN IP4 127.0.0.1
+            if (socket.session || resumed) return socket.close(4005, 'Cannot resume at this time');
 
-            a=rtcp:50004
+            resumed = true;
 
-            a=ice-ufrag:jha4
+            let session2 = global.sessions.get(`voice:${session_id}`);
 
-            a=ice-pwd:qBVOne32T8X9VFENnh70ty
+            if (!session2) {
+                let sesh = new session(globalUtils.generateString(16), socket, socket.user, token, false, {
+                    game_id: null,
+                    status: 'online',
+                    activities: [],
+                    user: socket.user ? globalUtils.miniUserObject(socket.user) : null
+                }, 'voice');
 
-            a=fingerprint:sha-256 4A:79:94:16:44:3F:BD:05:41:5A:C7:20:F3:12:54:70:00:73:5D:33:00:2D:2C:80:9B:39:E1:9F:2D:A7:49:87
+                sesh.start();
 
-            a=candidate:1 1 UDP 4261412862 35.213.196.38 50004 typ host
+                socket.session = sesh;
+            }
 
-            a=mid:0
-           */ //The client is expecting an sdp like this from us, ice credentials are random
+            let sesh = null;
+
+            if (!session2) {
+                sesh = socket.session;
+            } else {    
+                sesh = session2;
+                sesh.user = session2.user;
+            }
+
+            sesh.server_id = server_id;
+
+            if (sesh.token !== token) {
+                return socket.close(4004, 'Authentication failed');
+            }
+
             socket.send(JSON.stringify({
-                op: 4,
-                d: {
-                    mode: "xsalsa20_poly1305",
-                    secret_key: keyArry
-                }
+                op: 9,
+                d: null
             }))
         }
     });

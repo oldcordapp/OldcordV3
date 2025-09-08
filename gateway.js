@@ -25,7 +25,7 @@ async function syncPresence(socket, packet) {
         if (packet.d.status) {
             setStatusTo = packet.d.status.toLowerCase();
         }
-        
+
         if (packet.d.afk) {
             setStatusTo = "idle";
         } else if (packet.d.afk === false && packet.d.since === 0 && packet.d.status === "idle") {
@@ -49,7 +49,7 @@ const gateway = {
     port: null,
     handleEvents: function () {
         const server = gateway.server;
-        
+
         server.on("listening", () => {
             logText("Listening for connections", "GATEWAY");
         });
@@ -68,13 +68,13 @@ const gateway = {
                 acc[key] = value;
                 return acc;
             }, {});
-            
+
             if (!cookieStore['release_date']) {
                 socket.close(1000, 'The release_date cookie is required to establish a connection to the Oldcord gateway.');
 
                 return;
             }
-            
+
             if (!globalUtils.addClientCapabilities(cookieStore['release_date'], socket)) {
                 socket.close(1000, 'The release_date cookie is in an invalid format.');
 
@@ -90,6 +90,8 @@ const gateway = {
             let resumed = false;
 
             socket.cookieStore = cookieStore;
+
+            socket.inCall = false;
 
             socket.on('close', async (code) => {
                 if (socket.session) {
@@ -109,8 +111,8 @@ const gateway = {
             if (socket.wantsZlib) {
                 let buffer;
 
-                buffer = zlib.deflateSync(heartbeat_payload, {chunkSize: 65535, flush: zlib.constants.Z_SYNC_FLUSH, finishFlush: zlib.constants.Z_SYNC_FLUSH, level: zlib.constants.Z_BEST_COMPRESSION})
-    
+                buffer = zlib.deflateSync(heartbeat_payload, { chunkSize: 65535, flush: zlib.constants.Z_SYNC_FLUSH, finishFlush: zlib.constants.Z_SYNC_FLUSH, level: zlib.constants.Z_BEST_COMPRESSION })
+
                 if (!socket.zlibHeader) {
                     buffer = buffer.subarray(2, buffer.length);
                 }
@@ -183,7 +185,7 @@ const gateway = {
                             user: globalUtils.miniUserObject(socket.user)
                         });
 
-                        socket.session = sesh;        
+                        socket.session = sesh;
 
                         socket.session.start();
 
@@ -225,12 +227,10 @@ const gateway = {
                         let self_deaf = packet.d.self_deaf;
 
                         if (guild_id === null && channel_id === null) {
-                            /*
                             await global.dispatcher.dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis("VOICE_STATE_UPDATE", {
                                 channel_id: channel_id,
                                 guild_id: guild_id,
                                 user_id: socket.user.id,
-                                //user: socket.user,
                                 session_id: socket.session.id,
                                 deaf: false,
                                 mute: false,
@@ -239,9 +239,9 @@ const gateway = {
                                 self_video: false,
                                 suppress: false
                             });
-                            */
 
                             socket.current_guild = null;
+                            socket.inCall = false;
                         } else if (!socket.current_guild) {
                             socket.current_guild = await global.database.getGuildById(guild_id);
                         }
@@ -251,26 +251,16 @@ const gateway = {
                         if (!room) {
                             global.rooms.push({
                                 room_id: `${guild_id}:${channel_id}`,
-                                participants: [{
-                                    user: globalUtils.miniUserObject(socket.user),
-                                    ssrc: Math.round(Math.random() * 100000)
-                                }]
+                                participants: []
                             });
-                        } else {
-                            if (!room.participants.find(x => x.user.id === socket.user.id)) {
-                                room.participants.push({
-                                    user: globalUtils.miniUserObject(socket.user),
-                                    ssrc: Math.round(Math.random() * 100000)
-                                });
-                            }
+
+                            room = global.rooms.find(x => x.room_id === `${guild_id}:${channel_id}`);
                         }
 
-                        /*
                         await global.dispatcher.dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis("VOICE_STATE_UPDATE", {
                             channel_id: channel_id,
                             guild_id: guild_id,
                             user_id: socket.user.id,
-                            //user: socket.user,
                             session_id: socket.session.id,
                             deaf: false,
                             mute: false,
@@ -279,13 +269,12 @@ const gateway = {
                             self_video: false,
                             suppress: false
                         });
-                        */ //bad practice, really really bad practice, but ive left it in for further webrtc testing
+                        //bad practice, really really bad practice, but ive left it in for further webrtc testing
 
                         socket.session.dispatch("VOICE_STATE_UPDATE", {
                             channel_id: channel_id,
                             guild_id: guild_id,
                             user_id: socket.user.id,
-                            //user: socket.user,
                             session_id: socket.session.id,
                             deaf: false,
                             mute: false,
@@ -295,13 +284,22 @@ const gateway = {
                             suppress: false
                         });
 
-                        socket.session.dispatch("VOICE_SERVER_UPDATE", {
-                            token: globalUtils.generateString(30),
-                            //session_id: sesh_id,
-                            guild_id: guild_id,
-                            channel_id: channel_id,
-                            endpoint: globalUtils.generateRTCServerURL()
-                        });
+                        if (!room.participants.find(x => x.user.id === socket.user.id)) {
+                            room.participants.push({
+                                user: globalUtils.miniUserObject(socket.user),
+                                ssrc: Math.round(Math.random() * 100000)
+                            });
+                        }
+
+                        if (!socket.inCall && socket.current_guild != null) {
+                            socket.session.dispatch("VOICE_SERVER_UPDATE", {
+                                token: globalUtils.generateString(30),
+                                guild_id: guild_id,
+                                channel_id: channel_id,
+                                endpoint: globalUtils.generateRTCServerURL()
+                            });
+                            socket.inCall = true;
+                        }
                     } else if (packet.op == 12) {
                         if (!socket.session) return;
 
@@ -313,7 +311,7 @@ const gateway = {
 
                         if (usersGuilds.length === 0) return;
 
-                        for(var guild of guild_ids) {
+                        for (var guild of guild_ids) {
                             let guildObj = usersGuilds.find(x => x.id === guild);
 
                             if (!guildObj) continue;
@@ -383,7 +381,7 @@ const gateway = {
 
                         let related_presences = [];
 
-                        for(var presence of guild.presences) {
+                        for (var presence of guild.presences) {
                             let member = selected_members.find(x => x.id === presence.user.id);
 
                             if (member) {
@@ -395,38 +393,38 @@ const gateway = {
                         }
 
                         const online = related_presences
-                        .filter(p => p.presence.status !== 'offline' && p.presence.status !== 'invisible')
-                        .map(p => ({
-                            member: {
-                                ...p.member,
-                                presence: {
-                                    status: p.presence.status,
-                                    user: {
-                                        id: p.member.user.id,
-                                    },
-                                    game: null,
-                                    activities: [],
-                                    client_status: null
+                            .filter(p => p.presence.status !== 'offline' && p.presence.status !== 'invisible')
+                            .map(p => ({
+                                member: {
+                                    ...p.member,
+                                    presence: {
+                                        status: p.presence.status,
+                                        user: {
+                                            id: p.member.user.id,
+                                        },
+                                        game: null,
+                                        activities: [],
+                                        client_status: null
+                                    }
                                 }
-                            }
-                        }));
+                            }));
 
-                    const offline = related_presences
-                        .filter(p => p.presence.status === 'offline' || p.presence.status === 'invisible')
-                        .map(p => ({
-                            member: {
-                                ...p.member,
-                                presence: {
-                                    status: p.presence.status,
-                                    user: {
-                                        id: p.member.user.id,
-                                    },
-                                    game: null,
-                                    activities: [],
-                                    client_status: null
+                        const offline = related_presences
+                            .filter(p => p.presence.status === 'offline' || p.presence.status === 'invisible')
+                            .map(p => ({
+                                member: {
+                                    ...p.member,
+                                    presence: {
+                                        status: p.presence.status,
+                                        user: {
+                                            id: p.member.user.id,
+                                        },
+                                        game: null,
+                                        activities: [],
+                                        client_status: null
+                                    }
                                 }
-                            }
-                        }));
+                            }));
 
                         const items = [
                             { group: { id: 'online', count: online.length } },
@@ -512,7 +510,7 @@ const gateway = {
                         }
                     }
                 }
-                catch(error) {
+                catch (error) {
                     logText(error, "error");
 
                     socket.close(4000, 'Invalid payload');

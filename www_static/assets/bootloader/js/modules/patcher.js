@@ -57,7 +57,11 @@ const patcher = {
     if (getEnabledPatches().includes("forceWebRtcFullSdp")) {
       script = script.replaceAll(`truncateSDP=c`,`truncateSDP=(e)=>{return{sdp:e,codecs:l(e).codecs}}`);
     }
-    //script = script.replaceAll(`t.sdp`, `t`);
+
+    if (getEnabledPatches().includes("forceWebRtcP2P")) {
+      script = script.replaceAll(`.p2p=n`, `.p2p=true`);
+      script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`);
+    }
 
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
