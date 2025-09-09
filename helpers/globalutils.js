@@ -24,7 +24,7 @@ const globalUtils = {
         return `${config.secure ? 'wss' : 'ws'}://${config.gateway_url == "" ? (host ?? config.base_url) : config.gateway_url}:${config.ws_port}`;
     },
     generateRTCServerURL: () => {
-        return `${config.base_url}:${config.signaling_server_port}`;
+        return config.signaling_server_url == "" ? (config.base_url + ":" + config.signaling_server_port) : config.signaling_server_url;
     },
     unavailableGuildsStore: [],
     generateString: (length) => {
