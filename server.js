@@ -269,43 +269,7 @@ signalingServer.on('connection', async (socket) => {
         }
     };
 
-    let keyBuffer = [
-                    211,
-                    214,
-                    237,
-                    8,
-                    221,
-                    92,
-                    86,
-                    132,
-                    167,
-                    57,
-                    17,
-                    71,
-                    189,
-                    169,
-                    224,
-                    211,
-                    115,
-                    17,
-                    191,
-                    82,
-                    96,
-                    98,
-                    107,
-                    155,
-                    92,
-                    72,
-                    52,
-                    246,
-                    52,
-                    109,
-                    142,
-                    194
-                ];
-
-                //to-do fix the weird bug here
-    //let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
+    let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
 
     socket.ssrc = Math.round(Math.random() * 99999);
 
@@ -418,12 +382,11 @@ signalingServer.on('connection', async (socket) => {
 
                 let offer = sdpTransform.parse(sdp);
 
-
                 //very heavily to-do
                 return socket.send(JSON.stringify({
                     op: 4,
                     d: {
-                        sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:abc\na=ice-pwd:def\na=fingerprint:sha-256 AA:BB:CC:DD:EE:FF\na=candidate:1 1 UDP 4891913 127.0.0.1 3000 typ host`
+                        sdp: `m=audio 5000 ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:5000\na=ice-ufrag:abc\na=ice-pwd:def\na=fingerprint:sha-256 AA:BB:CC:DD:EE:FF\na=candidate:1 1 UDP 4891913 127.0.0.1 3000 typ host`
                     }
                 }));
             } else if (protocol === 'webrtc-p2p') {
