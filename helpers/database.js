@@ -2533,7 +2533,7 @@ const database = {
                 emojis: emojis,
                 webhooks: webhooks,
                 presences: presences,
-                voice_states: [],
+                voice_states: global.guild_voice_states.get(rows[0].id) || [],
                 vanity_url_code: rows[0].vanity_url == 'NULL' ? null : rows[0].vanity_url,
                 creation_date: rows[0].creation_date,
                 features: rows[0].features ? JSON.parse(rows[0].features) : [],

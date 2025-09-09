@@ -61,6 +61,7 @@ global.rooms = [];
 global.signaling_clients = new Map();
 global.udp_sessions = new Map();
 global.encryptions = new Map();
+global.guild_voice_states = new Map(); //guild_id -> voiceState[]
 
 udpServer.on('listening', () => {
     var address = udpServer.address();
@@ -458,8 +459,8 @@ signalingServer.on('connection', async (socket) => {
                     op: 4,
                     d: {
                         sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:${iceParameters.usernameFragment}\na=ice-pwd:${iceParameters.password}\na=fingerprint:sha-256 ${socket.fingerprint}\na=candidate:1 1 UDP ${socket.candidate.priority} ${socket.candidate.address} ${socket.candidate.port} typ host`,
-                        mode: "xsalsa20_poly1305",
-                        secret_key: Array.from(keyBuffer)
+                        //mode: "xsalsa20_poly1305",
+                        //secret_key: Array.from(keyBuffer)
                     }
                 }))
             } else if (protocol === 'webrtc-p2p') {

@@ -95,6 +95,20 @@ const gateway = {
 
             socket.on('close', async (code) => {
                 if (socket.session) {
+                    if (socket.current_guild) {
+                        let voiceStates = global.guild_voice_states.get(socket.current_guild.id);
+                        let possibleIndex = voiceStates.findIndex(x => x.user_id === socket.user.id);
+                        let myVoiceState = voiceStates[possibleIndex];
+
+                        if (myVoiceState) {
+                            myVoiceState.channel_id = null;
+
+                            await global.dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", myVoiceState);
+                        }
+
+                        voiceStates.splice(possibleIndex, 1);
+                    }
+
                     socket.session.onClose(code);
                 }
             });
@@ -227,22 +241,31 @@ const gateway = {
                         let self_deaf = packet.d.self_deaf;
 
                         if (guild_id === null && channel_id === null) {
-                            await global.dispatcher.dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis("VOICE_STATE_UPDATE", {
-                                channel_id: channel_id,
-                                guild_id: guild_id,
-                                user_id: socket.user.id,
-                                session_id: socket.session.id,
-                                deaf: false,
-                                mute: false,
-                                self_deaf: self_deaf,
-                                self_mute: self_mute,
-                                self_video: false,
-                                suppress: false
-                            });
+                            if (socket.current_guild !== null) {
+                                let voiceStates = global.guild_voice_states.get(socket.current_guild.id);
 
-                            socket.current_guild = null;
-                            socket.inCall = false;
-                        } else if (!socket.current_guild) {
+                                voiceStates.splice(voiceStates.findIndex(x => x.user_id === socket.user.id), 1);
+
+                                await global.dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", {
+                                    channel_id: channel_id,
+                                    guild_id: socket.current_guild.id, //must be guild id even if they left the vc and they dont send any guild id
+                                    user_id: socket.user.id,
+                                    session_id: socket.session.id,
+                                    deaf: false,
+                                    mute: false,
+                                    self_deaf: self_deaf,
+                                    self_mute: self_mute,
+                                    self_video: false,
+                                    suppress: false
+                                });
+
+                                socket.current_guild = null;
+                                socket.inCall = false;
+                                return;
+                            }
+                        }
+                        
+                        if (!socket.current_guild) {
                             socket.current_guild = await global.database.getGuildById(guild_id);
                         }
 
@@ -254,24 +277,12 @@ const gateway = {
                                 participants: []
                             });
 
+                            global.guild_voice_states.set(guild_id, []);
+
                             room = global.rooms.find(x => x.room_id === `${guild_id}:${channel_id}`);
                         }
 
-                        await global.dispatcher.dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis("VOICE_STATE_UPDATE", {
-                            channel_id: channel_id,
-                            guild_id: guild_id,
-                            user_id: socket.user.id,
-                            session_id: socket.session.id,
-                            deaf: false,
-                            mute: false,
-                            self_deaf: self_deaf,
-                            self_mute: self_mute,
-                            self_video: false,
-                            suppress: false
-                        });
-                        //bad practice, really really bad practice, but ive left it in for further webrtc testing
-
-                        socket.session.dispatch("VOICE_STATE_UPDATE", {
+                        await global.dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", {
                             channel_id: channel_id,
                             guild_id: guild_id,
                             user_id: socket.user.id,
@@ -289,6 +300,23 @@ const gateway = {
                                 user: globalUtils.miniUserObject(socket.user),
                                 ssrc: Math.round(Math.random() * 100000)
                             });
+
+                            let voiceStates = global.guild_voice_states.get(guild_id);
+
+                            if (!voiceStates.find(y => y.user_id === socket.user.id)) {
+                                voiceStates.push({
+                                    user_id: socket.user.id,
+                                    session_id: socket.session.id,
+                                    guild_id: guild_id,
+                                    channel_id: channel_id,
+                                    mute: false,
+                                    deaf: false,
+                                    self_deaf: self_deaf,
+                                    self_mute: self_mute,
+                                    self_video: false,
+                                    suppress: false
+                                });
+                            }
                         }
 
                         if (!socket.inCall && socket.current_guild != null) {
