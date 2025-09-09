@@ -22,24 +22,9 @@ const WebSocket = require('ws').WebSocket;
 const sodium = require('libsodium-wrappers');
 const sdpTransform = require('sdp-transform');
 const lodash = require('lodash');
-const mediasoup = require('mediasoup');
 const udp = require('dgram');
 const session = require('./helpers/session');
 const udpServer = udp.createSocket('udp4');
-
-let worker;
-let serve;
-
-(async () => {
-    worker = await mediasoup.createWorker();
-    const mediaCodecs = [{
-        kind: 'audio',
-        mimeType: 'audio/opus',
-        clockRate: 48000,
-        channels: 2
-    }];
-    serve = await worker.createRouter({ mediaCodecs });
-})();
 
 app.set('trust proxy', 1);
 
@@ -284,64 +269,43 @@ signalingServer.on('connection', async (socket) => {
         }
     };
 
-    socket.transport = await serve.createWebRtcTransport({
-        listenIps: [{ ip: '127.0.0.1', announcedIp: null }],
-        enableUdp: true,
-        enableTcp: true,
-        initialAvailableOutgoingBitrate: 1000000,
-        portRange: { min: 10000, max: 20000 }
-    });
+    let keyBuffer = [
+                    211,
+                    214,
+                    237,
+                    8,
+                    221,
+                    92,
+                    86,
+                    132,
+                    167,
+                    57,
+                    17,
+                    71,
+                    189,
+                    169,
+                    224,
+                    211,
+                    115,
+                    17,
+                    191,
+                    82,
+                    96,
+                    98,
+                    107,
+                    155,
+                    92,
+                    72,
+                    52,
+                    246,
+                    52,
+                    109,
+                    142,
+                    194
+                ];
 
-    const dtlsParameters = socket.transport.dtlsParameters;
-    const iceParameters = socket.transport.iceParameters;
-    const iceCandidates = socket.transport.iceCandidates;
-
-    socket.candidate = iceCandidates[0];
-    socket.fingerprint = dtlsParameters.fingerprints.find(x => x.algorithm === 'sha-256').value;
-
-    socket.hostCandidate = iceCandidates.find(candidate => candidate.type === 'host');
-    socket.hostPort = socket.hostCandidate.port;
-
-    //let ssrc = socket.sessions.size + 1;
-    let ssrc = 1;
-    let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
-
-    /*
-    let keyArry = [
-        211,
-        214,
-        237,
-        8,
-        221,
-        92,
-        86,
-        132,
-        167,
-        57,
-        17,
-        71,
-        189,
-        169,
-        224,
-        211,
-        115,
-        17,
-        191,
-        82,
-        96,
-        98,
-        107,
-        155,
-        92,
-        72,
-        52,
-        246,
-        52,
-        109,
-        142,
-        194
-    ];
-    */
+                //to-do fix the weird bug here
+    //let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
 
     socket.ssrc = Math.round(Math.random() * 99999);
 
@@ -425,7 +389,7 @@ signalingServer.on('connection', async (socket) => {
                 d: {
                     ssrc: socket.ssrc,
                     ip: "127.0.0.1",
-                    port: protocol === 'webrtc' ? socket.hostPort : config.udp_server_port,
+                    port: config.udp_server_port,
                     modes: ["plain", "xsalsa20_poly1305"],
                     heartbeat_interval: 1
                 }
@@ -438,7 +402,7 @@ signalingServer.on('connection', async (socket) => {
         } else if (jason.op === 1) {
             let protocol = jason.d.protocol;
 
-            global.encryptions.set(ssrc, {
+            global.encryptions.set(socket.ssrc, {
                 mode: "xsalsa20_poly1305",
                 key: Array.from(keyBuffer)
             });
@@ -453,16 +417,15 @@ signalingServer.on('connection', async (socket) => {
                 }]; //older clients dont have video/screensharing so its just voice yay
 
                 let offer = sdpTransform.parse(sdp);
-                let isChrome = codecs.find((val) => val.name == "opus")?.payload_type === 111;
 
+
+                //very heavily to-do
                 return socket.send(JSON.stringify({
                     op: 4,
                     d: {
-                        sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:${iceParameters.usernameFragment}\na=ice-pwd:${iceParameters.password}\na=fingerprint:sha-256 ${socket.fingerprint}\na=candidate:1 1 UDP ${socket.candidate.priority} ${socket.candidate.address} ${socket.candidate.port} typ host`,
-                        //mode: "xsalsa20_poly1305",
-                        //secret_key: Array.from(keyBuffer)
+                        sdp: `m=audio ${socket.hostPort} ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:${socket.hostPort}\na=ice-ufrag:abc\na=ice-pwd:def\na=fingerprint:sha-256 AA:BB:CC:DD:EE:FF\na=candidate:1 1 UDP 4891913 127.0.0.1 3000 typ host`
                     }
-                }))
+                }));
             } else if (protocol === 'webrtc-p2p') {
                 //this doesnt support encryption
 

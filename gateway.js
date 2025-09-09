@@ -241,7 +241,7 @@ const gateway = {
                         let self_deaf = packet.d.self_deaf;
 
                         if (guild_id === null && channel_id === null) {
-                            if (socket.current_guild !== null) {
+                            if (socket.current_guild && socket.current_guild.id && socket.user && socket.user.id) {
                                 let voiceStates = global.guild_voice_states.get(socket.current_guild.id);
 
                                 voiceStates.splice(voiceStates.findIndex(x => x.user_id === socket.user.id), 1);

@@ -81,6 +81,10 @@ const dispatcher = {
         return true;
     },
     dispatchEventInGuild: async (guild, type, payload) => {
+        if (!guild || !guild.members) {
+            return;
+        }
+        
         for(let i = 0; i < guild.members.length; i++) {
             let member = guild.members[i];
 
