@@ -55,14 +55,15 @@ const patcher = {
     }
 
     if (getEnabledPatches().includes("forceWebRtcFullSdp")) {
-      script = script.replaceAll(`truncateSDP=c`,`truncateSDP=(e)=>{return{sdp:e,codecs:l(e).codecs}}`);
+      script = script.replaceAll(/truncateSDP=./g,`truncateSDP=(e)=>{return{sdp:e,codecs:l(e).codecs}}`);
     }
 
     if (getEnabledPatches().includes("forceWebRtcP2P")) {
-      script = script.replaceAll(`.p2p=n`, `.p2p=true`);
-      script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`);
+      script = script.replaceAll(/.p2p=./g, `.p2p=true`);
     }
 
+    script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`); //deprecation for webrtc fix
+    
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");
