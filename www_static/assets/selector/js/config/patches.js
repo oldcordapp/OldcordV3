@@ -31,6 +31,17 @@ export const QOL_PATCHES = {
         defaultEnabled: false,
         compatibleVersions: '2017'
     },
+    modernizeTruncationSdp: {
+        id: 'modernizeTruncationSdp',
+        label: 'Modernize WebRTC SDP Truncation',
+        description: 'Basically sends more than just ICE & RTP mappings (Like the modern Discord clients) - *Does NOT work with forceWebRtcFullSdp*',
+        mandatory: false,
+        defaultEnabled: false,
+        compatibleVersions: '2017',
+        incompatiblePatches: [
+            'forceWebRtcFullSdp',
+        ]
+    },
     forceWebRtcP2P: {
         id: 'forceWebRtcP2P',
         label: 'Force WebRTC P2P',

@@ -54,15 +54,21 @@ const patcher = {
       );
     }
 
-    if (getEnabledPatches().includes("forceWebRtcFullSdp")) {
+    if (getEnabledPatches().includes("forceWebRtcFullSdp") && !getEnabledPatches().includes("modernizeTruncationSdp")) {
       script = script.replaceAll(/truncateSDP=./g,`truncateSDP=(e)=>{return{sdp:e,codecs:l(e).codecs}}`);
+    }
+
+    if (getEnabledPatches().includes("modernizeTruncationSdp") && !getEnabledPatches().includes("forceWebRtcFullSdp")) {
+      script=script.replaceAll(`a=new RegExp("^a=ice|opus|VP8|"+(o&&o.rtxPayloadType||0)+" rtx","i")`,`z=n,a=new RegExp("^a=ice|a=extmap|a=fingerprint|opus|VP8|".concat(null!=(z=null==i?void 0:i.rtxPayloadType)?z:0," rtx"),"i")`);
     }
 
     if (getEnabledPatches().includes("forceWebRtcP2P")) {
       script = script.replaceAll(/.p2p=./g, `.p2p=true`);
     }
 
+    script = script.replaceAll(`iceServers:n`, `iceServers:n,sdpSemantics:"unified-plan"`); //make sure it complies cuz liek every library now uses unified-plan
     script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`); //deprecation for webrtc fix
+    script = script.replaceAll(`"sdparta_"+r`, `r`); //fuc kyou firefox webrtc doesnt like non numeric values as mid
     
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
