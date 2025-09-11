@@ -380,7 +380,7 @@ const globalUtils = {
             mention_here: false,
         };
 
-        if (!text)
+        if (typeof text !== "string" || !text)
             return result;
 
         let i = 0;
