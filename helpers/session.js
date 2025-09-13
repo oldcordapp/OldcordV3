@@ -9,7 +9,7 @@ const BUFFER_LIMIT = 500; //max dispatch event backlog before terminating?
 const SESSION_TIMEOUT = 10 * 1000; //10 seconds brooo
 
 class session {
-    constructor(id, socket, user, token, ready, presence, type = 'gateway') {
+    constructor(id, socket, user, token, ready, presence, guild_id = 0, channel_id = 0, type = 'gateway') {
         this.id = id;
         this.socket = socket;
         this.token = token;
@@ -18,11 +18,13 @@ class session {
         this.time = Date.now();
         this.ready = ready;
         this.presence = presence;
-        this.type = type || 'gateway'; //or voice
+        this.type = type ?? 'gateway'; //or voice
         this.dead = false;
         this.lastMessage = Date.now();
         this.ratelimited = false;
         this.messages = 0;
+        this.channel_id = channel_id;
+        this.guild_id = guild_id;
         this.eventsBuffer = [];
         this.guilds = [];
         this.unavailable_guilds = [];

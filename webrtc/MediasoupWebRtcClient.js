@@ -275,7 +275,6 @@ class MediasoupWebRtcClient {
                 });
             }
         } catch { }
-
     }
 
     stopPublishingTrack(type) {

@@ -264,6 +264,9 @@ const gateway = {
                                 return;
                             }
                         }
+
+                        socket.session.guild_id = guild_id ?? 0;
+                        socket.session.channel_id = channel_id ?? 0;
                         
                         if (!socket.current_guild) {
                             socket.current_guild = await global.database.getGuildById(guild_id);

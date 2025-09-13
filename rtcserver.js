@@ -123,9 +123,10 @@ const rtcServer = {
                         status: "online",
                         activities: [],
                         user: globalUtils.miniUserObject(socket.user)
-                    }, 'voice');
+                    }, gatewaySession.guild_id, gatewaySession.channel_id, 'voice');
 
                     socket.session = sesh;
+                    socket.gatewaySession = gatewaySession;
 
                     socket.session.server_id = server_id;
 
@@ -141,7 +142,7 @@ const rtcServer = {
 
                     this.debug(`Client ${socket.userid} has identified.`);
 
-                    let roomId = `${server_id}-1413791197956255748`;
+                    let roomId = `${socket.gatewaySession.guild_id}-${socket.gatewaySession.channel_id}`;
 
                     socket.client = await global.mediaserver.join(roomId, user.id, socket, "guild-voice");
 
@@ -337,6 +338,8 @@ const rtcServer = {
                             socket.client.stopPublishingTrack("video");
                         }
 
+                        let roomId = `${socket.gatewaySession.guild_id}-${socket.gatewaySession.channel_id}`;
+
                         if (wantsToProduceAudio) {
                             if (!socket.client.isProducingAudio()) {
                                 await socket.client.publishTrack("audio", {
@@ -345,7 +348,7 @@ const rtcServer = {
                             }
 
                             for (const client of global.mediaserver.getClientsForRtcServer(
-                                `1413791197947867136-1413791197956255748`,
+                                roomId,
                             )) {
                                 if (client.user_id === socket.userid) continue;
 
@@ -369,7 +372,7 @@ const rtcServer = {
                             }
 
                             for (const client of global.mediaserver.getClientsForRtcServer(
-                                `1413791197947867136-1413791197956255748`,
+                                roomId,
                             )) {
                                 if (client.user_id === socket.userid) continue;
 
@@ -436,7 +439,7 @@ const rtcServer = {
                             status: 'online',
                             activities: [],
                             user: socket.user ? globalUtils.miniUserObject(socket.user) : null
-                        }, 'voice');
+                        }, server_id, 0, 'voice');
 
                         sesh.start();
 
