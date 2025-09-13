@@ -21,6 +21,7 @@ const fetch = require('node-fetch');
 const MediasoupSignalingDelegate = require('./webrtc/MediasoupSignalingDelegate');
 const udpServer = require('./udpserver');
 const rtcServer = require('./rtcserver');
+const os = require('os');
 
 app.set('trust proxy', 1);
 
@@ -114,10 +115,35 @@ if (config.port == config.ws_port) {
 
 gateway.ready(gatewayServer);
 
+//https://stackoverflow.com/a/15075395
+function getIPAddress() {
+    var interfaces = os.networkInterfaces();
+    for (var devName in interfaces) {
+        var iface = interfaces[devName];
+
+        for (var i = 0; i < iface.length; i++) {
+            var alias = iface[i];
+
+            if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
+                return alias.address;
+        }
+    }
+    return '0.0.0.0';
+}
+
 (async () => {
+    let ip_address = getIPAddress();
+
+    if (config.media_server_public_ip) {
+        let try_get_ip = await fetch("https://checkip.amazonaws.com");
+
+        ip_address = await try_get_ip.text();
+    }
+
     global.udpServer.start(config.udp_server_port, true);
     global.rtcServer.start(config.signaling_server_port, true);
-    await global.global.mediaserver.start('10.158.87.54', 5000, 6000, true);
+
+    await global.global.mediaserver.start(ip_address, 5000, 6000, true);
 })();
 
 httpServer.listen(config.port, () => {

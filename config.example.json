@@ -3,6 +3,7 @@
     "secure": false,
     "base_url": "127.0.0.1",
     "gateway_url": "",
+    "media_server_public_ip" : false,
     "signaling_server_url": "",
     "signaling_server_port": 5000,
     "udp_server_port" : 6000,

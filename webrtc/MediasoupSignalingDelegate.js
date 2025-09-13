@@ -4,6 +4,7 @@ const mediasoup = require("mediasoup");
 const { SDPInfo } = require("semantic-sdp");
 const { VoiceRoom } = require("./VoiceRoom");
 const { MediasoupWebRtcClient } = require("./MediasoupWebRtcClient");
+const { logText } = require("../helpers/logger");
 
 class MediasoupSignalingDelegate {
     constructor() {
@@ -14,7 +15,7 @@ class MediasoupSignalingDelegate {
     }
 
     async start(public_ip, portMin, portMax, debugLogs) {
-        this._ip = public_ip;
+        this._ip = public_ip.replace("\n", "");
         const numWorkers = 2;
 
         for (let i = 0; i < numWorkers; i++) {
@@ -47,6 +48,8 @@ class MediasoupSignalingDelegate {
             });
             this._workers.push(worker);
         }
+
+        logText(`Media Server online on ${this.ip}:${this.port}`, `MEDIA_SERVER`);
     }
 
     async join(roomId, userId, ws, type) {
