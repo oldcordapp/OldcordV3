@@ -55,21 +55,20 @@ const patcher = {
     }
 
     if (getEnabledPatches().includes("modernizeTruncationSdp")) {
-      script=script.replaceAll(`"^a=ice|opus|VP8|"`,`"^a=ice|a=extmap|a=fingerprint|opus|VP8|"`);
-      script=script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`);
+      script = script.replaceAll(`"^a=ice|opus|VP8|"`,`"^a=ice|a=extmap|a=fingerprint|opus|VP8|"`);
+      script = script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`);
     }
 
     if (getEnabledPatches().includes("forceWebRtcP2P")) {
       script = script.replaceAll(/.p2p=./g, `.p2p=true`);
     }
 
-   // script = script.replaceAll(`t.autoplay=!0`, `t.srcObject=this._stream;t.play()`); //figure out user interaction fix for autoplay
     script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`); //  deprecation for webrtc fix
-    script = script.replaceAll(`"sdparta_"+r`, `r`); //firefox webrtc doesnt like non numeric values as mid
+    script = script.replaceAll(`"sdparta_"+`, ``); //firefox webrtc doesnt like non numeric values as mid
+    script = script.replaceAll(`sdparta_`, ``);
     script = script.replaceAll(`URL.revokeObjectURL(this._audioElement.src))`, `this._audioElement.srcObject = null)`);
-    //script = script.replaceAll(`t.autoplay=!0,`, ``);
-    //script = script.replaceAll(`t.srcObject=this._stream,`, `t.srcObject=this._stream,window.audioElement=t,`)
     script = script.replaceAll(`this._stream.addTrack(e),null==this._audioElement`, `this._stream.addTrack(e),null==this._audioElement,e.kind==='audio'`);
+
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");
