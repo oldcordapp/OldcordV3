@@ -143,7 +143,7 @@ function getIPAddress() {
     global.udpServer.start(config.udp_server_port, true);
     global.rtcServer.start(config.signaling_server_port, true);
 
-    await global.global.mediaserver.start(ip_address, 5000, 6000, true);
+    await global.mediaserver.start(ip_address, 5000, 6000, true);
 })();
 
 httpServer.listen(config.port, () => {
