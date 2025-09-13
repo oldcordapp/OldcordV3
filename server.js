@@ -19,12 +19,12 @@ const app = express();
 const emailer = require('./helpers/emailer');
 const fetch = require('node-fetch');
 const WebSocket = require('ws').WebSocket;
-const sodium = require('libsodium-wrappers');
 const sdpTransform = require('sdp-transform');
 const lodash = require('lodash');
-const udp = require('dgram');
 const session = require('./helpers/session');
-const udpServer = udp.createSocket('udp4');
+const MediasoupSignalingDelegate = require('./webrtc/MediasoupSignalingDelegate');
+const udpServer = require('./udpserver');
+const rtcServer = require('./rtcserver');
 
 app.set('trust proxy', 1);
 
@@ -32,6 +32,9 @@ database.setupDatabase();
 
 global.dispatcher = dispatcher;
 global.gateway = gateway;
+global.udpServer = udpServer;
+global.rtcServer = rtcServer;
+global.mediaserver = new MediasoupSignalingDelegate();
 
 if (globalUtils.config.email_config.enabled) {
     global.emailer = new emailer(globalUtils.config.email_config, globalUtils.config.max_per_timeframe_ms, globalUtils.config.timeframe_ms, globalUtils.config.ratelimit_modifier);
@@ -43,469 +46,34 @@ global.database = database;
 global.permissions = permissions;
 global.config = globalUtils.config;
 global.rooms = [];
-global.signaling_clients = new Map();
-global.udp_sessions = new Map();
-global.encryptions = new Map();
-global.guild_voice_states = new Map(); //guild_id -> voiceState[]
-
-udpServer.on('listening', () => {
-    var address = udpServer.address();
-    var ipaddr = address.address;
-
-    logText(`Ready on ${ipaddr}:${config.udp_server_port}`, 'UDP_SERVER');
-});
-
-udpServer.on('error',function(error){
-    logText(`An unexpected error occurred: ${error.toString()}`, 'UDP_SERVER');
-    udpServer.close();
-});
-
-udpServer.sendBytes = (address, port, bytes) => {
-    udpServer.send(bytes, port, address, (err) => {
-        if (err) {
-            console.error('Error sending response:', err);
-        } else {
-            console.log(`Sent ${bytes.length} bytes to ${address}:${port}`);
-        }
-    });
-};
-
-udpServer.on('message', (msg, info) => {
-    if (msg.length < 4) {
-        console.log("msg length failed check")
-        return;
-    }
-
-    let ssrc = msg.readUInt32BE(0); //always in every packet, if its not here invalid packet
-
-    let session = global.udp_sessions.get(ssrc);
-
-    if (!session) {
-        let encryption = global.encryptions.get(ssrc);
-
-        if (!encryption) {
-            encryption = {
-                mode: "xsalsa20_poly1305",
-                key: [
-                    211,
-                    214,
-                    237,
-                    8,
-                    221,
-                    92,
-                    86,
-                    132,
-                    167,
-                    57,
-                    17,
-                    71,
-                    189,
-                    169,
-                    224,
-                    211,
-                    115,
-                    17,
-                    191,
-                    82,
-                    96,
-                    98,
-                    107,
-                    155,
-                    92,
-                    72,
-                    52,
-                    246,
-                    52,
-                    109,
-                    142,
-                    194
-                ]
-            }
-        }
-
-        let sesh = {
-            ip_addr: info.address,
-            ip_port: info.port,
-            encryption_mode: encryption.mode,
-            encryption_key: encryption.key
-        };
-
-        global.udp_sessions.set(ssrc, sesh);
-
-        session = sesh;
-    }
-
-    logText(`Incoming -> ${msg.length} bytes from ${info.address}:${info.port}`, 'UDP_SERVER');
-    logText(`Attempted deserialization -> ${msg.toString()} from ${info.address}:${info.port}`, 'UDP_SERVER');
-
-    if (msg.length === 70) {
-        //ip discovery
-
-        const ssrc = msg.readUInt32BE(0);
-        console.log(`Received SSRC: ${ssrc}`);
-
-        let ipDiscoveryResponse = Buffer.alloc(70);
-
-        ipDiscoveryResponse.writeUInt32LE(ssrc, 0);
-        ipDiscoveryResponse.write(info.address, 4, 'utf8');
-        ipDiscoveryResponse.writeUInt16LE(info.port, 68);
-
-        udpServer.sendBytes(info.address, info.port, ipDiscoveryResponse);
-    } else if (msg.length === 8) {
-        //ping packet(?)
-
-        udpServer.sendBytes(info.address, info.port, msg);
-    } else if (msg.length > 12) {
-        console.log('incoming voice data??');
-
-        const ssrc = msg.readUInt32BE(8);
-        const sequence = msg.readUInt16BE(2);
-        const timestamp = msg.readUInt32BE(4);
-
-        const session = global.udp_sessions.get(ssrc);
-
-        if (!session) {
-            console.error(`Received voice data for unknown SSRC: ${ssrc}`);
-            return;
-        }
-
-        const voiceKey = Buffer.from(session.encryption_key);
-        const rtpHeader = msg.slice(0, 12);
-
-        const nonce = Buffer.alloc(24).fill(0);
-        msg.slice(0, 12).copy(nonce, 0);
-
-        const encryptedPayload = msg.slice(12);
-
-        const decryptedOpusData = sodium.crypto_secretbox_open_easy(
-            encryptedPayload,
-            nonce,
-            voiceKey
-        );
-
-        if (!decryptedOpusData) {
-            console.error(`Failed to decrypt voice packet from SSRC: ${ssrc}`);
-            return;
-        }
-
-        global.udp_sessions.forEach((otherSession, otherSsrc) => {
-            if (otherSsrc !== ssrc) {
-                const otherKey = Buffer.from(otherSession.encryption_key);
-
-                const reEncryptionNonce = Buffer.alloc(24).fill(0);
-                msg.slice(0, 12).copy(reEncryptionNonce, 0);
-
-                const reEncryptedPayload = sodium.crypto_secretbox_easy(
-                    decryptedOpusData,
-                    reEncryptionNonce,
-                    otherKey
-                );
-
-                const reEncryptedPacket = Buffer.concat([
-                    msg.slice(0, 12),
-                    reEncryptedPayload
-                ]);
-
-                udpServer.send(reEncryptedPacket, otherSession.ip_port, otherSession.ip_addr);
-
-                global.signaling_clients.forEach((sg, index) => {
-                    sg.send(JSON.stringify({
-                        op: 5,
-                        d: {
-                            ssrc: ssrc,
-                            speaking: true,
-                            delay: 0
-                        }
-                    }))
-                })
-            }
-        });
-    }
-});
-
-udpServer.bind(config.udp_server_port);
-
-const signalingServer = new WebSocket.Server({
-    port: config.signaling_server_port
-});
-
-signalingServer.on('listening', async () => {
-    await sodium.ready;
-
-    logText(`Server up on port ${config.signaling_server_port}`, 'RTC_SERVER');
-});
-
-signalingServer.on('connection', async (socket) => {
-    logText(`Client has connected`, 'RTC_SERVER');
-
-    socket.send(JSON.stringify({
-        op: 8,
-        d: {
-            heartbeat_interval: 41250
-        }
-    }));
-
-    socket.hb = {
-        timeout: setTimeout(async () => {
-            socket.close(4009, 'Session timed out');
-        }, (45 * 1000) + (20 * 1000)),
-        reset: () => {
-            if (socket.hb.timeout != null) {
-                clearInterval(socket.hb.timeout);
-            }
-
-            socket.hb.timeout = new setTimeout(async () => {
-                socket.close(4009, 'Session timed out');
-            }, (45 * 1000) + 20 * 1000);
+global.MEDIA_CODECS = [
+    {
+        kind: 'audio',
+        mimeType: 'audio/opus',
+        clockRate: 48000,
+        channels: 2,
+        parameters: {
+            'minptime': 10,
+            'useinbandfec': 1,
+            'usedtx': 1
         },
-        acknowledge: (d) => {
-            let session = socket.session;
-            let base = {
-                op: 6,
-                d: d
-            }
-            let payload = session ? base : JSON.stringify(base);
-            (session || socket).send(payload);
-        }
-    };
+        preferredPayloadType: 111,
+    },
+    {
+        kind: 'video',
+        mimeType: 'video/VP8',
+        clockRate: 90000,
+        rtcpFeedback: [
+            { type: 'ccm', parameter: 'fir' },
+            { type: 'nack' },
+            { type: 'nack', parameter: 'pli' },
+            { type: 'goog-remb' }
+        ],
+        preferredPayloadType: 101
+    }
+];
 
-    let keyBuffer = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
-
-    socket.ssrc = Math.round(Math.random() * 99999);
-
-    let identified = false;
-    let resumed = false;
-
-    socket.on('close', () => {
-        for (const [id, clientSocket] of global.signaling_clients) {
-            if (id !== socket.userid) {
-                clientSocket.send(JSON.stringify({
-                    op: 13,
-                    d: {
-                        user_id: socket.userid
-                    }
-                }));
-            }
-        }
-
-        if (socket.userid) {
-            global.signaling_clients.delete(socket.userid);
-        }
-    });
-
-    socket.on('message', async (data) => {
-        let raw_data = Buffer.from(data).toString("utf-8");
-        let jason = JSON.parse(raw_data);
-
-        logText(`Incoming -> ${raw_data}`, 'RTC_SERVER');
-
-        if (jason.op === 0) {
-            let protocol = jason.d.protocol;
-            let userid = jason.d.user_id;
-            let sessionid = jason.d.session_id;
-            let token = jason.d.token;
-
-            if (identified || socket.session) {
-                return socket.close(4005, 'You have already identified.');
-            }
-
-            identified = true;
-
-            let user = await global.database.getAccountByUserId(userid);
-
-            if (user == null || user.disabled_until) {
-                return socket.close(4004, "Authentication failed");
-            }
-            
-            let gatewaySession = global.sessions.get(sessionid);
-
-            if (!gatewaySession || gatewaySession.user.id !== user.id) {
-                return socket.close(4004, "Authentication failed");
-            }
-
-            socket.user = user;
-
-            let sesh = new session(`voice:${sessionid}`, socket, user, token, false, {
-                game_id: null,
-                status: "online",
-                activities: [],
-                user: globalUtils.miniUserObject(socket.user)
-            }, 'voice');
-
-            socket.session = sesh;
-
-            socket.session.server_id = jason.d.server_id;
-
-            socket.session.start();
-
-            await socket.session.prepareReady();
-
-            logText(`A client's state has changed to -> RTC_CONNECTING`, 'RTC_SERVER');
-
-            socket.userid = user.id;
-
-            global.signaling_clients.set(socket.userid, socket);
-
-            logText(`Client ${socket.userid} has identified.`, 'RTC_SERVER');
-        
-            socket.send(JSON.stringify({
-                op: 2,
-                d: {
-                    ssrc: socket.ssrc,
-                    ip: "127.0.0.1",
-                    port: config.udp_server_port,
-                    modes: ["plain", "xsalsa20_poly1305"],
-                    heartbeat_interval: 1
-                }
-            }))
-        } else if (jason.op === 3) {
-            if (!socket.hb) return;
-
-            socket.hb.acknowledge(jason.d);
-            socket.hb.reset();
-        } else if (jason.op === 1) {
-            let protocol = jason.d.protocol;
-
-            global.encryptions.set(socket.ssrc, {
-                mode: "xsalsa20_poly1305",
-                key: Array.from(keyBuffer)
-            });
-
-            if (protocol === 'webrtc') {
-                let sdp = jason.d.sdp || jason.d.data;
-                let codecs = jason.d.codecs || [ {
-                    name: "opus",
-                    type: "audio",
-                    priority: 1000,
-                    payload_type: 111
-                }]; //older clients dont have video/screensharing so its just voice yay
-
-                let offer = sdpTransform.parse(sdp);
-
-                //very heavily to-do
-                return socket.send(JSON.stringify({
-                    op: 4,
-                    d: {
-                        sdp: `m=audio 5000 ICE/SDP\nc=IN IP4 127.0.0.1\na=rtcp:5000\na=ice-ufrag:abc\na=ice-pwd:def\na=fingerprint:sha-256 AA:BB:CC:DD:EE:FF\na=candidate:1 1 UDP 4891913 127.0.0.1 3000 typ host`
-                    }
-                }));
-            } else if (protocol === 'webrtc-p2p') {
-                //this doesnt support encryption
-
-                return socket.send(JSON.stringify({
-                    op: 4,
-                    d: {
-                        peers: Array.from(global.signaling_clients.keys()).filter(id => socket.userid != id)
-                    }
-                }))
-            } else {
-                return socket.send(JSON.stringify({
-                    op: 4,
-                    d: {
-                        mode: "xsalsa20_poly1305",
-                        secret_key: Array.from(keyBuffer)
-                    }
-                }))
-            }
-        } else if (jason.op === 10) {
-            const recipientId = jason.d.user_id;
-            const recipientSocket = global.signaling_clients.get(recipientId);
-
-            if (recipientSocket) {
-                const forwardedPayload = { ...jason.d, user_id: socket.userid };
-                const forwardedMessage = { op: 10, d: forwardedPayload };
-
-                recipientSocket.send(JSON.stringify(forwardedMessage));
-                logText(`Forwarded op:10 message from ${socket.userid} to ${recipientId}`, 'RTC_SERVER');
-            } else {
-                logText(`Recipient ${recipientId} not found.`, 'RTC_SERVER');
-            }
-        } else if (jason.op === 5) {
-            for (const [id, clientSocket] of global.signaling_clients) {
-                if (id !== socket.userid) {
-                    clientSocket.send(JSON.stringify({
-                        op: 5,
-                        d: {
-                            speaking: jason.d.speaking,
-                            ssrc: jason.d.ssrc,
-                            user_id: socket.userid
-                        }
-                    }));
-                }
-            }
-        } else if (jason.op === 12) {
-            let video_ssrc = parseInt(jason.d.video_ssrc ?? "0");
-            let rtx_ssrc = parseInt(jason.d.rtx_ssrc ?? "0");
-            let audio_ssrc = socket.ssrc;
-            let response = {
-                audio_ssrc: audio_ssrc,
-                video_ssrc: video_ssrc,
-                rtx_ssrc: rtx_ssrc
-            }
-
-            socket.send(JSON.stringify({
-                op: 12,
-                d: response
-            }))
-
-             for (const [id, clientSocket] of global.signaling_clients) {
-                if (id !== socket.userid) {
-                    response.user_id = socket.userid;
-
-                    clientSocket.send(JSON.stringify({
-                        op: 12,
-                        d: response
-                    }));
-                }
-            }
-        } else if (jason.op === 7) {
-            let token = jason.d.token;
-            let session_id = jason.d.session_id;
-            let server_id = jason.d.server_id;
-
-            if (!token || !session_id) return socket.close(4000, 'Invalid payload');
-
-            if (socket.session || resumed) return socket.close(4005, 'Cannot resume at this time');
-
-            resumed = true;
-
-            let session2 = global.sessions.get(`voice:${session_id}`);
-
-            if (!session2) {
-                let sesh = new session(globalUtils.generateString(16), socket, socket.user, token, false, {
-                    game_id: null,
-                    status: 'online',
-                    activities: [],
-                    user: socket.user ? globalUtils.miniUserObject(socket.user) : null
-                }, 'voice');
-
-                sesh.start();
-
-                socket.session = sesh;
-            }
-
-            let sesh = null;
-
-            if (!session2) {
-                sesh = socket.session;
-            } else {    
-                sesh = session2;
-                sesh.user = session2.user;
-            }
-
-            sesh.server_id = server_id;
-
-            if (sesh.token !== token) {
-                return socket.close(4004, 'Authentication failed');
-            }
-
-            socket.send(JSON.stringify({
-                op: 9,
-                d: null
-            }))
-        }
-    });
-});
+global.guild_voice_states = new Map(); //guild_id -> voiceState[]
 
 const portAppend = globalUtils.nonStandardPort ? ":" + config.port : "";
 const base_url = config.base_url + portAppend;
@@ -549,6 +117,12 @@ if (config.port == config.ws_port) {
 }
 
 gateway.ready(gatewayServer);
+
+(async () => {
+    global.udpServer.start(config.udp_server_port, true);
+    global.rtcServer.start(config.signaling_server_port, true);
+    await global.global.mediaserver.start('10.158.87.54', 5000, 6000, true);
+})();
 
 httpServer.listen(config.port, () => {
     logText(`HTTP ready on port ${config.port}`, "OLDCORD");

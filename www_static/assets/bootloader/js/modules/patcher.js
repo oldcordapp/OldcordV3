@@ -66,10 +66,13 @@ const patcher = {
       script = script.replaceAll(/.p2p=./g, `.p2p=true`);
     }
 
-    script = script.replaceAll(`iceServers:n`, `iceServers:n,sdpSemantics:"unified-plan"`); //make sure it complies cuz liek every library now uses unified-plan
-    script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`); //deprecation for webrtc fix
-    script = script.replaceAll(`"sdparta_"+r`, `r`); //fuc kyou firefox webrtc doesnt like non numeric values as mid
-    
+   // script = script.replaceAll(`t.autoplay=!0`, `t.srcObject=this._stream;t.play()`); //figure out user interaction fix for autoplay
+    script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`); //  deprecation for webrtc fix
+    script = script.replaceAll(`"sdparta_"+r`, `r`); //firefox webrtc doesnt like non numeric values as mid
+    script = script.replaceAll(`URL.revokeObjectURL(this._audioElement.src))`, `this._audioElement.srcObject = null)`);
+    //script = script.replaceAll(`t.autoplay=!0,`, ``);
+    //script = script.replaceAll(`t.srcObject=this._stream,`, `t.srcObject=this._stream,window.audioElement=t,`)
+    script = script.replaceAll(`this._stream.addTrack(e),null==this._audioElement`, `this._stream.addTrack(e),null==this._audioElement,e.kind==='audio'`);
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");

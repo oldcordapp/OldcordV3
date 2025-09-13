@@ -5,7 +5,8 @@ export const QOL_PATCHES = {
         description: 'Required for client functionality. Automatically enabled on desktop client.',
         mandatory: false,
         defaultEnabled: false,
-        compatibleVersions: 'all'
+        compatibleVersions: 'all',
+        incompatiblePatches: []
     },
     userSelect: {
         id: 'userSelect',
@@ -13,7 +14,8 @@ export const QOL_PATCHES = {
         description: 'Enables user selection in 2015 clients',
         mandatory: false,
         defaultEnabled: true,
-        compatibleVersions: '2015'
+        compatibleVersions: '2015',
+        incompatiblePatches: []
     },
     emojiAnywhere: {
         id: 'emojiAnywhere',
@@ -21,7 +23,8 @@ export const QOL_PATCHES = {
         description: 'Allows using emojis anywhere without restrictions',
         mandatory: false,
         defaultEnabled: true,
-        compatibleVersions: 'all'
+        compatibleVersions: 'all',
+        incompatiblePatches: []
     },
     forceWebRtcFullSdp: {
         id: 'forceWebRtcFullSdp',
@@ -29,7 +32,8 @@ export const QOL_PATCHES = {
         description: 'Forces the client to send a non truncated sdp upon Select Protocol (Only use if you know what you are doing)',
         mandatory: false,
         defaultEnabled: false,
-        compatibleVersions: '2017'
+        compatibleVersions: '2017',
+        incompatiblePatches: []
     },
     modernizeTruncationSdp: {
         id: 'modernizeTruncationSdp',
@@ -69,6 +73,7 @@ export const QOL_PATCHES = {
             "september_29_2018",
             "november_30_2018",
             "december_31_2018"
-         ]
+         ],
+         incompatiblePatches: []
     }
 };

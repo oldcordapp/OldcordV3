@@ -12,25 +12,38 @@ export class UI {
     static createQolOption(patch, selectedBuild) {
         const isElectron = window.DiscordNative !== undefined;
         const isElectronPatch = patch.id === 'electronPatch';
-        const checked = isElectronPatch ? isElectron : (patch.mandatory || patch.defaultEnabled);
         const forceDisabled = isElectronPatch && !isElectron;
         const preferences = Settings.getBuildPreferences(selectedBuild);
 
+        let isChecked = preferences[patch.id] ?? patch.defaultEnabled;
+        let isDisabledByIncompatibility = false;
+
+        if (isChecked) {
+            for (const incompatiblePatchId of patch.incompatiblePatches) {
+                const isOffendingPatchEnabled = preferences[incompatiblePatchId] ?? QOL_PATCHES[incompatiblePatchId]?.defaultEnabled;
+                if (isOffendingPatchEnabled) {
+                    isChecked = false;
+                    isDisabledByIncompatibility = true;
+                    break;
+                }
+            }
+        }
+
         const element = document.createElement('div');
         element.className = 'qol-option';
+
         element.innerHTML = `
-            <label class="toggle mb-sm">
+             <label class="toggle mb-sm">
                 <input type="checkbox" id="${patch.id}" 
-                       ${forceDisabled || patch.mandatory ? 'disabled' : ''}
-                       ${checked ? 'checked' : ''}>
+                        ${forceDisabled || patch.mandatory || isDisabledByIncompatibility ? 'disabled' : ''}
+                        ${isChecked ? 'checked' : ''}>
                 <span class="toggle-slider"></span>
                 <span class="toggle-label text-normal">${patch.label}</span>
                 <div class="info-tooltip">
-                    <i class="info-icon">i</i>
+                     <i class="info-icon">i</i>
                     <span class="tooltip-text">${patch.description}</span>
                 </div>
-            </label>
-        `;
+        </label> `;
 
         const tooltipWrapper = document.createElement('div');
         tooltipWrapper.className = 'tooltip-wrapper';
@@ -54,13 +67,17 @@ export class UI {
         });
 
         const checkbox = element.querySelector(`#${patch.id}`);
-        if (checkbox && !patch.mandatory) {
-            checkbox.checked = preferences[patch.id] ?? patch.defaultEnabled;
+        if (checkbox && !patch.mandatory && !isDisabledByIncompatibility) {
             checkbox.addEventListener('change', () => this.handlePatchChange(patch.id, checkbox.checked, selectedBuild));
+        } else if (isDisabledByIncompatibility) {
+            // Add a tooltip or message for incompatibility
+            const tooltipText = element.querySelector('.tooltip-text');
+            tooltipText.textContent = `This patch is disabled because it is incompatible with another enabled patch.`;
         }
 
         return element;
     }
+
 
     static handlePatchChange(patchId, checked, selectedBuild) {
         const prefs = Settings.getBuildPreferences(selectedBuild);
@@ -72,7 +89,7 @@ export class UI {
     static updateQolOptions(selectedBuild) {
         const container = document.getElementById('qolOptions');
         container.innerHTML = '';
-        
+
         Object.entries(QOL_PATCHES)
             .filter(([_, patch]) => Settings.isCompatibleBuild(patch, selectedBuild))
             .forEach(([_, patch]) => {

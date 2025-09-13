@@ -18,6 +18,9 @@ const globalUtils = {
     badEmails: null,
     nonStandardPort: config.secure ? config.port != 443 : config.port != 80,
     nonStandardWsPort: config.secure ? config.ws_port != 443 : config.ws_port != 80,
+    generateSsrc() {
+        return crypto.randomBytes(4).readUInt32BE(0);
+    },
     generateGatewayURL: (req) => {
         let host = req.headers['host'];
         if (host) host = host.split(':', 2)[0];
