@@ -308,6 +308,7 @@ const rtcServer = {
                         const wantsToProduceAudio = d.audio_ssrc !== 0;
                         const wantsToProduceVideo = d.video_ssrc !== 0;
 
+                        // https://github.com/spacebarchat/server/blob/master/src/webrtc/opcodes/Video.ts (The code for this OP is literally 99% spacebars, its just to wait for the clients to connect & publish/subscribe to tracks so it doesnt scream about producers)
                         if (!socket.client.webrtcConnected) {
                             if (wantsToProduceAudio) {
                                 try {
@@ -363,7 +364,6 @@ const rtcServer = {
                         }
 
                         if (wantsToProduceVideo) {
-                            //socket.client.videoStream = { ...stream, type: "video" };
                             if (!socket.client.isProducingVideo()) {
                                 await socket.client.publishTrack("video", {
                                     video_ssrc: d.video_ssrc,
