@@ -3,12 +3,14 @@ const { logText } = require('./helpers/logger');
 const session = require('./helpers/session');
 const globalUtils = require('./helpers/globalutils');
 const WebSocket = require('ws');
+const { EventEmitter } = require("node:events");
 
 const rtcServer = {
     port: null,
     signalingServer: null,
     debugLogs: false,
     clients: new Map(),
+    emitter: null,
     protocolsMap: new Map(),
     debug(message) {
         if (!this.debugLogs) {
@@ -18,6 +20,7 @@ const rtcServer = {
         logText(message, 'RTC_SERVER');
     },
     start(port, debugLogs) {
+        this.emitter = new EventEmitter();
         this.port = port;
         this.debugLogs = debugLogs;
         this.signalingServer = new WebSocket.Server({
@@ -28,6 +31,14 @@ const rtcServer = {
             await sodium.ready;
 
             this.debug(`Server up on port ${this.port}`);
+        });
+
+        this.emitter.on('server-mute', (muterId, userId, muted) => {
+             let socketClient = this.clients.get(userId);
+
+             if (socketClient) {
+                socketClient.client.updateTrack("audio", muted, false);
+             }
         });
 
         this.signalingServer.on('connection', async (socket) => {

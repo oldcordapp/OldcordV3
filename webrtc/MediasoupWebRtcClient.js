@@ -26,7 +26,7 @@ class MediasoupWebRtcClient {
     }
 
     getIncomingStreamSSRCs() {
-        return {    
+        return {
             audio_ssrc: this.incomingSSRCS?.audio_ssrc,
             video_ssrc: this.isProducingVideo()
                 ? this.incomingSSRCS?.video_ssrc
@@ -80,7 +80,7 @@ class MediasoupWebRtcClient {
     async getExistingProducer(ssrcs) {
         let producerFound = null;
 
-        for(let client of this.room.clients.values()) {
+        for (let client of this.room.clients.values()) {
             if (!client.audioProducer) {
                 continue;
             }
@@ -116,6 +116,12 @@ class MediasoupWebRtcClient {
             this.voiceRoomId,
         );
 
+        let mutedClients = [];
+
+        if (this.room.muted_clients.has(this.user_id)) {
+            mutedClients = this.room.muted_clients.get(this.user_id);
+        }
+
         await Promise.all(
             Array.from(clients).map(async (client) => {
                 if (client.user_id === this.user_id) return;
@@ -124,6 +130,14 @@ class MediasoupWebRtcClient {
                 let consumerAudioSsrc = 0;
                 let consumerVideoSsrc = 0;
                 let consumerRtxSsrc = 0;
+
+                if (mutedClients.includes(client.user_id) || this.room.server_muted_clients.includes(client.user_id)) {
+                    if (this.isSubscribedToTrack(client.user_id, "audio")) {
+                        this.unSubscribeFromTrack(client.user_id, "audio");
+                    }
+
+                    return;
+                }
 
                 if (
                     client.isProducingAudio() &&
@@ -176,7 +190,10 @@ class MediasoupWebRtcClient {
         try {
             if (!this.webrtcConnected || !this.transport) return;
 
+            if (this.room.server_muted_clients.includes(this.user_id)) return;
+
             if (type === "audio" && !this.isProducingAudio()) {
+
                 let existingProducer = await this.getExistingProducer(ssrc.audio_ssrc);
 
                 if (existingProducer) {
@@ -312,7 +329,13 @@ class MediasoupWebRtcClient {
         const client = this.room?.getClientById(user_id);
 
         if (!client.audioProducer) return;
+        
+        let mutedClients = [];
 
+        if (this.room.muted_clients.has(this.user_id)) {
+            mutedClients = this.room.muted_clients.get(this.user_id);
+        }
+        
         const producer =
             type === "audio" ? client.audioProducer : client.videoProducer;
 
@@ -323,6 +346,8 @@ class MediasoupWebRtcClient {
         );
 
         if (existingConsumer) return;
+
+        if (mutedClients.includes(client.user_id) || this.room.server_muted_clients.includes(client.user_id)) return;
 
         const consumer = await this.transport.consume({
             producerId: producer.id,
@@ -343,9 +368,9 @@ class MediasoupWebRtcClient {
             }, //
         });
 
-       if (type === "video") {
+        if (type === "video") {
             setTimeout(async () => {
-               await consumer.resume();
+                await consumer.resume();
             }, 2000);
         }
 
@@ -372,6 +397,55 @@ class MediasoupWebRtcClient {
         if (typeof index === "number" && index != -1) {
             this.consumers?.splice(index, 1);
         }
+    }
+
+    async updateTrack(type, muted = false, deafen = false) {
+        const producer =
+            type === "audio" ? this.audioProducer : this.videoProducer;
+
+        if (!producer) return;
+
+        if (muted) {
+            await producer.pause();
+
+            this.room.server_muted_clients.push(this.user_id);
+        } else {
+            await producer.resume();
+
+            this.room.server_muted_clients.splice(this.room.server_muted.clients.indexOf(this.user_id), 1);
+        }
+    }
+
+    async updateTrackLocal(user_id, type, muted = false) {
+        const client = this.room?.getClientById(user_id);
+        if (!client) return;
+
+        const producer =
+            type === "audio" ? client.audioProducer : client.videoProducer;
+
+        if (!producer) return;
+
+        const consumer = this.consumers?.find(
+            (c) => c.producerId === producer.id
+        );
+
+        if (!consumer) return;
+
+        let muted_list = this.room.muted_clients.get(this.user_id);
+
+        if (!muted_list) {
+            muted_list = [];
+        }
+
+        if (muted) {
+            await consumer.pause();
+            muted_list.push(client.user_id);
+        } else {
+            await consumer.resume();
+            muted_list.splice(muted_list.indexOf(client.user_id), 1);
+        }
+
+        this.room.muted_clients.set(this.user_id, muted_list);
     }
 
     isSubscribedToTrack(user_id, type) {
