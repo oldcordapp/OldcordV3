@@ -54,12 +54,9 @@ const patcher = {
       );
     }
 
-    if (getEnabledPatches().includes("forceWebRtcFullSdp") && !getEnabledPatches().includes("modernizeTruncationSdp")) {
-      script = script.replaceAll(/truncateSDP=./g,`truncateSDP=(e)=>{return{sdp:e,codecs:l(e).codecs}}`);
-    }
-
-    if (getEnabledPatches().includes("modernizeTruncationSdp") && !getEnabledPatches().includes("forceWebRtcFullSdp")) {
-      script=script.replaceAll(`a=new RegExp("^a=ice|opus|VP8|"+(o&&o.rtxPayloadType||0)+" rtx","i")`,`z=n,a=new RegExp("^a=ice|a=extmap|a=fingerprint|opus|VP8|".concat(null!=(z=null==i?void 0:i.rtxPayloadType)?z:0," rtx"),"i")`);
+    if (getEnabledPatches().includes("modernizeTruncationSdp")) {
+      script=script.replaceAll(`"^a=ice|opus|VP8|"`,`"^a=ice|a=extmap|a=fingerprint|opus|VP8|"`);
+      script=script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`);
     }
 
     if (getEnabledPatches().includes("forceWebRtcP2P")) {

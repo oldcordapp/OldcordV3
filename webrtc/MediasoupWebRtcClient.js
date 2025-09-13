@@ -173,21 +173,63 @@ class MediasoupWebRtcClient {
     }
 
     async publishTrack(type, ssrc) {
-        if (!this.webrtcConnected || !this.transport) return;
+        try {
+            if (!this.webrtcConnected || !this.transport) return;
 
-        if (type === "audio" && !this.isProducingAudio()) {
-            let existingProducer = await this.getExistingProducer(ssrc.audio_ssrc);
+            if (type === "audio" && !this.isProducingAudio()) {
+                let existingProducer = await this.getExistingProducer(ssrc.audio_ssrc);
 
-            if (existingProducer) {
-                this.audioProducer = existingProducer;
-            } else {
-                this.audioProducer = await this.transport.produce({
-                    kind: "audio",
-                    mid: "audio",
+                if (existingProducer) {
+                    this.audioProducer = existingProducer;
+                } else {
+                    this.audioProducer = await this.transport.produce({
+                        kind: "audio",
+                        mid: "audio",
+                        rtpParameters: {
+                            codecs:
+                                this.codecCapabilities
+                                    ?.filter((codec) => codec.kind === "audio")
+                                    .map((codec) => {
+                                        const {
+                                            mimeType,
+                                            clockRate,
+                                            channels,
+                                            rtcpFeedback,
+                                            parameters,
+                                        } = codec;
+
+                                        return {
+                                            mimeType,
+                                            clockRate,
+                                            channels,
+                                            rtcpFeedback,
+                                            parameters,
+                                            payloadType: codec.preferredPayloadType || 111,
+                                        };
+                                    }) || [],
+                            encodings: [
+                                {
+                                    ssrc: ssrc.audio_ssrc,
+                                    maxBitrate: 64000,
+                                    codecPayloadType:
+                                        this.codecCapabilities?.find(codec => codec.kind === "audio")
+                                            ?.preferredPayloadType || 111,
+                                },
+                            ],
+                        },
+                        paused: false,
+                    });
+                }
+            }
+
+            if (type === "video" && !this.isProducingVideo()) {
+                this.videoProducer = await this.transport.produce({
+                    kind: "video",
+                    mid: "video",
                     rtpParameters: {
                         codecs:
                             this.codecCapabilities
-                                ?.filter((codec) => codec.kind === "audio")
+                                ?.filter((codec) => codec.kind === "video")
                                 .map((codec) => {
                                     const {
                                         mimeType,
@@ -203,76 +245,37 @@ class MediasoupWebRtcClient {
                                         channels,
                                         rtcpFeedback,
                                         parameters,
-                                        payloadType: codec.preferredPayloadType || 111,
+                                        payloadType: codec.preferredPayloadType || 102,
                                     };
                                 }) || [],
                         encodings: [
                             {
-                                ssrc: ssrc.audio_ssrc,
-                                maxBitrate: 64000,
+                                ssrc: ssrc.video_ssrc,
+                                rtx: { ssrc: ssrc.rtx_ssrc },
                                 codecPayloadType:
-                                    this.codecCapabilities?.find(codec => codec.kind === "audio")
-                                        ?.preferredPayloadType || 111,
+                                    this.codecCapabilities?.find(codec => codec.kind === "video")?.preferredPayloadType || 102,
                             },
                         ],
+                        headerExtensions: this.headerExtensions
+                            ?.filter(
+                                (header) =>
+                                    header.uri === "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay" ||
+                                    header.uri === "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time" ||
+                                    header.uri === "urn:ietf:params:rtp-hdrext:toffset" ||
+                                    header.uri === "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+                            )
+                            .map((header) => {
+                                return {
+                                    id: header.id,
+                                    uri: header.uri,
+                                };
+                            }),
                     },
                     paused: false,
                 });
             }
-        }
+        } catch { }
 
-        if (type === "video" && !this.isProducingVideo()) {
-            this.videoProducer = await this.transport.produce({
-                kind: "video",
-                mid: "video",
-                rtpParameters: {
-                    codecs:
-                        this.codecCapabilities
-                            ?.filter((codec) => codec.kind === "video")
-                            .map((codec) => {
-                                const {
-                                    mimeType,
-                                    clockRate,
-                                    channels,
-                                    rtcpFeedback,
-                                    parameters,
-                                } = codec;
-
-                                return {
-                                    mimeType,
-                                    clockRate,
-                                    channels,
-                                    rtcpFeedback,
-                                    parameters,
-                                    payloadType: codec.preferredPayloadType || 102,
-                                };
-                            }) || [],
-                    encodings: [
-                        {
-                            ssrc: ssrc.video_ssrc,
-                            rtx: { ssrc: ssrc.rtx_ssrc },
-                            codecPayloadType:
-                                this.codecCapabilities?.find(codec => codec.kind === "video")?.preferredPayloadType || 102,
-                        },
-                    ],
-                    headerExtensions: this.headerExtensions
-                        ?.filter(
-                            (header) =>
-                                header.uri === "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay" ||
-                                header.uri === "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time" ||
-                                header.uri === "urn:ietf:params:rtp-hdrext:toffset" ||
-                                header.uri === "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
-                        )
-                        .map((header) => {
-                            return {
-                                id: header.id,
-                                uri: header.uri,
-                            };
-                        }),
-                },
-                paused: false,
-            });
-        }
     }
 
     stopPublishingTrack(type) {
