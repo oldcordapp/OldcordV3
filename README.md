@@ -17,7 +17,28 @@ Due to Oldcord's rapidly changing nature, there are some commits which may break
 Which is why, on future commits where the DB is changed in a significant way, we will add a short SQL query/queries you can run to update the database to work with the new wrapper on the commit description. <br>
 The server may also automatically run these migration scripts for you when you update your instance and restart it.<br>
 
-Also, if you created your Oldcord instance before November 14 (2024) and you are updating it, please make sure that your `config.json` file is also updated to the new format, or your instance will not work.
+There have been some major changes with Oldcord V3 recently, such as some pretty significant configuration file tweaks. <b>Make sure your config.json file ALWAYS matches the amount of entries in the example config whenever you pull from this repository.</b> <br><br>
+Also, if you created your Oldcord instance before November 14 (2024) and you are updating it, please make sure that your `config.json` file is also updated to the new format, or your instance will not work. <br>
+
+# FAQ
+`What is WebRTC P2P?`
+ - In the Jan 31st 2017 discord client build there was a new protocol for voice that was introduced, webrtc-p2p, it was around for at least the whole of 2017 & 2018, we don't know when it was removed - probably 2019 or so.
+ - But we do know it was never actually used in the client, and there's no documentation on it ever existing, I assume it was there for discord developers to use on testing instances? It works by sending ICE candidates to the RTC server via OP 10, and the server just relays it out to the other clients in the call.
+ - It is not recommended to use this feature without a VPN, as it does leak your IP address due to its nature of being <b>peer to peer</b>.
+
+`Is Voice Supported?` <br><br>
+[WebRTC-P2P](https://github.com/user-attachments/assets/0daf70dc-783e-4e97-a41c-829966d01254)<br>
+[WebRTC](https://github.com/user-attachments/assets/98ffc6e3-f6fe-4d81-b57d-0d0465c374f0)<br>
+
+ - Voice is still heavily work in progress! But it has been confirmed to be working, either via WebRTC P2P (Browser Client), UDP (Discord Client) or WebRTC (Browser Client).
+ - There are some known bugs such as a subscriber/producer ssrc mismatch issue with the client, clients speaking without any indicator in calls, and you may need to re-join the call, deafen/undeafen to hear anything on receiving clients. We are working on a fix for this issue.
+ - WebRTC does require the Modernize WebRTC SDP Truncation patch to be enabled to work!!
+
+`How about Video? Is Video Supported?`
+- Not at the moment, we're just trying to fix all the bugs with the clients & media server related to voice first.
+
+`Does server muting/deafening work? And does deafening actually prevent you from receiving audio data?`
+- Not right now but it's being actively worked on! As always, contributions are encouraged & welcome!
 
 # Setup
 Download and setup a postgreSQL server with the database name of your choice.
@@ -51,6 +72,9 @@ Example integration configuration:
 `NO_REGISTRATION` - Block all future users from creating an account on your instance. <br>
 `NO_GUILD_CREATION` - Block future guilds from being created. <br>
 `NO_INVITE_USE` - Block invites from being used. <br>
+
+And you can also do some pretty cool stuff like:
+`autojoin:GUILDID` (e.g autojoin:1413791197947867136) - Auto join a guild on account creation. <br>
 
 More are to come with instance flags in the future. <br>
 
