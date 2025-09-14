@@ -41,9 +41,12 @@ const rtcServer = {
              }
         });
 
-        this.signalingServer.on('connection', async (socket) => {
+        this.signalingServer.on('connection', async (socket, req) => {
             this.debug(`Client has connected`);
 
+            socket.userAgent = req.headers['user-agent'] ?? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
+            socket.isChrome = /Chrome/.test(socket.userAgent);
+            
             socket.send(JSON.stringify({
                 op: 8,
                 d: {

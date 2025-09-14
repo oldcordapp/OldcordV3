@@ -68,7 +68,7 @@ const patcher = {
     script = script.replaceAll(`sdparta_`, ``);
     script = script.replaceAll(`URL.revokeObjectURL(this._audioElement.src))`, `this._audioElement.srcObject = null)`);
     script = script.replaceAll(`this._stream.addTrack(e),null==this._audioElement`, `this._stream.addTrack(e),null==this._audioElement,e.kind==='audio'`);
-
+    script = script.replaceAll(`this.emit("video",this.userId,`, `if(this._fpc.audioSSRC===0){this._fpc.audioSSRC=Math.floor(Math.random() * 0xFFFFFFFF) + 1;}\nthis.emit("video",this.userId,`)
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");
