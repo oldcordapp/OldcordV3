@@ -33,14 +33,6 @@ const rtcServer = {
             this.debug(`Server up on port ${this.port}`);
         });
 
-        this.emitter.on('server-mute', (muterId, userId, muted) => {
-             let socketClient = this.clients.get(userId);
-
-             if (socketClient) {
-                socketClient.client.updateTrack("audio", muted, false);
-             }
-        });
-
         this.signalingServer.on('connection', async (socket, req) => {
             this.debug(`Client has connected`);
 

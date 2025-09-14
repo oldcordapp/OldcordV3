@@ -7,10 +7,6 @@ class VoiceRoom {
         this._clients = new Map();
         this._sfu = sfu;
         this._router = router;
-        this.muted_clients = new Map(); // user id -> array of user ids they've muted
-        this.deafened_clients = []; // list of user ids currently deafened
-        this.server_muted_clients = []; //list of user ids server muted
-        this.server_deafened_clients = []; //list of user ids server deafened
     }
 
     onClientJoin = (client) => {
