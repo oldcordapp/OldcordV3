@@ -58,10 +58,8 @@ router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimi
 
         return res.status(204).send();
     } catch (error) {
-        console.log(error);
+        logText(error, "error");
     
-        
-        
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"

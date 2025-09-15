@@ -66,9 +66,20 @@ const patcher = {
     script = script.replaceAll(`.src=URL.createObjectURL(this._stream)`, `.srcObject=this._stream`); //  deprecation for webrtc fix
     script = script.replaceAll(`"sdparta_"+`, ``); //firefox webrtc doesnt like non numeric values as mid
     script = script.replaceAll(`sdparta_`, ``);
-    script = script.replaceAll(`URL.revokeObjectURL(this._audioElement.src))`, `this._audioElement.srcObject = null)`);
-    script = script.replaceAll(`this._stream.addTrack(e),null==this._audioElement`, `this._stream.addTrack(e),null==this._audioElement,e.kind==='audio'`);
-    script = script.replaceAll(`this.emit("video",this.userId,`, `if(this._fpc.audioSSRC===0){this._fpc.audioSSRC=Math.floor(Math.random() * 0xFFFFFFFF) + 1;}\nthis.emit("video",this.userId,`)
+
+    if (/Firefox/.test(navigator.userAgent)) {
+      script = script.replaceAll(`URL.revokeObjectURL(this._audioElement.src))`, `this._audioElement.srcObject = null)`); //firefox is very finnicky about these
+    }
+
+    if (/Chrome/.test(navigator.userAgent)) { //For chromium based browsers, they usually have this issue of sending 0 as an audio_ssrc for their first op 12, leading to issues with the media server.
+      script = script.replaceAll(/(\w).input.on\("video",(\w)._handleVideo\),/g, ``);
+      script = script.replaceAll(/return (\w)._handleVideo\((\w).input.getVideoStreamId\(\)\)/g, ``);
+      script = script.replaceAll(/(\w)\.videoSSRC===(\w)&&(\w)\.rtxSSRC===(\w)&&(\w)\.videoReady\|\|/g, ``);
+      script = script.replaceAll(/(\w)\.videoSSRC!==(\w)\.videoSSRC&&/g, ``); //Early 2017 fix
+    }
+
+    //script = script.replaceAll(`this._stream.addTrack(e),null==this._audioElement`, `this._stream.addTrack(e),null==this._audioElement,e.kind==='audio'`); - deprecated patch
+    
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");

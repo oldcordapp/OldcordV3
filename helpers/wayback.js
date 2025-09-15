@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const { logText } = require('./logger');
 
 const wayback = {
     convertTimestampToCustomFormat: (timestamp) => {
@@ -14,17 +15,13 @@ const wayback = {
         return `${year}${month}${day}${hours}${minutes}${seconds}`;
     },
     getTimestamps: async (url) => {
-        console.log("Fetching");
-
         try {
             const response = await fetch("https://web.archive.org/web/timemap/link/" + url, {
                 headers: {
                     'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
                 }
             });
-        
-            console.log("Fetching");
-            
+
             if (!response || !response.ok || !response.body) {
                 return null;
             }
@@ -33,8 +30,6 @@ const wayback = {
             let last_ts = "0";
 
             let responseTxt = await response.text();
-            
-            console.log(responseTxt);
 
             let lines = responseTxt.split('\n');
 
@@ -51,8 +46,8 @@ const wayback = {
                 last_ts: wayback.convertTimestampToCustomFormat(last_ts)
             };
         }
-        catch (err) {
-            console.log(err);
+        catch (error) {
+            logText(error, "error");
             
             return null;
         }

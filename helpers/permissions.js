@@ -1,3 +1,5 @@
+const { logText } = require("./logger");
+
 const permissions = {
     CREATE_INSTANT_INVITE: 1 << 0,
     KICK_MEMBERS: 1 << 1,
@@ -74,7 +76,7 @@ const permissions = {
             return permissions.has(highestRole.permissions, key);
         }
         catch (error) {
-            console.log(error);
+            logText(error, "error");
 
             return false;
         }
@@ -154,7 +156,7 @@ const permissions = {
             return permissions.has(calc, key);
         }
         catch (error) { 
-            console.log(error);
+            logText(error, "error");
 
             return false; 
         }

@@ -311,8 +311,6 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
 
 router.post("/:webhookid/:webhooktoken/github", async (req, res) => {
     try {
-        //console.log(JSON.stringify(req.body)); -- uncomment for github's weird webhook payloads
-    
         let webhook = req.webhook;
 
         if (!webhook) {

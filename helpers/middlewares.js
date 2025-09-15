@@ -136,8 +136,6 @@ async function assetsMiddleware(req, res) {
         let r = await fetch(snapshot_url);
 
         if (!r.ok) {
-            console.log(r.statusText);
-
             cached404s[req.params.asset] = 1;
 
             return res.status(404).send("File not found");
