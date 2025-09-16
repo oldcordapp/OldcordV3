@@ -1,5 +1,6 @@
 const udp = require('dgram');
 const { logText } = require('./helpers/logger');
+const { OPCODES } = require('./handlers/rtc');
 const server = udp.createSocket('udp4');
 
 const udpServer = {
@@ -160,7 +161,7 @@ const udpServer = {
                     return;
                 }
 
-                this.sessions.forEach((otherSession, otherSsrc) => {
+                for (const [otherSsrc, otherSession] of this.clients) {
                     if (otherSsrc !== ssrc) {
                         const otherKey = Buffer.from(otherSession.encryption_key);
 
@@ -177,21 +178,21 @@ const udpServer = {
                             msg.slice(0, 12),
                             reEncryptedPayload
                         ]);
-                        
+
                         this.sendBytes(otherSession.ip_addr, otherSession.ip_port, reEncryptedPacket);
 
-                        global.rtcServer.forEach((sg, _) => {
-                            sg.send(JSON.stringify({
-                                op: 5,
+                        for (const [_, clientSocket] of global.rtcServer.clients) {
+                            clientSocket.send(JSON.stringify({
+                                op: OPCODES.SPEAKING,
                                 d: {
                                     ssrc: ssrc,
                                     speaking: true,
                                     delay: 0
                                 }
-                            }))
-                        })
+                            }));
+                        }
                     }
-                });
+                }
             }
         });
 
