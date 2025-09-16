@@ -36,7 +36,7 @@ class emailer {
             this.ratelimited = this.outNumberPerTF > max_per_timeframe && !this.ratelimited;
 
             if (this.ratelimited && !this.sentRLNotice) {
-                logText(`Hit configured e-mail ratelimit - Will be able to send e-mails again in ~${Math.round(this.timeframe_ms * this.ratelimiter_modifier)}ms.`);
+                logText(`Hit configured e-mail ratelimit - Will be able to send e-mails again in ~${Math.round(this.timeframe_ms * this.ratelimiter_modifier)}ms.`, 'EMAILER');
                 
                 this.sentRLNotice = true;
             }

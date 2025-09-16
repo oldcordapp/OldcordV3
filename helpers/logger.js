@@ -9,6 +9,36 @@ const logText = (text, type) => {
         return;
     }
 
+    if (!global.config.debugLogs) {
+        global.config.debugLogs = {
+            gateway: true,
+            rtc: true,
+            media: true,
+            udp: true,
+            rest: true,
+            dispatcher: true,
+            errors: true
+        } //compatibility
+    }
+
+    if (!global.config.debugLogs['errors'] && type === 'error') {
+        return;
+    }
+
+    if (!global.config.debugLogs['dispatcher'] && type === 'dispatcher') {
+        return;
+    }
+
+    let restTags = [
+        'oldcord',
+        'debug',
+        'emailer'
+    ]
+
+    if (!global.config.debugLogs['rest'] && restTags.includes(type.toLowerCase())) {
+        return;
+    }
+
     if (type !== 'error') {
         console.log(`[OLDCORDV3] <${type.toUpperCase()}>: ${text}`);
         return;

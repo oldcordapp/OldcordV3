@@ -113,7 +113,7 @@ if (config.port == config.ws_port) {
     });
 }
 
-gateway.ready(gatewayServer);
+gateway.ready(gatewayServer, config.debugLogs['gateway'] ?? true);
 
 //https://stackoverflow.com/a/15075395
 function getIPAddress() {
@@ -140,10 +140,10 @@ function getIPAddress() {
         ip_address = await try_get_ip.text();
     }
 
-    global.udpServer.start(config.udp_server_port, true);
-    global.rtcServer.start(config.signaling_server_port, true);
+    global.udpServer.start(config.udp_server_port, config.debugLogs['udp'] ?? true);
+    global.rtcServer.start(config.signaling_server_port, config.debugLogs['rtc'] ?? true);
 
-    await global.mediaserver.start(ip_address, 5000, 6000, true);
+    await global.mediaserver.start(ip_address, 5000, 6000, config.debugLogs['media'] ?? true);
 })();
 
 httpServer.listen(config.port, () => {

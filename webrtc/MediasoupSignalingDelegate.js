@@ -21,7 +21,7 @@ class MediasoupSignalingDelegate {
         for (let i = 0; i < numWorkers; i++) {
             const worker = await mediasoup.createWorker({
                 logLevel: debugLogs ? "debug" : "none",
-                logTags: [
+                logTags: debugLogs ? [
                     "info",
                     "ice",
                     "dtls",
@@ -34,7 +34,7 @@ class MediasoupSignalingDelegate {
                     "simulcast",
                     "svc",
                     "sctp",
-                ],
+                ] : [],
                 rtcMinPort: portMin,
                 rtcMaxPort: portMax,
             });

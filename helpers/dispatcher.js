@@ -76,7 +76,7 @@ const dispatcher = {
             }
         }
 
-        logText(`[DISPATCHER] (Event to all perms) -> ${type}`, 'debug');
+        logText(`(Event to all perms) -> ${type}`, 'dispatcher');
 
         return true;
     },
@@ -107,7 +107,7 @@ const dispatcher = {
             }
         }
 
-        logText(`[DISPATCHER] (Event in guild) -> ${type}`, 'debug');
+        logText(`(Event in guild) -> ${type}`, 'dispatcher');
 
         return true;
     },
@@ -126,7 +126,7 @@ const dispatcher = {
             }
         }
 
-        logText(`[DISPATCHER] (Event in group channel) -> ${type}`, 'debug');
+        logText(`(Event in group channel) -> ${type}`, 'dispatcher');
 
         return true;
     },
@@ -155,7 +155,7 @@ const dispatcher = {
             }
         }
 
-        logText(`[DISPATCHER] (Event in channel) -> ${type}`, 'debug');
+        logText(`(Event in channel) -> ${type}`, 'dispatcher');
 
         return true;
     }

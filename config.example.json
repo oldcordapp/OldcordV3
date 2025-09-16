@@ -11,6 +11,15 @@
     "ws_port": 1337,
     "cache404s": false,
     "serve_selector": true,
+    "debugLogs": {
+        "gateway" : true,
+        "rtc" : true,
+        "media" : true,
+        "udp" : true,
+        "dispatcher" : true,
+        "rest" : true,
+        "errors": true
+    },
     "instance": {
         "name": "Staging",
         "description": "An oldcord v3 instance",
