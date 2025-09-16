@@ -150,7 +150,18 @@ class MediasoupSignalingDelegate {
             } ${iceCandidate.ip} ${iceCandidate.port} typ ${
                 iceCandidate.type
             }\n` + 
-            `m=video 0 ICE/SDP`;
+            `m=video 0 ICE/SDP` +
+            `a=fingerprint:sha-256 ${fingerprint.value}\n` +
+            `c=IN IP4 0.0.0.0\n` +
+            `a=rtcp:0\n` +
+            `a=ice-ufrag:${iceParameters.usernameFragment}\n` +
+            `a=ice-pwd:${iceParameters.password}\n` +
+            `a=fingerprint:sha-256 ${fingerprint.value}\n` +
+            `a=candidate:1 1 ${iceCandidate.protocol.toUpperCase()} ${
+                iceCandidate.priority
+            } 0.0.0.0 0 typ ${
+                iceCandidate.type
+            }\n`;
 
         return { sdp: sdpAnswer, selectedVideoCodec: "H264" };
     }
