@@ -4,7 +4,7 @@ const mediasoup = require("mediasoup");
 const { SDPInfo } = require("semantic-sdp");
 const { VoiceRoom } = require("./VoiceRoom");
 const { MediasoupWebRtcClient } = require("./MediasoupWebRtcClient");
-const { logText } = require("../helpers/logger");
+const { logText } = require("../logger");
 
 class MediasoupSignalingDelegate {
     constructor() {
