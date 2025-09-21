@@ -361,10 +361,6 @@ async function handleVideo(socket, packet) {
         }
     }
 
-    socket.send(JSON.stringify({
-        op: 12,
-        d: response
-    }));
 }
 
 async function handleResume(socket, packet) {
