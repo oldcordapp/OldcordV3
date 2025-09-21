@@ -188,8 +188,9 @@
 
 body {
     font-family: 'Nebula Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-    height: 100vh;
-    overflow: hidden;
+    height: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     color: var(--text-normal);
     background-color: var(--background-base);
 }
@@ -223,7 +224,7 @@ body {
 .container {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     padding: 20px;
 }
@@ -265,12 +266,14 @@ body {
 
 .selector-card {
     padding: var(--spacing-xl);
-    height: 800px;
+    min-height: 400px;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
-    overflow: auto;
-    justify-content: center; /* Center vertically */
-    align-items: center; /* Center horizontally */
+    overflow-y: auto;
+    justify-content: flex-start;
+    align-items: center;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .selector-card > * {
@@ -753,9 +756,25 @@ input[type="checkbox"]:checked + .toggle-slider:before {
     display: none;
 }
 
+/* mobile media */
 @media (max-width: 768px) {
-    .selector-content {
+    .selector-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .selector-card, .changelog-card {
+        min-height: auto;
+        max-height: none;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .logo-container {
+        top: 20px;
+        left: 20px;
     }
 }
 
@@ -772,12 +791,10 @@ input[type="checkbox"]:checked + .toggle-slider:before {
     padding: 0 24px 16px;
     flex: 1;
     overflow-y: auto;
-    max-height: calc(100vh - 150px); /* Limit height while allowing scroll */
+    max-height: calc(90vh - 150px);
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar) transparent;
-    flex: 1;
-    overflow-y: auto;
-    height: 100%;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .changelog-content h4:first-of-type {
