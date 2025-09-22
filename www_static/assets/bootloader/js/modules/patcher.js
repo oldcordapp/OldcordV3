@@ -64,13 +64,13 @@ const patcher = {
       // Rewrite setRemoteDescription to unified-plan based of current setLocalDescription's offer in a similar manner to modern Discord's
       (function () {
           if (!window.oldcord) {
-              window.oldcord = {};
+              window.oldcord = { webRTCPatch: {}};
           }
-          if (window.oldcord.isSDPPatched) {
+          if (window.oldcord.webRTCPatch.isPatched) {
               return;
           }
-          window.oldcord.isSDPPatched = true;
-          window.oldcord.peerConnectionOffers = new WeakMap();
+          window.oldcord.webRTCPatch.isPatched = true;
+          window.oldcord.webRTCPatch.previousDescription = new WeakMap();
 
           const originalSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
           const originalSetRemoteDescription = RTCPeerConnection.prototype.setRemoteDescription;
@@ -84,63 +84,67 @@ const patcher = {
           const getDirection = (block) => (block.match(/a=(sendrecv|sendonly|recvonly|inactive)/) || [])[0];
 
           RTCPeerConnection.prototype.setLocalDescription = function(description) {
-              if (description && description.type === 'offer') {
-                  window.oldcord.peerConnectionOffers.set(this, description);
+              if (description) {
+                  window.oldcord.webRTCPatch.previousDescription.set(this, description);
               }
               return originalSetLocalDescription.apply(this, arguments);
           };
 
           RTCPeerConnection.prototype.setRemoteDescription = async function(description) {
               if (!/Chrome/.test(navigator.userAgent) || !description) {
-                  return originalSetRemoteDescription.apply(this, arguments);
-              }
-
-              const offer = window.oldcord.peerConnectionOffers.get(this);
-              if (!offer) {
-                  console.warn('[SDP Patcher] No corresponding offer found. Applying answer as-is.');
-                  return originalSetRemoteDescription.apply(this, arguments);
-              }
-
-              const offerMBlocks = getMediaBlocks(offer.sdp);
-              let answerMBlocks = getMediaBlocks(description.sdp);
-
-              if (offerMBlocks.length > answerMBlocks.length) {
-                  console.log(`[SDP Patcher] Offer/Answer m-block mismatch (${offerMBlocks.length} > ${answerMBlocks.length}). Adding missing sections.`);
-
-                  if (answerMBlocks.length === 0) {
-                      console.error('[SDP Patcher] Cannot add missing sections: The answer has no media blocks to use as a template.');
-                      return originalSetRemoteDescription.apply(this, arguments);
+                  if (description) {
+                    window.oldcord.webRTCPatch.previousDescription.set(this, description);
                   }
+                  return originalSetRemoteDescription.apply(this, arguments);
+              }
 
-                  for (let i = answerMBlocks.length; i < offerMBlocks.length; i++) {
-                      const missingOfferBlock = offerMBlocks[i];
-                      const missingMediaType = getMediaType(missingOfferBlock);
+              const previousDescription = window.oldcord.webRTCPatch.previousDescription.get(this);
+              if (!previousDescription) {
+                  console.warn('[SDP Patcher] No corresponding description found. Applying answer as-is.');
+                  window.oldcord.webRTCPatch.previousDescription.set(this, description);
+                  return originalSetRemoteDescription.apply(this, arguments);
+              }
 
-                      let templateBlock = answerMBlocks.find(b => getMediaType(b) === missingMediaType) || answerMBlocks[0];
+              const previousMBlocks = getMediaBlocks(previousDescription.sdp);
+              let currentMBlocks = getMediaBlocks(description.sdp);
+
+              if (currentMBlocks.length === 0) {
+                  console.error('[SDP Patcher] The description has no media blocks.');
+                  return originalSetRemoteDescription.apply(this, arguments);
+              }
+
+              if (previousMBlocks.length > currentMBlocks.length) {
+                  console.log(`[SDP Patcher] Offer/Answer m-block mismatch (${previousMBlocks.length} > ${currentMBlocks.length}). Adding missing sections.`);
+
+                  for (let i = currentMBlocks.length; i < previousMBlocks.length; i++) {
+                      const missingMBlock = previousMBlocks[i];
+                      const missingMediaType = getMediaType(missingMBlock);
+
+                      let templateBlock = currentMBlocks.find(b => getMediaType(b) === missingMediaType) || currentMBlocks[0];
                       let newBlockLines = templateBlock.split(/\r?\n/);
 
-                      const offerDirection = getDirection(missingOfferBlock);
-                      let answerDirection = offerDirection;
-                      if (offerDirection === 'a=sendonly') {
-                          answerDirection = 'a=recvonly';
-                      } else if (offerDirection === 'a=recvonly') {
-                          answerDirection = 'a=sendonly';
+                      const previousMDirection = getDirection(missingMBlock);
+                      let currentMDirection = previousMDirection;
+                      if (previousMDirection === 'a=sendonly') {
+                          currentMDirection = 'a=recvonly';
+                      } else if (previousMDirection === 'a=recvonly') {
+                          currentMDirection = 'a=sendonly';
                       }
 
                       const directionIndex = newBlockLines.findIndex(line => line.match(/a=(sendrecv|sendonly|recvonly|inactive)/));
-                      if (directionIndex > -1 && answerDirection) {
-                          newBlockLines[directionIndex] = answerDirection;
-                      } else if (answerDirection) {
-                          newBlockLines.push(answerDirection);
+                      if (directionIndex > -1 && currentMDirection) {
+                          newBlockLines[directionIndex] = currentMDirection;
+                      } else if (currentMDirection) {
+                          newBlockLines.push(currentMDirection);
                       }
 
                       newBlockLines[0] = newBlockLines[0].replace(/^m=\w+/, `m=${missingMediaType}`);
-                      answerMBlocks.push(newBlockLines.join('\r\n'));
+                      currentMBlocks.push(newBlockLines.join('\r\n'));
                   }
               }
 
               const sdpHeader = getHeader(description.sdp);
-              let finalSdp = sdpHeader + '\r\n' + answerMBlocks.join('\r\n');
+              let finalSdp = sdpHeader + '\r\n' + currentMBlocks.join('\r\n');
 
               let midIndex = 0;
               finalSdp = finalSdp.replace(/^a=mid:.*$/gm, () => `a=mid:${midIndex++}`);
@@ -163,6 +167,7 @@ const patcher = {
               console.log("[SDP Patcher] Original Answer SDP:\n", description.sdp);
               console.log("[SDP Patcher] Modified Answer SDP:\n", newDescription.sdp);
 
+              window.oldcord.webRTCPatch.previousDescription.set(this, description);
               return originalSetRemoteDescription.call(this, newDescription);
           };
       })();
