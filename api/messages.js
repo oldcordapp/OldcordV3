@@ -64,14 +64,19 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), async (req
                 msg.content = msg.content.replace("[YEAR]", req.client_build_date.getFullYear());
             }
 
-            if (msg.reactions) {
-                for(var reaction of msg.reactions) {
-                    reaction.me = reaction.user_ids.includes(creator.id);
-                        
-                    delete reaction.user_ids;
-                }
-            }
+
+        if (msg.reactions) {
+            for (var reaction of msg.reactions) {
+                let userIds = Array.isArray(reaction.user_ids) ? reaction.user_ids : [];
+                reaction.me = userIds.includes(creator.id);
+
+                // fix NaN count issues
+                reaction.count = userIds.length || 0;
+
+                delete reaction.user_ids;
         }
+    }
+}
 
         return res.status(200).json(messages);
     } catch (error) {
