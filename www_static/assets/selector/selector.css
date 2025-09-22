@@ -224,7 +224,7 @@ body {
 .container {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     min-height: 100vh;
     padding: 20px;
 }
@@ -266,8 +266,7 @@ body {
 
 .selector-card {
     padding: var(--spacing-xl);
-    min-height: 400px;
-    max-height: 90vh;
+    height: 800px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -756,10 +755,8 @@ input[type="checkbox"]:checked + .toggle-slider:before {
     display: none;
 }
 
-/* mobile media */
 @media (max-width: 768px) {
     .selector-grid {
-        grid-template-columns: 1fr;
         gap: 16px;
     }
 
