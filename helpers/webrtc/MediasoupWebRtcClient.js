@@ -127,6 +127,7 @@ class MediasoupWebRtcClient {
                     consumerRtxSsrc = videoConsumer.rtpParameters?.encodings?.[0]?.rtx?.ssrc ?? 0;
                 }
 
+                /*
                 this.websocket.send(JSON.stringify({
                     op: 12,
                     d: {
@@ -136,6 +137,7 @@ class MediasoupWebRtcClient {
                         rtx_ssrc: consumerRtxSsrc
                     },
                 }));
+                */
             }),
         );
     }

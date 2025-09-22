@@ -57,11 +57,11 @@ const patcher = {
     if (getEnabledPatches().includes("modernizeTruncationSdp")) {
       script = script.replaceAll(`^a=ice|opus|VP8`, `^a=ice|a=extmap|a=fingerprint|opus|VP8`);
       script = script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`);
-      script = script.replaceAll(`sdpSemantics:"plan-b"`, `sdpSemantics:"unified-plan"`); // plan-b is dead
       script = script.replaceAll('t.prototype._generateSessionDescription=function(e){var t=this.audioCodec,n=this.audioPayloadType,o=this.videoCodec,a=this.videoPayloadType,r=this.rtxPayloadType,i=this.sdp;if(null==t||null==n||null==o||null==a||null==r||null==i)throw new Error("payload cannot be null");var s=this._getSSRCs(),u=(0,c.generateSessionDescription)(e,i,this.direction,t,n,40,o,a,2500,r,s);return this.emit(e,u),Promise.resolve(u)}', 't.prototype._generateSessionDescription=function(e){var t=this;return"answer"===e?this._pc._pc.createAnswer().then(function(e){return t.emit("answer",e),e}):this._pc._pc.createOffer().then(function(e){return t.emit("offer",e),e})}');
       script = script.replaceAll(/(var \w+=(\w+)\._pc=new RTCPeerConnection\({iceServers:\w+,sdpSemantics:)"plan-b"(.+?\);)/g, '$1"unified-plan"$3$2._audioTransceiver=$2._pc.addTransceiver("audio",{direction:"recvonly"});$2._videoTransceiver=$2._pc.addTransceiver("video",{direction:"recvonly"});');
       script = script.replaceAll('t.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":o(function(){return t._handleVideo(t.input.getVideoStreamId())});break;case"connectionstatechange":this.emit(e,this.connectionState)}}', 't.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;case"connectionstatechange":this.emit(e,this.connectionState)}}');
-      
+    
+      // Rewrite setRemoteDescription to unified-plan based of current setLocalDescription's offer in a similar manner to modern Discord's
       (function () {
           if (!window.oldcord) {
               window.oldcord = {};
@@ -119,10 +119,6 @@ const patcher = {
 
                       let templateBlock = answerMBlocks.find(b => getMediaType(b) === missingMediaType) || answerMBlocks[0];
                       let newBlockLines = templateBlock.split(/\r?\n/);
-
-                      const offerSsrcLines = getSsrcLines(missingOfferBlock);
-                      newBlockLines = newBlockLines.filter(line => !line.startsWith('a=ssrc:'));
-                      newBlockLines.push(...offerSsrcLines);
 
                       const offerDirection = getDirection(missingOfferBlock);
                       let answerDirection = offerDirection;

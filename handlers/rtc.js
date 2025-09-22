@@ -79,18 +79,16 @@ async function handleIdentify(socket, packet) {
         await socket.client.subscribeToProducers(global.mediaserver);
     });
 
-    const generatedSsrc = {
-        audio_ssrc: globalUtils.generateSsrc(),
-        video_ssrc: globalUtils.generateSsrc(),
-        rtx_ssrc: globalUtils.generateSsrc(),
-    };
-
-    socket.client.initIncomingSSRCs(generatedSsrc);
+    socket.client.initIncomingSSRCs({
+        audio_ssrc: 0,
+        video_ssrc: 0,
+        rtx_ssrc: 0
+    });
 
     socket.send(JSON.stringify({
         op: OPCODES.CONNECTIONINFO,
         d: {
-            ssrc: generatedSsrc.audio_ssrc,
+            ssrc: globalUtils.generateSsrc(),
             ip: global.mediaserver.ip,
             port: global.mediaserver.port,
             modes: ["plain", "xsalsa20_poly1305"],
@@ -244,6 +242,26 @@ async function handleVideo(socket, packet) {
         const clientsThatNeedUpdate = new Set();
         const wantsToProduceAudio = d.audio_ssrc !== 0;
         const wantsToProduceVideo = d.video_ssrc !== 0;
+        let newTrack = false;
+
+        if (socket.client.incomingSSRCS.audio_ssrc !== 0 || socket.client.incomingSSRCS.video_ssrc !== 0 || socket.client.incomingSSRCS.rtx_ssrc !== 0) {
+            // This signals a new audio track
+            newTrack = true
+        }
+
+        // Override 0 SSRCs from clients, aka new connection
+
+        if (socket.client.incomingSSRCS.audio_ssrc !== d.audio_ssrc) {
+            socket.client.incomingSSRCS.audio_ssrc = d.audio_ssrc
+        }
+
+        if (socket.client.incomingSSRCS.video_ssrc !== d.video_ssrc) {
+            socket.client.incomingSSRCS.video_ssrc = d.video_ssrc
+        }
+
+        if (socket.client.incomingSSRCS.rtx_ssrc !== d.rtx_ssrc) {
+            socket.client.incomingSSRCS.rtx_ssrc = d.rtx_ssrc
+        }
 
         // https://github.com/spacebarchat/server/blob/master/src/webrtc/opcodes/Video.ts (The code for this OP is literally 99% spacebars, its just to wait for the clients to connect & publish/subscribe to tracks so it doesnt scream about producers)
         if (!socket.client.webrtcConnected) {
@@ -279,7 +297,7 @@ async function handleVideo(socket, packet) {
         let roomId = `${socket.gatewaySession.guild_id}-${socket.gatewaySession.channel_id}`;
 
         if (wantsToProduceAudio) {
-            if (!socket.client.isProducingAudio()) {
+            if (!socket.client.isProducingAudio() || newTrack) {
                 await socket.client.publishTrack("audio", {
                     audio_ssrc: d.audio_ssrc,
                 });
@@ -301,7 +319,7 @@ async function handleVideo(socket, packet) {
         }
 
         if (wantsToProduceVideo) {
-            if (!socket.client.isProducingVideo()) {
+            if (!socket.client.isProducingVideo() || newTrack) {
                 await socket.client.publishTrack("video", {
                     video_ssrc: d.video_ssrc,
                     rtx_ssrc: d.rtx_ssrc,
@@ -323,6 +341,7 @@ async function handleVideo(socket, packet) {
             }
         }
 
+        /*
         await Promise.all(
             Array.from(clientsThatNeedUpdate).map((client) => {
                 const ssrcs = client.getOutgoingStreamSSRCsForUser(socket.userid);
@@ -340,7 +359,9 @@ async function handleVideo(socket, packet) {
                 }));
             }),
         );
+        */
     } else {
+        /*
         for (const [id, clientSocket] of global.rtcServer.clients) {
             if (id !== socket.userid) {
                 response.user_id = socket.userid;
@@ -351,6 +372,7 @@ async function handleVideo(socket, packet) {
                 }));
             }
         }
+        */
     }
 }
 
