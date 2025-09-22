@@ -1,8 +1,11 @@
-import { builds, defaultBuild } from '../config/builds.js';
+import { builds } from "../config/builds.js"
+import { utils } from '../../../bootloader/js/modules/utils.js';
 import { CHANGELOGS, videos } from '../config/changelogs.js';
 import { QOL_PATCHES } from '../config/patches.js';
 import { Dialog } from './dialog.js';
 import { Settings } from './settings.js';
+
+let defaultBuild = "";
 
 export class UI {
     static renderContent(container, content) {
@@ -118,6 +121,16 @@ export class UI {
             menuOption.dataset.value = build;
             menu.appendChild(menuOption);
         });
+
+        if (!defaultBuild) {
+            defaultBuild = utils.getDefaultClientBuild();
+            utils.setCookie("default_client_build", defaultBuild);
+        }
+
+        if (!builds.includes(defaultBuild)){
+            defaultBuild = 'october_5_2017'; //fallback
+            utils.setCookie("default_client_build", defaultBuild);
+        }
 
         select.value = defaultBuild;
         button.textContent = this.formatBuildDate(defaultBuild);

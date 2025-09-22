@@ -1,3 +1,4 @@
+import { utils } from "../../../bootloader/js/modules/utils.js";
 
 export const builds = [
     "june_12_2015",
@@ -48,5 +49,3 @@ export const builds = [
     "november_30_2018",
     "december_31_2018",
 ];
-
-export const defaultBuild = "october_5_2017";

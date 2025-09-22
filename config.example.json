@@ -11,7 +11,9 @@
     "ws_port": 1337,
     "cache404s": false,
     "serve_selector": true,
-    "debugLogs": {
+    "require_release_date_cookie": true,
+    "default_client_build": "october_5_2017",
+    "debug_logs": {
         "gateway" : true,
         "rtc" : true,
         "media" : true,

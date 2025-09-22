@@ -9,8 +9,8 @@ const logText = (text, type) => {
         return;
     }
 
-    if (!global.config.debugLogs) {
-        global.config.debugLogs = {
+    if (!global.config.debug_logs) {
+        global.config.debug_logs = {
             gateway: true,
             rtc: true,
             media: true,
@@ -21,11 +21,11 @@ const logText = (text, type) => {
         } //compatibility
     }
 
-    if (!global.config.debugLogs['errors'] && type === 'error') {
+    if (!global.config.debug_logs['errors'] && type === 'error') {
         return;
     }
 
-    if (!global.config.debugLogs['dispatcher'] && type === 'dispatcher') {
+    if (!global.config.debug_logs['dispatcher'] && type === 'dispatcher') {
         return;
     }
 
@@ -35,7 +35,7 @@ const logText = (text, type) => {
         'emailer'
     ]
 
-    if (!global.config.debugLogs['rest'] && restTags.includes(type.toLowerCase())) {
+    if (!global.config.debug_logs['rest'] && restTags.includes(type.toLowerCase())) {
         return;
     }
 

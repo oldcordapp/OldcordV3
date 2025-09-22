@@ -6,11 +6,11 @@ const server = udp.createSocket('udp4');
 const udpServer = {
     server: null,
     port: null,
-    debugLogs: false,
+    debug_logs: false,
     clients: new Map(),
     encryptionsMap: new Map(),
     debug(message) {
-        if (!this.debugLogs) {
+        if (!this.debug_logs) {
             return;
         }
 
@@ -27,9 +27,9 @@ const udpServer = {
             return true;
         });
     },
-    start(port, debugLogs = false) {
+    start(port, debug_logs = false) {
         this.port = port;
-        this.debugLogs = debugLogs;
+        this.debug_logs = debug_logs;
 
         server.on('listening', () => {
             var address = server.address();

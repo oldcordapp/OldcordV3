@@ -14,14 +14,14 @@ class MediasoupSignalingDelegate {
         this._ip = "";
     }
 
-    async start(public_ip, portMin, portMax, debugLogs) {
+    async start(public_ip, portMin, portMax, debug_logs) {
         this._ip = public_ip.replace("\n", "");
         const numWorkers = 2;
 
         for (let i = 0; i < numWorkers; i++) {
             const worker = await mediasoup.createWorker({
-                logLevel: debugLogs ? "debug" : "none",
-                logTags: debugLogs ? [
+                logLevel: debug_logs ? "debug" : "none",
+                logTags: debug_logs ? [
                     "info",
                     "ice",
                     "dtls",

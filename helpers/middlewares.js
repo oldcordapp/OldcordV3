@@ -23,12 +23,26 @@ async function clientMiddleware(req, res, next) {
 
         let cookies = req.cookies;
 
-        if (!cookies) {
+        if (!cookies && config.require_release_date_cookie) {
             return res.status(400).json({
                 code: 400,
                 message: "Cookies are required to use the oldcord backend, please enable them and try again."
             })
         }
+
+        if (!cookies['release_date'] && !config.require_release_date_cookie) {
+            res.cookie('release_date', config.default_client_build || "october_5_2017", {
+                maxAge: 100 * 365 * 24 * 60 * 60 * 1000
+            });
+        }
+
+        if (!cookies['default_client_build'] || cookies['default_client_build'] !== (config.default_client_build || "october_5_2017")) {
+            res.cookie('default_client_build', config.default_client_build || "october_5_2017", {
+                maxAge: 100 * 365 * 24 * 60 * 60 * 1000
+            });
+        }
+
+        cookies = req.cookies;
 
         if (!globalUtils.addClientCapabilities(cookies['release_date'], req)) {
             return res.redirect("/selector");

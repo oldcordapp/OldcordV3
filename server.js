@@ -113,7 +113,7 @@ if (config.port == config.ws_port) {
     });
 }
 
-gateway.ready(gatewayServer, config.debugLogs['gateway'] ?? true);
+gateway.ready(gatewayServer, config.debug_logs['gateway'] ?? true);
 
 //https://stackoverflow.com/a/15075395
 function getIPAddress() {
@@ -140,10 +140,10 @@ function getIPAddress() {
         ip_address = await try_get_ip.text();
     }
 
-    global.udpServer.start(config.udp_server_port, config.debugLogs['udp'] ?? true);
-    global.rtcServer.start(config.signaling_server_port, config.debugLogs['rtc'] ?? true);
+    global.udpServer.start(config.udp_server_port, config.debug_logs['udp'] ?? true);
+    global.rtcServer.start(config.signaling_server_port, config.debug_logs['rtc'] ?? true);
 
-    await global.mediaserver.start(ip_address, 5000, 6000, config.debugLogs['media'] ?? true);
+    await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs['media'] ?? true);
 })();
 
 httpServer.listen(config.port, () => {
@@ -511,17 +511,35 @@ app.use("/api/v*/", (_, res) => {
 });
 
 if (config.serve_selector) {
-    app.get("/selector", (_, res) => {
+    app.get("/selector", (req, res) => {
+        res.cookie('default_client_build', config.default_client_build || "october_5_2017", {
+            maxAge: 100 * 365 * 24 * 60 * 60 * 1000
+        });
+
+        if (!config.require_release_date_cookie && !req.cookies['release_date']) {
+            res.cookie('release_date', config.default_client_build || "october_5_2017", {
+                maxAge: 100 * 365 * 24 * 60 * 60 * 1000
+            });
+        }
+
         return res.send(fs.readFileSync(`./www_static/assets/selector/selector.html`, 'utf8'));
     });
 }
 
 app.get("/launch", (req, res) => {
-    if (!req.query.release_date) {
+    if (!req.query.release_date && config.require_release_date_cookie) {
         return res.redirect("/selector");
+    }
+
+    if (!config.require_release_date_cookie && !req.query.release_date) {
+        req.query.release_date = config.default_client_build || "october_5_2017"
     }
     
     res.cookie('release_date', req.query.release_date, {
+        maxAge: 100 * 365 * 24 * 60 * 60 * 1000
+    });
+
+    res.cookie('default_client_build', config.default_client_build || "october_5_2017", {
         maxAge: 100 * 365 * 24 * 60 * 60 * 1000
     });
 
@@ -546,8 +564,18 @@ app.get("/instance", (req, res) => {
 
 app.get("*", (req, res) => {
     try {
-        if (!req.client_build) {
+        if (!req.client_build && config.require_release_date_cookie) {
             return res.redirect("/selector");
+        }
+
+        if (!config.require_release_date_cookie && !req.client_build) {
+            req.client_build = config.default_client_build || "october_5_2017"
+        }
+
+        if (!req.cookies['default_client_build'] || req.cookies['default_client_build'] !== (config.default_client_build || "october_5_2017")) {
+            res.cookie('default_client_build', config.default_client_build || "october_5_2017", {
+                maxAge: 100 * 365 * 24 * 60 * 60 * 1000
+            });
         }
 
         res.sendFile(path.join(__dirname, "www_static/assets/bootloader/index.html"));

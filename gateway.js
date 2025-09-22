@@ -7,9 +7,9 @@ const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
 const gateway = {
     server: null,
     port: null,
-    debugLogs: false,
+    debug_logs: false,
     debug(message) {
-        if (!this.debugLogs) {
+        if (!this.debug_logs) {
             return;
         }
 
@@ -54,19 +54,27 @@ const gateway = {
         await socket.session.updatePresence(setStatusTo, gameField);
     },
     handleClientConnect: async function (socket, req) {
-        const cookies = req.headers.cookie;
+        let cookies = req.headers.cookie;
 
-        if (!cookies) {
+        if (!cookies && globalUtils.config.require_release_date_cookie) {
             socket.close(4000, 'Cookies are required to use the Oldcord gateway.');
 
             return;
         }
 
-        const cookieStore = cookies.split(';').reduce((acc, cookie) => {
+        if (!cookies && !globalUtils.config.require_release_date_cookie) {
+            cookies = `release_date=${globalUtils.config.default_client_build || "october_5_2017"};default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
+        }
+
+        let cookieStore = cookies.split(';').reduce((acc, cookie) => {
             const [key, value] = cookie.split('=').map(v => v.trim());
             acc[key] = value;
             return acc;
         }, {});
+
+        if (!cookies && !cookies.includes('release_date') && !globalUtils.config.require_release_date_cookie) {
+            cookies['release_date'] = globalUtils.config.default_client_build || "october_5_2017"
+        }
 
         if (!cookieStore['release_date']) {
             socket.close(1000, 'The release_date cookie is required to establish a connection to the Oldcord gateway.');
@@ -185,8 +193,8 @@ const gateway = {
 
         server.on('connection', this.handleClientConnect.bind(this));
     },
-    ready: function (server, debugLogs = false) {
-        gateway.debugLogs = debugLogs;
+    ready: function (server, debug_logs = false) {
+        gateway.debug_logs = debug_logs;
         gateway.server = new WebSocket.Server({
             perMessageDeflate: false,
             server: server

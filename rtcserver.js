@@ -7,12 +7,12 @@ const { OPCODES, rtcHandlers } = require('./handlers/rtc');
 const rtcServer = {
     port: null,
     signalingServer: null,
-    debugLogs: false,
+    debug_logs: false,
     clients: new Map(),
     emitter: null,
     protocolsMap: new Map(),
     debug(message) {
-        if (!this.debugLogs) {
+        if (!this.debug_logs) {
             return;
         }
 
@@ -92,10 +92,10 @@ const rtcServer = {
             socket.close(4000, 'Invalid payload');
         }
     },
-    start(port, debugLogs) {
+    start(port, debug_logs) {
         this.emitter = new EventEmitter();
         this.port = port;
-        this.debugLogs = debugLogs;
+        this.debug_logs = debug_logs;
         this.signalingServer = new WebSocket.Server({
             port: port
         });
