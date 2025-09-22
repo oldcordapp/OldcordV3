@@ -63,8 +63,8 @@ const patcher = {
     
       // Rewrite setRemoteDescription to unified-plan based of current setLocalDescription's offer in a similar manner to modern Discord's
       (function () {
-          if (!window.oldcord) {
-              window.oldcord = { webRTCPatch: {}};
+          if (window.oldcord && !window.oldcord.webRTCPatch) {
+              window.oldcord.webRTCPatch = {};
           }
           if (window.oldcord.webRTCPatch.isPatched) {
               return;

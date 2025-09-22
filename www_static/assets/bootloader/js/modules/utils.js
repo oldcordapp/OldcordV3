@@ -56,7 +56,7 @@ export const utils = {
   },
 
   getGlobalConfig() {
-    return window.config || {};
+    return window.oldcord.config || {};
   },
 
   getChunkCache() {

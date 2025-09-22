@@ -48,7 +48,7 @@ export class ResourceLoader {
         const content = await response.text();
         const processed =
           type === "script"
-            ? patcher.js(content, "root", window.config)
+            ? patcher.js(content, "root", window.oldcord.config)
             : patcher.css(content);
 
         // Find if a script has chunks
@@ -264,7 +264,7 @@ export class ResourceLoader {
 
       const response = await fetch(fullUrl);
       const text = await response.text();
-      const processed = patcher.js(text, "chunk", window.config);
+      const processed = patcher.js(text, "chunk", window.oldcord.config);
       const blob = new Blob([processed], { type: "application/javascript" });
       const blobUrl = URL.createObjectURL(blob);
 

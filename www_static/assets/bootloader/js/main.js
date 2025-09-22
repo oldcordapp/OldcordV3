@@ -73,10 +73,12 @@ class Bootloader {
         this.localStorage.removeItem("token");
       }
 
+      window.oldcord = {};
+
       utils.loadLog("Build: " + this.release_date);
       utils.loadLog("Loading instance config...");
-      window.config = await Config.load();
-      document.title = window.config.instance.name;
+      window.oldcord.config = await Config.load();
+      document.title = window.oldcord.config.instance.name;
 
       const envCheck = await this.checkEnvironment();
       if (envCheck.status === "ready") {
@@ -106,7 +108,7 @@ class Bootloader {
 
     window.BetterDiscord = true;
     window.Firebug = { chrome: { isInitialized: false } };
-    window.GLOBAL_ENV = window.config.globalEnv;
+    window.GLOBAL_ENV = window.oldcord.config.globalEnv;
     return { status: "ready" };
   }
 
