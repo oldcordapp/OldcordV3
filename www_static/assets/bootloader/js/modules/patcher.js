@@ -82,7 +82,6 @@ const patcher = {
           };
           const getMediaType = (block) => (block.match(/^m=(\w+)/) || [])[1];
           const getDirection = (block) => (block.match(/a=(sendrecv|sendonly|recvonly|inactive)/) || [])[0];
-          const getSsrcLines = (block) => block.match(/^a=ssrc:.*$/gm) || [];
 
           RTCPeerConnection.prototype.setLocalDescription = function(description) {
               if (description && description.type === 'offer') {
