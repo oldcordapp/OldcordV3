@@ -55,8 +55,123 @@ const patcher = {
     }
 
     if (getEnabledPatches().includes("modernizeTruncationSdp")) {
-      script = script.replaceAll(`"^a=ice|opus|VP8|"`,`"^a=ice|a=extmap|a=fingerprint|opus|VP8|"`);
+      script = script.replaceAll(`^a=ice|opus|VP8`, `^a=ice|a=extmap|a=fingerprint|opus|VP8`);
       script = script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`);
+      script = script.replaceAll(`sdpSemantics:"plan-b"`, `sdpSemantics:"unified-plan"`); // plan-b is dead
+      script = script.replaceAll('t.prototype._generateSessionDescription=function(e){var t=this.audioCodec,n=this.audioPayloadType,o=this.videoCodec,a=this.videoPayloadType,r=this.rtxPayloadType,i=this.sdp;if(null==t||null==n||null==o||null==a||null==r||null==i)throw new Error("payload cannot be null");var s=this._getSSRCs(),u=(0,c.generateSessionDescription)(e,i,this.direction,t,n,40,o,a,2500,r,s);return this.emit(e,u),Promise.resolve(u)}', 't.prototype._generateSessionDescription=function(e){var t=this;return"answer"===e?this._pc._pc.createAnswer().then(function(e){return t.emit("answer",e),e}):this._pc._pc.createOffer().then(function(e){return t.emit("offer",e),e})}');
+      script = script.replaceAll(/(var \w+=(\w+)\._pc=new RTCPeerConnection\({iceServers:\w+,sdpSemantics:)"plan-b"(.+?\);)/g, '$1"unified-plan"$3$2._audioTransceiver=$2._pc.addTransceiver("audio",{direction:"recvonly"});$2._videoTransceiver=$2._pc.addTransceiver("video",{direction:"recvonly"});');
+      script = script.replaceAll('t.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":o(function(){return t._handleVideo(t.input.getVideoStreamId())});break;case"connectionstatechange":this.emit(e,this.connectionState)}}', 't.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;case"connectionstatechange":this.emit(e,this.connectionState)}}');
+      
+      (function () {
+          if (!window.oldcord) {
+              window.oldcord = {};
+          }
+          if (window.oldcord.isSDPPatched) {
+              return;
+          }
+          window.oldcord.isSDPPatched = true;
+          window.oldcord.peerConnectionOffers = new WeakMap();
+
+          const originalSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
+          const originalSetRemoteDescription = RTCPeerConnection.prototype.setRemoteDescription;
+
+          const getHeader = (sdp) => sdp.split('\r\nm=')[0];
+          const getMediaBlocks = (sdp) => {
+              const parts = sdp.split('\r\nm=');
+              return parts.length > 1 ? parts.slice(1).map(block => 'm=' + block.trim()) : [];
+          };
+          const getMediaType = (block) => (block.match(/^m=(\w+)/) || [])[1];
+          const getDirection = (block) => (block.match(/a=(sendrecv|sendonly|recvonly|inactive)/) || [])[0];
+          const getSsrcLines = (block) => block.match(/^a=ssrc:.*$/gm) || [];
+
+          RTCPeerConnection.prototype.setLocalDescription = function(description) {
+              if (description && description.type === 'offer') {
+                  window.oldcord.peerConnectionOffers.set(this, description);
+              }
+              return originalSetLocalDescription.apply(this, arguments);
+          };
+
+          RTCPeerConnection.prototype.setRemoteDescription = async function(description) {
+              if (!/Chrome/.test(navigator.userAgent) || !description) {
+                  return originalSetRemoteDescription.apply(this, arguments);
+              }
+
+              const offer = window.oldcord.peerConnectionOffers.get(this);
+              if (!offer) {
+                  console.warn('[SDP Patcher] No corresponding offer found. Applying answer as-is.');
+                  return originalSetRemoteDescription.apply(this, arguments);
+              }
+
+              const offerMBlocks = getMediaBlocks(offer.sdp);
+              let answerMBlocks = getMediaBlocks(description.sdp);
+
+              if (offerMBlocks.length > answerMBlocks.length) {
+                  console.log(`[SDP Patcher] Offer/Answer m-block mismatch (${offerMBlocks.length} > ${answerMBlocks.length}). Adding missing sections.`);
+
+                  if (answerMBlocks.length === 0) {
+                      console.error('[SDP Patcher] Cannot add missing sections: The answer has no media blocks to use as a template.');
+                      return originalSetRemoteDescription.apply(this, arguments);
+                  }
+
+                  for (let i = answerMBlocks.length; i < offerMBlocks.length; i++) {
+                      const missingOfferBlock = offerMBlocks[i];
+                      const missingMediaType = getMediaType(missingOfferBlock);
+
+                      let templateBlock = answerMBlocks.find(b => getMediaType(b) === missingMediaType) || answerMBlocks[0];
+                      let newBlockLines = templateBlock.split(/\r?\n/);
+
+                      const offerSsrcLines = getSsrcLines(missingOfferBlock);
+                      newBlockLines = newBlockLines.filter(line => !line.startsWith('a=ssrc:'));
+                      newBlockLines.push(...offerSsrcLines);
+
+                      const offerDirection = getDirection(missingOfferBlock);
+                      let answerDirection = offerDirection;
+                      if (offerDirection === 'a=sendonly') {
+                          answerDirection = 'a=recvonly';
+                      } else if (offerDirection === 'a=recvonly') {
+                          answerDirection = 'a=sendonly';
+                      }
+
+                      const directionIndex = newBlockLines.findIndex(line => line.match(/a=(sendrecv|sendonly|recvonly|inactive)/));
+                      if (directionIndex > -1 && answerDirection) {
+                          newBlockLines[directionIndex] = answerDirection;
+                      } else if (answerDirection) {
+                          newBlockLines.push(answerDirection);
+                      }
+
+                      newBlockLines[0] = newBlockLines[0].replace(/^m=\w+/, `m=${missingMediaType}`);
+                      answerMBlocks.push(newBlockLines.join('\r\n'));
+                  }
+              }
+
+              const sdpHeader = getHeader(description.sdp);
+              let finalSdp = sdpHeader + '\r\n' + answerMBlocks.join('\r\n');
+
+              let midIndex = 0;
+              finalSdp = finalSdp.replace(/^a=mid:.*$/gm, () => `a=mid:${midIndex++}`);
+
+              const midCount = (finalSdp.match(/^m=/gm) || []).length;
+              if (midCount > 0) {
+                  const newMidList = Array.from({ length: midCount }, (_, i) => i).join(' ');
+                  if (finalSdp.includes('a=group:BUNDLE')) {
+                      finalSdp = finalSdp.replace(/^a=group:BUNDLE.*$/gm, `a=group:BUNDLE ${newMidList}`);
+                  }
+              }
+
+              finalSdp = finalSdp.replace(/(\r?\n){2,}/g, '\r\n').trim() + '\r\n';
+
+              const newDescription = new RTCSessionDescription({
+                  type: 'answer',
+                  sdp: finalSdp,
+              });
+              
+              console.log("[SDP Patcher] Original Answer SDP:\n", description.sdp);
+              console.log("[SDP Patcher] Modified Answer SDP:\n", newDescription.sdp);
+
+              return originalSetRemoteDescription.call(this, newDescription);
+          };
+      })();
+
     }
 
     if (getEnabledPatches().includes("forceWebRtcP2P")) {
@@ -71,15 +186,6 @@ const patcher = {
       script = script.replaceAll(`URL.revokeObjectURL(this._audioElement.src))`, `this._audioElement.srcObject = null)`); //firefox is very finnicky about these
     }
 
-    if (/Chrome/.test(navigator.userAgent)) { //For chromium based browsers, they usually have this issue of sending 0 as an audio_ssrc for their first op 12, leading to issues with the media server.
-      script = script.replaceAll(/(\w).input.on\("video",(\w)._handleVideo\),/g, ``);
-      script = script.replaceAll(/return (\w)._handleVideo\((\w).input.getVideoStreamId\(\)\)/g, ``);
-      script = script.replaceAll(/(\w)\.videoSSRC===(\w)&&(\w)\.rtxSSRC===(\w)&&(\w)\.videoReady\|\|/g, ``);
-      script = script.replaceAll(/(\w)\.videoSSRC!==(\w)\.videoSSRC&&/g, ``); //Early 2017 fix
-    }
-
-    //script = script.replaceAll(`this._stream.addTrack(e),null==this._audioElement`, `this._stream.addTrack(e),null==this._audioElement,e.kind==='audio'`); - deprecated patch
-    
     // Disable HTTPS in insecure mode (for local testing)
     if (location.protocol != "https")
       script = script.replaceAll("https://", location.protocol + "//");

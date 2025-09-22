@@ -94,15 +94,7 @@ async function handleIdentify(socket, packet) {
             ip: global.mediaserver.ip,
             port: global.mediaserver.port,
             modes: ["plain", "xsalsa20_poly1305"],
-            heartbeat_interval: 1,
-            streams: [{
-                type: "video",
-                ssrc: generatedSsrc.video_ssrc,
-                rtx_ssrc: generatedSsrc.rtx_ssrc,
-                rid: "100",
-                active: false,
-                quality: 100
-            }]
+            heartbeat_interval: 1
         }
     }));
 }
@@ -360,7 +352,6 @@ async function handleVideo(socket, packet) {
             }
         }
     }
-
 }
 
 async function handleResume(socket, packet) {
