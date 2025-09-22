@@ -26,10 +26,10 @@ export const QOL_PATCHES = {
         compatibleVersions: 'all',
         incompatiblePatches: []
     },
-    modernizeTruncationSdp: {
-        id: 'modernizeTruncationSdp',
-        label: 'Modernize WebRTC SDP Truncation',
-        description: 'Basically sends more than just ICE & RTP mappings (Like the modern Discord clients) - Required for WebRTC Voice Communication',
+    modernizeWebRTC: {
+        id: 'modernizeWebRTC',
+        label: 'Modernize WebRTC',
+        description: 'Sends more than just ICE & RTP mappings (Like the modern Discord clients) and Unified Plan support - Required for WebRTC Voice Communication',
         mandatory: false,
         defaultEnabled: true,
         compatibleVersions: [

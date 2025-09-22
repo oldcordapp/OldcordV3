@@ -54,7 +54,7 @@ const patcher = {
       );
     }
 
-    if (getEnabledPatches().includes("modernizeTruncationSdp")) {
+    if (getEnabledPatches().includes("modernizeWebRTC")) {
       script = script.replaceAll(`^a=ice|opus|VP8`, `^a=ice|a=extmap|a=fingerprint|opus|VP8`);
       script = script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`);
       script = script.replaceAll('t.prototype._generateSessionDescription=function(e){var t=this.audioCodec,n=this.audioPayloadType,o=this.videoCodec,a=this.videoPayloadType,r=this.rtxPayloadType,i=this.sdp;if(null==t||null==n||null==o||null==a||null==r||null==i)throw new Error("payload cannot be null");var s=this._getSSRCs(),u=(0,c.generateSessionDescription)(e,i,this.direction,t,n,40,o,a,2500,r,s);return this.emit(e,u),Promise.resolve(u)}', 't.prototype._generateSessionDescription=function(e){var t=this;return"answer"===e?this._pc._pc.createAnswer().then(function(e){return t.emit("answer",e),e}):this._pc._pc.createOffer().then(function(e){return t.emit("offer",e),e})}');
