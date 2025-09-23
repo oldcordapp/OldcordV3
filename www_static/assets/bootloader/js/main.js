@@ -39,15 +39,29 @@ class Bootloader {
     document.getElementById("oldcord-loading-quote").textContent = quoteText;
 
     const submitter = document.getElementById("oldcord-loading-submitter");
-    if (randomQuote.submittedBy) {
-      const submitterText = randomQuote.submittedVia
+
+    let submitterText = "";
+
+    if (!randomQuote.submittedBy) {
+      submitter.style.display = "none";
+      return
+    } else {
+      submitter.style.display = "block";
+    }
+
+    if (randomQuote.fromDiscord) {
+      submitterText = `ORIGINALLY APPEARED ON <span>DISCORD</span> IN <span>${randomQuote.appearedIn}</span>`;
+      submitterText += randomQuote.submittedBy === "Discord" ? "" : "<br/>ORIGINALLY ";
+      
+    }
+
+    if (randomQuote.submittedBy !== "Discord") {
+      submitterText += randomQuote.submittedVia
         ? `SUBMITTED BY <span>${randomQuote.submittedBy}</span> VIA <span>${randomQuote.submittedVia}</span>`
         : `SUBMITTED BY <span>${randomQuote.submittedBy}</span>`;
-      submitter.innerHTML = submitterText;
-      submitter.style.display = "block";
-    } else {
-      submitter.style.display = "none";
     }
+
+    submitter.innerHTML = submitterText;
   }
 
   setLoadingText(text) {

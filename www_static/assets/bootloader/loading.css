@@ -157,7 +157,7 @@
     font-size: 12px;
     font-weight: 400;
     color: rgba(255, 255, 255, 0.6);
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 /* Move submitter styles before loading-text and increase specificity */
