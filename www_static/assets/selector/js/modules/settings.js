@@ -49,27 +49,52 @@ export class Settings {
         preferences[selectedBuild] = settings;
         this.setCookie(STORAGE_KEYS.PATCH_PREFERENCES, preferences);
     }
+    
+    static getIncompatibilityReport(selectedBuild) {
+        const preferences = this.getBuildPreferences(selectedBuild);
+        const conflicts = [];
+        const checkedPatches = new Set();
+
+        for (const [key, patch] of Object.entries(QOL_PATCHES)) {
+            if (!this.isCompatibleBuild(patch, selectedBuild)) continue;
+
+            const isChecked = preferences[key] ?? patch.defaultEnabled;
+            if (isChecked) {
+                checkedPatches.add(key);
+            }
+        }
+
+        const processedPairs = new Set();
+
+        for (const patchKey of checkedPatches) {
+            const patch = QOL_PATCHES[patchKey];
+            if (!patch.incompatiblePatches || patch.incompatiblePatches.length === 0) continue;
+
+            for (const incompatibleKey of patch.incompatiblePatches) {
+                if (checkedPatches.has(incompatibleKey)) {
+                    const pair = [patchKey, incompatibleKey].sort().join('|');
+                    if (!processedPairs.has(pair)) {
+                        conflicts.push({
+                            patchA: QOL_PATCHES[patchKey],
+                            patchB: QOL_PATCHES[incompatibleKey]
+                        });
+                        processedPairs.add(pair);
+                    }
+                }
+            }
+        }
+        return conflicts;
+    }
 
     static updateEnabledPatches(selectedBuild) {
         const preferences = this.getBuildPreferences(selectedBuild);
-        const alerts = [];
 
         const enabledPatches = Object.entries(QOL_PATCHES)
             .filter(([key, patch]) => {
-                const isCompatible = this.isCompatibleBuild(patch, selectedBuild);
+                const isCompatibleWithBuild = this.isCompatibleBuild(patch, selectedBuild);
                 const isEnabledInPreferences = preferences[key] ?? patch.defaultEnabled;
-
-                const hasIncompatibleEnabled = patch.incompatiblePatches && patch.incompatiblePatches.some(incompatiblePatchKey => {
-                    const incompatiblePatchEnabled = preferences[incompatiblePatchKey] ?? QOL_PATCHES[incompatiblePatchKey].defaultEnabled;
-                    return incompatiblePatchEnabled;
-                });
-
-                if (isCompatible && isEnabledInPreferences && !hasIncompatibleEnabled) {
-                    return true;
-                } else if (isCompatible && isEnabledInPreferences && hasIncompatibleEnabled) {
-                    return false;
-                }
-                return false;
+                
+                return isCompatibleWithBuild && isEnabledInPreferences;
             })
             .map(([_, patch]) => patch.id);
 

@@ -18,19 +18,7 @@ export class UI {
         const forceDisabled = isElectronPatch && !isElectron;
         const preferences = Settings.getBuildPreferences(selectedBuild);
 
-        let isChecked = preferences[patch.id] ?? patch.defaultEnabled;
-        let isDisabledByIncompatibility = false;
-
-        if (isChecked) {
-            for (const incompatiblePatchId of patch.incompatiblePatches) {
-                const isOffendingPatchEnabled = preferences[incompatiblePatchId] ?? QOL_PATCHES[incompatiblePatchId]?.defaultEnabled;
-                if (isOffendingPatchEnabled) {
-                    isChecked = false;
-                    isDisabledByIncompatibility = true;
-                    break;
-                }
-            }
-        }
+        const isChecked = preferences[patch.id] ?? patch.defaultEnabled;
 
         const element = document.createElement('div');
         element.className = 'qol-option';
@@ -38,7 +26,7 @@ export class UI {
         element.innerHTML = `
              <label class="toggle mb-sm">
                 <input type="checkbox" id="${patch.id}" 
-                        ${forceDisabled || patch.mandatory || isDisabledByIncompatibility ? 'disabled' : ''}
+                        ${forceDisabled || patch.mandatory ? 'disabled' : ''}
                         ${isChecked ? 'checked' : ''}>
                 <span class="toggle-slider"></span>
                 <span class="toggle-label text-normal">${patch.label}</span>
@@ -70,12 +58,8 @@ export class UI {
         });
 
         const checkbox = element.querySelector(`#${patch.id}`);
-        if (checkbox && !patch.mandatory && !isDisabledByIncompatibility) {
+        if (checkbox && !patch.mandatory) {
             checkbox.addEventListener('change', () => this.handlePatchChange(patch.id, checkbox.checked, selectedBuild));
-        } else if (isDisabledByIncompatibility) {
-            // Add a tooltip or message for incompatibility
-            const tooltipText = element.querySelector('.tooltip-text');
-            tooltipText.textContent = `This patch is disabled because it is incompatible with another enabled patch.`;
         }
 
         return element;
@@ -87,6 +71,7 @@ export class UI {
         prefs[patchId] = checked;
         Settings.saveBuildPreferences(selectedBuild, prefs);
         Settings.updateEnabledPatches(selectedBuild);
+        this.updateQolOptions(selectedBuild);
     }
 
     static updateQolOptions(selectedBuild) {
@@ -302,6 +287,23 @@ export class UI {
                     allowfullscreen>
                 </iframe>
             </div>`;
+    }
+
+    static showIncompatibilityDialog(conflicts) {
+        const conflictMessages = conflicts.map(conflict =>
+            `<li>'${conflict.patchA.label}' is incompatible with '${conflict.patchB.label}'.</li>`
+        ).join('');
+
+        Dialog.show({
+            title: 'Incompatible Patches Selected',
+            content: `
+                <p>The following selected patches cannot be used together. Please review your selections and disable one of the conflicting patches to continue.</p>
+                <ul class="mt-md" style="list-style-position: inside;">${conflictMessages}</ul>
+            `,
+            buttons: [
+                { id: 'positiveButton', label: 'OK', onClick: () => Dialog.hide() }
+            ]
+        });
     }
 
     static toggleAdvancedSettings(show) {

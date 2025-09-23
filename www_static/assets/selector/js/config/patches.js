@@ -54,7 +54,7 @@ export const QOL_PATCHES = {
             "november_30_2018",
             "december_31_2018",
         ], //Does not work for 2015/2016, and Jan 23 2017 for some reason - looking into that later
-        incompatiblePatches: []
+        incompatiblePatches: ["forceWebRtcP2P"]
     },
     forceWebRtcP2P: {
         id: 'forceWebRtcP2P',
@@ -84,6 +84,6 @@ export const QOL_PATCHES = {
             "november_30_2018",
             "december_31_2018"
          ],
-         incompatiblePatches: []
+         incompatiblePatches: ["modernizeWebRTC"]
     }
 };

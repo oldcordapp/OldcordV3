@@ -9,6 +9,13 @@ function initializeEventListeners() {
 
     document.getElementById('launchButton').addEventListener('click', () => {
         const selectedBuild = document.getElementById('buildSelect').value;
+
+        const conflicts = Settings.getIncompatibilityReport(selectedBuild);
+        if (conflicts.length > 0) {
+            UI.showIncompatibilityDialog(conflicts);
+            return;
+        }
+
         const enabledMods = Object.entries(QOL_PATCHES)
             .filter(([_, patch]) => {
                 const checkbox = document.getElementById(patch.id);

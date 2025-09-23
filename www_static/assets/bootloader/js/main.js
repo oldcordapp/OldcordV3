@@ -52,7 +52,6 @@ class Bootloader {
     if (randomQuote.fromDiscord) {
       submitterText = `ORIGINALLY APPEARED ON <span>DISCORD</span> IN <span>${randomQuote.appearedIn}</span>`;
       submitterText += randomQuote.submittedBy === "Discord" ? "" : "<br/>ORIGINALLY ";
-      
     }
 
     if (randomQuote.submittedBy !== "Discord") {
