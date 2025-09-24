@@ -39,7 +39,7 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
 
 **Configuration** (`config.json`):
   - `custom_invite_url`: Sets the domain for your instance's invite links (e.g., setting it to example.com will make it so every invite has the prefix example.com - similar to discord.gg)
-  - `Google reCAPTCHA`: To enable, provide a `site_key` and `secret_key`. Change `enabled` to `false` to disable.
+  - `Google reCAPTCHA`: To enable, provide a `site_key`, `secret_key` and change `enabled` to `true`. Do the opposite (`enabled` to `false`) to disable.
      - **IMPORTANT**: The default keys are for demo purposes, **all answers will be marked as valid**, you MUST change these for a production environment.
   - `integration_config`: Manages in-app connections (e.g, Twitch). You'll need to create developer applications on these platforms (like Twitch) to get a `client_id` and `client_secret`.
      ```
