@@ -104,6 +104,10 @@
         },
         "emojis_per_guild" : {
             "max" : 200
+        },
+        "messages": {
+            "min": 0,
+            "max": 4000
         }
     },
     "gcs_config" : { },
