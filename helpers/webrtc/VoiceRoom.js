@@ -33,34 +33,31 @@ class VoiceRoom {
     onClientLeave = (client) => {
         this._clients.delete(client.user_id);
 
-        if (!client.isStopped) {
-            client.isStopped = true;
+        for (const otherClient of this.clients.values()) {
+            if (otherClient.user_id === client.user_id) continue;
 
-            for (const otherClient of this.clients.values()) {
-                if (otherClient.user_id === client.user_id) continue;
-
-                otherClient.consumers?.forEach((consumer) => {
-                    if (
-                        client?.audioProducer?.id === consumer.producerId ||
-                        client?.videoProducer?.id === consumer.producerId
-                    ) {
-                        consumer.close();
-                    }
-                });
-            }
-
-            client.consumers?.forEach((consumer) => consumer.close());
-            client.audioProducer?.close();
-            client.videoProducer?.close();
-            client.transport?.close();
-            client.room = undefined;
-            client.audioProducer = undefined;
-            client.videoProducer = undefined;
-            client.consumers = [];
-            client.transport = undefined;
-            client.websocket = undefined;
-            client.emitter.removeAllListeners();
+            otherClient.consumers?.forEach((consumer) => {
+                if (
+                    client?.audioProducer?.id === consumer.producerId ||
+                    client?.videoProducer?.id === consumer.producerId
+                ) {
+                    consumer.close();
+                }
+            });
         }
+
+        client.consumers?.forEach((consumer) => consumer.close());
+        client.audioProducer?.close();
+        client.videoProducer?.close();
+        client.transport?.close();
+        client.isStopped = true;
+        client.room = undefined;
+        client.audioProducer = undefined;
+        client.videoProducer = undefined;
+        client.consumers = [];
+        client.transport = undefined;
+        client.websocket = undefined;
+        client.emitter.removeAllListeners();
     };
 
     get clients() {

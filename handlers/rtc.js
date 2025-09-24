@@ -75,10 +75,6 @@ async function handleIdentify(socket, packet) {
         global.mediaserver.onClientClose(socket.client);
     });
 
-    socket.client.emitter.once("connected", async () => {
-        await socket.client.subscribeToProducers(global.mediaserver);
-    });
-
     socket.client.initIncomingSSRCs({
         audio_ssrc: 0,
         video_ssrc: 0,
@@ -189,6 +185,11 @@ async function handleSpeaking(socket, packet) {
             return;
         }
 
+        if (!socket.client.isProducingAudio()) {
+            global.rtcServer.debug(`Client ${socket.userid} sent a speaking packet but has no audio producer.`);
+            return;
+        }
+
         await Promise.all(
             Array.from(
                 global.mediaserver.getClientsForRtcServer(
@@ -199,12 +200,17 @@ async function handleSpeaking(socket, packet) {
 
                 const ssrc = client.getOutgoingStreamSSRCsForUser(socket.userid);
 
+                if (packet.d.speaking && ssrc.audio_ssrc === 0) {
+                     global.rtcServer.debug(`Suppressing speaking packet for ${client.user_id} as consumer for ${socket.userid} is not ready (ssrc=0).`);
+                     return Promise.resolve();
+                }
+
                 client.websocket.send(JSON.stringify({
                     op: OPCODES.SPEAKING,
                     d: {
                         user_id: socket.userid,
                         speaking: packet.d.speaking,
-                        ssrc: ssrc.audio_ssrc ?? 0,
+                        ssrc: ssrc.audio_ssrc
                     },
                 }));
             }),
@@ -242,126 +248,67 @@ async function handleVideo(socket, packet) {
         const clientsThatNeedUpdate = new Set();
         const wantsToProduceAudio = d.audio_ssrc !== 0;
         const wantsToProduceVideo = d.video_ssrc !== 0;
-        let newTrack = false;
 
-        if (socket.client.incomingSSRCS.audio_ssrc !== 0 || socket.client.incomingSSRCS.video_ssrc !== 0 || socket.client.incomingSSRCS.rtx_ssrc !== 0) {
-            // This signals a new audio track
-            newTrack = true
+        const isCurrentlyProducingAudio = socket.client.isProducingAudio();
+        const isCurrentlyProducingVideo = socket.client.isProducingVideo();
+
+        socket.client.initIncomingSSRCs({
+            audio_ssrc: d.audio_ssrc,
+            video_ssrc: d.video_ssrc,
+            rtx_ssrc: d.rtx_ssrc
+        });
+
+        if (wantsToProduceAudio && !isCurrentlyProducingAudio) {
+            console.log(`[${socket.userid}] Starting audio production with ssrc ${d.audio_ssrc}`);
+            await socket.client.publishTrack("audio", { audio_ssrc: d.audio_ssrc });
+
+            for (const client of socket.client.room.clients.values()) {
+                if (client.user_id === socket.userid) continue;
+                await client.subscribeToTrack(socket.client.user_id, "audio");
+                clientsThatNeedUpdate.add(client);
+            }
         }
-
-        // Override 0 SSRCs from clients, aka new connection
-
-        if (socket.client.incomingSSRCS.audio_ssrc !== d.audio_ssrc) {
-            socket.client.incomingSSRCS.audio_ssrc = d.audio_ssrc
-        }
-
-        if (socket.client.incomingSSRCS.video_ssrc !== d.video_ssrc) {
-            socket.client.incomingSSRCS.video_ssrc = d.video_ssrc
-        }
-
-        if (socket.client.incomingSSRCS.rtx_ssrc !== d.rtx_ssrc) {
-            socket.client.incomingSSRCS.rtx_ssrc = d.rtx_ssrc
-        }
-
-        // https://github.com/spacebarchat/server/blob/master/src/webrtc/opcodes/Video.ts (The code for this OP is literally 99% spacebars, its just to wait for the clients to connect & publish/subscribe to tracks so it doesnt scream about producers)
-        if (!socket.client.webrtcConnected) {
-            if (wantsToProduceAudio) {
-                try {
-                    await Promise.race([
-                        new Promise((resolve, reject) => {
-                            socket.client.emitter.once("connected", () =>
-                                resolve(),
-                            );
-                        }),
-                        new Promise((resolve, reject) => {
-                            setTimeout(() => {
-                                if (socket.client.webrtcConnected) resolve();
-                                else reject();
-                            }, 3000);
-                        }),
-                    ]);
-                } catch (e) {
-                    return;
-                }
-            } else return;
-        }
-
-        if (!wantsToProduceAudio && socket.client.isProducingAudio()) {
+        else if (!wantsToProduceAudio && isCurrentlyProducingAudio) {
+            console.log(`[${socket.userid}] Stopping audio production.`);
             socket.client.stopPublishingTrack("audio");
+
+            for (const client of socket.client.room.clients.values()) {
+                if (client.user_id !== socket.userid) clientsThatNeedUpdate.add(client);
+            }
         }
 
-        if (!wantsToProduceVideo && socket.client.isProducingVideo()) {
+        if (wantsToProduceVideo && !isCurrentlyProducingVideo) {
+            console.log(`[${socket.userid}] Starting video production with ssrc ${d.video_ssrc}`);
+            await socket.client.publishTrack("video", { video_ssrc: d.video_ssrc, rtx_ssrc: d.rtx_ssrc });
+            for (const client of socket.client.room.clients.values()) {
+                if (client.user_id === socket.userid) continue;
+                await client.subscribeToTrack(socket.client.user_id, "video");
+                clientsThatNeedUpdate.add(client);
+            }
+        }
+        else if (!wantsToProduceVideo && isCurrentlyProducingVideo) {
+            console.log(`[${socket.userid}] Stopping video production.`);
             socket.client.stopPublishingTrack("video");
-        }
-
-        let roomId = `${socket.gatewaySession.guild_id}-${socket.gatewaySession.channel_id}`;
-
-        if (wantsToProduceAudio) {
-            if (!socket.client.isProducingAudio() || newTrack) {
-                await socket.client.publishTrack("audio", {
-                    audio_ssrc: d.audio_ssrc,
-                });
-            }
-
-            for (const client of global.mediaserver.getClientsForRtcServer(
-                roomId,
-            )) {
-                if (client.user_id === socket.userid) continue;
-
-                if (!client.isSubscribedToTrack(socket.userid, "audio")) {
-                    await client.subscribeToTrack(
-                        socket.client.user_id,
-                        "audio",
-                    );
-                    clientsThatNeedUpdate.add(client);
-                }
+            for (const client of socket.client.room.clients.values()) {
+                if (client.user_id !== socket.userid) clientsThatNeedUpdate.add(client);
             }
         }
 
-        if (wantsToProduceVideo) {
-            if (!socket.client.isProducingVideo() || newTrack) {
-                await socket.client.publishTrack("video", {
-                    video_ssrc: d.video_ssrc,
-                    rtx_ssrc: d.rtx_ssrc,
-                });
-            }
-
-            for (const client of global.mediaserver.getClientsForRtcServer(
-                roomId,
-            )) {
-                if (client.user_id === socket.userid) continue;
-
-                if (!client.isSubscribedToTrack(socket.userid, "video")) {
-                    await client.subscribeToTrack(
-                        socket.client.user_id,
-                        "video",
-                    );
-                    clientsThatNeedUpdate.add(client);
-                }
-            }
-        }
-
-        /*
         await Promise.all(
             Array.from(clientsThatNeedUpdate).map((client) => {
                 const ssrcs = client.getOutgoingStreamSSRCsForUser(socket.userid);
-
                 client.websocket.send(JSON.stringify({
                     op: OPCODES.VIDEO,
                     d: {
                         user_id: socket.userid,
-                        audio_ssrc:
-                            ssrcs.audio_ssrc ??
-                            socket.client.getIncomingStreamSSRCs().audio_ssrc,
-                        video_ssrc: ssrcs.video_ssrc ?? 0,
-                        rtx_ssrc: ssrcs.rtx_ssrc ?? 0
+                        audio_ssrc: ssrcs.audio_ssrc,
+                        video_ssrc: ssrcs.video_ssrc,
+                        rtx_ssrc: ssrcs.rtx_ssrc
                     },
                 }));
             }),
         );
-        */
     } else {
-        /*
         for (const [id, clientSocket] of global.rtcServer.clients) {
             if (id !== socket.userid) {
                 response.user_id = socket.userid;
@@ -372,7 +319,6 @@ async function handleVideo(socket, packet) {
                 }));
             }
         }
-        */
     }
 }
 

@@ -37,37 +37,40 @@ class MediasoupWebRtcClient {
         };
     }
 
-    getOutgoingStreamSSRCsForUser(user_id) {
-        const otherClient = this.room?.getClientById(user_id);
+   getOutgoingStreamSSRCsForUser(user_id) {
+    const otherClient = this.room?.getClientById(user_id);
+    const audioProducerId = otherClient?.audioProducer?.id;
+    const videoProducerId = otherClient?.videoProducer?.id;
 
-        if (!otherClient) {
-            return {
-                audio_ssrc: 0,
-                video_ssrc: 0,
-                rtx_ssrc: 0
-            };
-        }
+    const audioConsumer = this.consumers?.find(
+        (consumer) => consumer.producerId === audioProducerId
+    );
 
-        const audioProducerId = otherClient.audioProducer?.id;
-        const videoProducerId = otherClient.videoProducer?.id;
+    const videoConsumer = this.consumers?.find(
+        (consumer) => consumer.producerId === videoProducerId
+    );
 
-        const audioConsumer = this.consumers?.find(
-            (consumer) => consumer.producerId === audioProducerId
-        );
-        const videoConsumer = this.consumers?.find(
-            (consumer) => consumer.producerId === videoProducerId
-        );
-
-        const audioSsrc = audioConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
-        const videoSsrc = videoConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
-        const rtxSsrc = videoConsumer?.rtpParameters?.encodings[0]?.rtx?.ssrc ?? 0;
-
-        return {
-            audio_ssrc: audioSsrc,
-            video_ssrc: videoSsrc,
-            rtx_ssrc: rtxSsrc,
-        };
+    // --- ADD THIS DETAILED LOG ---
+    if (!audioConsumer && audioProducerId) { // Log only on failure
+        console.log(`[SSRC LOOKUP FAILED]
+  - Listener: ${this.user_id}
+  - Speaker: ${user_id}
+  - Speaker's Producer ID: ${audioProducerId}
+  - Listener has ${this.consumers.length} consumers for producers: [${this.consumers.map(c => c.producerId).join(', ')}]
+  - Consumer for speaker was NOT FOUND.`);
     }
+    // --- END OF LOG ---
+
+    const audioSsrc = audioConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
+    const videoSsrc = videoConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
+    const rtxSsrc = videoConsumer?.rtpParameters?.encodings[0]?.rtx?.ssrc ?? 0;
+
+    return {
+        audio_ssrc: audioSsrc,
+        video_ssrc: videoSsrc,
+        rtx_ssrc: rtxSsrc,
+    };
+}
 
     isProducingAudio() {
         return !!this.audioProducer;
@@ -77,12 +80,10 @@ class MediasoupWebRtcClient {
         return !!this.videoProducer;
     }
 
-    async subscribeToProducers(mediaServer) {
-        if (!this.webrtcConnected) return;
+    async onJoinedRoom() {
+        if (!this.webrtcConnected || !this.voiceRoomId || !this.room) return;
 
-        const clients = mediaServer.getClientsForRtcServer(
-            this.voiceRoomId,
-        );
+        let clients = new Set(this.room._clients.values());
 
         await Promise.all(
             Array.from(clients).map(async (client) => {
@@ -93,18 +94,12 @@ class MediasoupWebRtcClient {
                 let consumerVideoSsrc = 0;
                 let consumerRtxSsrc = 0;
 
-                if (
-                    client.isProducingAudio() &&
-                    !this.isSubscribedToTrack(client.user_id, "audio")
-                ) {
+                if (client.isProducingAudio() && !this.isSubscribedToTrack(client.user_id, "audio")) {
                     await this.subscribeToTrack(client.user_id, "audio");
                     needsUpdate = true;
                 }
 
-                if (
-                    client.isProducingVideo() &&
-                    !this.isSubscribedToTrack(client.user_id, "video")
-                ) {
+                if (client.isProducingVideo() && !this.isSubscribedToTrack(client.user_id, "video")) {
                     await this.subscribeToTrack(client.user_id, "video");
                     needsUpdate = true;
                 }
@@ -114,6 +109,7 @@ class MediasoupWebRtcClient {
                 const audioConsumer = this.consumers.find(
                     (consumer) => consumer.producerId === client.audioProducer?.id
                 );
+
                 const videoConsumer = this.consumers.find(
                     (consumer) => consumer.producerId === client.videoProducer?.id
                 );
@@ -127,7 +123,6 @@ class MediasoupWebRtcClient {
                     consumerRtxSsrc = videoConsumer.rtpParameters?.encodings?.[0]?.rtx?.ssrc ?? 0;
                 }
 
-                /*
                 this.websocket.send(JSON.stringify({
                     op: 12,
                     d: {
@@ -137,7 +132,6 @@ class MediasoupWebRtcClient {
                         rtx_ssrc: consumerRtxSsrc
                     },
                 }));
-                */
             }),
         );
     }
@@ -145,6 +139,11 @@ class MediasoupWebRtcClient {
     async publishTrack(type, ssrc) {
         try {
             if (!this.webrtcConnected || !this.transport) return;
+
+            if ((type === 'audio' && this.isProducingAudio()) || (type === 'video' && this.isProducingVideo())) {
+                console.warn(`[${this.user_id}] Attempted to publish an existing track of type "${type}". Aborting.`);
+                return;
+            }
 
             if (type === "audio" && !this.isProducingAudio()) {
                 this.audioProducer = await this.transport.produce({
@@ -236,7 +235,9 @@ class MediasoupWebRtcClient {
                     paused: false,
                 });
             }
-        } catch { }
+        }  catch (error) {
+            console.error(`[${this.user_id}] FAILED to publish track of type "${type}":`, error);
+        }
     }
 
     stopPublishingTrack(type) {
@@ -273,7 +274,7 @@ class MediasoupWebRtcClient {
 
         const client = this.room?.getClientById(user_id);
 
-        if (!client.audioProducer) return;
+        if (!client) return;
         
         const producer =
             type === "audio" ? client.audioProducer : client.videoProducer;
@@ -304,6 +305,8 @@ class MediasoupWebRtcClient {
                 user_id: client.user_id,
             },
         });
+
+        console.log(`[Consumer Created] type: ${type}, id: ${consumer.id}, producerId: ${consumer.producerId}, paused: ${consumer.paused}`);
 
         if (type === "video") {
             setTimeout(async () => {

@@ -126,6 +126,8 @@ class MediasoupSignalingDelegate {
         client.webrtcConnected = true;
         client.emitter.emit("connected");
 
+        await client.onJoinedRoom();
+
         const iceParameters = transport.iceParameters;
         const iceCandidates = transport.iceCandidates;
         const iceCandidate = iceCandidates[0];
@@ -155,10 +157,6 @@ class MediasoupSignalingDelegate {
 
     onClientClose(client) {
         this._rooms.get(client.voiceRoomId)?.onClientLeave(client);
-    }
-
-    updateSDP(offer) {
-        throw new Error("Method not implemented.");
     }
 
     getClientsForRtcServer(rtcServerId) {
