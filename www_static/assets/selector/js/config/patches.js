@@ -33,6 +33,7 @@ export const QOL_PATCHES = {
         mandatory: false,
         defaultEnabled: true,
         compatibleVersions: [
+            //"january_23_2017",
             "january_31_2017",
             "march_30_2017",
             "may_3_2017",

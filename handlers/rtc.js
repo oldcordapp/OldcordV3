@@ -120,7 +120,10 @@ async function handleSelectProtocol(socket, packet) {
             payload_type: 111
         }];
 
-        let answer = await global.mediaserver.onOffer(socket.client, sdp, codecs);
+        let client_build = socket.gatewaySession.socket.client_build;
+        let client_build_date = socket.gatewaySession.socket.client_build_date; //to-do add to underlying socket object
+
+        let answer = await global.mediaserver.onOffer(client_build, client_build_date, socket.client, sdp, codecs);
 
         return socket.send(JSON.stringify({
             op: OPCODES.SETUP,

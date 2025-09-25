@@ -86,8 +86,9 @@ class MediasoupSignalingDelegate {
         return client;
     }
 
-    async onOffer(client, sdpOffer, codecs) {
+    async onOffer(client_build, client_build_date, client, sdpOffer, codecs) {
         const room = this._rooms.get(client.voiceRoomId);
+        const legacyAnswer = client_build === "january_23_2017" || client_build_date.getFullYear() < 2017;
 
         if (!room) {
             return Promise.reject(new Error("Room not found"));
@@ -104,6 +105,8 @@ class MediasoupSignalingDelegate {
         const transport = await room.router.router.createWebRtcTransport({
             listenInfos: [{ ip: "0.0.0.0", announcedAddress: this.ip, protocol: "udp" }],
             enableUdp: true,
+            enableTcp: true,
+            preferUdp: true,
             initialAvailableOutgoingBitrate: 2500000,
         });
 
@@ -137,6 +140,42 @@ class MediasoupSignalingDelegate {
         );
         if (!fingerprint) {
             return Promise.reject(new Error("Fingerprint not found"));
+        }
+
+        if (legacyAnswer) {
+            const sdpLines = [];
+
+            sdpLines.push("v=0");
+            sdpLines.push(`o=- 0 0 IN IP4 ${iceCandidate.ip}`);
+            sdpLines.push("s=-");
+            sdpLines.push("t=0 0");
+            sdpLines.push(`m=audio ${iceCandidate.port} ICE/SDP`);
+            sdpLines.push(`c=IN IP4 ${iceCandidate.ip}`);
+            sdpLines.push(`a=rtcp:${iceCandidate.port}`);
+            sdpLines.push(`a=ice-ufrag:${iceParameters.usernameFragment}`);
+            sdpLines.push(`a=ice-pwd:${iceParameters.password}`);
+            sdpLines.push(`a=fingerprint:sha-256 ${fingerprint.value}`);
+            sdpLines.push("a=setup:active");
+            sdpLines.push("a=mid:0");
+            sdpLines.push("a=sendrecv");
+            sdpLines.push("a=rtcp-mux");
+
+            for (const codec of codecs) {
+                sdpLines.push(`a=rtpmap:${codec.payload_type} ${codec.name}/48000/2`);
+            }
+
+            for (const ext of rtpHeaders) {
+                sdpLines.push(`a=extmap:${ext.id} ${ext.uri}`);
+            }
+
+            sdpLines.push(`a=candidate:1 1 ${iceCandidate.protocol.toUpperCase()} ${iceCandidate.priority} ${iceCandidate.ip} ${iceCandidate.port} typ ${iceCandidate.type}`);
+
+            const sdpAnswer = sdpLines.join('\n') + '\n';
+
+            return {
+                sdp: sdpAnswer, 
+                selectedVideoCodec: "VP8"
+            }
         }
 
         const sdpAnswer =

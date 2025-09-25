@@ -54,7 +54,9 @@ const patcher = {
       );
     }
 
-    if (getEnabledPatches().includes("modernizeWebRTC")) {  
+    if (getEnabledPatches().includes("modernizeWebRTC")) {
+      script = script.replaceAll(`l(e,t,n,a,i,(r||4e4)/1e3)`, `window.oldcord.fixSessionDescription2016(e,t,n,a,i,(r||4e4)/1e3)`); // i tried to get you to cooperate so this is what you get
+      script = script.replaceAll(`e.selectProtocol(a,r)`, `e.selectProtocol(a,window.oldcord.truncateSDP(r))`); //Jan 23 2017
       script = script.replaceAll(`^a=ice|opus|VP8`, `^a=ice|a=extmap|a=fingerprint|opus|VP8`); //2017-2018 fix
       script = script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`); //2017-2018 fix
       script = script.replaceAll('t.prototype._generateSessionDescription=function(e){var t=this.audioCodec,n=this.audioPayloadType,o=this.videoCodec,a=this.videoPayloadType,r=this.rtxPayloadType,i=this.sdp;if(null==t||null==n||null==o||null==a||null==r||null==i)throw new Error("payload cannot be null");var s=this._getSSRCs(),u=(0,c.generateSessionDescription)(e,i,this.direction,t,n,40,o,a,2500,r,s);return this.emit(e,u),Promise.resolve(u)}', 't.prototype._generateSessionDescription=function(e){var t=this;return"answer"===e?this._pc._pc.createAnswer().then(function(e){return t.emit("answer",e),e}):this._pc._pc.createOffer().then(function(e){return t.emit("offer",e),e})}'); //Not a necessary patch on 2018
@@ -62,6 +64,7 @@ const patcher = {
       script = script.replaceAll(`{mandatory:{OfferToReceiveAudio:!0,OfferToReceiveVideo:!1},optional:[{VoiceActivityDetection:!0}]};`, `{OfferToReceiveAudio:!0,OfferToReceiveVideo:!1};`) //2015 - first 2017 build fix
       script = script.replaceAll(/(var \w+=(\w+)\._pc=new RTCPeerConnection\({iceServers:\w+,sdpSemantics:)"plan-b"(.+?\);)/g, '$1"unified-plan"$3$2._audioTransceiver=$2._pc.addTransceiver("audio",{direction:"recvonly"});$2._videoTransceiver=$2._pc.addTransceiver("video",{direction:"recvonly"});');
       script = script.replaceAll(/t\.prototype\._handleNewListener=function\(e\)\{.*?_handleVideo\(.*?getVideoStreamId.*?\)(?:.*?case"connectionstatechange":.*?)?\s*\}\s*\}/g, 't.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;case"connectionstatechange":this.emit(e,this.connectionState)}}'); //2017-2018
+      script = script.replaceAll(/[a-zA-Z]\(function\(\)\{return t\._handleVideo\(t\.input\.getVideoURL\(\)\)\}\);/g, `(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoURL())})();`); //very early 2017 fix
       script = script.replaceAll(`this._mute||!this._speaking`, `this._mute`); //2017 fix
       script = script.replaceAll(`this._mute||this._speakingFlags===s.SpeakingFlags.NONE`, `this._mute`); //2018
       
@@ -70,9 +73,48 @@ const patcher = {
           if (window.oldcord && !window.oldcord.webRTCPatch) {
               window.oldcord.webRTCPatch = {};
           }
+
           if (window.oldcord.webRTCPatch.isPatched) {
               return;
           }
+
+          if (!window.oldcord.truncateSDP) {
+            window.oldcord.truncateSDP = function(sdp) {
+                const filterRegex = new RegExp("^a=ice|a=extmap|a=fingerprint|opus|VP8|0 rtx", "i");
+                const lines = sdp.split(/\r\n|\n/);
+                const filteredLines = lines.filter(line => filterRegex.test(line));
+                const uniqueLines = [...new Set(filteredLines)];
+
+                return uniqueLines.join('\n');
+            };
+          }
+
+          if (!window.oldcord.fixSessionDescription2016) {
+             window.oldcord.fixSessionDescription2016 = function(type, audioPayloadType, sdp, direction, unknown, bitrate = 6400 / 100) {
+               function replaceSDP(sdp, audioPayloadType) {
+                  return sdp.replace(`ICE/SDP`, `RTP/SAVPF ` + audioPayloadType).trim();
+               }
+
+               let defaults = [0, "default", !0];
+               
+               sdp = replaceSDP(sdp, audioPayloadType);
+               unknown = [defaults].concat(unknown);
+
+                let formattedUnknown = unknown.map(function (e, t) {
+                  return t
+                }).join(" ");
+
+                let u = unknown.map(function (e, t) {
+                  let i = e[0];
+                  let r = e[1];
+                  let s = e[2];
+                  return s ? sdp + "\na=" + (direction === "sendrecv" && t === 0 ? "sendrecv" : "sendonly") + "\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\na=mid:" + t + "\nb=AS:" + bitrate + "\na=msid:" + r + "-" + i + " " + r + "-" + i + "\na=rtcp-mux\na=rtpmap:" + audioPayloadType + " opus/48000/2\na=setup:actpass\na=ssrc:" + i + " cname:" + r + "-" + i : "m=audio 0 RTP/SAVPF " + audioPayloadType + "\nc=IN IP4 0.0.0.0\na=inactive\na=rtpmap:" + audioPayloadType + " NULL/0"
+                });
+
+                return ["v=0\no=- 6054093392514871408 0 IN IP4 127.0.0.1\ns=-\nt=0 0\na=group:BUNDLE " + formattedUnknown + "\na=msid-semantic:WMS *"].concat(u).join('\n').trim() + '\n';
+             }
+          }
+
           window.oldcord.webRTCPatch.isPatched = true;
           window.oldcord.webRTCPatch.previousDescription = new WeakMap();
 
@@ -81,7 +123,7 @@ const patcher = {
 
           const getHeader = (sdp) => sdp.split('\r\nm=')[0];
           const getMediaBlocks = (sdp) => {
-              const parts = sdp.split('\r\nm=');
+              const parts = sdp.split(/\r?\nm=/);
               return parts.length > 1 ? parts.slice(1).map(block => 'm=' + block.trim()) : [];
           };
           const getMediaType = (block) => (block.match(/^m=(\w+)/) || [])[1];
@@ -94,6 +136,10 @@ const patcher = {
               return originalSetLocalDescription.apply(this, arguments);
           };
 
+          if (release_date.includes("_2016") || release_date.includes("_2015") || release_date === "january_23_2017") {
+            return;
+          }
+          
           RTCPeerConnection.prototype.setRemoteDescription = async function(description) {
               if (!/Chrome/.test(navigator.userAgent) || !description) {
                   if (description) {
@@ -162,6 +208,8 @@ const patcher = {
               }
 
               finalSdp = finalSdp.replace(/(\r?\n){2,}/g, '\r\n').trim() + '\r\n';
+
+              finalSdp = 'v=0' + finalSdp.split('v=0').pop();
 
               const newDescription = new RTCSessionDescription({
                   type: 'answer',
