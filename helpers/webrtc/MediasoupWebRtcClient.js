@@ -37,40 +37,29 @@ class MediasoupWebRtcClient {
         };
     }
 
-   getOutgoingStreamSSRCsForUser(user_id) {
-    const otherClient = this.room?.getClientById(user_id);
-    const audioProducerId = otherClient?.audioProducer?.id;
-    const videoProducerId = otherClient?.videoProducer?.id;
+    getOutgoingStreamSSRCsForUser(user_id) {
+        const otherClient = this.room?.getClientById(user_id);
+        const audioProducerId = otherClient?.audioProducer?.id;
+        const videoProducerId = otherClient?.videoProducer?.id;
 
-    const audioConsumer = this.consumers?.find(
-        (consumer) => consumer.producerId === audioProducerId
-    );
+        const audioConsumer = this.consumers?.find(
+            (consumer) => consumer.producerId === audioProducerId
+        );
 
-    const videoConsumer = this.consumers?.find(
-        (consumer) => consumer.producerId === videoProducerId
-    );
+        const videoConsumer = this.consumers?.find(
+            (consumer) => consumer.producerId === videoProducerId
+        );
 
-    // --- ADD THIS DETAILED LOG ---
-    if (!audioConsumer && audioProducerId) { // Log only on failure
-        console.log(`[SSRC LOOKUP FAILED]
-  - Listener: ${this.user_id}
-  - Speaker: ${user_id}
-  - Speaker's Producer ID: ${audioProducerId}
-  - Listener has ${this.consumers.length} consumers for producers: [${this.consumers.map(c => c.producerId).join(', ')}]
-  - Consumer for speaker was NOT FOUND.`);
+        const audioSsrc = audioConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
+        const videoSsrc = videoConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
+        const rtxSsrc = videoConsumer?.rtpParameters?.encodings[0]?.rtx?.ssrc ?? 0;
+
+        return {
+            audio_ssrc: audioSsrc,
+            video_ssrc: videoSsrc,
+            rtx_ssrc: rtxSsrc,
+        };
     }
-    // --- END OF LOG ---
-
-    const audioSsrc = audioConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
-    const videoSsrc = videoConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
-    const rtxSsrc = videoConsumer?.rtpParameters?.encodings[0]?.rtx?.ssrc ?? 0;
-
-    return {
-        audio_ssrc: audioSsrc,
-        video_ssrc: videoSsrc,
-        rtx_ssrc: rtxSsrc,
-    };
-}
 
     isProducingAudio() {
         return !!this.audioProducer;
@@ -236,7 +225,7 @@ class MediasoupWebRtcClient {
                 });
             }
         }  catch (error) {
-            console.error(`[${this.user_id}] FAILED to publish track of type "${type}":`, error);
+            //console.error(`[${this.user_id}] FAILED to publish track of type "${type}":`, error);
         }
     }
 

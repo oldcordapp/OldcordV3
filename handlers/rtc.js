@@ -190,6 +190,48 @@ async function handleSpeaking(socket, packet) {
             return;
         }
 
+        let incomingSSRCs = socket.client.getIncomingStreamSSRCs();
+
+        if (incomingSSRCs.audio_ssrc !== ssrc) {
+            console.log(`[${socket.userid}] SSRC mismatch detected. Correcting audio SSRC from ${incomingSSRCs.audio_ssrc} to ${ssrc}.`);
+
+            socket.client.stopPublishingTrack("audio");
+
+            socket.client.initIncomingSSRCs({
+                audio_ssrc: ssrc,
+                video_ssrc: incomingSSRCs.video_ssrc,
+                rtx_ssrc: incomingSSRCs.rtx_ssrc
+            });
+
+            await socket.client.publishTrack("audio", { audio_ssrc: ssrc });
+
+            const clientsToNotify = new Set();
+
+            for (const otherClient of socket.client.room.clients.values()) {
+                if (otherClient.user_id === socket.userid) continue;
+
+                await otherClient.subscribeToTrack(socket.client.user_id, "audio");
+
+                clientsToNotify.add(otherClient);
+            }
+
+            await Promise.all(
+                Array.from(clientsToNotify).map((client) => {
+                    const updatedSsrcs = client.getOutgoingStreamSSRCsForUser(socket.userid);
+
+                    client.websocket.send(JSON.stringify({
+                        op: OPCODES.VIDEO,
+                        d: {
+                            user_id: socket.userid,
+                            audio_ssrc: updatedSsrcs.audio_ssrc,
+                            video_ssrc: updatedSsrcs.video_ssrc,
+                            rtx_ssrc: updatedSsrcs.rtx_ssrc,
+                        },
+                    }));
+                }),
+            );
+        }
+
         await Promise.all(
             Array.from(
                 global.mediaserver.getClientsForRtcServer(
@@ -198,11 +240,11 @@ async function handleSpeaking(socket, packet) {
             ).map((client) => {
                 if (client.user_id === socket.userid) return Promise.resolve();
 
-                const ssrc = client.getOutgoingStreamSSRCsForUser(socket.userid);
+                const ssrcInfo = client.getOutgoingStreamSSRCsForUser(socket.userid);
 
-                if (packet.d.speaking && ssrc.audio_ssrc === 0) {
-                     global.rtcServer.debug(`Suppressing speaking packet for ${client.user_id} as consumer for ${socket.userid} is not ready (ssrc=0).`);
-                     return Promise.resolve();
+                if (packet.d.speaking && ssrcInfo.audio_ssrc === 0) {
+                    global.rtcServer.debug(`Suppressing speaking packet for ${client.user_id} as consumer for ${socket.userid} is not ready (ssrc=0).`);
+                    return Promise.resolve();
                 }
 
                 client.websocket.send(JSON.stringify({
@@ -210,7 +252,7 @@ async function handleSpeaking(socket, packet) {
                     d: {
                         user_id: socket.userid,
                         speaking: packet.d.speaking,
-                        ssrc: ssrc.audio_ssrc
+                        ssrc: ssrcInfo.audio_ssrc
                     },
                 }));
             }),

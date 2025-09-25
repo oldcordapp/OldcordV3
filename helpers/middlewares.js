@@ -315,6 +315,7 @@ async function authMiddleware(req, res, next) {
             "november_16_2017",
             "december_21_2017",
             "january_25_2018",
+            "february_25_2018",
             "march_7_2018",
             "april_1_2018",
             "april_23_2018",
@@ -324,7 +325,7 @@ async function authMiddleware(req, res, next) {
             "september_29_2018",
             "november_30_2018",
             "december_31_2018",
-        ] //forgive me
+        ]; //forgive me
 
         if (release_date.length < 2 || typeof release_date !== 'string' || !valid_releases.includes(release_date)) {
             req.cannot_pass = true;

@@ -54,13 +54,16 @@ const patcher = {
       );
     }
 
-    if (getEnabledPatches().includes("modernizeWebRTC")) {
-      script = script.replaceAll(`^a=ice|opus|VP8`, `^a=ice|a=extmap|a=fingerprint|opus|VP8`);
-      script = script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`);
-      script = script.replaceAll('t.prototype._generateSessionDescription=function(e){var t=this.audioCodec,n=this.audioPayloadType,o=this.videoCodec,a=this.videoPayloadType,r=this.rtxPayloadType,i=this.sdp;if(null==t||null==n||null==o||null==a||null==r||null==i)throw new Error("payload cannot be null");var s=this._getSSRCs(),u=(0,c.generateSessionDescription)(e,i,this.direction,t,n,40,o,a,2500,r,s);return this.emit(e,u),Promise.resolve(u)}', 't.prototype._generateSessionDescription=function(e){var t=this;return"answer"===e?this._pc._pc.createAnswer().then(function(e){return t.emit("answer",e),e}):this._pc._pc.createOffer().then(function(e){return t.emit("offer",e),e})}');
+    if (getEnabledPatches().includes("modernizeWebRTC")) {  
+      script = script.replaceAll(`^a=ice|opus|VP8`, `^a=ice|a=extmap|a=fingerprint|opus|VP8`); //2017-2018 fix
+      script = script.replaceAll(`^a=ice|opus|VP9`, `^a=ice|a=extmap|a=fingerprint|opus|VP9`); //2017-2018 fix
+      script = script.replaceAll('t.prototype._generateSessionDescription=function(e){var t=this.audioCodec,n=this.audioPayloadType,o=this.videoCodec,a=this.videoPayloadType,r=this.rtxPayloadType,i=this.sdp;if(null==t||null==n||null==o||null==a||null==r||null==i)throw new Error("payload cannot be null");var s=this._getSSRCs(),u=(0,c.generateSessionDescription)(e,i,this.direction,t,n,40,o,a,2500,r,s);return this.emit(e,u),Promise.resolve(u)}', 't.prototype._generateSessionDescription=function(e){var t=this;return"answer"===e?this._pc._pc.createAnswer().then(function(e){return t.emit("answer",e),e}):this._pc._pc.createOffer().then(function(e){return t.emit("offer",e),e})}'); //Not a necessary patch on 2018
+      script = script.replaceAll(/new\s+RTCPeerConnection\s*\(({\s*iceServers\s*:\s*\w+\s*})\s*,\s*{\s*optional\s*:\s*\[\s*{\s*DtlsSrtpKeyAgreement\s*:\s*(?:!0|true)\s*}\s*]\s*}\)/g, 'new RTCPeerConnection($1)'); //2015 - first 2017 build fix
+      script = script.replaceAll(`{mandatory:{OfferToReceiveAudio:!0,OfferToReceiveVideo:!1},optional:[{VoiceActivityDetection:!0}]};`, `{OfferToReceiveAudio:!0,OfferToReceiveVideo:!1};`) //2015 - first 2017 build fix
       script = script.replaceAll(/(var \w+=(\w+)\._pc=new RTCPeerConnection\({iceServers:\w+,sdpSemantics:)"plan-b"(.+?\);)/g, '$1"unified-plan"$3$2._audioTransceiver=$2._pc.addTransceiver("audio",{direction:"recvonly"});$2._videoTransceiver=$2._pc.addTransceiver("video",{direction:"recvonly"});');
-      script = script.replaceAll('t.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":o(function(){return t._handleVideo(t.input.getVideoStreamId())});break;case"connectionstatechange":this.emit(e,this.connectionState)}}', 't.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;case"connectionstatechange":this.emit(e,this.connectionState)}}');
-      script = script.replaceAll(`this._mute||!this._speaking`, `this._mute`);
+      script = script.replaceAll(/t\.prototype\._handleNewListener=function\(e\)\{.*?_handleVideo\(.*?getVideoStreamId.*?\)(?:.*?case"connectionstatechange":.*?)?\s*\}\s*\}/g, 't.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;case"connectionstatechange":this.emit(e,this.connectionState)}}'); //2017-2018
+      script = script.replaceAll(`this._mute||!this._speaking`, `this._mute`); //2017 fix
+      script = script.replaceAll(`this._mute||this._speakingFlags===s.SpeakingFlags.NONE`, `this._mute`); //2018
       
       // Rewrite setRemoteDescription to unified-plan based of current setLocalDescription's offer in a similar manner to modern Discord's
       (function () {

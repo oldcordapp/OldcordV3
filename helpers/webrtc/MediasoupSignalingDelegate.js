@@ -12,6 +12,7 @@ class MediasoupSignalingDelegate {
         this._rooms = new Map();
         this.nextWorkerIdx = 0;
         this._ip = "";
+        this.logRtpPackets = false;
     }
 
     async start(public_ip, portMin, portMax, debug_logs) {
@@ -25,15 +26,14 @@ class MediasoupSignalingDelegate {
                     "info",
                     "ice",
                     "dtls",
-                    "rtp",
                     "srtp",
-                    "rtcp",
                     "rtx",
                     "bwe",
                     "score",
                     "simulcast",
                     "svc",
                     "sctp",
+                    ...(this.logRtpPackets ? ["rtp", "rtcp"] : []),
                 ] : [],
                 rtcMinPort: portMin,
                 rtcMaxPort: portMax,
