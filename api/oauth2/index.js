@@ -4,11 +4,12 @@ const router = express.Router({ mergeParams: true });
 const applications = require('./applications');
 const tokens = require('./tokens');
 const globalUtils = require('../../helpers/globalutils');
+const quickcache = require('../../helpers/quickcache');
 
 router.use("/applications", applications);
 router.use("/tokens", tokens);
 
-router.get("/authorize", async (req, res) => {
+router.get("/authorize", quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
         let account = req.account;
 

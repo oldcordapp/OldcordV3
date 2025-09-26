@@ -5,8 +5,9 @@ const globalUtils = require('../helpers/globalutils');
 const Snowflake = require('../helpers/snowflake');
 const fs = require('fs');
 const router = express.Router({ mergeParams: true });
+const quickcache = require('../helpers/quickcache');
 
-router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), async (req, res) => {
+router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 

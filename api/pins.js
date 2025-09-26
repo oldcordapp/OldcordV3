@@ -4,9 +4,9 @@ const messages = require('./messages');
 const webhooks = require("./webhooks");
 const { channelPermissionsMiddleware, rateLimitMiddleware, guildPermissionsMiddleware, channelMiddleware } = require('../helpers/middlewares');
 const globalUtils = require('../helpers/globalutils');
-
 const router = express.Router({ mergeParams: true });
 const config = globalUtils.config;
+const quickcache = require('../helpers/quickcache');
 
 router.param('messageid', async (req, res, next, messageid) => {
     req.message = await global.database.getMessageById(messageid);
@@ -14,7 +14,7 @@ router.param('messageid', async (req, res, next, messageid) => {
     next();
 });
 
-router.get("/", channelMiddleware, async (req, res) => {
+router.get("/", channelMiddleware, quickcache.cacheFor(60 * 30), async (req, res) => {
     try {
         const account = req.account;
 

@@ -3,6 +3,7 @@ const { logText } = require('../helpers/logger');
 const globalUtils = require('../helpers/globalutils');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
+const quickcache = require('../helpers/quickcache');
 
 router.param('memberid', async (req, res, next, memberid) => {
     req.member = req.guild.members.find(x => x.id === memberid);
@@ -10,7 +11,7 @@ router.param('memberid', async (req, res, next, memberid) => {
     next();
 });
 
-router.get("/", guildPermissionsMiddleware("BAN_MEMBERS"), async (req, res) => {
+router.get("/", guildPermissionsMiddleware("BAN_MEMBERS"), quickcache.cacheFor(60 * 30), async (req, res) => {
     try {
         const sender = req.account;
 

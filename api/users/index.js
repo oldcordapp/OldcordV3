@@ -3,6 +3,7 @@ const { logText } = require('../../helpers/logger');
 const me = require('./me');
 const globalUtils = require('../../helpers/globalutils');
 const { rateLimitMiddleware, userMiddleware } = require('../../helpers/middlewares');
+const quickcache = require('../../helpers/quickcache');
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.param('userid', async (req, res, next, userid) => {
 
 router.use("/@me", me);
 
-router.get("/:userid", userMiddleware, async (req, res) => {
+router.get("/:userid", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
     return res.status(200).json(globalUtils.miniUserObject(req.user));
 });
 
@@ -112,7 +113,7 @@ router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_con
     }
 });
 
-router.get("/:userid/profile", userMiddleware, async (req, res) => {
+router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 
@@ -196,7 +197,7 @@ router.get("/:userid/profile", userMiddleware, async (req, res) => {
     }
 });
 
-router.get("/:userid/relationships", userMiddleware, async (req, res) => {
+router.get("/:userid/relationships", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 

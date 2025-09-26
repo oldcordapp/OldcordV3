@@ -2,6 +2,7 @@ const express = require('express');
 const { logText } = require('../helpers/logger');
 const Snowflake = require('../helpers/snowflake');
 const router = express.Router({ mergeParams: true });
+const quickcache = require('../helpers/quickcache');
 
 router.param('code', async (req, _, next, code) => {
     let id = "1279311572212178955";
@@ -123,7 +124,7 @@ router.param('code', async (req, _, next, code) => {
     next();
 });
 
-router.get("/gift-codes/:code", async (req, res) => {
+router.get("/gift-codes/:code", quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
         return res.status(200).json(req.gift);
     } catch (error) {

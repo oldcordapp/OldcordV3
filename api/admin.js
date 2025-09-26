@@ -2,6 +2,7 @@ const express = require('express');
 const { logText } = require('../helpers/logger');
 const { staffAccessMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
+const quickcache = require('../helpers/quickcache');
 
 //PRIVILEGE: 1 - (JANITOR) [Can only flag things for review], 2 - (MODERATOR) [Can only delete messages, mute users, and flag things for review], 3 - (ADMIN) [Free reign, can review flags, disable users, delete servers, etc], 4 - (INSTANCE OWNER) - [Can add new admins, manage staff, etc]
 
@@ -11,7 +12,7 @@ router.param('userid', async (req, res, next, userid) => {
     next();
 });
 
-router.get("/guilds/search", staffAccessMiddleware(1), async (req, res) => {
+router.get("/guilds/search", staffAccessMiddleware(1), quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
         let search = req.query.input;
 

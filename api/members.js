@@ -2,6 +2,7 @@ const express = require('express');
 const globalUtils = require('../helpers/globalutils');
 const { logText } = require('../helpers/logger');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
+const quickcache = require('../helpers/quickcache');
 
 const router = express.Router({ mergeParams: true });
 
@@ -11,7 +12,7 @@ router.param('memberid', async (req, res, next, memberid) => {
     next();
 });
 
-router.get("/:memberid", async (req, res) => {
+router.get("/:memberid", quickcache.cacheFor(60 * 30), async (req, res) => {
     return res.status(200).json(req.member);
 });
 

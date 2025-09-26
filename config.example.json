@@ -12,6 +12,7 @@
     "cache404s": false,
     "serve_selector": true,
     "require_release_date_cookie": true,
+    "cache_authenticated_get_requests" : true,
     "default_client_build": "october_5_2017",
     "debug_logs": {
         "gateway" : true,
@@ -106,7 +107,7 @@
             "max" : 200
         },
         "messages": {
-            "min": 0,
+            "min": 1,
             "max": 4000
         }
     },

@@ -2,8 +2,8 @@ const express = require('express');
 const globalUtils = require('../helpers/globalutils');
 const { logText } = require('../helpers/logger');
 const { channelPermissionsMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
-
 const router = express.Router({ mergeParams: false });
+const quickcache = require('../helpers/quickcache');
 
 router.param('userid', async (req, res, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
@@ -290,7 +290,7 @@ router.put("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), ra
     }
 });
 
-router.get("/:urlencoded", async (req, res) => {
+router.get("/:urlencoded", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 

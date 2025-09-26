@@ -8,9 +8,9 @@ const Jimp = require('jimp');
 const Snowflake = require('../helpers/snowflake');
 const reactions = require('./reactions');
 const path = require('path');
-
 const upload = multer();
 const router = express.Router({ mergeParams: true });
+const quickcache = require('../helpers/quickcache');
 
 router.param('messageid', async (req, res, next, messageid) => {
     req.message = await global.database.getMessageById(messageid);
@@ -29,7 +29,7 @@ function handleJsonAndMultipart(req, res, next) {
     }
 }
 
-router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), async (req, res) => {
+router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache.cacheFor(60 * 30), async (req, res) => {
     try {
         const creator = req.account;
 

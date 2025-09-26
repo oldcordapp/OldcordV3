@@ -2,6 +2,7 @@ const express = require('express');
 const globalUtils = require('../helpers/globalutils');
 const { logText } = require('../helpers/logger');
 const { instanceMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
+const quickcache = require('../helpers/quickcache');
 
 const router = express.Router({ mergeParams: true });
 
@@ -16,7 +17,7 @@ router.param('code', async (req, res, next, memberid) => {
     next();
 });
 
-router.get("/:code", async (req, res) => {
+router.get("/:code", quickcache.cacheFor(60 * 30), async (req, res) => {
     try {
         const invite = req.invite;
 

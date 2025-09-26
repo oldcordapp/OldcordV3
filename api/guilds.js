@@ -5,6 +5,7 @@ const roles = require('./roles');
 const members = require('./members');
 const bans = require('./bans');
 const emojis = require('./emojis');
+const quickcache = require('../helpers/quickcache');
 
 const { instanceMiddleware, rateLimitMiddleware, guildMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 
@@ -16,7 +17,7 @@ router.param('guildid', async (req, _, next, guildid) => {
     next();
 });
 
-router.get("/:guildid", guildMiddleware, async (req, res) => {
+router.get("/:guildid", guildMiddleware, quickcache.cacheFor(60 * 10), async (req, res) => {
     return res.status(200).json(req.guild);
 });
 
@@ -182,7 +183,7 @@ router.post("/:guildid/delete", guildMiddleware, rateLimitMiddleware(global.conf
 
 router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.deleteGuild.maxPerTimeFrame, global.config.ratelimit_config.deleteGuild.timeFrame), guildDeleteRequest);
 
-router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddleware("READ_MESSAGE_HISTORY"), async (req, res) => {
+router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
         const account = req.account;
 
@@ -373,7 +374,7 @@ router.post("/:guildid/prune", async (_, res) => {
     return res.status(204).send();
 });
 
-router.get("/:guildid/embed", guildMiddleware, async (req, res) => {
+router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -448,7 +449,7 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
     }
 });
 
-router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("MAANGE_GUILD"), async (req, res) => {
+router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("MAANGE_GUILD"), quickcache.cacheFor(60 * 5), async (req, res) => {
     const sender = req.account;
 
     if (sender == null) {
@@ -507,7 +508,7 @@ router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("
     })
 });
 
-router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (req, res) => {
+router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -709,7 +710,7 @@ router.use("/:guildid/emojis", emojis);
 
 //too little to make a route for it,
 
-router.get("/:guildid/webhooks", guildMiddleware, async (req, res) => {
+router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let guild = req.guild;
 
@@ -735,11 +736,11 @@ router.get("/:guildid/webhooks", guildMiddleware, async (req, res) => {
     }
 });
 
-router.get("/:guildid/regions", (_, res) => {
+router.get("/:guildid/regions", quickcache.cacheFor(60 * 60 * 5), (_, res) => {
     return res.status(200).json(globalUtils.getRegions());
 });
 
-router.get("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware("ADMINISTRATOR"), async (req, res) => {
+router.get("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware("ADMINISTRATOR"), quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
         if (!req.guild) {
             return res.status(404).json({

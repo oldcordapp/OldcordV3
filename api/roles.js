@@ -2,8 +2,8 @@ const express = require('express');
 const { logText } = require('../helpers/logger');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const globalUtils = require('../helpers/globalutils');
-
 const router = express.Router({ mergeParams: true });
+const quickcache = require('../helpers/quickcache');
 
 router.param('roleid', async (req, res, next, roleid) => {
     req.role = req.guild.roles.find(x => x.id === roleid);
@@ -11,7 +11,7 @@ router.param('roleid', async (req, res, next, roleid) => {
     next();
 });
 
-router.get("/:roleid", async (req, res) => {
+router.get("/:roleid", quickcache.cacheFor(60 * 30), async (req, res) => {
     return res.status(200).json(req.role);
 });
 

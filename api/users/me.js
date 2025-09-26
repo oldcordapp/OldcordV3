@@ -4,6 +4,7 @@ const { rateLimitMiddleware, guildMiddleware } = require('../../helpers/middlewa
 const { logText } = require('../../helpers/logger');
 const router = express.Router();
 const relationships = require('./relationships');
+const quickcache = require('../../helpers/quickcache');
 
 router.use("/relationships", relationships);
 
@@ -19,7 +20,7 @@ router.param('guildid', async (req, _, next, guildid) => {
     next();
 });
 
-router.get("/", async (req, res) => {
+router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
 
@@ -304,7 +305,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
   }
 });
 
-router.get("/settings", async (req, res) => {
+router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
 
@@ -435,7 +436,7 @@ router.put("/notes/:userid", async (req, res) => {
   }
 });
 
-router.get("/connections", async (req, res) => {
+router.get("/connections", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 
@@ -750,7 +751,7 @@ router.patch("/guilds/:guildid/settings", guildMiddleware, rateLimitMiddleware(g
     }
 });
 
-router.get("/mentions", async (req, res) => {
+router.get("/mentions", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
 

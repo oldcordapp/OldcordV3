@@ -2,6 +2,7 @@ const express = require('express');
 const { logText } = require('../../helpers/logger');
 const globalUtils = require('../../helpers/globalutils');
 const router = express.Router();
+const quickcache = require('../../helpers/quickcache');
 
 router.param('userid', async (req, _, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
@@ -9,7 +10,7 @@ router.param('userid', async (req, _, next, userid) => {
     next();
 });
 
-router.get("/", async (req, res) => {
+router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
 
