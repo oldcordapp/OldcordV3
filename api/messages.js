@@ -109,7 +109,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             });
         }
 
-        if (!req.body.embeds && (!req.body.content || typeof req.body.content !== 'string' || req.body.content === "")) {
+        if (!req.body.embeds && !req.file && (!req.body.content || typeof req.body.content !== 'string' || req.body.content === "")) {
             return res.status(400).json({
                 code: 400,
                 message: 'Cannot send an empty message.',
