@@ -11,7 +11,7 @@ router.param('memberid', async (req, res, next, memberid) => {
     next();
 });
 
-router.get("/", guildPermissionsMiddleware("BAN_MEMBERS"), quickcache.cacheFor(60 * 30), async (req, res) => {
+router.get("/", guildPermissionsMiddleware("BAN_MEMBERS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         const sender = req.account;
 

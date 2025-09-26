@@ -12,7 +12,7 @@ router.param('userid', async (req, res, next, userid) => {
     next();
 });
 
-router.get("/guilds/search", staffAccessMiddleware(1), quickcache.cacheFor(60 * 10), async (req, res) => {
+router.get("/guilds/search", staffAccessMiddleware(1), quickcache.cacheFor(60 * 10, true), async (req, res) => {
     try {
         let search = req.query.input;
 

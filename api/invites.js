@@ -17,6 +17,7 @@ router.param('code', async (req, res, next, memberid) => {
     next();
 });
 
+//We wont cache stuff like this for everyone because if theyre banned we want the invite to be invalid only for them.
 router.get("/:code", quickcache.cacheFor(60 * 30), async (req, res) => {
     try {
         const invite = req.invite;

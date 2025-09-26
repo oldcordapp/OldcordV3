@@ -49,7 +49,7 @@ router.param('recipientid', async (req, res, next, recipientid) => {
     next();
 });
 
-router.get("/:channelid", channelMiddleware, channelPermissionsMiddleware("READ_MESSAGES"), quickcache.cacheFor(60 * 30), async (req, res) => {
+router.get("/:channelid", channelMiddleware, channelPermissionsMiddleware("READ_MESSAGES"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     return res.status(200).json(req.channel);
 });
 
@@ -203,7 +203,7 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
     }
 });
 
-router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_CHANNELS"), quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_CHANNELS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -302,7 +302,7 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
 
 router.use("/:channelid/messages", channelMiddleware, messages);
 
-router.get("/:channelid/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_WEBHOOKS"), quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get("/:channelid/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_WEBHOOKS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         let account = req.account;
 

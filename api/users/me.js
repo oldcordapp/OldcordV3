@@ -20,6 +20,7 @@ router.param('guildid', async (req, _, next, guildid) => {
     next();
 });
 
+//Or this 
 router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
@@ -305,6 +306,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
   }
 });
 
+//Or this
 router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;

@@ -10,6 +10,8 @@ router.param('userid', async (req, _, next, userid) => {
     next();
 });
 
+//Never share this because it's unique to the requester lol
+
 router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;

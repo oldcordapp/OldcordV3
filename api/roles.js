@@ -11,7 +11,7 @@ router.param('roleid', async (req, res, next, roleid) => {
     next();
 });
 
-router.get("/:roleid", quickcache.cacheFor(60 * 30), async (req, res) => {
+router.get("/:roleid", quickcache.cacheFor(60 * 15, true), async (req, res) => {
     return res.status(200).json(req.role);
 });
 

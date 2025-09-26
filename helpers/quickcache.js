@@ -4,25 +4,32 @@ const globalUtils = require('./globalutils');
 const quickcache = {
     cacheStore: new Map(),
     requestLock: new Map(),
-    getCacheKey(req) {
-        if (!req.headers['authorization']) {
+    getCacheKey(req, shared) {
+        if (!req.headers['authorization'] && !shared) {
             return null;
         }
 
         let url = req.originalUrl;
-        let token = req.headers['authorization'];
-        let hash = crypto.createHash('sha256').update(`${url}::${token}`).digest('hex');
+
+        let inValue = `${url}::SHARED`
+
+        if (!shared) {
+            let token = req.headers['authorization'];
+            inValue = `${url}::${token}`;
+        }
+
+        let hash = crypto.createHash('sha256').update(inValue).digest('hex');
 
         return hash;
     },
-    cacheFor(ttl) {
+    cacheFor(ttl, shared = false) {
         return function (req, res, next) {
             if (req.method !== 'GET' || req.headers['cache-control'] === 'no-cache' || !globalUtils.config['cache_authenticated_get_requests']) {
                 return next();
             } //NEVER cache anything other than GET or well no-cache
 
             let self = quickcache;
-            let cacheKey = self.getCacheKey(req);
+            let cacheKey = self.getCacheKey(req, shared)
 
             if (cacheKey === null) {
                 return next();

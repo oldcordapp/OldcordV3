@@ -14,7 +14,7 @@ router.param('messageid', async (req, res, next, messageid) => {
     next();
 });
 
-router.get("/", channelMiddleware, quickcache.cacheFor(60 * 30), async (req, res) => {
+router.get("/", channelMiddleware, quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         const account = req.account;
 

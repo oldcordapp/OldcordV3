@@ -29,7 +29,7 @@ function handleJsonAndMultipart(req, res, next) {
     }
 }
 
-router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache.cacheFor(60 * 30), async (req, res) => {
+router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache.cacheFor(15, false), async (req, res) => {
     try {
         const creator = req.account;
 

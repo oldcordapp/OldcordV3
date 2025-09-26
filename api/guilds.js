@@ -17,7 +17,7 @@ router.param('guildid', async (req, _, next, guildid) => {
     next();
 });
 
-router.get("/:guildid", guildMiddleware, quickcache.cacheFor(60 * 10), async (req, res) => {
+router.get("/:guildid", guildMiddleware, quickcache.cacheFor(60 * 10, true), async (req, res) => {
     return res.status(200).json(req.guild);
 });
 
@@ -366,15 +366,15 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
     }
 });
 
-router.get("/:guildid/prune", async (_, res) => {
+router.get("/:guildid/prune",  guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (_, res) => {
     return res.status(200).json([]);
 });
 
-router.post("/:guildid/prune", async (_, res) => {
+router.post("/:guildid/prune",   guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (_, res) => {
     return res.status(204).send();
 });
 
-router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30), async (req, res) => {
+router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30, true), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -710,7 +710,7 @@ router.use("/:guildid/emojis", emojis);
 
 //too little to make a route for it,
 
-router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         let guild = req.guild;
 
@@ -726,9 +726,7 @@ router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5), a
         return res.status(200).json(webhooks);
     } catch (error) {
         logText(error, "error");
-
-        
-    
+   
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"
@@ -736,7 +734,7 @@ router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5), a
     }
 });
 
-router.get("/:guildid/regions", quickcache.cacheFor(60 * 60 * 5), (_, res) => {
+router.get("/:guildid/regions", guildMiddleware, quickcache.cacheFor(60 * 60 * 5, true), (_, res) => {
     return res.status(200).json(globalUtils.getRegions());
 });
 
