@@ -22,7 +22,7 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
 **Voice & Video**:
   - **Voice**: 🟠 Work in progress, but functional via WebRTC P2P, standard WebRTC (Browser), and UDP (Desktop Client).
       - **Known Issues**: Minor bugs like speaker indicators not showing, firefox not working, or needing to rejoin a call to hear/speak to others are being actively worked on.
-      - **Note**: WebRTC requires the "Modernize WebRTC" patch to be enabled in order to work properly. Right now, because of the media server code being integrated into Oldcord, running Oldcord behind a firewall like Cloudflare would not work well with UDP and will disconnect upon joining.
+      - **Note**: WebRTC requires the "Modernize WebRTC" patch to be enabled in order to work properly. Right now, because of the media server code being integrated into Oldcord, running Oldcord behind a firewall like Cloudflare would not work well with UDP (affecting both standard WebRTC and Desktop Client) and will disconnect upon joining.
   - **Video**: 🔴 Not yet supported. Our current focus is on ensuring voice chat works 100% of the time with little to no issues.
   - **Moderation Features**: 🔴Server mute and deafen are planned and actively being worked on.
 
