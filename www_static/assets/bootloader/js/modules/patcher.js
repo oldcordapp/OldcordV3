@@ -498,8 +498,23 @@ const patcher = {
     script = script.replaceAll(/discord.media/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
 
+    function replaceDiscord(script) {
+      const tokenizerRegex =
+        /("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(`(?:\\.|[^`\\])*`)|(\/\/.*)|(\/\*[\s\S]*?\*\/)/g;
+
+      return script.replace(tokenizerRegex, (match) => {
+        if (match.startsWith("/") || match.startsWith("*")) {
+          return match;
+        }
+
+        return match.split(/Discord/).join("Oldcord");
+      });
+    }
+
+    script = replaceDiscord(script);
+
     // Just for visual verification that it is patched by Oldcord LMAO
-    script += "\n//Oldcord Patched";
+    script += "\n// Oldcord Patched";
 
     return script;
   },
