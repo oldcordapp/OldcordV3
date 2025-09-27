@@ -22,6 +22,7 @@ const MediasoupSignalingDelegate = require('./helpers/webrtc/MediasoupSignalingD
 const udpServer = require('./udpserver');
 const rtcServer = require('./rtcserver');
 const os = require('os');
+const mrServer = require('./mrserver');
 
 app.set('trust proxy', 1);
 
@@ -31,7 +32,12 @@ global.dispatcher = dispatcher;
 global.gateway = gateway;
 global.udpServer = udpServer;
 global.rtcServer = rtcServer;
-global.mediaserver = new MediasoupSignalingDelegate();
+
+if (!globalUtils.config.mr_server) {
+    global.mediaserver = new MediasoupSignalingDelegate();
+}
+
+global.using_media_relay = globalUtils.config.mr_server;
 
 if (globalUtils.config.email_config.enabled) {
     global.emailer = new emailer(globalUtils.config.email_config, globalUtils.config.max_per_timeframe_ms, globalUtils.config.timeframe_ms, globalUtils.config.ratelimit_modifier);
@@ -142,8 +148,15 @@ function getIPAddress() {
 
     global.udpServer.start(config.udp_server_port, config.debug_logs['udp'] ?? true);
     global.rtcServer.start(config.signaling_server_port, config.debug_logs['rtc'] ?? true);
+    
+    if (global.using_media_relay) {
+        global.mrServer = mrServer;
+        global.mrServer.start(config.mr_server_port, config.debug_logs['mr'] ?? true);
+    }
 
-    await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs['media'] ?? true);
+    if (!global.using_media_relay) {
+        await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs['media'] ?? true);
+    }
 })();
 
 httpServer.listen(config.port, () => {

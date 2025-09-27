@@ -1,33 +1,42 @@
 const sodium = require('libsodium-wrappers');
 const { logText } = require('./helpers/logger');
 const WebSocket = require('ws');
-const { EventEmitter } = require("node:events");
-const { OPCODES, rtcHandlers } = require('./handlers/rtc');
+const { mrHandlers, OPCODES } = require('./handlers/mr');
 
-const rtcServer = {
+const mrServer = {
     port: null,
-    signalingServer: null,
     debug_logs: false,
-    clients: new Map(),
+    servers: new Map(),
     emitter: null,
-    protocolsMap: new Map(),
+    signalingServer: null,
     debug(message) {
         if (!this.debug_logs) {
             return;
         }
 
-        logText(message, 'RTC_SERVER');
+        logText(message, 'MR_SERVER');
     },
-    randomKeyBuffer() {
-        return sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
-    },
-    async handleClientConnect(socket, req) {
-        this.debug(`Client has connected`);
+    getRandomMediaServer() {
+        const serverEntries = Array.from(this.servers.entries());
 
-        socket.userAgent = req.headers['user-agent'] ?? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
-        socket.isChrome = /Chrome/.test(socket.userAgent);
-        socket.ip_address = (req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
-        
+        if (serverEntries.length === 0) {
+            return null;
+        }
+
+        const randomIndex = Math.floor(Math.random() * serverEntries.length);
+        const randomEntry = serverEntries[randomIndex];
+        const ip = randomEntry[0];
+        const serverObject = randomEntry[1];
+
+        return {
+            ip: ip,
+            socket: serverObject.socket,
+            port: serverObject.port
+        };
+    },
+    async handleClientConnect(socket) {
+        this.debug(`Media server has connected`);
+
         socket.send(JSON.stringify({
             op: OPCODES.HEARTBEAT_INFO,
             d: {
@@ -37,7 +46,7 @@ const rtcServer = {
 
         socket.hb = {
             timeout: setTimeout(async () => {
-                socket.close(4009, 'Session timed out');
+                this.handleClientClose(socket, true);
             }, (45 * 1000) + (20 * 1000)),
             reset: () => {
                 if (socket.hb.timeout != null) {
@@ -45,38 +54,28 @@ const rtcServer = {
                 }
 
                 socket.hb.timeout = new setTimeout(async () => {
-                    socket.close(4009, 'Session timed out');
+                    this.handleClientClose(socket, true);
                 }, (45 * 1000) + 20 * 1000);
             },
             acknowledge: (d) => {
-                let session = socket.session;
-                let base = {
+                socket.send(JSON.stringify({
                     op: OPCODES.HEARTBEAT_ACK,
                     d: d
-                }
-                let payload = session ? base : JSON.stringify(base);
-                (session || socket).send(payload);
+                }));
             }
         };
 
         socket.on('close', () => this.handleClientClose(socket));
         socket.on('message', (data) => this.handleClientMessage(socket, data));
     },
-    async handleClientClose(socket) {
-        for (const [id, clientSocket] of this.clients) {
-            if (id !== socket.userid) {
-                clientSocket.send(JSON.stringify({
-                    op: OPCODES.DISCONNECT,
-                    d: {
-                        user_id: socket.userid
-                    }
-                }));
-            }
+    async handleClientClose(socket, timedOut = false) {
+        if (timedOut) {
+            this.debug(`!! MEDIA SERVER HAS TIMED OUT - CHECK SERVER ASAP`);
         }
 
-        if (socket.userid) {
-            this.clients.delete(socket.userid);
-        }
+        this.debug(`Lost connection to media server -> Removing from store...`);
+
+        this.servers.delete(socket.public_ip);
     },
     async handleClientMessage(socket, data) {
         try {
@@ -85,7 +84,7 @@ const rtcServer = {
 
             this.debug(`Incoming -> ${raw_data}`);
 
-            await rtcHandlers[packet.op]?.(socket, packet);
+            await mrHandlers[packet.op]?.(socket, packet);
         }
         catch (error) {
             logText(error, "error");
@@ -94,7 +93,6 @@ const rtcServer = {
         }
     },
     start(port, debug_logs) {
-        this.emitter = new EventEmitter();
         this.port = port;
         this.debug_logs = debug_logs;
         this.signalingServer = new WebSocket.Server({
@@ -102,8 +100,6 @@ const rtcServer = {
         });
 
         this.signalingServer.on('listening', async () => {
-            await sodium.ready;
-
             this.debug(`Server up on port ${this.port}`);
         });
         
@@ -111,4 +107,4 @@ const rtcServer = {
     }
 };
 
-module.exports = rtcServer;
+module.exports = mrServer;

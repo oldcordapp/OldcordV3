@@ -13,6 +13,8 @@
     "serve_selector": true,
     "require_release_date_cookie": true,
     "cache_authenticated_get_requests" : true,
+    "mr_server": false,
+    "mr_server_port" : 4444,
     "default_client_build": "october_5_2017",
     "debug_logs": {
         "gateway" : true,
@@ -20,6 +22,7 @@
         "media" : true,
         "udp" : true,
         "dispatcher" : true,
+        "mr" : true,
         "rest" : true,
         "errors": true
     },
