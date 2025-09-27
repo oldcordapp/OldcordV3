@@ -643,7 +643,8 @@ const patcher = {
     script = script.replaceAll(/discord.media/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
 
-    if (!release_date.endsWith("2018") || (release_date.endsWith("2018") && (release_date.startsWith("january") || release_date.startsWith("february") || release_date.startsWith("march") || release_date.startsWith("april") || release_date.startsWith("may") || release_date.startsWith("june") || release_date.startsWith("july") || release_date.startsWith("august")))) {
+    // TODO: Fix Discord text change in january-august 2018
+    if (!release_date.endsWith("2018") || (release_date.endsWith("2018") && !(release_date.startsWith("january") || release_date.startsWith("february") || release_date.startsWith("march") || release_date.startsWith("april") || release_date.startsWith("may") || release_date.startsWith("june") || release_date.startsWith("july") || release_date.startsWith("august")))) {
       function replaceDiscord(script) {
         const tokenizerRegex =
           /("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(`(?:\\.|[^`\\])*`)|(\/\/.*)|(\/\*[\s\S]*?\*\/)/g;
