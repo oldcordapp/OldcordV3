@@ -48,7 +48,7 @@ const patcher = {
       return js.replaceAll(/"/g, '"').replaceAll(/\n|\r/g, "");
     }
     script = script.replaceAll(
-      /title:\"Discord\"|'Discord'/g,
+      /title:["']Discord["']/g,
       `title:"${sanitize(config.instance.name)}"`
     );
 
