@@ -43,6 +43,7 @@ const patcher = {
     // Fix client misidentification
     script = script.replace("__[STANDALONE]__", "");
 
+    // Title replacement
     function sanitize(js) {
       return js.replaceAll(/"/g, '"').replaceAll(/\n|\r/g, "");
     }
