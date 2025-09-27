@@ -43,16 +43,13 @@ const patcher = {
     // Fix client misidentification
     script = script.replace("__[STANDALONE]__", "");
 
-    // Apply patches conditionally based on enabled state
-    if (!release_date.endsWith("_2018") && !release_date.endsWith("_2019")) {
-      function sanitize(js) {
-        return js.replaceAll(/"/g, '"').replaceAll(/\n|\r/g, "");
-      }
-      script = script.replaceAll(
-        /\"Discord\"|'Discord'/g,
-        `"${sanitize(config.instance.name)}"`
-      );
+    function sanitize(js) {
+      return js.replaceAll(/"/g, '"').replaceAll(/\n|\r/g, "");
     }
+    script = script.replaceAll(
+      /title:\"Discord\"|'Discord'/g,
+      `title:"${sanitize(config.instance.name)}"`
+    );
 
     if (getEnabledPatches().includes("modernizeWebRTC")) {
       script = script.replaceAll(`l(e,t,n,a,i,(r||4e4)/1e3)`, `window.oldcord.fixSessionDescription2016(e,t,n,a,i,(r||4e4)/1e3)`); // i tried to get you to cooperate so this is what you get
@@ -341,7 +338,6 @@ const patcher = {
       null,
       "The client's build year must match the selected era (e.g., 2015-2016, 2015-2017, 2015-2018) to enable server features. Unsure? Select 'Everything' to allow all client builds to access your server."
     );
-    replaceMessage("NOTIFICATION_TITLE_DISCORD", null, "Oldcord");
 
     // Custom flags patch
     if (!release_date.endsWith("_2015")) {
