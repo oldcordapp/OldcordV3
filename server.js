@@ -534,7 +534,7 @@ if (config.serve_selector) {
             });
         }
 
-        return res.send(fs.readFileSync(`./www_static/assets/selector/selector.html`, 'utf8'));
+        return res.send(fs.readFileSync(`./www_static/assets/selector/index.html`, 'utf8'));
     });
 }
 
