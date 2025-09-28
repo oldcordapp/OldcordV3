@@ -231,9 +231,8 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
         );
 
         let ret_results = [];
-
+        
         for (var result of results.messages) {
-            delete result.guild_id;
             delete result.reactions;
 
             result.hit = true;
