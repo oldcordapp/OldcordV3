@@ -73,10 +73,10 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache
                 // fix NaN count issues
                 reaction.count = userIds.length || 0;
 
-                delete reaction.user_ids;
+                    delete reaction.user_ids;
+                }
+            }
         }
-    }
-}
 
         return res.status(200).json(messages);
     } catch (error) {

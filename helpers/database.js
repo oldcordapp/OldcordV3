@@ -28,9 +28,9 @@ const database = {
         };
 
         const cacheKey = JSON.stringify(query);
-        
+
         const client = await pool.connect();
-        
+
         let isWriteQuery = false;
 
         try {
@@ -38,7 +38,7 @@ const database = {
 
             if (isWriteQuery)
                 await client.query('BEGIN');
-    
+
             if (/SELECT\s+\*\s+FROM/i.test(queryString)) {
                 if (cache[cacheKey]) {
                     return cache[cacheKey];
@@ -48,7 +48,7 @@ const database = {
             if (isWriteQuery) {
                 const tableNameMatch = queryString.match(/(?:FROM|INTO|UPDATE)\s+(\S+)/i);
                 const tableName = tableNameMatch ? tableNameMatch[1] : null;
-    
+
                 if (tableName) {
                     for (const key in cache) {
                         if (key.includes(tableName)) {
@@ -74,7 +74,7 @@ const database = {
             if (isWriteQuery) {
                 await client.query('ROLLBACK');
             }
-    
+
             logText(`Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`, "error");
 
             return null;
@@ -84,9 +84,9 @@ const database = {
     },
     setupDatabase: async () => {
         try {
-            await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`,[]);
+            await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
 
-            await database.runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,[0.1]); //for the people who update their instance but do not manually run the relationships migration script
+            await database.runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`, [0.1]); //for the people who update their instance but do not manually run the relationships migration script
 
             v = await database.runQuery(`SELECT * FROM instance_info;`);
 
@@ -117,28 +117,28 @@ const database = {
                 disabled_reason TEXT DEFAULT NULL
            );`, []); // 4 = Everyone, 3 = Friends of Friends & Server Members, 2 = Friends of Friends, 1 = Server Members, 0 = No one
 
-           await database.runQuery(`
+            await database.runQuery(`
             CREATE TABLE IF NOT EXISTS relationships (
 	        user_id_1 TEXT,
             type INT,
             user_id_2 TEXT
             );`, []); //User ID 1 will always be the user that initially establishes the relationship. Internally, the type will always be 3 for both incoming and outgoing FRs to avoid inserting 2 columns for one relationship. Checking whether the user id is in column 1 will also be the way to determine blocked users.
 
-           await database.runQuery(`
+            await database.runQuery(`
             CREATE TABLE IF NOT EXISTS user_notes (
                 author_id TEXT,
                 user_id TEXT,
                 note TEXT DEFAULT NULL
             );`, []);
 
-           await database.runQuery(`
+            await database.runQuery(`
             CREATE TABLE IF NOT EXISTS dm_channels (
                 id TEXT,
                 user1 TEXT,
                 user2 TEXT
             );`, []);
 
-           await database.runQuery(`
+            await database.runQuery(`
             CREATE TABLE IF NOT EXISTS group_channels (
                 id TEXT,
                 icon TEXT DEFAULT NULL,
@@ -147,7 +147,7 @@ const database = {
                 recipients TEXT DEFAULT '[]'
             );`, []);
 
-           await database.runQuery(`
+            await database.runQuery(`
             CREATE TABLE IF NOT EXISTS staff (
                 user_id TEXT,
                 privilege INTEGER DEFAULT 1,
@@ -208,7 +208,7 @@ const database = {
                 verification_level INTEGER DEFAULT 0
            );`, []);
 
-           await database.runQuery(`
+            await database.runQuery(`
            CREATE TABLE IF NOT EXISTS applications (
                id TEXT PRIMARY KEY,
                owner_id TEXT,
@@ -218,7 +218,7 @@ const database = {
                description TEXT DEFAULT NULL
           );`, []);
 
-          await database.runQuery(`
+            await database.runQuery(`
           CREATE TABLE IF NOT EXISTS bots (
               id TEXT PRIMARY KEY,
               application_id TEXT,
@@ -314,7 +314,7 @@ const database = {
                 user_id TEXT
            );`, []);
 
-           await database.runQuery(`CREATE TABLE IF NOT EXISTS webhooks (
+            await database.runQuery(`CREATE TABLE IF NOT EXISTS webhooks (
                 guild_id TEXT,
                 channel_id TEXT,
                 id TEXT,
@@ -364,6 +364,10 @@ const database = {
                 ['1279218211430105089', 'Oldcord', '0000', 'system@oldcordapp.com', 'aLq6abXnklLRql3MEEpEHge4F9j3cE', null, new Date().toISOString(), null, 1]
             );
 
+            await database.runQuery(`CREATE EXTENSION IF NOT EXISTS pg_trgm;`);
+
+            await database.runQuery(`CREATE INDEX CONCURRENTLY IF NOT EXISTS trgm_index_messages_content ON messages USING GIN (lower(content) gin_trgm_ops);`);
+
             return true;
         } catch (error) {
             logText(error, "error");
@@ -376,18 +380,18 @@ const database = {
             if (user_id === staff.user_id || user_id === '1279218211430105089') {
                 return false;
             } // Safety net
-    
+
             // If disabled_until is not provided, default to 'FOREVER'
             if (!disabled_until) {
                 disabled_until = 'FOREVER';
             }
-    
+
             await database.runQuery(`
                 UPDATE users SET disabled_until = $1, disabled_reason = $2 WHERE id = $3
             `, [disabled_until, public_reason, user_id]);
-    
+
             let audit_log = staff.audit_log;
-    
+
             let audit_entry = {
                 moderation_id: Snowflake.generate(),
                 timestamp: new Date().toISOString(),
@@ -399,16 +403,16 @@ const database = {
                 },
                 reasoning: audit_log_reason
             };
-    
+
             audit_log.push(audit_entry);
-    
+
             await database.updateInternalAuditLog(staff.user_id, audit_log);
-    
+
             return audit_entry;
         } catch (error) {
             logText(error, "error");
             return null;
-        } 
+        }
     },
     updateInternalAuditLog: async (staff_id, new_log) => {
         try {
@@ -421,7 +425,7 @@ const database = {
             logText(error, "error");
 
             return false;
-        } 
+        }
     },
     setPrivateChannels: async (user_id, private_channels) => {
         try {
@@ -430,25 +434,25 @@ const database = {
             `, [JSON.stringify(private_channels), user_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
         }
     },
     getGuildMemberByID: async (guild_id, user_id) => {
-    	try {
+        try {
             const rows = await database.runQuery(`
                SELECT m.guild_id, m.user_id, m.nick, m.roles, m.joined_at, m.deaf, m.mute, u.username, u.discriminator, u.id as user_id_real, u.avatar, u.bot, u.flags FROM members AS m INNER JOIN users AS u ON u.id = m.user_id WHERE m.guild_id = $1 AND m.user_id = $2
             `, [guild_id, user_id]);
-            
+
             if (rows === null || rows.length === 0) {
                 return null;
             }
 
             const row = rows[0];
 
-	        const member = {
+            const member = {
                 id: row.user_id_real,
                 nick: row.nick == 'NULL' ? null : row.nick,
                 deaf: row.deaf == 1,
@@ -467,10 +471,10 @@ const database = {
             };
 
             return member;
-    	} catch(error) {
-    	    logText(error, "error");
-    	    return null;
-    	}
+        } catch (error) {
+            logText(error, "error");
+            return null;
+        }
     },
     op12getGuildMembersAndPresences: async (guild) => {
         try {
@@ -486,7 +490,7 @@ const database = {
             if (rows === null || rows.length === 0) {
                 return { members: [], presences: [] };
             }
-    
+
             let members = [];
             let presences = [];
             let offlineCount = 0;
@@ -525,7 +529,7 @@ const database = {
                     joined_at: new Date().toISOString(),
                     user: miniUser
                 };
-    
+
                 let sessions = global.userSessions.get(member.id);
                 let presenceStatus = 'offline';
                 let presence = {
@@ -534,7 +538,7 @@ const database = {
                     activities: [],
                     user: globalUtils.miniUserObject(member.user)
                 };
-    
+
                 if (sessions && sessions.length > 0) {
                     let session = sessions[sessions.length - 1];
 
@@ -543,7 +547,7 @@ const database = {
                         presence = session.presence;
                     }
                 }
-    
+
                 if (presenceStatus === 'online' || presenceStatus === 'idle' || presenceStatus === 'dnd') {
                     members.push(member);
                     presences.push(presence);
@@ -553,14 +557,14 @@ const database = {
                     presences.push(presence);
                 }
             }
-    
+
             return {
                 members: members,
                 presences: presences
             };
         } catch (error) {
             logText(error, "error");
-            
+
             return { members: [], presences: [] };
         }
     },
@@ -569,13 +573,13 @@ const database = {
             const rows = await database.runQuery(`
                 SELECT private_channels FROM users WHERE id = $1 LIMIT 1
             `, [user_id]);
-            
+
             if (rows == null || rows.length == 0) {
                 return [];
             }
-            
+
             return JSON.parse(rows[0].private_channels) ?? [];
-        } catch (error) {  
+        } catch (error) {
             logText(error, "error");
 
             return [];
@@ -592,7 +596,7 @@ const database = {
 
             //TODO: Foul solution but more maintainable than copying and pasting -- fix up later
             return await database.getChannelById(rows[0].id);
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -652,7 +656,7 @@ const database = {
             }
 
             return true;
-        }  catch (error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -684,7 +688,7 @@ const database = {
             } else {
                 return null;
             }
-        } catch (error) {  
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -695,7 +699,7 @@ const database = {
             await database.runQuery(`UPDATE users SET guild_settings = $1 WHERE id = $2`, [JSON.stringify(new_settings), user_id]);
 
             return true;
-        } catch (error) {  
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -708,7 +712,7 @@ const database = {
             `, [email]);
 
             return await globalUtils.prepareAccountObject(rows, []); //relationships arent even accessed from here either
-        } catch (error) {  
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -719,7 +723,7 @@ const database = {
             let rows = await database.runQuery(`
                     SELECT * FROM users WHERE token = $1
             `, [token]);
-                
+
             if (!rows || rows.length == 0) {
                 rows = await database.runQuery(`
                     SELECT * FROM bots WHERE token = $1
@@ -751,7 +755,7 @@ const database = {
             const rows = await database.runQuery(`
                 SELECT * FROM users WHERE username = $1 AND discriminator = $2
             `, [username, discriminator]);
-            
+
             if (!rows || rows.length == 0)
                 return null;
 
@@ -761,7 +765,7 @@ const database = {
 
             let relationships = await global.database.getRelationshipsByUserId(rows[0].id)
             return await globalUtils.prepareAccountObject(rows, relationships); //to-do fix
-	} catch (error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -780,7 +784,7 @@ const database = {
             let ret = [];
 
             if (Array.isArray(rows)) {
-                for(var row of rows) {
+                for (var row of rows) {
                     ret.push({
                         id: row.id,
                         username: row.username,
@@ -800,23 +804,23 @@ const database = {
                 const row = rows[0];
 
                 ret.push({
-                        id: row.id,
-                        username: row.username,
-                        discriminator: row.discriminator,
-                        avatar: row.avatar == 'NULL' ? null : row.avatar,
-                        email: row.email,
-                        password: row.password,
-                        token: row.token,
-                        verified: row.verified == 1 ? true : false,
-                        flags: row.flags ?? 0,
-                        bot: row.bot == 1 ? true : false,
-                        created_at: row.created_at,
-                        settings: JSON.parse(row.settings)
-                    })
+                    id: row.id,
+                    username: row.username,
+                    discriminator: row.discriminator,
+                    avatar: row.avatar == 'NULL' ? null : row.avatar,
+                    email: row.email,
+                    password: row.password,
+                    token: row.token,
+                    verified: row.verified == 1 ? true : false,
+                    flags: row.flags ?? 0,
+                    bot: row.bot == 1 ? true : false,
+                    created_at: row.created_at,
+                    settings: JSON.parse(row.settings)
+                })
             }
 
             return ret;
-        } catch (error) {  
+        } catch (error) {
             logText(error, "error");
 
             return [];
@@ -894,7 +898,7 @@ const database = {
         try {
             if (!id)
                 return null;
-            
+
             if (id.startsWith("WEBHOOK_")) {
                 let webhookId = id.split('_')[1];
                 let overrideId = id.split('_')[2];
@@ -953,7 +957,7 @@ const database = {
                 let relationships = await global.database.getRelationshipsByUserId(rows[0].id)
 
                 return await globalUtils.prepareAccountObject(rows, relationships);
-	        }
+            }
         } catch (error) {
             logText(error, "error");
 
@@ -1070,11 +1074,11 @@ const database = {
                 }
 
                 avatar = name_hash;
-    
+
                 if (!fs.existsSync(`./www_dynamic/avatars/${webhook_id}`)) {
                     fs.mkdirSync(`./www_dynamic/avatars/${webhook_id}`, { recursive: true });
                 }
- 
+
                 fs.writeFileSync(`./www_dynamic/avatars/${webhook_id}/${name_hash}.${extension}`, imgData, "base64");
             }
 
@@ -1096,7 +1100,7 @@ const database = {
     deleteWebhook: async (webhook_id) => {
         try {
             await database.runQuery(`DELETE FROM webhooks WHERE id = $1`, [webhook_id]);
-           
+
             return true;
         } catch (error) {
             logText(error, "error");
@@ -1116,7 +1120,7 @@ const database = {
                 var name_hash = md5(name);
 
                 avatarHash = name_hash;
-    
+
                 if (extension == "jpeg") {
                     extension = "jpg";
                 }
@@ -1124,14 +1128,14 @@ const database = {
                 if (!fs.existsSync(`./www_dynamic/avatars/${webhook_id}`)) {
                     fs.mkdirSync(`./www_dynamic/avatars/${webhook_id}`, { recursive: true });
                 }
- 
+
                 fs.writeFileSync(`./www_dynamic/avatars/${webhook_id}/${name_hash}.${extension}`, imgData, "base64");
             }
 
             let token = globalUtils.generateString(60);
 
             await database.runQuery(`INSERT INTO webhooks (guild_id, channel_id, id, token, avatar, name, creator_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [guild.id, channel_id, webhook_id, token, avatarHash == null ? 'NULL' : avatarHash, name, user.id]);
-  
+
             return {
                 application_id: null,
                 id: webhook_id,
@@ -1193,7 +1197,7 @@ const database = {
             if (rows != null && rows.length > 0) {
                 const ret = [];
 
-                for(var row of rows) {
+                for (var row of rows) {
                     ret.push({
                         id: row.account_id,
                         type: row.platform,
@@ -1251,7 +1255,7 @@ const database = {
             await database.runQuery(`UPDATE connected_accounts SET visibility = $1, friendSync = $2, integrations = $3, revoked = $4 WHERE account_id = $5`, [visibility == true ? 1 : 0, friendSync == true ? 1 : 0, JSON.stringify(integrations), revoked == true ? 1 : 0, connection_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -1268,7 +1272,7 @@ const database = {
             await database.runQuery(`DELETE FROM connected_accounts WHERE account_id = $1`, [connection_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -1283,12 +1287,12 @@ const database = {
             return true;
         }
         catch (error) {
-           logText(error, "error");
-            
+            logText(error, "error");
+
             return false;
         }
     },
-    getRelationshipsByUserId: async(user_id) => {
+    getRelationshipsByUserId: async (user_id) => {
         try {
             const rows = await database.runQuery(`
 	            WITH r AS (
@@ -1303,7 +1307,7 @@ const database = {
 		            FROM relationships WHERE $1 = user_id_1 OR $1 = user_id_2
 		        )
                 SELECT * FROM users
-                JOIN r ON users.id = r.id`,[user_id]);
+                JOIN r ON users.id = r.id`, [user_id]);
 
 
             if (rows === null || rows.length === 0) {
@@ -1313,17 +1317,17 @@ const database = {
             let ret = [];
 
 
-            for(var relationship of rows) {
+            for (var relationship of rows) {
                 if (relationship.user_id_1 === user_id && relationship.type === 3) {
                     relationship.type = 4;
-		        }
+                }
                 if (!(relationship.type === 2 && relationship.user_id_1 != user_id)) { //another user blocked this user, this user does not need to know that.
                     ret.push({
                         id: relationship.id,
                         type: relationship.type,
                         user: globalUtils.miniUserObject(relationship)
                     })
-		        }
+                }
             }
             return ret;
         } catch (error) {
@@ -1335,20 +1339,20 @@ const database = {
     modifyRelationship: async (user_id, relationship) => {
         try {
             if (relationship.type === 0) {
-                await database.runQuery(`DELETE FROM relationships WHERE (user_id_1 = $1 AND user_id_2 = $2) OR (user_id_2 = $1 AND user_id_1 = $2)`,[user_id,relationship.id]);
-	        } else {
+                await database.runQuery(`DELETE FROM relationships WHERE (user_id_1 = $1 AND user_id_2 = $2) OR (user_id_2 = $1 AND user_id_1 = $2)`, [user_id, relationship.id]);
+            } else {
                 await database.runQuery(`UPDATE relationships SET type = $1 WHERE user_id_1 = $2 OR user_id_2 = $2`, [relationship.type, user_id]);
-	        }
+            }
             return true;
         } catch (error) {
             logText(error, "error");
 
             return false;
-	    }
+        }
     },
-    addRelationship: async (initiator_id,type,target_id) => {
+    addRelationship: async (initiator_id, type, target_id) => {
         try {
-            await database.runQuery("INSERT INTO relationships (user_id_1, type, user_id_2) VALUES ($1, $2, $3)",[initiator_id, type, target_id]);
+            await database.runQuery("INSERT INTO relationships (user_id_1, type, user_id_2) VALUES ($1, $2, $3)", [initiator_id, type, target_id]);
 
             return true;
         } catch (error) {
@@ -1362,11 +1366,11 @@ const database = {
             const rows = await database.runQuery(`
                 SELECT * FROM bans WHERE guild_id = $1
             `, [id]);
-    
+
             if (rows != null && rows.length > 0) {
                 const ret = [];
 
-                for(var row of rows) {
+                for (var row of rows) {
                     const user = await database.getAccountByUserId(row.user_id);
 
                     if (user != null) {
@@ -1382,7 +1386,7 @@ const database = {
             }
         } catch (error) {
             logText(error, "error");
-    
+
             return [];
         }
     },
@@ -1432,7 +1436,7 @@ const database = {
 
             if (type === 1 || type === 3) {
                 //create dm channel / group dm
-                
+
                 //Convert recipients to user snowflakes, discard other data
                 let recipientIDs = globalUtils.usersToIDs(recipients);
 
@@ -1444,7 +1448,7 @@ const database = {
                 for (let i = 0; i < recipients.length; i++) {
                     if (!recipients)
                         continue;
-                    
+
                     let user;
 
                     if ((typeof recipients[i]) == "string") {
@@ -1452,7 +1456,7 @@ const database = {
 
                         if (!user)
                             continue;
-                        
+
                         user = globalUtils.miniUserObject(user);
                     } else {
                         user = recipients[i];
@@ -1465,7 +1469,7 @@ const database = {
                 if (type === 1) {
                     //DM channel
                     await database.runQuery(`INSERT INTO dm_channels (id, user1, user2) VALUES ($1, $2, $3)`, [channel_id, recipientIDs[0], recipientIDs[1]]);
-                    
+
                     return {
                         id: channel_id,
                         guild_id: null,
@@ -1496,7 +1500,7 @@ const database = {
                 id: channel_id,
                 name: name,
                 guild_id: guild_id,
-                parent_id: parent_id, 
+                parent_id: parent_id,
                 type: type,
                 topic: null,
                 nsfw: false,
@@ -1504,7 +1508,7 @@ const database = {
                 permission_overwrites: [],
                 position: position
             };
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -1516,8 +1520,8 @@ const database = {
 
             await database.runQuery(`UPDATE members SET nick = $1 WHERE guild_id = $2 AND user_id = $3`, [nick, guild_id, member_id]);
 
-            return true;    
-        } catch(error) {
+            return true;
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -1531,15 +1535,15 @@ const database = {
 
                 if (channel.permission_overwrites) {
                     let out = globalUtils.SerializeOverwritesToString(channel.permission_overwrites);
-    
+
                     if (out != null) {
                         overwrites = out;
                     }
                 }
-    
+
                 await database.runQuery(`UPDATE channels SET last_message_id = $1, name = $2, topic = $3, nsfw = $4, parent_id = $5, permission_overwrites = $6, position = $7 WHERE id = $8`, [channel.last_message_id, channel.name, channel.topic, channel.nsfw ? 1 : 0, channel.parent_id == null ? 'NULL' : channel.parent_id, overwrites, channel.position, channel_id]);
-    
-                return channel;   
+
+                return channel;
             } else if (channel.type === 3) {
                 //group channel
 
@@ -1550,17 +1554,17 @@ const database = {
                     var imgData = process_icon.replace(`data:image/${extension};base64,`, "");
                     var name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var name_hash = md5(name);
-    
+
                     let icon = name_hash;
-        
+
                     if (extension == "jpeg") {
                         extension = "jpg";
                     }
-    
+
                     if (!fs.existsSync(`./www_dynamic/group_icons/${channel_id}`)) {
                         fs.mkdirSync(`./www_dynamic/group_icons/${channel_id}`, { recursive: true });
                     }
-     
+
                     fs.writeFileSync(`./www_dynamic/group_icons/${channel_id}/${name_hash}.${extension}`, imgData, "base64");
 
                     channel.icon = icon;
@@ -1576,9 +1580,9 @@ const database = {
 
                 return channel;
             }
-             
+
             return null; //unknown channel type?
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -1588,13 +1592,13 @@ const database = {
         try {
             if (!recipients)
                 return false;
-            
+
             let recipientIDs = globalUtils.usersToIDs(recipients);
-            
+
             await database.runQuery(`UPDATE group_channels SET recipients = $1 WHERE id = $2`, [JSON.stringify(recipientIDs), channel_id]);
 
-            return true;    
-        } catch(error) {
+            return true;
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -1612,7 +1616,7 @@ const database = {
 
             const ret = [];
 
-            for(var row of rows) {
+            for (var row of rows) {
                 const message = await database.getMessageById(row.message_id);
 
                 if (message != null) {
@@ -1648,9 +1652,9 @@ const database = {
             const mentions = [];
 
             if (mentions_data.mentions && mentions_data.mentions.length > 0) {
-                for(var mention_id of mentions_data.mentions) {
+                for (var mention_id of mentions_data.mentions) {
                     const mention = await database.getAccountByUserId(mention_id);
-    
+
                     if (mention != null) {
                         mentions.push(globalUtils.miniUserObject(mention));
                     }
@@ -1664,7 +1668,7 @@ const database = {
             const messageAttachments = [];
 
             if (attachments != null && attachments.length > 0) {
-                for(var attachment of attachments) {
+                for (var attachment of attachments) {
                     messageAttachments.push({
                         filename: attachment.filename,
                         height: attachment.height,
@@ -1715,7 +1719,7 @@ const database = {
     getPinnedMessagesInChannel: async (channel_id) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM messages WHERE channel_id = $1 AND pinned = $2`, [channel_id, 1]);
-           
+
             if (rows == null || rows.length == 0) {
                 return [];
             }
@@ -1740,7 +1744,7 @@ const database = {
     getBotByApplicationId: async (application_id) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM bots WHERE application_id = $1`, [application_id]);
-           
+
             if (rows == null || rows.length == 0) {
                 return null;
             }
@@ -1748,7 +1752,7 @@ const database = {
             return {
                 avatar: rows[0].avatar === 'NULL' ? null : rows[0].avatar,
                 bot: true,
-                discriminator:  rows[0].discriminator,
+                discriminator: rows[0].discriminator,
                 id: rows[0].id,
                 public: rows[0].public == 1,
                 require_code_grant: rows[0].require_code_grant == 1,
@@ -1763,28 +1767,28 @@ const database = {
     },
     abracadabraApplication: async (application) => {
         try {
-           let salt = await genSalt(10);
-           let pwHash = await hash(globalUtils.generateString(30), salt);
-           let discriminator = Math.round(Math.random() * 9999);
+            let salt = await genSalt(10);
+            let pwHash = await hash(globalUtils.generateString(30), salt);
+            let discriminator = Math.round(Math.random() * 9999);
 
-           while (discriminator < 1000) {
-               discriminator = Math.round(Math.random() * 9999);
-           }
+            while (discriminator < 1000) {
+                discriminator = Math.round(Math.random() * 9999);
+            }
 
-           let token = globalUtils.generateToken(application.id, pwHash);
-           
-           await database.runQuery(`INSERT INTO bots (id, application_id, username, discriminator, avatar, token) VALUES ($1, $2, $3, $4, $5, $6)`, [application.id, application.id, application.name, discriminator.toString(), 'NULL', token]);
+            let token = globalUtils.generateToken(application.id, pwHash);
 
-           return {
-             avatar: null,
-             bot: true,
-             discriminator: discriminator.toString(),
-             id: application.id,
-             public: true,
-             require_code_grant: false,
-             token: token,
-             username: application.name
-           }
+            await database.runQuery(`INSERT INTO bots (id, application_id, username, discriminator, avatar, token) VALUES ($1, $2, $3, $4, $5, $6)`, [application.id, application.id, application.name, discriminator.toString(), 'NULL', token]);
+
+            return {
+                avatar: null,
+                bot: true,
+                discriminator: discriminator.toString(),
+                id: application.id,
+                public: true,
+                require_code_grant: false,
+                token: token,
+                username: application.name
+            }
         } catch (error) {
             logText(error, "error");
 
@@ -1798,23 +1802,23 @@ const database = {
             if (bot.avatar != null) {
                 if (bot.avatar.includes("data:image")) {
                     var extension = bot.avatar.split('/')[1].split(';')[0];
-                    var imgData =  bot.avatar.replace(`data:image/${extension};base64,`, "");
+                    var imgData = bot.avatar.replace(`data:image/${extension};base64,`, "");
                     var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var hash = md5(file_name);
-            
+
                     if (extension == "jpeg") {
                         extension = "jpg";
                     }
-            
+
                     send_icon = hash.toString();
-            
+
                     if (!fs.existsSync(`www_dynamic/avatars`)) {
                         fs.mkdirSync(`www_dynamic/avatars`, { recursive: true });
                     }
-    
+
                     if (!fs.existsSync(`www_dynamic/avatars/${bot.id}`)) {
                         fs.mkdirSync(`www_dynamic/avatars/${bot.id}`, { recursive: true });
-            
+
                         fs.writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, "base64");
                     } else {
                         fs.writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, "base64");
@@ -1842,23 +1846,23 @@ const database = {
             if (bot.avatar != null) {
                 if (bot.avatar.includes("data:image")) {
                     var extension = bot.avatar.split('/')[1].split(';')[0];
-                    var imgData =  bot.avatar.replace(`data:image/${extension};base64,`, "");
+                    var imgData = bot.avatar.replace(`data:image/${extension};base64,`, "");
                     var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var hash = md5(file_name);
-            
+
                     if (extension == "jpeg") {
                         extension = "jpg";
                     }
-            
+
                     send_icon = hash.toString();
-            
+
                     if (!fs.existsSync(`www_dynamic/avatars`)) {
                         fs.mkdirSync(`www_dynamic/avatars`, { recursive: true });
                     }
-    
+
                     if (!fs.existsSync(`www_dynamic/avatars/${bot.id}`)) {
                         fs.mkdirSync(`www_dynamic/avatars/${bot.id}`, { recursive: true });
-            
+
                         fs.writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, "base64");
                     } else {
                         fs.writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, "base64");
@@ -1886,23 +1890,23 @@ const database = {
             if (application.icon != null) {
                 if (application.icon.includes("data:image")) {
                     var extension = application.icon.split('/')[1].split(';')[0];
-                    var imgData =  application.icon.replace(`data:image/${extension};base64,`, "");
+                    var imgData = application.icon.replace(`data:image/${extension};base64,`, "");
                     var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var hash = md5(file_name);
-            
+
                     if (extension == "jpeg") {
                         extension = "jpg";
                     }
-            
+
                     send_icon = hash.toString();
-            
+
                     if (!fs.existsSync(`www_dynamic/applications_icons`)) {
                         fs.mkdirSync(`www_dynamic/applications_icons`, { recursive: true });
                     }
-    
+
                     if (!fs.existsSync(`www_dynamic/applications_icons/${application.id}`)) {
                         fs.mkdirSync(`www_dynamic/applications_icons/${application.id}`, { recursive: true });
-            
+
                         fs.writeFileSync(`www_dynamic/applications_icons/${application.id}/${hash}.${extension}`, imgData, "base64");
                     } else {
                         fs.writeFileSync(`www_dynamic/applications_icons/${application.id}/${hash}.${extension}`, imgData, "base64");
@@ -1950,7 +1954,7 @@ const database = {
     getApplicationById: async (application_id) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM applications WHERE id = $1`, [application_id]);
-           
+
             if (rows == null || rows.length == 0) {
                 return null;
             }
@@ -1979,7 +1983,7 @@ const database = {
     getUsersApplications: async (user) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM applications WHERE owner_id = $1`, [user.id]);
-           
+
             if (rows == null || rows.length == 0) {
                 return [];
             }
@@ -2010,59 +2014,135 @@ const database = {
     //to-do add role mention support
     getRecentMentions: async (user_id, before_id, limit, include_roles, include_everyone_mentions, guild_id) => {
         try {
-            let query = `SELECT * FROM messages WHERE `;
+            let query = `
+            SELECT m.* FROM messages AS m 
+            WHERE 
+        `;
             const params = [];
             let paramIndex = 1;
 
             if (guild_id) {
-                query += `guild_id = $${paramIndex} AND `;
-
+                query += `m.guild_id = $${paramIndex++} AND `;
                 params.push(guild_id);
-
-                paramIndex++;
             }
 
             if (before_id) {
-                query += `message_id < $${paramIndex} AND `;
-
+                query += `m.message_id < $${paramIndex++} AND `;
                 params.push(before_id);
-
-                paramIndex++;
             }
-    
-            query += `(content LIKE '%<@${user_id}>%'`;
-    
+
+            let mentionConditions = [];
+
+            mentionConditions.push(`m.content LIKE '%<@${user_id}>%'`);
+
             if (include_everyone_mentions) {
-                query += ` OR mention_everyone = 1`;
+                mentionConditions.push(`m.mention_everyone = 1`);
             }
-    
-            query += `) `;
-    
 
-            query += `ORDER BY timestamp DESC LIMIT $${paramIndex}`;
+            query += `(${mentionConditions.join(' OR ')}) `;
 
+            query += `ORDER BY m.timestamp DESC LIMIT $${paramIndex}`;
             params.push(limit);
-    
-            const rows = await database.runQuery(query, params);
-    
-            if (!rows || rows.length === 0) {
+
+            const messageRows = await database.runQuery(query, params);
+
+            if (!messageRows || messageRows.length === 0) {
                 return [];
             }
-    
-            const ret = [];
-    
-            for (const row of rows) {
-                const message = await database.getMessageById(row.message_id);
 
-                if (message != null) {
-                    delete message.guild_id; //apparently the client doesnt need this?
-                    delete message.overrides;
-                    
-                    ret.push(message);
+            const messageIds = messageRows.map(row => row.message_id);
+            const uniqueUserIds = new Set();
+
+            for (const row of messageRows) {
+                uniqueUserIds.add(row.author_id);
+                const mentions_data = globalUtils.parseMentions(row.content);
+                if (mentions_data.mentions && mentions_data.mentions.length > 0) {
+                    mentions_data.mentions.forEach(uid => uniqueUserIds.add(uid));
                 }
             }
-    
-            return ret;
+
+            const userIdArray = Array.from(uniqueUserIds).filter(id => !id.startsWith("WEBHOOK_"));
+
+            const accounts = await database.getAccountsByIds(userIdArray);
+            const accountMap = new Map(accounts.map(acc => [acc.id, acc]));
+
+            const attachmentsRows = await database.runQuery(`
+            SELECT * FROM attachments WHERE message_id = ANY($1)
+        `, [messageIds]);
+
+            const attachmentsMap = new Map();
+
+            if (attachmentsRows) {
+                for (const attachment of attachmentsRows) {
+                    if (!attachmentsMap.has(attachment.message_id)) {
+                        attachmentsMap.set(attachment.message_id, []);
+                    }
+
+                    attachmentsMap.get(attachment.message_id).push({
+                        filename: attachment.filename,
+                        height: attachment.height,
+                        width: attachment.width,
+                        id: attachment.attachment_id,
+                        proxy_url: attachment.url,
+                        url: attachment.url,
+                        size: attachment.size
+                    });
+                }
+            }
+
+            const finalMessages = [];
+            for (const row of messageRows) {
+                const author = accountMap.get(row.author_id);
+                if (!author) { continue; }
+
+                const mentions_data = globalUtils.parseMentions(row.content);
+                const mentions = [];
+
+                if (mentions_data.mentions && mentions_data.mentions.length > 0) {
+                    for (const mention_id of mentions_data.mentions) {
+                        const mention = accountMap.get(mention_id);
+                        
+                        if (mention) {
+                            mentions.push(mention);
+                        }
+                    }
+                }
+
+                const messageAttachments = attachmentsMap.get(row.message_id) || [];
+
+                const msgReactions = JSON.parse(row.reactions);
+                let reactions = [];
+                if (msgReactions) {
+                    for (const reactionRow of msgReactions) {
+                        reactions.push({
+                            user_id: reactionRow.user_id,
+                            emoji: reactionRow.emoji
+                        });
+                    }
+                }
+
+                let message = {
+                    id: row.message_id,
+                    content: row.content,
+                    channel_id: row.channel_id,
+                    author: globalUtils.miniUserObject(author),
+                    attachments: messageAttachments,
+                    embeds: row.embeds === 'NULL' ? [] : JSON.parse(row.embeds),
+                    mentions: mentions,
+                    mention_everyone: row.mention_everyone === 1,
+                    mention_roles: mentions_data.mention_roles,
+                    nonce: row.nonce,
+                    edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
+                    timestamp: row.timestamp,
+                    reactions: reactions,
+                    tts: row.tts === 1,
+                    pinned: row.pinned === 1,
+                };
+
+                finalMessages.push(message);
+            }
+
+            return finalMessages;
         } catch (error) {
             logText(error, "error");
             return [];
@@ -2072,54 +2152,147 @@ const database = {
         try {
             let query = `SELECT * FROM messages WHERE channel_id = $1 `;
             const params = [id];
+            let paramIndex = 2;
 
             if (before_id && after_id) {
-                query += 'AND message_id < $2 AND message_id > $3 ORDER BY timestamp DESC LIMIT $4';
+                query += `AND message_id < $${paramIndex++} AND message_id > $${paramIndex++} ORDER BY timestamp DESC LIMIT $${paramIndex}`;
                 params.push(before_id, after_id, limit);
             } else if (before_id) {
-                query += 'AND message_id < $2 ORDER BY timestamp DESC LIMIT $3';
+                query += `AND message_id < $${paramIndex++} ORDER BY timestamp DESC LIMIT $${paramIndex}`;
                 params.push(before_id, limit);
             } else if (after_id) {
-                query += 'AND message_id > $2 ORDER BY timestamp DESC LIMIT $3';
+                query += `AND message_id > $${paramIndex++} ORDER BY timestamp DESC LIMIT $${paramIndex}`;
                 params.push(after_id, limit);
             } else {
-                query += 'ORDER BY timestamp DESC LIMIT $2';
+                query += `ORDER BY timestamp DESC LIMIT $${paramIndex}`;
                 params.push(limit);
             }
 
-            const rows = await database.runQuery(query, params);
+            const messageRows = await database.runQuery(query, params);
 
-            if (rows == null || rows.length == 0) {
+            if (messageRows === null || messageRows.length === 0) {
                 return [];
             }
 
-            const ret = [];
+            const messageIds = messageRows.map(row => row.message_id);
+            const uniqueUserIds = new Set();
 
-            for (const row of rows) {
-                const message = await database.getMessageById(row.message_id);
-                
-                if (includeReactions) {
-                    const reactions = message.reactions;
-                    const fixedReactions = [];
+            for (const row of messageRows) {
+                uniqueUserIds.add(row.author_id);
 
-                    const reactionMap = reactions.reduce((acc, reaction) => {
-                        const { id, name } = reaction.emoji;
-                        const key = id || name;
-                    
+                const mentions_data = globalUtils.parseMentions(row.content);
+
+                if (mentions_data.mentions && mentions_data.mentions.length > 0) {
+                    mentions_data.mentions.forEach(uid => uniqueUserIds.add(uid));
+                }
+            }
+
+            const userIdArray = Array.from(uniqueUserIds);
+
+            const accounts = await database.getAccountsByIds(userIdArray);
+            const accountMap = new Map();
+
+            if (accounts && accounts.length > 0) {
+                accounts.forEach(acc => accountMap.set(acc.id, acc));
+            }
+
+            const attachmentsRows = await database.runQuery(`
+            SELECT * FROM attachments WHERE message_id = ANY($1)
+        `, [messageIds]);
+
+            const attachmentsMap = new Map();
+
+            if (attachmentsRows) {
+                for (const attachment of attachmentsRows) {
+                    if (!attachmentsMap.has(attachment.message_id)) {
+                        attachmentsMap.set(attachment.message_id, []);
+                    }
+
+                    attachmentsMap.get(attachment.message_id).push({
+                        filename: attachment.filename,
+                        height: attachment.height,
+                        width: attachment.width,
+                        id: attachment.attachment_id,
+                        proxy_url: attachment.url,
+                        url: attachment.url,
+                        size: attachment.size
+                    });
+                }
+            }
+
+            const finalMessages = [];
+            for (const row of messageRows) {
+                const author = accountMap.get(row.author_id);
+
+                if (!author) {
+                    continue;
+                }
+
+                const mentions_data = globalUtils.parseMentions(row.content);
+                const mentions = [];
+
+                if (mentions_data.mentions && mentions_data.mentions.length > 0) {
+                    for (const mention_id of mentions_data.mentions) {
+                        const mention = accountMap.get(mention_id);
+                        if (mention) {
+                            mentions.push(mention);
+                        }
+                    }
+                }
+
+                const messageAttachments = attachmentsMap.get(row.message_id) || [];
+                const msgReactions = JSON.parse(row.reactions);
+
+                let reactions = [];
+
+                if (msgReactions) {
+                    for (const reactionRow of msgReactions) {
+                        reactions.push({
+                            user_id: reactionRow.user_id,
+                            emoji: reactionRow.emoji
+                        });
+                    }
+                }
+
+                let message = {
+                    //Surprisingly enough discord doesn't return a guild_id property for each message
+                    id: row.message_id,
+                    content: row.content,
+                    channel_id: row.channel_id,
+                    author: author, //Already minified due to the nature of the get accounts by id bulk function :3
+                    attachments: messageAttachments,
+                    embeds: row.embeds === 'NULL' ? [] : JSON.parse(row.embeds),
+                    mentions: mentions,
+                    mention_everyone: row.mention_everyone === 1,
+                    mention_roles: mentions_data.mention_roles,
+                    nonce: row.nonce,
+                    edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
+                    timestamp: row.timestamp,
+                    reactions: reactions,
+                    tts: row.tts === 1,
+                    pinned: row.pinned === 1,
+                    overrides: (!row.overrides || row.overrides === 'NULL' ? null : JSON.parse(row.overrides))
+                };
+
+                if (includeReactions && message.reactions.length > 0) {
+                    const reactionMap = message.reactions.reduce((acc, reaction) => {
+                        const key = reaction.emoji;
+
                         if (!acc[key]) {
-                            acc[key] = { 
-                                emoji: { id, name },
+                            acc[key] = {
+                                emoji: reaction.emoji,
                                 count: 0,
                                 user_ids: new Set()
                             };
                         }
-                    
+
                         acc[key].count++;
                         acc[key].user_ids.add(reaction.user_id);
-                    
+
                         return acc;
                     }, {});
-          
+
+                    const fixedReactions = [];
                     for (const key in reactionMap) {
                         fixedReactions.push({
                             emoji: reactionMap[key].emoji,
@@ -2128,46 +2301,221 @@ const database = {
                             me: false
                         });
                     }
-
                     message.reactions = fixedReactions;
                 }
 
-                if (message != null) {
-                    ret.push(message);
-                }
+                finalMessages.push(message);
             }
 
-            return ret;
+            return finalMessages;
         } catch (error) {
             logText(error, "error");
-
             return [];
         }
     },
-    getGuildMessages: async (guild_id, containsContent, includeNsfw) => {
+    getAccountsByIds: async (ids) => {
         try {
-            const rows = await database.runQuery(`SELECT m.* FROM messages m JOIN channels ch ON m.channel_id = ch.id WHERE m.guild_id = $1 AND LOWER(m.content) LIKE LOWER($2) ${includeNsfw ? "" : "AND ch.nsfw = 0"}`, [guild_id, `%${containsContent}%`]);
-    
-            if (!rows || rows.length === 0) {
+            if (!ids || ids.length === 0) {
                 return [];
             }
-    
-            const ret = [];
+
+            const rows = await database.runQuery(`SELECT id, username, discriminator, avatar, flags FROM users WHERE id = ANY($1::text[])`, [ids]) ?? [];
+            const accounts = [];
 
             for (const row of rows) {
-                const message = await database.getMessageById(row.message_id);
-    
-                if (message) {
-                    ret.push(message);
-                }
+                accounts.push({
+                    username: row.username,
+                    discriminator: row.discriminator,
+                    id: row.id,
+                    avatar: row.avatar === 'NULL' ? null : row.avatar,
+                    bot: false,
+                    flags: row.flags,
+                    premium: true
+                });
             }
-    
-            return ret;
+
+            //Relationships will never be used in here, and it only works for NORMAL user accounts - neither webhooks nor bots, should be pretty efficient.
+
+            return accounts;
         } catch (error) {
             logText(error, "error");
             return [];
         }
     },
+    getGuildMessages: async (guild_id, author_id, containsContent, channel_id, mentions_user_id, includeNsfw, before_id, after_id, limit, offset) => {
+        try {
+            let whereClause = ` WHERE m.guild_id = $1 `;
+            let params = [guild_id];
+            let paramIndex = 2;
+
+            const buildWhere = (pIndex) => {
+                let clause = '';
+                let p = [...params];
+
+                if (author_id) {
+                    clause += ` AND m.author_id = $${pIndex++}`;
+                    p.push(author_id);
+                }
+
+                if (containsContent) {
+                    clause += ` AND LOWER(m.content) LIKE LOWER($${pIndex++})`;
+                    p.push(`%${containsContent}%`);
+                }
+
+                if (channel_id) {
+                    clause += ` AND m.channel_id = $${pIndex++}`;
+                    p.push(channel_id);
+                }
+
+                if (mentions_user_id) {
+                    clause += ` AND m.content LIKE $${pIndex++}`;
+                    p.push(`%<@${mentions_user_id}>%`);
+                }
+
+                if (before_id) {
+                    clause += ` AND m.message_id < $${pIndex++}`;
+                    p.push(before_id);
+                }
+
+                if (after_id) {
+                    clause += ` AND m.message_id > $${pIndex++}`;
+                    p.push(after_id);
+                }
+
+                if (!includeNsfw) {
+                    clause += ` AND ch.nsfw = 0`;
+                }
+
+                return { clause, params: p, nextIndex: pIndex };
+            };
+
+            const { clause, params: mainParams, nextIndex: finalIndex } = buildWhere(paramIndex);
+
+            const countQuery = `SELECT COUNT(m.message_id) AS total_count FROM messages AS m INNER JOIN channels AS ch ON m.channel_id = ch.id ${whereClause} ${clause}`;
+
+            const countRows = await database.runQuery(countQuery, mainParams);
+            const totalCount = parseInt(countRows[0].total_count) || 0;
+
+            if (totalCount === 0) {
+                return { messages: [], totalCount: 0 };
+            }
+
+            let dataQuery = `SELECT m.* FROM messages AS m INNER JOIN channels AS ch ON m.channel_id = ch.id ${whereClause} ${clause} ORDER BY m.message_id DESC LIMIT $${finalIndex} OFFSET $${finalIndex + 1}`;
+
+            mainParams.push(parseInt(limit), parseInt(offset));
+
+            const messageRows = await database.runQuery(dataQuery, mainParams);
+
+            if (messageRows.length === 0) {
+                return { messages: [], totalCount };
+            }
+
+            const messageIds = messageRows.map(row => row.message_id);
+            const uniqueUserIds = new Set();
+
+            for (const row of messageRows) {
+                uniqueUserIds.add(row.author_id);
+
+                const mentions_data = globalUtils.parseMentions(row.content);
+
+                if (mentions_data.mentions && mentions_data.mentions.length > 0) {
+                    mentions_data.mentions.forEach(id => uniqueUserIds.add(id));
+                }
+            }
+
+            const userIdArray = Array.from(uniqueUserIds);
+
+            const accounts = await database.getAccountsByIds(userIdArray);
+            const accountMap = new Map();
+
+            if (accounts && accounts.length > 0) {
+                accounts.forEach(acc => accountMap.set(acc.id, acc));
+            }
+
+            const attachmentsRows = await database.runQuery(`
+                SELECT * FROM attachments WHERE message_id = ANY($1)
+            `, [messageIds]);
+
+            const attachmentsMap = new Map();
+
+            if (attachmentsRows) {
+                for (const attachment of attachmentsRows) {
+                    if (!attachmentsMap.has(attachment.message_id)) {
+                        attachmentsMap.set(attachment.message_id, []);
+                    }
+
+                    attachmentsMap.get(attachment.message_id).push({
+                        filename: attachment.filename,
+                        height: attachment.height,
+                        width: attachment.width,
+                        id: attachment.attachment_id,
+                        proxy_url: attachment.url,
+                        url: attachment.url,
+                        size: attachment.size
+                    });
+                }
+            }
+
+            const messages = [];
+
+            for (const row of messageRows) {
+                const author = accountMap.get(row.author_id);
+
+                if (!author) {
+                    continue;
+                }
+
+                const mentions_data = globalUtils.parseMentions(row.content);
+                const mentions = [];
+
+                if (mentions_data.mentions && mentions_data.mentions.length > 0) {
+                    for (const mention_id of mentions_data.mentions) {
+                        const mention = accountMap.get(mention_id);
+
+                        if (mention) {
+                            mentions.push(mention);
+                        }
+                    }
+                }
+
+                const messageAttachments = attachmentsMap.get(row.message_id) || [];
+
+                const reactionRet = [];
+                const msgReactions = JSON.parse(row.reactions);
+
+                for (const reactionRow of msgReactions) {
+                    reactionRet.push({
+                        user_id: reactionRow.user_id,
+                        emoji: reactionRow.emoji
+                    });
+                }
+
+                messages.push({
+                    id: row.message_id,
+                    content: row.content,
+                    channel_id: row.channel_id,
+                    author: author, //is already minified
+                    attachments: messageAttachments,
+                    embeds: row.embeds === 'NULL' ? [] : JSON.parse(row.embeds),
+                    mentions: mentions,
+                    mention_everyone: row.mention_everyone === 1,
+                    mention_roles: mentions_data.mention_roles,
+                    nonce: row.nonce,
+                    edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
+                    timestamp: row.timestamp,
+                    reactions: reactionRet,
+                    tts: row.tts === 1,
+                    pinned: row.pinned === 1,
+                    overrides: (!row.overrides || row.overrides === 'NULL' ? null : JSON.parse(row.overrides))
+                });
+            }
+
+            return { messages, totalCount };
+        } catch (error) {
+            logText(error, "error");
+            return { messages: [], totalCount: 0 };
+        }
+    }, //TBH: gemini helped me optimize these 2 message fetching related functions, but holy fuck, good decisions clanker
     getChannelById: async (id) => {
         try {
             if (id.includes("12792182114301050")) {
@@ -2186,14 +2534,14 @@ const database = {
 
             if (row.guild_id === 'NULL') {
                 //dm channel / group dm
-                
+
                 let privChannel = {
                     id: row.id,
                     guild_id: null,
                     type: row.type,
                     last_message_id: row.last_message_id ?? "0",
                 };
-                
+
                 if (privChannel.type === 1) {
                     let dm_info = await database.getDMInfo(privChannel.id);
 
@@ -2209,7 +2557,7 @@ const database = {
                         privChannel.recipients = recipients;
                     }
                 }
-                
+
                 if (privChannel.type === 3) {
                     let group_info = await database.getGroupDMInfo(privChannel.id);
                     if (group_info != null) {
@@ -2220,7 +2568,7 @@ const database = {
                             if (user)
                                 recipients.push(globalUtils.miniUserObject(user));
                         }
-                        
+
                         privChannel.icon = group_info.icon;
                         privChannel.name = group_info.name;
                         privChannel.owner_id = group_info.owner_id;
@@ -2290,7 +2638,7 @@ const database = {
 
             let ret = [];
 
-            for(var row of rows) {
+            for (var row of rows) {
                 let guild = await database.getGuildById(row.id);
 
                 ret.push(guild);
@@ -2326,15 +2674,15 @@ const database = {
 
             for (var row of channelRows) {
                 if (!row) continue;
-    
-                let overwrites = [];    
-    
+
+                let overwrites = [];
+
                 if (row.permission_overwrites && row.permission_overwrites.includes(":")) {
                     for (var overwrite of row.permission_overwrites.split(':')) {
                         let role_id = overwrite.split('_')[0];
                         let allow_value = overwrite.split('_')[1];
                         let deny_value = overwrite.split('_')[2];
-    
+
                         overwrites.push({
                             id: role_id,
                             allow: parseInt(allow_value),
@@ -2347,7 +2695,7 @@ const database = {
                     let role_id = overwrite.split('_')[0];
                     let allow_value = overwrite.split('_')[1];
                     let deny_value = overwrite.split('_')[2];
-    
+
                     overwrites.push({
                         id: role_id,
                         allow: parseInt(allow_value),
@@ -2372,7 +2720,7 @@ const database = {
                 if (parseInt(row.type) === 4) {
                     delete channel_obj.parent_id;
                 }
-    
+
                 channels.push(channel_obj);
             }
 
@@ -2390,7 +2738,7 @@ const database = {
 
             let roles = [];
 
-            for(var row of roleRows) {
+            for (var row of roleRows) {
                 roles.push({
                     id: row.role_id,
                     name: row.name,
@@ -2459,11 +2807,11 @@ const database = {
 
             let presences = [];
 
-            for(var member of members) {
+            for (var member of members) {
                 let sessions = global.userSessions.get(member.id);
 
                 if (global.userSessions.size === 0 || !sessions) {
-                    presences.push({                             
+                    presences.push({
                         game_id: null,
                         status: 'offline',
                         activities: [],
@@ -2471,9 +2819,9 @@ const database = {
                     });
                 } else {
                     let session = sessions[sessions.length - 1]
-    
+
                     if (!session.presence) {
-                        presences.push({                             
+                        presences.push({
                             game_id: null,
                             status: 'offline',
                             activities: [],
@@ -2546,7 +2894,7 @@ const database = {
 
             return {
                 id: rows[0].id,
-                unavailable: true 
+                unavailable: true
             }; //fallback ?
         }
     },
@@ -2569,7 +2917,7 @@ const database = {
             `, [id]);
 
             if (members != null && members.length > 0) {
-                for(var member of members) {
+                for (var member of members) {
                     let guild = await database.getGuildById(member.guild_id);
 
                     if (guild != null) guilds.push(guild);
@@ -2577,13 +2925,13 @@ const database = {
             }
 
             return guilds;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return [];
         }
     },
-    updateGuildWidget: async (guild_id, channel_id , enabled) => {
+    updateGuildWidget: async (guild_id, channel_id, enabled) => {
         try {
             if (channel_id == null) {
                 channel_id = 'NULL'
@@ -2591,8 +2939,8 @@ const database = {
 
             await database.runQuery(`UPDATE widgets SET channel_id = $1, enabled = $2 WHERE guild_id = $3`, [channel_id, enabled == true ? 1 : 0, guild_id]);
 
-            return true;    
-        } catch(error) {
+            return true;
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -2610,7 +2958,7 @@ const database = {
                 channel_id: rows[0].channel_id == 'NULL' ? null : rows[0].channel_id,
                 enabled: rows[0].enabled == 1 ? true : false,
             }
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -2629,7 +2977,7 @@ const database = {
             }
 
             return channel.permission_overwrites;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return [];
@@ -2665,7 +3013,7 @@ const database = {
                             guild_id: isThereGuild.channels[0].guild_id,
                             type: isThereGuild.channels[0].type
                         }
-                    } 
+                    }
                 } else return null;
             }
 
@@ -2721,8 +3069,8 @@ const database = {
                     guild_id: channel.guild_id,
                     type: channel.type
                 }
-            } 
-        } catch(error) {
+            }
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -2739,13 +3087,13 @@ const database = {
             }
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
         }
     },
-    useInvite: async(code, user_id) => {
+    useInvite: async (code, user_id) => {
         try {
             const invite = await database.getInvite(code);
 
@@ -2788,7 +3136,7 @@ const database = {
             await database.runQuery(`UPDATE invites SET uses = $1 WHERE code = $2`, [invite.uses, invite.code]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -2809,7 +3157,7 @@ const database = {
             await database.runQuery(`UPDATE members SET roles = $1 WHERE user_id = $2`, ['NULL', user_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -2848,7 +3196,7 @@ const database = {
             }
 
             if (member.roles.length > 1) {
-                for(var role2 of member.roles) {
+                for (var role2 of member.roles) {
                     roleStr = roleStr + ':' + role2;
                 }
             } else {
@@ -2867,7 +3215,7 @@ const database = {
             await database.runQuery(`UPDATE members SET roles = $1 WHERE user_id = $2`, [roleStr, user_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -2879,7 +3227,7 @@ const database = {
                 return false;
 
             let guild_id = guild.id;
-            
+
             let saveRoles = [];
 
             for (var role of role_ids) {
@@ -2890,14 +3238,14 @@ const database = {
                 if (role === guild_id) {
                     continue; //everyone has the everyone role silly
                 }
-                
+
                 saveRoles.push(role);
             }
 
             await database.runQuery(`UPDATE members SET roles = $1 WHERE user_id = $2 AND guild_id = $3`, [JSON.stringify(saveRoles), user_id, guild_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -2922,7 +3270,7 @@ const database = {
             await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [guild.id, user_id, 'NULL', '[]', date, 0, 0]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -2938,7 +3286,7 @@ const database = {
 
             const ret = [];
 
-            for(var row of rows) {
+            for (var row of rows) {
                 const invite = await database.getInvite(row.code);
 
                 if (invite != null) {
@@ -2947,9 +3295,9 @@ const database = {
             }
 
             return ret;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
-  
+
             return [];
         }
     },
@@ -2964,7 +3312,7 @@ const database = {
             await database.runQuery(`DELETE FROM invites WHERE code = $1`, [code]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -2980,7 +3328,7 @@ const database = {
 
             const ret = [];
 
-            for(var row of rows) {
+            for (var row of rows) {
                 const invite = await database.getInvite(row.code);
 
                 if (invite != null) {
@@ -2989,7 +3337,7 @@ const database = {
             }
 
             return ret;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return [];
@@ -3012,13 +3360,13 @@ const database = {
 
                 if (existingInvites != null && existingInvites != 'NULL' && existingInvites.length > 0) {
                     let code = existingInvites[0].code;
-    
+
                     const invite = await database.getInvite(code);
-    
+
                     if (invite == null) {
                         return null;
                     }
-        
+
                     return invite;
                 }
             }
@@ -3026,13 +3374,13 @@ const database = {
             await database.runQuery(`INSERT INTO invites (guild_id, channel_id, code, temporary, revoked, inviter_id, uses, maxuses, maxage, xkcdpass, createdat) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [guild_id, channel_id, code, temporary == true ? 1 : 0, 0, inviter_id, 0, maxUses, maxAge, xkcdpass == true ? 1 : 0, date]);
 
             const invite = await database.getInvite(code);
-    
+
             if (invite == null) {
                 return null;
             }
-    
+
             return invite;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -3045,7 +3393,7 @@ const database = {
             `, [JSON.stringify(new_settings), user_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3056,7 +3404,7 @@ const database = {
             await database.runQuery(`DELETE FROM roles WHERE role_id = $1`, [role_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3079,7 +3427,7 @@ const database = {
                 hoist: false,
                 mentionable: false
             };
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -3090,7 +3438,7 @@ const database = {
             await database.runQuery(`UPDATE roles SET name = $1, permissions = $2, position = $3, color = $4, hoist = $5, mentionable = $6 WHERE role_id = $7`, [role.name, role.permissions, role.position, role.color, role.hoist ? 1 : 0, role.mentionable ? 1 : 0, role.id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3125,7 +3473,7 @@ const database = {
         try {
             let current_overwrites = await database.getChannelPermissionOverwrites(guild, channel_id);
 
-            for(var i = 0; i < overwrites.length; i++) {
+            for (var i = 0; i < overwrites.length; i++) {
                 let overwrite = overwrites[i];
                 let old_overwrite = current_overwrites.findIndex(x => x.id == overwrite.id);
 
@@ -3143,7 +3491,7 @@ const database = {
             `, [serialized, channel_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3154,7 +3502,7 @@ const database = {
             await database.runQuery(`DELETE FROM members WHERE guild_id = $1 AND user_id = $2`, [guild_id, user_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3180,7 +3528,7 @@ const database = {
             ]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3195,13 +3543,13 @@ const database = {
             }
 
             await database.runQuery(`DELETE FROM messages WHERE message_id = $1`, [message_id]);
-            
+
             const attachments = await database.runQuery(`SELECT * FROM attachments WHERE message_id = $1`, [message_id]);
 
             if (attachments && attachments.length > 0) {
                 await Promise.all(attachments.map(async (attachment) => {
                     const attachmentPath = `./www_dynamic/attachments/${message.channel_id}/${attachment.attachment_id}`;
-                    
+
                     try {
                         const files = await fsPromises.readdir(attachmentPath);
 
@@ -3215,7 +3563,7 @@ const database = {
             }
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3241,7 +3589,7 @@ const database = {
             ]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3250,11 +3598,11 @@ const database = {
     getDMInfo: async (channel_id) => {
         try {
             const rows = await database.runQuery(`SELECT user1, user2 FROM dm_channels WHERE id = $1`, [channel_id]);
-  
+
             if (rows === null || rows.length === 0) {
                 return null;
             }
-            
+
             let user1 = rows[0].user1 == 'NULL' ? null : rows[0].user1;
             let user2 = rows[0].user2 == 'NULL' ? null : rows[0].user2;
 
@@ -3270,7 +3618,7 @@ const database = {
     getGroupDMInfo: async (channel_id) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM group_channels WHERE id = $1`, [channel_id]);
-  
+
             if (rows === null || rows.length === 0) {
                 return null;
             }
@@ -3292,7 +3640,7 @@ const database = {
             await database.runQuery(`INSERT INTO webhook_overrides (id, override_id, avatar_url, username) VALUES ($1, $2, $3, $4)`, [webhook_id, override_id, avatar_url == null ? 'NULL' : avatar_url, username == null ? 'NULL' : username]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -3301,7 +3649,7 @@ const database = {
     getWebhookOverrides: async (webhook_id, override_id) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM webhook_overrides WHERE id = $1 AND override_id = $2`, [webhook_id, override_id]);
-  
+
             if (rows === null || rows.length === 0) {
                 return null;
             }
@@ -3310,7 +3658,7 @@ const database = {
                 username: rows[0].username,
                 avatar_url: rows[0].avatar_url
             };
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -3319,13 +3667,13 @@ const database = {
     getNoteForUserId: async (requester_id, user_id) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM user_notes WHERE author_id = $1 AND user_id = $2`, [requester_id, user_id]);
-  
+
             if (rows === null || rows.length === 0) {
                 return null;
             }
 
             return rows[0].note === 'NULL' ? null : rows[0].note;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -3334,19 +3682,19 @@ const database = {
     getNotesByAuthorId: async (requester_id) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM user_notes WHERE author_id = $1`, [requester_id]);
-  
+
             if (rows === null || rows.length === 0) {
                 return [];
             }
 
             let notes = {};
 
-            for(var row of rows) {
+            for (var row of rows) {
                 notes[row.user_id] = row.note;
             }
 
             return notes;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return [];
@@ -3358,12 +3706,12 @@ const database = {
 
             if (!notes) {
                 await database.runQuery(`INSERT INTO user_notes (author_id, user_id, note) VALUES ($1, $2, $3)`, [requester_id, user_id, new_note === null ? 'NULL' : new_note]);
-    
+
                 return true;
             }
-    
+
             await database.runQuery(`UPDATE user_notes SET note = $1 WHERE author_id = $2 AND user_id = $3`, [new_note === null ? 'NULL' : new_note, requester_id, user_id]);
-    
+
             return true;
         } catch (error) {
             logText(error, "error");
@@ -3371,7 +3719,7 @@ const database = {
             return false;
         }
     },
-    createMessage: async (guild_id , channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhookOverride = null, webhook_embeds = null) => {
+    createMessage: async (guild_id, channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhookOverride = null, webhook_embeds = null) => {
         try {
             const id = Snowflake.generate();
             const date = new Date().toISOString();
@@ -3422,7 +3770,7 @@ const database = {
             let embeds = await embedder.generateMsgEmbeds(content, attachment);
 
             if (webhook_embeds && (Array.isArray(webhook_embeds) && webhook_embeds.length > 0)) {
-                embeds = webhook_embeds;   
+                embeds = webhook_embeds;
             }
 
             await database.runQuery(`INSERT INTO messages (guild_id, message_id, channel_id, author_id, content, edited_timestamp, mention_everyone, nonce, timestamp, tts, embeds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [
@@ -3458,9 +3806,9 @@ const database = {
             const mentions = [];
 
             if (mentions_data.mentions && mentions_data.mentions.length > 0) {
-                for(var mention_id of mentions_data.mentions) {
+                for (var mention_id of mentions_data.mentions) {
                     const mention = await database.getAccountByUserId(mention_id);
-    
+
                     if (mention != null) {
                         mentions.push(globalUtils.miniUserObject(mention));
                     }
@@ -3472,7 +3820,7 @@ const database = {
             msg.mention_roles = mentions_data.mention_roles;
 
             return msg;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return null;
@@ -3507,15 +3855,15 @@ const database = {
 
             for (var row of channelRows) {
                 if (!row) continue;
-    
-                let overwrites = [];    
-    
+
+                let overwrites = [];
+
                 if (row.permission_overwrites && row.permission_overwrites.includes(":")) {
                     for (var overwrite of row.permission_overwrites.split(':')) {
                         let role_id = overwrite.split('_')[0];
                         let allow_value = overwrite.split('_')[1];
                         let deny_value = overwrite.split('_')[2];
-    
+
                         overwrites.push({
                             id: role_id,
                             allow: parseInt(allow_value),
@@ -3528,7 +3876,7 @@ const database = {
                     let role_id = overwrite.split('_')[0];
                     let allow_value = overwrite.split('_')[1];
                     let deny_value = overwrite.split('_')[2];
-    
+
                     overwrites.push({
                         id: role_id,
                         allow: parseInt(allow_value),
@@ -3536,7 +3884,7 @@ const database = {
                         type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
                     });
                 }
-    
+
                 let channel_obj = {
                     id: row.id,
                     name: row.name,
@@ -3553,7 +3901,7 @@ const database = {
                 if (parseInt(row.type) === 4) {
                     delete channel_obj.parent_id;
                 }
-    
+
                 channels.push(channel_obj);
             }
 
@@ -3571,7 +3919,7 @@ const database = {
 
             let roles = [];
 
-            for(var row of roleRows) {
+            for (var row of roleRows) {
                 roles.push({
                     id: row.role_id,
                     name: row.name,
@@ -3638,11 +3986,11 @@ const database = {
 
             let presences = [];
 
-            for(var member of members) {
+            for (var member of members) {
                 let sessions = global.userSessions.get(member.id);
 
                 if (global.userSessions.size === 0 || !sessions) {
-                    presences.push({                             
+                    presences.push({
                         game_id: null,
                         status: 'offline',
                         activities: [],
@@ -3650,7 +3998,7 @@ const database = {
                     });
                 } else {
                     let session = sessions[sessions.length - 1]
-    
+
                     if (!session.presence) {
                         presences.push({
                             game_id: null,
@@ -3729,7 +4077,7 @@ const database = {
     updateGuildVanity: async (guild_id, vanity_url) => {
         try {
             let send_vanity = 'NULL';
-            
+
             if (vanity_url != null) {
                 send_vanity = vanity_url;
             }
@@ -3743,7 +4091,7 @@ const database = {
             await database.runQuery(`UPDATE guilds SET vanity_url = $1 WHERE id = $2`, [vanity_url, guild_id]);
 
             return 1; //success
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return -1; //error
@@ -3751,30 +4099,30 @@ const database = {
     },
     updateGuild: async (guild_id, afk_channel_id, afk_timeout, icon, splash, banner, name, default_message_notifications, verification_level) => {
         try {
-            let send_icon  = 'NULL';
+            let send_icon = 'NULL';
             let send_splash = 'NULL';
             let send_banner = 'NULL';
 
             if (icon != null) {
                 if (icon.includes("data:image")) {
                     var extension = icon.split('/')[1].split(';')[0];
-                    var imgData =  icon.replace(`data:image/${extension};base64,`, "");
+                    var imgData = icon.replace(`data:image/${extension};base64,`, "");
                     var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var hash = md5(file_name);
-            
+
                     if (extension == "jpeg") {
                         extension = "jpg";
                     }
-            
+
                     send_icon = hash.toString();
-            
+
                     if (!fs.existsSync(`www_dynamic/icons`)) {
                         fs.mkdirSync(`www_dynamic/icons`, { recursive: true });
                     }
-    
+
                     if (!fs.existsSync(`www_dynamic/icons/${guild_id}`)) {
                         fs.mkdirSync(`www_dynamic/icons/${guild_id}`, { recursive: true });
-            
+
                         fs.writeFileSync(`www_dynamic/icons/${guild_id}/${hash}.${extension}`, imgData, "base64");
                     } else {
                         fs.writeFileSync(`www_dynamic/icons/${guild_id}/${hash}.${extension}`, imgData, "base64");
@@ -3790,20 +4138,20 @@ const database = {
                     var imgData = splash.replace(`data:image/${extension};base64,`, "");
                     var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var hash = md5(file_name);
-            
+
                     if (extension == "jpeg") {
                         extension = "jpg";
                     }
-            
+
                     send_splash = hash.toString();
-            
+
                     if (!fs.existsSync(`www_dynamic/splashes`)) {
                         fs.mkdirSync(`www_dynamic/splashes`, { recursive: true });
                     }
-    
+
                     if (!fs.existsSync(`www_dynamic/splashes/${guild_id}`)) {
                         fs.mkdirSync(`www_dynamic/splashes/${guild_id}`, { recursive: true });
-            
+
                         fs.writeFileSync(`www_dynamic/splashes/${guild_id}/${hash}.${extension}`, imgData, "base64");
                     } else {
                         fs.writeFileSync(`www_dynamic/splashes/${guild_id}/${hash}.${extension}`, imgData, "base64");
@@ -3819,20 +4167,20 @@ const database = {
                     var imgData = banner.replace(`data:image/${extension};base64,`, "");
                     var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var hash = md5(file_name);
-            
+
                     if (extension == "jpeg") {
                         extension = "jpg";
                     }
-            
+
                     send_banner = hash.toString();
-            
+
                     if (!fs.existsSync(`www_dynamic/banners`)) {
                         fs.mkdirSync(`www_dynamic/banners`, { recursive: true });
                     }
-    
+
                     if (!fs.existsSync(`www_dynamic/banners/${guild_id}`)) {
                         fs.mkdirSync(`www_dynamic/banners/${guild_id}`, { recursive: true });
-            
+
                         fs.writeFileSync(`www_dynamic/banners/${guild_id}/${hash}.${extension}`, imgData, "base64");
                     } else {
                         fs.writeFileSync(`www_dynamic/banners/${guild_id}/${hash}.${extension}`, imgData, "base64");
@@ -3845,13 +4193,13 @@ const database = {
             await database.runQuery(`UPDATE guilds SET name = $1, icon = $2, splash = $3, banner = $4, afk_channel_id = $5, afk_timeout = $6, default_message_notifications = $7, verification_level = $8 WHERE id = $9`, [name, send_icon, send_splash, send_banner, (afk_channel_id == null ? 'NULL' : afk_channel_id), afk_timeout, default_message_notifications, verification_level, guild_id]);
 
             return true;
-        } catch(error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
         }
     },
-    createGuild: async (owner_id, icon , name, region, exclusions, client_date) => {
+    createGuild: async (owner_id, icon, name, region, exclusions, client_date) => {
         try {
             const id = Snowflake.generate();
             const date = new Date().toISOString();
@@ -3863,23 +4211,23 @@ const database = {
 
             if (icon != null) {
                 var extension = icon.split('/')[1].split(';')[0];
-                var imgData =  icon.replace(`data:image/${extension};base64,`, "");
+                var imgData = icon.replace(`data:image/${extension};base64,`, "");
                 var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                 var hash = md5(file_name);
-        
+
                 if (extension == "jpeg") {
                     extension = "jpg";
                 }
-        
+
                 icon = hash.toString();
-        
+
                 if (!fs.existsSync(`www_dynamic/icons`)) {
                     fs.mkdirSync(`www_dynamic/icons`, { recursive: true });
                 }
 
                 if (!fs.existsSync(`www_dynamic/icons/${id}`)) {
                     fs.mkdirSync(`www_dynamic/icons/${id}`, { recursive: true });
-        
+
                     fs.writeFileSync(`www_dynamic/icons/${id}/${hash}.${extension}`, imgData, "base64");
                 } else {
                     fs.writeFileSync(`www_dynamic/icons/${id}/${hash}.${extension}`, imgData, "base64");
@@ -3897,11 +4245,11 @@ const database = {
 
                 await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [text_channels_id, 4, id, 'NULL', '0', 'NULL', 'Text Channels', 0]);
                 await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_text_id, 0, id, text_channels_id, 'NULL', '0', 'NULL', 'general', 0]);
-                
+
                 await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [voice_channels_id, 4, id, 'NULL', '0', 'NULL', 'Voice Channels', 1]);
                 await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_vc_id, 2, id, voice_channels_id, 'NULL', '0', 'NULL', 'General', 0]);
 
-                await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]); 
+                await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]);
                 await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner_id, 'NULL', '[]', date, 0, 0]);
                 await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, 'NULL', 0]);
 
@@ -3979,7 +4327,7 @@ const database = {
                     voice_states: [],
                     roles: [{
                         id: id,
-                        name: "@everyone", 
+                        name: "@everyone",
                         permissions: 104193089,
                         position: 0
                     }]
@@ -3987,7 +4335,7 @@ const database = {
             }
 
             await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [id, 0, id, 'NULL', '0', 'NULL', 'general', 0]);
-            await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]); 
+            await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]);
             await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner_id, 'NULL', '[]', date, 0, 0]);
             await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, 'NULL', 0]);
 
@@ -4028,12 +4376,12 @@ const database = {
                 voice_states: [],
                 roles: [{
                     id: id,
-                    name: "@everyone", 
+                    name: "@everyone",
                     permissions: 104193089,
                     position: 0
                 }]
             }
-            
+
         } catch (error) {
             logText(error, "error");
 
@@ -4131,11 +4479,11 @@ const database = {
     updateAccount: async (userid, avatar, username, discriminator, password, new_pw, new_em) => {
         try {
             const account = await database.getAccountByUserId(userid);
-    
+
             if (!account) {
                 return -1;
             }
-    
+
             let new_avatar = account.avatar;
             let new_username = account.username;
             let new_discriminator = account.discriminator;
@@ -4149,15 +4497,15 @@ const database = {
                     const imgData = avatar.replace(`data:image/${extension};base64,`, "");
                     const name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     const name_hash = md5(name);
-        
+
                     const validExtension = extension === "jpeg" ? "jpg" : extension;
-        
+
                     new_avatar = name_hash.toString();
-        
+
                     if (!fs.existsSync(`./www_dynamic/avatars/${account.id}`)) {
                         fs.mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
                     }
-        
+
                     fs.writeFileSync(`./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`, imgData, "base64");
 
                     await database.runQuery(`UPDATE users SET avatar = $1 WHERE id = $2`, [new_avatar, account.id]);
@@ -4185,20 +4533,20 @@ const database = {
             }
 
             const accounts = await database.getAccountsByUsername(new_username);
-    
+
             if (accounts.length >= 9998 && account.username != new_username) {
                 return 1; //too many users
             }
 
             if (discriminator) {
                 const parsedDiscriminator = parseInt(discriminator);
-    
+
                 if (isNaN(parsedDiscriminator) || parsedDiscriminator < 1 || parsedDiscriminator > 9999 || discriminator.length !== 4) {
                     return 0;
                 }
-    
+
                 const existingUsers = await global.database.getAccountByUsernameTag(new_username, discriminator);
-    
+
                 if (existingUsers === null) {
                     new_discriminator = discriminator;
                 } else if (existingUsers.id != account.id) return 0;
@@ -4210,27 +4558,27 @@ const database = {
                     const imgData = new_avatar.replace(`data:image/${extension};base64,`, "");
                     const name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     const name_hash = md5(name);
-        
+
                     const validExtension = extension === "jpeg" ? "jpg" : extension;
-        
+
                     new_avatar = name_hash.toString();
-        
+
                     if (!fs.existsSync(`./www_dynamic/avatars/${account.id}`)) {
                         fs.mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
                     }
-        
+
                     fs.writeFileSync(`./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`, imgData, "base64");
                 }
 
                 if (new_pw != null && new_password != account.password) {
                     if (account.password) {
                         const checkPassword = await database.doesThisMatchPassword(password, account.password);
-    
+
                         if (!checkPassword) {
                             return 2; //invalid password
                         }
                     }
-        
+
                     const salt = await genSalt(10);
                     const newPwHash = await hash(new_password, salt);
                     const token = globalUtils.generateToken(account.id, newPwHash);
@@ -4239,7 +4587,7 @@ const database = {
                     new_password = newPwHash;
                 } else {
                     const checkPassword = await database.doesThisMatchPassword(password, account.password);
-    
+
                     if (!checkPassword) {
                         return 2; //invalid password
                     }
@@ -4251,15 +4599,15 @@ const database = {
                 const imgData = new_avatar.replace(`data:image/${extension};base64,`, "");
                 const name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                 const name_hash = md5(name);
-    
+
                 const validExtension = extension === "jpeg" ? "jpg" : extension;
-    
+
                 new_avatar = name_hash.toString();
-    
+
                 if (!fs.existsSync(`./www_dynamic/avatars/${account.id}`)) {
                     fs.mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
                 }
-    
+
                 fs.writeFileSync(`./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`, imgData, "base64");
 
                 await database.runQuery(`UPDATE users SET avatar = $1 WHERE id = $2`, [new_avatar, account.id]);
@@ -4300,7 +4648,7 @@ const database = {
                     disabled_until: user.disabled_until
                 }
             }
-            
+
             let comparison = compareSync(password, user.password);
 
             if (!comparison) {

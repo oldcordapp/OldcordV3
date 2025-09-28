@@ -183,7 +183,9 @@ router.post("/:guildid/delete", guildMiddleware, rateLimitMiddleware(global.conf
 
 router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.deleteGuild.maxPerTimeFrame, global.config.ratelimit_config.deleteGuild.timeFrame), guildDeleteRequest);
 
-router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache.cacheFor(60 * 10), async (req, res) => {
+// UNFORTUNAAAATELY to keep the data fresh it is best advised that we dont cache the response at all.
+
+router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddleware("READ_MESSAGE_HISTORY"), rateLimitMiddleware(global.config.ratelimit_config.messageSearching.maxPerTimeFrame, global.config.ratelimit_config.messageSearching.timeFrame), async (req, res) => {
     try {
         const account = req.account;
 
@@ -204,22 +206,47 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
         }
 
         let content = req.query.content;
+        let channel_id = req.query.channel_id;
+        let offset = parseInt(req.query.offset) || 0;
+        let limit = 25;
+        let author_id = req.query.author_id;
+        let before_id = req.query.max_id;
+        let after_id = req.query.min_id;
+        let mentions = req.query.mentions; //user_id
         let include_nsfw = req.query.include_nsfw === "true" ?? false;
+        let has = req.query.has; //fuck this i cant be fucked today
+        //need to do during too
 
-        let results = await global.database.getGuildMessages(guild.id, content, include_nsfw);
+        const results = await global.database.getGuildMessages(
+            guild.id,
+            author_id,
+            content,
+            channel_id,
+            mentions,
+            include_nsfw,
+            before_id,
+            after_id,
+            limit,
+            offset
+        );
 
         let ret_results = [];
 
-        for(var result of results) {
+        for (var result of results.messages) {
+            delete result.guild_id;
+            delete result.reactions;
+
+            result.hit = true;
+
             ret_results.push([
                 result
-            ]); //..why?
+            ]);
         }
 
         return res.status(200).json({
-            messages: results,
+            messages: ret_results,
             analytics_id: null,
-            total_results: results.length,
+            total_results: results.totalCount,
             doing_deep_historical_index: false,
             documents_indexed: true
         });
@@ -366,11 +393,11 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
     }
 });
 
-router.get("/:guildid/prune",  guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (_, res) => {
+router.get("/:guildid/prune", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (_, res) => {
     return res.status(200).json([]);
 });
 
-router.post("/:guildid/prune",   guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (_, res) => {
+router.post("/:guildid/prune", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (_, res) => {
     return res.status(204).send();
 });
 
