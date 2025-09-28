@@ -32,12 +32,11 @@ global.dispatcher = dispatcher;
 global.gateway = gateway;
 global.udpServer = udpServer;
 global.rtcServer = rtcServer;
+global.using_media_relay = globalUtils.config && globalUtils.config.mr_server.enabled;
 
-if (!globalUtils.config.mr_server) {
+if (!global.using_media_relay) {
     global.mediaserver = new MediasoupSignalingDelegate();
 }
-
-global.using_media_relay = globalUtils.config.mr_server;
 
 if (globalUtils.config.email_config.enabled) {
     global.emailer = new emailer(globalUtils.config.email_config, globalUtils.config.max_per_timeframe_ms, globalUtils.config.timeframe_ms, globalUtils.config.ratelimit_modifier);
@@ -151,7 +150,7 @@ function getIPAddress() {
     
     if (global.using_media_relay) {
         global.mrServer = mrServer;
-        global.mrServer.start(config.mr_server_port, config.debug_logs['mr'] ?? true);
+        global.mrServer.start(config.mr_server.port, config.debug_logs['mr'] ?? true);
     }
 
     if (!global.using_media_relay) {

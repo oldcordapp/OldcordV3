@@ -35,7 +35,8 @@ async function handleIdentify(socket, packet) {
     socket.send(JSON.stringify({
         op: OPCODES.ALRIGHT,
         d: {
-            location: global.mrServer.servers.size + 1
+            location: global.mrServer.servers.size,
+            config: global.config.mr_server.config
         }
     }));
 }

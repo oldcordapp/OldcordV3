@@ -1,5 +1,4 @@
 const { EventEmitter } = require("node:events");
-const { VoiceRoom } = require("./VoiceRoom");
 
 class MediasoupWebRtcClient {
     constructor(userId, roomId, websocket, room) {

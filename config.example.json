@@ -13,8 +13,13 @@
     "serve_selector": true,
     "require_release_date_cookie": true,
     "cache_authenticated_get_requests" : true,
-    "mr_server": false,
-    "mr_server_port" : 4444,
+    "mr_server": {
+        "enabled" : false,
+        "port" : 4444,
+        "config" : {
+            "speaking_throttle_ms" : 150
+        }
+    },
     "default_client_build": "october_5_2017",
     "debug_logs": {
         "gateway" : true,

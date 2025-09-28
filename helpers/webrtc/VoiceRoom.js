@@ -1,5 +1,3 @@
-const { MediasoupWebRtcClient } = require("./MediasoupWebRtcClient");
-
 class VoiceRoom {
     constructor(id, type, sfu, router) {
         this._id = id;

@@ -14,7 +14,7 @@ const mrServer = {
             return;
         }
 
-        logText(message, 'MR_SERVER');
+        logText(message, 'MR_SIGNALING_SERVER');
     },
     getRandomMediaServer() {
         const serverEntries = Array.from(this.servers.entries());
@@ -69,13 +69,18 @@ const mrServer = {
         socket.on('message', (data) => this.handleClientMessage(socket, data));
     },
     async handleClientClose(socket, timedOut = false) {
+        if (socket === null) {
+            return;
+        }
+        
         if (timedOut) {
-            this.debug(`!! MEDIA SERVER HAS TIMED OUT - CHECK SERVER ASAP`);
+            this.debug(`!! A MEDIA SERVER HAS TIMED OUT - CHECK THE SERVER ASAP`);
         }
 
-        this.debug(`Lost connection to media server -> Removing from store...`);
+        this.debug(`Lost connection to a media server -> Removing from store...`);
 
         this.servers.delete(socket.public_ip);
+        socket = null;
     },
     async handleClientMessage(socket, data) {
         try {
