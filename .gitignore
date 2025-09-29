@@ -2,6 +2,7 @@ config.json*
 node_modules
 package-lock.json
 www_dynamic
+www_static/assets/selector/*
 *.un~
 *.swp
 *.pem

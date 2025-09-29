@@ -1,12 +1,16 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
 
   build: {
-    outDir: '../../www_static/assets/selector',
+    outDir: "../../www_static/assets/selector",
 
     emptyOutDir: true,
-  }
-})
+
+    assetsDir: "",
+  },
+
+  base: "/assets/selector/",
+});
