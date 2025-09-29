@@ -1,13 +1,13 @@
-import { compoment } from "./ui/classes/component.js";
+import { component } from "./ui/classes/component.js";
 import main from "./ui/views/main.js";
 
 const initialState = {
   overlayView: null,
 };
 
-export class App extends compoment {
+export class App extends component {
   constructor(container) {
-    super(container, initialState);
+    super(initialState, container);
 
     this.viewInstances = {};
   }
@@ -20,12 +20,12 @@ export class App extends compoment {
     if (!this.viewInstances.main) {
       console.log(`[Selector] Initializing main view...`);
 
-      this.viewInstances.main = new main(this.rootElement);
-
-      const viewElement = await this.viewInstances.main.render(
-        this.state,
-        this
+      this.viewInstances.main = new main(
+        { changeView: this.changeView.bind(this) },
+        this.store
       );
+
+      const viewElement = await this.viewInstances.main.render();
 
       this.rootElement.appendChild(viewElement);
     }
@@ -33,7 +33,9 @@ export class App extends compoment {
     if (overlayView) {
       const overlayContainer = document.createElement("div");
 
-      overlayContainer.className("overlay-container");
+      this.rootElement.appendChild(overlayContainer);
+
+      overlayContainer.className = "overlay-container";
 
       overlayContainer.innerHTML = "";
 
@@ -46,7 +48,6 @@ export class App extends compoment {
         console.log(`[Selector] Initializing ${overlayView} view...`);
 
         instance = new component(
-          this.rootElement,
           {
             changeView: this.changeView.bind(this),
           },
@@ -56,25 +57,23 @@ export class App extends compoment {
         this.viewInstances[overlayView] = instance;
       }
 
-      const element = instance.render(this.store);
-      this.overlayContainer.appendChild(element);
+      const element = await instance.render();
+
+      overlayContainer.appendChild(element);
     } else {
       this.rootElement
-        .querySelectorAll("overlay-container")
+        .querySelectorAll(".overlay-container")
         .forEach((element) => {
           element.remove();
         });
     }
   }
 
-  async changeView(view) {
-    switch (view) {
-      case "main": {
-        this.store.setState({ overlayView: null });
-      }
-      default: {
-        this.store.setState({ overlayView: view });
-      }
+  changeView(view) {
+    if (view == "main") {
+      this.store.setState({ overlayView: null });
+    } else {
+      this.store.setState({ overlayView: view });
     }
   }
 }

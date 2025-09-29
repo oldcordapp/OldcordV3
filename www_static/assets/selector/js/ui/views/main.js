@@ -1,12 +1,12 @@
-import { compoment } from "../classes/component.js";
+import { component } from "../classes/component.js";
 
 const initialState = {
   selectedBuild: "",
 };
 
-export default class extends compoment {
-  constructor(container, actions, globalState) {
-    super(container, initialState, actions, globalState);
+export default class extends component {
+  constructor(actions, globalState) {
+    super(initialState, undefined, actions, globalState);
   }
 
   async render() {
@@ -46,9 +46,17 @@ export default class extends compoment {
     const text = document.createElement("p");
     text.innerText = "You're in main page!";
 
+    const button = document.createElement("button");
+    button.innerText = "Change view";
+
+    button.addEventListener("click", () => {
+      this.actions.changeView("settings")
+    })
+
     container.appendChild(selectorCard);
     container.appendChild(changelogCard);
     container.appendChild(text);
+    container.appendChild(button);
 
     return container;
   }

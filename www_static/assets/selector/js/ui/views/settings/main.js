@@ -1,34 +1,46 @@
-import { compoment } from "../classes/compoment.js";
+import { component } from "../../classes/component.js";
 
 const initialState = {
-  currentView: "",
+  currentView: "mods",
 };
 
-export default class extends compoment {
-  constructor(container, actions, globalState) {
-    super(container, initialState, actions, globalState);
+export default class extends component {
+  constructor(actions, globalState) {
+    super(initialState, undefined, actions, globalState);
+
+    this.viewInstances = {};
   }
 
   async render() {
-    this.rootElement.innerHTML = "";
+    const container = document.createElement("div");
 
-    const currentView = state.currentView;
+    const currentView = this.store.getState().currentView;
 
-    let viewComponent = null;
+    let instance = this.viewInstances[currentView];
 
-    try {
-      const module = await import(`./${currentView}.js`);
+    if (!instance) {
+      try {
+        const module = await import(`./${currentView}.js`);
+        const component = module.default;
 
-      viewComponent = module.default;
-    } catch (error) {
-      console.error(`[Settings] Failed to load view: ${currentView}`, error);
+        instance = new component(this.actions, this.globalStore);
 
-      const fallbackModule = await import(`./main.js`);
+        this.viewInstances[currentView] = instance;
+      } catch (error) {
+        console.error(`[Settings] Failed to load view: ${currentView}`, error);
 
-      viewComponent = fallbackModule.default;
+        if (!this.viewInstances.mods) {
+          const module = await import(`./mods.js`);
+          const component = module.default;
+
+          instance = new component(this.actions, this.globalStore);
+
+          this.viewInstances.mods = instance;
+        }
+      }
     }
 
-    this.rootElement.appendChild(viewComponent(state, this));
+    container.appendChild(await instance.render());
 
     return container;
   }

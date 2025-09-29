@@ -1,9 +1,9 @@
 import { store } from "./state.js";
 
-export class compoment {
+export class component {
   constructor(
-    container,
     initialState,
+    container = undefined,
     actions = undefined,
     globalState = undefined
   ) {
@@ -13,6 +13,7 @@ export class compoment {
 
     this.store.subscribe(() => this.render());
     this.actions = { ...this.actions, ...actions };
+
   }
 
   render() {}
