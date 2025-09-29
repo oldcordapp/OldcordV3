@@ -1,4 +1,5 @@
 import { component } from "../../classes/component.js";
+import { h } from "../../lib/hyperscript.js";
 
 const initialState = {};
 
@@ -8,21 +9,17 @@ export default class extends component {
   }
 
   async render() {
-    const container = document.createElement("div");
-
-    const text = document.createElement("p");
-    text.innerText = "You're in settings page!";
-
-    const button = document.createElement("button");
-    button.innerText = "Change view";
-
-    button.addEventListener("click", () => {
-      this.actions.changeView("main");
-    });
-
-    container.appendChild(text);
-    container.appendChild(button);
-
-    return container;
+    return h(
+      "div",
+      {},
+      h("p", {}, "You're in settings page!"),
+      h(
+        "button",
+        {
+          onclick: () => this.actions.changeView("main"),
+        },
+        "Change view"
+      )
+    );
   }
 }

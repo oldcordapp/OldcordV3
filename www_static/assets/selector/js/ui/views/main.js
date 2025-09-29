@@ -1,4 +1,5 @@
 import { component } from "../classes/component.js";
+import { h } from "../lib/hyperscript.js";
 
 const initialState = {
   selectedBuild: "",
@@ -10,54 +11,46 @@ export default class extends component {
   }
 
   async render() {
-    const container = document.createElement("div");
-
-    const background = document.createElement("div");
-    background.className = "backround";
-
-    const logoContainer = document.createElement("a");
-    const logoImg = document.createElement("img");
-
-    logoContainer.href = "https://oldcordapp.com";
-    logoContainer.className = "logo-container";
-
-    logoImg.className = "logo-svg";
-    logoImg.src = "https://files.catbox.moe/66ix91.svg";
-
-    logoContainer.appendChild(logoImg);
-
-    const selectorCard = document.createElement("div");
-    selectorCard.id = "selector-card";
-    selectorCard.className = "card";
-
-    const changelogCard = document.createElement("div");
-    changelogCard.id = "changelog-card";
-    changelogCard.className = "card";
-
-    const buildSelectorContainer = document.createElement("div");
-    const patchesContainer = document.createElement("div");
-    const changelogContainer = document.createElement("div");
-
-    selectorCard.appendChild(buildSelectorContainer);
-    selectorCard.appendChild(patchesContainer);
-
-    changelogCard.appendChild(changelogContainer);
-
-    const text = document.createElement("p");
-    text.innerText = "You're in main page!";
-
-    const button = document.createElement("button");
-    button.innerText = "Change view";
-
-    button.addEventListener("click", () => {
-      this.actions.changeView("settings")
-    })
-
-    container.appendChild(selectorCard);
-    container.appendChild(changelogCard);
-    container.appendChild(text);
-    container.appendChild(button);
-
-    return container;
+    return h(
+      "div",
+      {},
+      h("div", { className: "backround" }),
+      h(
+        "a",
+        {
+          href: "https://oldcordapp.com",
+          className: "logo-container",
+        },
+        h("img", {
+          className: "logo-svg",
+          src: "https://files.catbox.moe/66ix91.svg",
+        })
+      ),
+      h(
+        "div",
+        {
+          id: "selector-card",
+          className: "card",
+        },
+        h("div"),
+        h("div")
+      ),
+      h(
+        "div",
+        {
+          id: "changelog-card",
+          className: "card",
+        },
+        h("div")
+      ),
+      h("p", {}, "You're in main page!"),
+      h(
+        "button",
+        {
+          onclick: () => this.actions.changeView("settings"),
+        },
+        "Change view"
+      )
+    );
   }
 }

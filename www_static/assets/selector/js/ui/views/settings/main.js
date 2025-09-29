@@ -1,4 +1,5 @@
 import { component } from "../../classes/component.js";
+import { h } from "../../lib/hyperscript.js";
 
 const initialState = {
   currentView: "mods",
@@ -12,8 +13,6 @@ export default class extends component {
   }
 
   async render() {
-    const container = document.createElement("div");
-
     const currentView = this.store.getState().currentView;
 
     let instance = this.viewInstances[currentView];
@@ -40,8 +39,6 @@ export default class extends component {
       }
     }
 
-    container.appendChild(await instance.render());
-
-    return container;
+    return h("div", {}, await instance.render());
   }
 }
