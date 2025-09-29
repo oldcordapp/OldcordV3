@@ -1,4 +1,4 @@
-![Herple...](/hurple.png)
+![Herple...](/assets/hurple.png)
 <!-- Oldcord: bring back the past -->
 
 # OldcordV3
@@ -34,8 +34,9 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
 **Installation**:
   1. **Setup the Database**: Create a new database via PgAdmin or commandline for PostgreSQL, make sure this database (user & password login as well) matches what's in your future config.json file.
   2. **Install Dependencies**: In the project directory, run the command `npm install`.
-  3. **Configure**: Copy `config.example.json` to a new file named `config.json`. Edit the values to match your setup (See the configuration section below for further details).
-  4. **Start the Server**: Run the command `node server.js`.
+  3. **Build the frontend**: Build the selector frontend using the command ``.
+  4. **Configure**: Copy `config.example.json` to a new file named `config.json`. Edit the values to match your setup (See the configuration section below for further details).
+  5. **Start the Server**: Run the command `node server/index.js`.
 
 **Configuration** (`config.json`):
   - `custom_invite_url`: Sets the domain for your instance's invite links (e.g., setting it to example.com will make it so every invite has the prefix example.com - similar to discord.gg)

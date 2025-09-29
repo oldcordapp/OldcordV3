@@ -195,7 +195,7 @@ app.get('/proxy', async (req, res) => {
 });
 
 app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
-    const baseFilePath = path.join(__dirname, 'www_dynamic', 'attachments', req.params.guildid, req.params.channelid, req.params.filename);
+    const baseFilePath = path.join(process.cwd(), 'www_dynamic', 'attachments', req.params.guildid, req.params.channelid, req.params.filename);
     
     try {
         let { width, height } = req.query;
@@ -221,7 +221,7 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
         const mime = req.params.filename.endsWith(".jpg") ? 'image/jpeg' : 'image/png';
 
         const resizedFileName = `${req.params.filename.split('.').slice(0, -1).join('.')}_${width}_${height}.${mime.split('/')[1]}`;
-        const resizedFilePath = path.join(__dirname, 'www_dynamic', 'attachments', req.params.guildid, req.params.channelid, resizedFileName);
+        const resizedFilePath = path.join(process.cwd(), 'www_dynamic', 'attachments', req.params.guildid, req.params.channelid, resizedFileName);
 
         if (fs.existsSync(resizedFilePath)) {
             return res.status(200).type(mime).sendFile(resizedFilePath);
@@ -247,7 +247,7 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
 
 app.get('/icons/:serverid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'icons', req.params.serverid);
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'icons', req.params.serverid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -275,7 +275,7 @@ app.get('/icons/:serverid/:file', async (req, res) => {
 
 app.get("/app-assets/:applicationid/store/:file", async(req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'app_assets');
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'app_assets');
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -307,7 +307,7 @@ app.get("/app-assets/:applicationid/store/:file", async(req, res) => {
 
 app.get('/channel-icons/:channelid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'group_icons', req.params.channelid);
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'group_icons', req.params.channelid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -335,7 +335,7 @@ app.get('/channel-icons/:channelid/:file', async (req, res) => {
 
 app.get('/app-icons/:applicationid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'applications_icons', req.params.applicationid);
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'applications_icons', req.params.applicationid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -363,7 +363,7 @@ app.get('/app-icons/:applicationid/:file', async (req, res) => {
 
 app.get('/splashes/:serverid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'splashes', req.params.serverid);
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'splashes', req.params.serverid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -391,7 +391,7 @@ app.get('/splashes/:serverid/:file', async (req, res) => {
 
 app.get('/banners/:serverid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'banners', req.params.serverid);
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'banners', req.params.serverid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -419,7 +419,7 @@ app.get('/banners/:serverid/:file', async (req, res) => {
 
 app.get('/avatars/:userid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'avatars', req.params.userid);
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'avatars', req.params.userid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -448,7 +448,7 @@ app.get('/avatars/:userid/:file', async (req, res) => {
 
 app.get("/emojis/:file", async (req, res) => {
     try {
-        const directoryPath = path.join(__dirname, 'www_dynamic', 'emojis');
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'emojis');
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -475,9 +475,9 @@ app.get("/emojis/:file", async (req, res) => {
     }
 });
 
-app.use('/assets', express.static(path.join(__dirname, 'www_static', 'assets')));
+app.use('/assets', express.static(path.join(process.cwd(), 'www_static', 'assets')));
 
-app.use('/assets', express.static(path.join(__dirname, 'www_dynamic', 'assets')));
+app.use('/assets', express.static(path.join(process.cwd(), 'www_dynamic', 'assets')));
 
 app.use("/assets/:asset", assetsMiddleware);
 
@@ -491,7 +491,7 @@ app.use(clientMiddleware);
 
 app.get("/api/users/:userid/avatars/:file", async (req, res) => {
     try {
-        const filePath = path.join(__dirname, 'www_dynamic', 'avatars', req.params.userid, req.params.file);
+        const filePath = path.join(process.cwd(), 'www_dynamic', 'avatars', req.params.userid, req.params.file);
 
         if (!fs.existsSync(filePath)) {
             return res.status(404).send("File not found");
@@ -590,7 +590,7 @@ app.get("*", (req, res) => {
             });
         }
 
-        res.sendFile(path.join(__dirname, "www_static/assets/bootloader/index.html"));
+        res.sendFile(path.join(process.cwd(), "www_static/assets/bootloader/index.html"));
     }
     catch(error) {
         logText(error, "error");

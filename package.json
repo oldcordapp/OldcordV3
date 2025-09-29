@@ -1,4 +1,10 @@
 {
+  "workspaces": [
+    "frontend/selector"
+  ],
+  "scripts": {
+    "build": "npm run build --prefix frontend/selector"
+  },
   "dependencies": {
     "@distube/ytdl-core": "^4.14.3",
     "@google-cloud/storage": "^7.12.1",
