@@ -1,25 +1,55 @@
-export default function main(state, app) {
-  const container = document.createElement('div');
+import { compoment } from "../classes/component.js";
 
-  const selectorCard = document.createElement("div");
-  selectorCard.id = "selector-card";
-  selectorCard.className = "card";
+const initialState = {
+  selectedBuild: "",
+};
 
-  const changelogCard = document.createElement("div");
-  changelogCard.id = "changelog-card";
-  changelogCard.className = "card";
+export default class extends compoment {
+  constructor(container, actions, globalState) {
+    super(container, initialState, actions, globalState);
+  }
 
-  const buildSelectorContainer = document.createElement("div");
-  const patchesContainer = document.createElement("div");
-  const changelogContainer = document.createElement("div");
+  async render() {
+    const container = document.createElement("div");
 
-  selectorCard.appendChild(buildSelectorContainer);
-  selectorCard.appendChild(patchesContainer);
+    const background = document.createElement("div");
+    background.className = "backround";
 
-  changelogCard.appendChild(changelogContainer);
+    const logoContainer = document.createElement("a");
+    const logoImg = document.createElement("img");
 
-  container.appendChild(selectorCard);
-  container.appendChild(changelogCard)
+    logoContainer.href = "https://oldcordapp.com";
+    logoContainer.className = "logo-container";
 
-  return container
+    logoImg.className = "logo-svg";
+    logoImg.src = "https://files.catbox.moe/66ix91.svg";
+
+    logoContainer.appendChild(logoImg);
+
+    const selectorCard = document.createElement("div");
+    selectorCard.id = "selector-card";
+    selectorCard.className = "card";
+
+    const changelogCard = document.createElement("div");
+    changelogCard.id = "changelog-card";
+    changelogCard.className = "card";
+
+    const buildSelectorContainer = document.createElement("div");
+    const patchesContainer = document.createElement("div");
+    const changelogContainer = document.createElement("div");
+
+    selectorCard.appendChild(buildSelectorContainer);
+    selectorCard.appendChild(patchesContainer);
+
+    changelogCard.appendChild(changelogContainer);
+
+    const text = document.createElement("p");
+    text.innerText = "You're in main page!";
+
+    container.appendChild(selectorCard);
+    container.appendChild(changelogCard);
+    container.appendChild(text);
+
+    return container;
+  }
 }
