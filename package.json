@@ -3,7 +3,7 @@
     "frontend/selector"
   ],
   "scripts": {
-    "build": "npm run build --prefix frontend/selector"
+    "start": "npm run build --prefix frontend/selector && node server/index.js"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.14.3",
