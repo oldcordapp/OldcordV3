@@ -13,6 +13,7 @@
     "serve_selector": true,
     "require_release_date_cookie": true,
     "cache_authenticated_get_requests" : true,
+    "tenor_api_key": "",
     "mr_server": {
         "enabled" : false,
         "port" : 4444,
@@ -147,6 +148,11 @@
         },
         "deleteChannel" : {
             "maxPerTimeFrame" : 5,
+            "timeFrame" : 3600000,
+            "breakdown" : "1000 * 60 * 60"
+        },
+        "tenorSearch" : {
+            "maxPerTimeFrame" : 250,
             "timeFrame" : 3600000,
             "breakdown" : "1000 * 60 * 60"
         },

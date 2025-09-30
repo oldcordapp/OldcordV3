@@ -17,6 +17,7 @@ const store = require('./store');
 const oauth2 = require('./oauth2/index');
 const entitlements = require('./entitlements');
 const activities = require('./activities');
+const integrations = require('./integrations');
 
 global.config = globalUtils.config;
 //just in case
@@ -98,6 +99,7 @@ app.use("/invite", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), invites);
 app.use("/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), webhooks);
 app.use("/oauth2", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), oauth2);
 app.use("/store", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), store);
+app.use("/integrations", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), integrations);
 
 app.use("/track", (_, res) => {
     return res.status(204).send();
