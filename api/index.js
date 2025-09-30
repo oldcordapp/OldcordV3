@@ -17,6 +17,7 @@ const store = require('./store');
 const oauth2 = require('./oauth2/index');
 const entitlements = require('./entitlements');
 const activities = require('./activities');
+const tenor = require("./tenor");
 
 global.config = globalUtils.config;
 //just in case
@@ -98,6 +99,8 @@ app.use("/invite", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), invites);
 app.use("/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), webhooks);
 app.use("/oauth2", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), oauth2);
 app.use("/store", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), store);
+app.use("/integrations/tenor",instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), tenor);
+
 
 app.use("/track", (_, res) => {
     return res.status(204).send();
