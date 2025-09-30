@@ -16,7 +16,7 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
 
 **Client Year Support**:
   - 🟢 **2015 - 2016**: Full support.
-  - 🟠 **2017 - 2018**: In development, mostly supported. (To-dos like tenor, giphy support, etc)
+  - 🟠 **2017 - 2018**: In development, mostly supported. (To-dos like giphy support, etc)
   - ❎ **2019+**: No plans for support. Too much commercial crap in these versions, we're focused on preserving the classic Discord experience, completely free from telemetry and bloat.
 
 **Voice & Video**:
