@@ -31,7 +31,7 @@
 .logo-container.enter {
   opacity: 0;
   transform: translateY(-20px);
-  animation: logoEntrance 0.3s cubic-bezier(0.3, 0.86, 0.36, 1.4) 0.2s forwards;
+  animation: logoEntrance 0.3s cubic-bezier(0.3, 0.86, 0.36, 1.4) forwards;
 }
 
 .logo-container.exit {

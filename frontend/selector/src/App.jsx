@@ -10,7 +10,7 @@ function Container() {
   return (
     <>
       <PrimaryLayer />
-      {activeLayer === "settings" && <SecondaryLayer />}
+      {activeLayer === "secondary" && <SecondaryLayer />}
 
       <ModalsLayer />
     </>

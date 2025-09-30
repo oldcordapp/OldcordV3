@@ -9,8 +9,10 @@ export function LayerHandler({ children }) {
 
   const [activeNotifs, setActiveNotifs] = useState([]);
 
+  const [triggeredExit, setTriggeredExit] = useState(false);
+
   function changeLayer(layer) {
-    if ((layer = "main")) {
+    if ((layer = "primary")) {
       setActiveLayer(null);
     } else {
       setActiveLayer(layer);
@@ -39,10 +41,12 @@ export function LayerHandler({ children }) {
     activeLayer,
     activeModals,
     activeNotifs,
+    triggeredExit,
     changeLayer,
     addModal,
     removeModal,
-    addNotif
+    addNotif,
+    setTriggeredExit,
   };
 
   return <Context value={value}>{children}</Context>;
