@@ -21,6 +21,6 @@ export default defineConfig({
         target: "http://localhost:1337", // Assuming that dev express server port is 1337
         changeOrigin: true,
       }
-    }
+    },
   }
 });
