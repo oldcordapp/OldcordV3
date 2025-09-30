@@ -205,8 +205,22 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
             }); 
         }
 
+        let channelsMap = new Map();
+        
+        for (let channel of guild.channels) {
+            channelsMap.set(channel.id, channel);
+        }
+
         let content = req.query.content;
         let channel_id = req.query.channel_id;
+
+        if (channel_id && !channelsMap.get(channel_id)) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Channel"
+            });
+        }
+
         let offset = parseInt(req.query.offset) || 0;
         let limit = 25;
         let author_id = req.query.author_id;
@@ -231,21 +245,33 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
         );
 
         let ret_results = [];
+        let minus = 0;
         
         for (var result of results.messages) {
-            delete result.reactions;
+            let chan_id = result.channel_id;
+            let channel = channelsMap.get(chan_id);
 
-            result.hit = true;
+            if (!channel) {
+                continue;
+            }
 
-            ret_results.push([
-                result
-            ]);
+            let canReadChannel = await global.permissions.hasChannelPermissionTo(channel, guild, account.id, "READ_MESSAGES");
+
+            if (canReadChannel) {
+                delete result.reactions;
+                
+                result.hit = true;
+
+                ret_results.push([
+                    result
+                ]);
+            } else minus++;
         }
 
         return res.status(200).json({
             messages: ret_results,
             analytics_id: null,
-            total_results: results.totalCount,
+            total_results: results.totalCount - minus,
             doing_deep_historical_index: false,
             documents_indexed: true
         });
