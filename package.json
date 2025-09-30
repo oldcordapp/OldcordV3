@@ -1,6 +1,6 @@
 {
   "workspaces": [
-    "frontend/selector"
+    "frontend/*"
   ],
   "scripts": {
     "start": "npm run build --prefix frontend/selector && node server/index.js"

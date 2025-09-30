@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import svgrPlugin from "vite-plugin-svgr";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), svgrPlugin()],
 
   build: {
     outDir: "../../www_static/assets/selector",
@@ -13,4 +14,13 @@ export default defineConfig({
   },
 
   base: "/assets/selector/",
+
+  server: {
+    proxy: {
+      '/assets/fonts': {
+        target: "http://localhost:1337", // Assuming that dev express server port is 1337
+        changeOrigin: true,
+      }
+    }
+  }
 });
