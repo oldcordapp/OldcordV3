@@ -76,4 +76,4 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
   - **discord.js**: Snowflake implementation.
   - **unkn0w**: Disposable email domain list.
   - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which discord used before 2022), used in the bootloader and build selector.
-  - [**s074 & the spacebar team**](https://github.com/spacebarchat/mediasoup-webrtc): WebRTC media server implementation.
+  - [**s074 & the Spacebar team**](https://github.com/spacebarchat/mediasoup-webrtc): WebRTC media server implementation.
