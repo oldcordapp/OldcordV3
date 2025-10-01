@@ -7,7 +7,7 @@ export default function ({ children, className, ...rest }) {
   useEffect(() => {
     if(ref.current) {
       ref.current.classList.add(className);
-    }
+    }    
   }, [])
 
   return (

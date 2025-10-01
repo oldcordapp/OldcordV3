@@ -1,3 +1,39 @@
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(-70px) scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cardExit {
+  to {
+    opacity: 0;
+    transform: translateY(-70px) scale(1.05);
+  }
+}
+
+/*
+  From original transformations on every 2 breakpoints:
+
+  opacity: 1; transform: scale(1) translateY(0px) translateZ(0px);
+  opacity: 0.437511; transform: scale(1.00001) translateY(-0.0160662px) translateZ(0px);
+  opacity: -0.00244028; transform: scale(1.02812) translateY(-39.3742px) translateZ(0px);
+  opacity: -0.0608424; transform: scale(1.05012) translateY(-70.1708px) translateZ(0px);
+  opacity: -0.0184211; transform: scale(1.05304) translateY(-74.259px) translateZ(0px);
+  opacity: 0.00267768; transform: scale(1.05092) translateY(-71.2895px) translateZ(0px);
+  opacity: 0.00335551; transform: scale(1.04987) translateY(-69.8126px) translateZ(0px);
+  opacity: 0.000666654; transform: scale(1.04983) translateY(-69.7651px) translateZ(0px);
+  opacity: -0.000255352; transform: scale(1.04997) translateY(-69.9533px) translateZ(0px);
+  opacity: -0.000170281; transform: scale(1.05001) translateY(-70.0179px) translateZ(0px);
+  opacity: -1.74219e-05; transform: scale(1.05001) translateY(-70.0119px) translateZ(0px);
+  opacity: 1.80166e-05; transform: scale(1.05) translateY(-70.0012px) translateZ(0px);
+  opacity: 1.80166e-05; transform: scale(1.05) translateY(-70.0012px) translateZ(0px);
+*/
+
 .card {
   width: 480px;
   padding: 40px;
@@ -14,4 +50,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  animation: cardEntrance 0.3s cubic-bezier(0.5, 1.78, 0.5, 0.75);
+}
+
+.card.exit {
+    animation: cardExit 0.3s cubic-bezier(0.5, 1.78, 0.5, 0.75) forwards;
 }
