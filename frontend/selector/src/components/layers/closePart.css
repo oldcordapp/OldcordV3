@@ -29,8 +29,12 @@
   outline: none;
 }
 
+.close-button:hover {
+    background-color: #484c52;
+}
+
 .x-mark {
-  fill: #72767d;
+  fill: var(--text-normal);
   width: 18px;
   height: 18px;
 }
