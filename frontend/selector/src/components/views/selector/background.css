@@ -21,7 +21,7 @@
   background-repeat: repeat;
   background-position: center;
   opacity: 0;
-  animation: backgroundEntering 0.3s ease-in-out;
+  animation: backgroundEntering 0.2s linear 0.2s;
 }
 
 .background-img.entered {

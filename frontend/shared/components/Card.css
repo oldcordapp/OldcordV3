@@ -1,0 +1,12 @@
+.card {
+  width: 480px;
+  padding: 40px;
+  box-sizing: border-box;
+
+  background-color: var(--card-background);
+  border-radius: 5px;
+  box-shadow: 0 2px 10px var(--card-shadow);
+  
+  color: var(--text-normal);
+  font-size: 18px;
+}

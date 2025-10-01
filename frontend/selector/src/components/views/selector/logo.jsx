@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import Logo from "../../../assets/logo.svg?react";
 import "./logo.css";
 
 export default function () {
-  const [isEntered, setIsEntered] = useState(false);
+  const ref = useRef(null);
 
   function handleEntered() {
-    setIsEntered(true);
+    if (ref.current) {
+      ref.current.classList.remove("enter");
+      ref.current.classList.remove("mounted");
+    }
   }
 
   return (
     <a
       href="https://oldcordapp.com"
-      className={`logo-container ${isEntered ? "" : "enter"}`}
+      className={`logo-container mounted enter`}
       onAnimationEnd={handleEntered}
+      ref={ref}
     >
       <Logo className="logo-svg" />
     </a>

@@ -1,0 +1,41 @@
+:root {
+  /* Theme colors */
+  --brand: #5865f2;
+
+  /* Background colors */
+  --background: #282b30;
+
+  /* Card colors*/
+  --card-background: #36393f;
+  --card-shadow: rgba(0, 0, 0, 0.2);
+
+  /* Text colors */
+  --text-normal: #f6f6f7;
+  --text-muted: #949ba4;
+  --text-link: #dcddde;
+
+  /* Interactive colors */
+  --interactive-normal: #b5bac1;
+  --interactive-hover: #dcddde;
+  --interactive-active: #ffffff;
+  --interactive-muted: #72767d;
+
+  /* Button colors */
+  --button-primary: #7289da;
+  --button-primary-hover: #677bc4;
+  --button-secondary: #4f545c;
+  --button-danger: #f04747;
+
+  /* Utility colors */
+  --warning: #ed4245;
+  --scrollbar: #1a1b1e;
+
+  /* Common values */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}

@@ -13,5 +13,23 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   color: var(--text-normal);
-  background-color: var(--background-base);
+  background-color: var(--background);
 }
+
+/*
+  From original transformations on every 2 breakpoints:
+
+  opacity: 0; transform: scale(0.93) translateZ(0px);
+  opacity: 0.0100021; transform: scale(0.93) translateZ(0px);
+  opacity: 0.521859; transform: scale(0.962104) translateZ(0px);
+  opacity: 0.922527; transform: scale(0.992699) translateZ(0px);
+  opacity: 1.03101; transform: scale(1.00194) translateZ(0px);
+  opacity: 1.02445; transform: scale(1.00187) translateZ(0px);
+  opacity: 1.00665; transform: scale(1.00057) translateZ(0px);
+  opacity: 0.999613; transform: scale(0.999997) translateZ(0px);
+  After 4 breakpoints: opacity: 0.99957; transform: scale(1) translateZ(0px);
+  opacity: 1.00004; transform: scale(1) translateZ(0px);
+  Ends after 4 breakpoints to opacity: 1; transform: scale(1) translateZ(0px);
+
+  Calculated function by Gemini: cubic-bezier(0.4032, -0.1454, 0.0000, 1.3799)
+*/
