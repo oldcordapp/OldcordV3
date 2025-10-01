@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Logo from "../../../assets/logo.svg?react";
 import "./logo.css";
 

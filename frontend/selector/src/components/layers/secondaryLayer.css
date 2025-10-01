@@ -3,9 +3,18 @@
   z-index: 9999;
   transform: scale(1.07);
   opacity: 0;
+  display: flex;
 }
 
 .secondary-layer.transitionToSecondaryLayer {
   opacity: 1;
   transform: scale(1);
+}
+
+.content-part {
+    max-width: 740px;
+    min-height: 100%;
+    min-width: 460px;
+
+    width: 100%;
 }

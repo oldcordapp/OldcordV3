@@ -11,7 +11,7 @@ export default function () {
   return (
     <div className="settings-view-container">
       <p>Welcome to the settings page!</p>
-      <button onClick={switchView}>Go back</button>
+      <p>This settings page is not implemented yet.</p>
     </div>
   );
 }
