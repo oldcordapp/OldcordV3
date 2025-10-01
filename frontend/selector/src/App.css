@@ -6,6 +6,13 @@
   text-rendering: optimizeLegibility;
 }
 
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 body {
   font-family: "Nebula Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
@@ -30,6 +37,13 @@ body {
   After 4 breakpoints: opacity: 0.99957; transform: scale(1) translateZ(0px);
   opacity: 1.00004; transform: scale(1) translateZ(0px);
   Ends after 4 breakpoints to opacity: 1; transform: scale(1) translateZ(0px);
-
-  Calculated function by Gemini: cubic-bezier(0.4032, -0.1454, 0.0000, 1.3799)
 */
+
+.primary-layer,
+.secondary-layer {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  transition: transform 0.3s cubic-bezier(0.4032, -0.1454, 0, 1.3799),
+    opacity 0.3s cubic-bezier(0.3024, 0.0675, 0, 1.394);
+}

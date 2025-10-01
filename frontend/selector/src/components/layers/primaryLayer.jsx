@@ -1,18 +1,25 @@
 import "./primaryLayer.css";
 import { useLayer } from "../../hooks/layerHandler";
-import useIsMounted from "../../hooks/useIsMounted";
 import Selector from "../views/selector/main";
+import { useEffect, useRef } from "react";
 
 export default function () {
-  const isActive = useLayer().activeLayer === null;
-  const isMounted = useIsMounted();
+  const { activeLayer } = useLayer();
+  const isActive = activeLayer === null;
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      if (!isActive) {
+        ref.current.classList.add("transitionToSecondaryLayer");
+      } else {
+        ref.current.classList.remove("transitionToSecondaryLayer");
+      }
+    }
+  }, [activeLayer]);
 
   return (
-    <div
-      className={`primary-layer ${
-        isActive ? (isMounted ? "enter" : "") : "exit"
-      }`}
-    >
+    <div className={`primary-layer`} ref={ref}>
       <Selector />
     </div>
   );

@@ -1,0 +1,11 @@
+.secondary-layer {
+  background-color: var(--background-secondary);
+  z-index: 9999;
+  transform: scale(1.07);
+  opacity: 0;
+}
+
+.secondary-layer.transitionToSecondaryLayer {
+  opacity: 1;
+  transform: scale(1);
+}

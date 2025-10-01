@@ -4,9 +4,9 @@
 
   /* Background colors */
   --background: #282b30;
+  --background-secondary: #36393f;
 
   /* Card colors*/
-  --card-background: #36393f;
   --card-shadow: rgba(0, 0, 0, 0.2);
 
   /* Text colors */

@@ -1,4 +1,4 @@
-import { createContext, useState, useContext } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 
 const Context = createContext();
 
@@ -9,10 +9,26 @@ export function LayerHandler({ children }) {
 
   const [activeNotifs, setActiveNotifs] = useState([]);
 
-  const [triggeredExit, setTriggeredExit] = useState(false);
+  const [triggeredRedirect, setTriggeredRedirect] = useState(false);
 
-  function changeLayer(layer) {
-    if ((layer = "primary")) {
+  const [exitingLayer, setExitingLayer] = useState(null);
+  const [exitDuration, setExitDuration] = useState(null);
+
+  useEffect(() => {
+    if (exitingLayer) {
+      const timer = setTimeout(() => {
+        setExitingLayer(null);
+      }, exitDuration);
+
+      return () => clearTimeout(timer);
+    }
+  }, [exitingLayer]);
+
+  function changeLayer(layer, exitDuration = 300) {
+    setExitingLayer(activeLayer);
+    setExitDuration(exitDuration);
+
+    if (layer == "primary") {
       setActiveLayer(null);
     } else {
       setActiveLayer(layer);
@@ -41,12 +57,13 @@ export function LayerHandler({ children }) {
     activeLayer,
     activeModals,
     activeNotifs,
-    triggeredExit,
+    triggeredRedirect,
+    exitingLayer,
     changeLayer,
     addModal,
     removeModal,
     addNotif,
-    setTriggeredExit,
+    setTriggeredRedirect,
   };
 
   return <Context value={value}>{children}</Context>;

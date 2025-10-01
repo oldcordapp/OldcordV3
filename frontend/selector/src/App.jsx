@@ -5,12 +5,12 @@ import SecondaryLayer from "./components/layers/secondaryLayer";
 import ModalsLayer from "./components/layers/modalsLayer";
 
 function Container() {
-  const { activeLayer } = useLayer();
+  const { activeLayer, exitingLayer } = useLayer();
 
   return (
     <>
       <PrimaryLayer />
-      {activeLayer === "secondary" && <SecondaryLayer />}
+      {(activeLayer !== null || exitingLayer !== null) && <SecondaryLayer />}
 
       <ModalsLayer />
     </>

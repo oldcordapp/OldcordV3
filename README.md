@@ -75,5 +75,6 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
   - **ziad87**: Hummus2 source code for token generation, permissions and sessions.
   - **discord.js**: Snowflake implementation.
   - **unkn0w**: Disposable email domain list.
-  - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which discord used before 2022), used in the bootloader and build selector.
-  - [**s074 & the Spacebar team**](https://github.com/spacebarchat/mediasoup-webrtc): WebRTC media server implementation.
+  - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which Discord used before 2022), used in the bootloader and build selector.
+  - **s074 & the Spacebar team**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc).
+  - **[FontAwesome](https://fontawesome.com/)**: Icons
