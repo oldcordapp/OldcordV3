@@ -1,4 +1,4 @@
-![Herple...](/assets/hurple.png)
+![Herple...](/.assets/hurple.png)
 <!-- Oldcord: bring back the past -->
 
 # OldcordV3
