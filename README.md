@@ -77,4 +77,4 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
   - **unkn0w**: Disposable email domain list.
   - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which Discord used before 2022), used in the bootloader and build selector.
   - **s074 & the Spacebar team**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc).
-  - **Google**: [Matrial Design Icons](https://fonts.google.com/icons).
+  - **Google**: [Material Design Icons](https://fonts.google.com/icons).
