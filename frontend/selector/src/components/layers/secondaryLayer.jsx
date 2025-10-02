@@ -1,13 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useLayer } from "../../hooks/layerHandler";
-import SettingsView from "../views/settings/main";
 import "./secondaryLayer.css";
 import SidebarPart from "./sidebarPart";
-import SettingsNavigationList from "../views/settings/settingsNavigationList";
 import ClosePart from "./closePart";
 
-export default function () {
-  const { activeLayer, exitingLayer, changeLayer } = useLayer();
+export default function SecondaryLayer({ sidebarComponent, contentComponent }) {
+  const { activeLayer, changeLayer } = useLayer();
   const isActive = activeLayer !== null;
   const ref = useRef(null);
 
@@ -32,18 +30,10 @@ export default function () {
   }
 
   return (
-    <div className={`secondary-layer`} ref={ref}>
-      <SidebarPart>
-        {(activeLayer === "settings" || exitingLayer === "settings") && (
-          <SettingsNavigationList />
-        )}
-      </SidebarPart>
+    <div className="secondary-layer" ref={ref}>
+      <SidebarPart>{sidebarComponent}</SidebarPart>
 
-      <div className="content-part">
-        {(activeLayer === "settings" || exitingLayer === "settings") && (
-          <SettingsView></SettingsView>
-        )}
-      </div>
+      <div className="content-part">{contentComponent}</div>
 
       <ClosePart onClose={onClose} />
     </div>

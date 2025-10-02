@@ -42,8 +42,8 @@
   color: #dcddde;
 }
 
-.nav-item.nav-item-selected,
-.nav-item.nav-item-selected:hover {
+.nav-item.selected,
+.nav-item.selected:hover {
   background-color: #7289da;
   color: #fff;
   cursor: default;
