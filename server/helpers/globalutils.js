@@ -350,6 +350,7 @@ const globalUtils = {
     areWeFriends: (user1, user2) => {
         let ourRelationships = user1.relationships;
         let theirRelationships = user2.relationships;
+
         let relationshipState = theirRelationships.find(x => x.id === user1.id);
         let ourRelationshipState = ourRelationships.find(x => x.id === user2.id);
 

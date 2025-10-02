@@ -55,26 +55,13 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache
             limit = 200;
         }
 
-        let includeReactions = req.guild && !req.guild.exclusions.includes("reactions");
+        let includeReactions = (req.guild && !req.guild.exclusions.includes("reactions")) || (channel.type === 1 || channel.type === 3); //to-do get rid of magic numbers
 
-        let messages = await global.database.getChannelMessages(channel.id, limit, req.query.before, req.query.after, includeReactions);
+        let messages = await global.database.getChannelMessages(channel.id, creator.id, limit, req.query.before, req.query.after, includeReactions);
 
         for(var msg of messages) {
             if (msg.id === '1279218211430105089') {
                 msg.content = msg.content.replace("[YEAR]", req.client_build_date.getFullYear());
-            }
-
-
-        if (msg.reactions) {
-            for (var reaction of msg.reactions) {
-                let userIds = Array.isArray(reaction.user_ids) ? reaction.user_ids : [];
-                reaction.me = userIds.includes(creator.id);
-
-                // fix NaN count issues
-                reaction.count = userIds.length || 0;
-
-                    delete reaction.user_ids;
-                }
             }
         }
 

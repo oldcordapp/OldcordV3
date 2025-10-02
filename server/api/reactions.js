@@ -88,7 +88,7 @@ router.delete("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"),
         if (guild)
             await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_REMOVE", payload);
         else
-            await global.dispatcher.dispatchEventInPrivateChannel(channel.id, "MESSAGE_REACTION_REMOVE", payload);
+            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_REMOVE", payload);
 
         return res.status(204).send();
     } catch (error) {
@@ -187,7 +187,7 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
         if (guild)
             await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_REMOVE", payload);
         else
-            await global.dispatcher.dispatchEventInPrivateChannel(channel.id, "MESSAGE_REACTION_REMOVE", payload);
+            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_REMOVE", payload);
 
         return res.status(204).send();
     } catch (error) {
@@ -255,6 +255,15 @@ router.put("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), ra
             dispatch_name = encoded;
         }
 
+        let reactionKey = JSON.stringify({
+            id: id,
+            name: dispatch_name
+        });
+
+        if (message.reactions.some(x => x.user_id === account.id && JSON.stringify(x.emoji) === reactionKey)) {
+            return res.status(204).send(); //dont dispatch more than once
+        }
+
         let tryReact = await global.database.addMessageReaction(message, account.id, id, encoded);
 
         if (!tryReact) {
@@ -277,7 +286,7 @@ router.put("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), ra
         if (guild)
             await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_ADD", payload);
         else
-            await global.dispatcher.dispatchEventInPrivateChannel(channel.id, "MESSAGE_REACTION_ADD", payload);
+            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_ADD", payload);
 
         return res.status(204).send();
     } catch (error) {

@@ -1527,7 +1527,7 @@ const database = {
             return false;
         }
     },
-    updateChannel: async (channel_id, channel) => {
+    updateChannel: async (channel_id, channel, groupOwnerPassOver = false) => {
         try {
             if (channel.type === 0 || channel.type === 2 || channel.type === 4) {
                 //text channel, voice channel, category
@@ -1577,6 +1577,10 @@ const database = {
                 }
 
                 await database.runQuery(`UPDATE group_channels SET name = $1 WHERE id = $2`, [channel.name ?? '', channel_id]);
+                
+                if (groupOwnerPassOver) {
+                    await database.runQuery(`UPDATE group_channels SET owner_id = $1 WHERE id = $2`, [channel.owner_id, channel_id]);
+                }
 
                 return channel;
             }
@@ -2101,7 +2105,7 @@ const database = {
                 if (mentions_data.mentions && mentions_data.mentions.length > 0) {
                     for (const mention_id of mentions_data.mentions) {
                         const mention = accountMap.get(mention_id);
-                        
+
                         if (mention) {
                             mentions.push(mention);
                         }
@@ -2109,17 +2113,6 @@ const database = {
                 }
 
                 const messageAttachments = attachmentsMap.get(row.message_id) || [];
-
-                const msgReactions = JSON.parse(row.reactions);
-                let reactions = [];
-                if (msgReactions) {
-                    for (const reactionRow of msgReactions) {
-                        reactions.push({
-                            user_id: reactionRow.user_id,
-                            emoji: reactionRow.emoji
-                        });
-                    }
-                }
 
                 let message = {
                     id: row.message_id,
@@ -2134,7 +2127,7 @@ const database = {
                     nonce: row.nonce,
                     edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
                     timestamp: row.timestamp,
-                    reactions: reactions,
+                    reactions: [], //Not used here either
                     tts: row.tts === 1,
                     pinned: row.pinned === 1,
                 };
@@ -2148,7 +2141,7 @@ const database = {
             return [];
         }
     },
-    getChannelMessages: async (id, limit, before_id, after_id, includeReactions) => {
+    getChannelMessages: async (id, requester_id, limit, before_id, after_id, includeReactions) => {
         try {
             let query = `SELECT * FROM messages WHERE channel_id = $1 `;
             const params = [id];
@@ -2241,17 +2234,45 @@ const database = {
                 }
 
                 const messageAttachments = attachmentsMap.get(row.message_id) || [];
-                const msgReactions = JSON.parse(row.reactions);
+                const msgReactions = JSON.parse(row.reactions) || [];
 
-                let reactions = [];
+                let rawReactions = [];
 
-                if (msgReactions) {
-                    for (const reactionRow of msgReactions) {
-                        reactions.push({
+                for (const reactionRow of msgReactions) {
+                    const reactionKey = JSON.stringify(reactionRow.emoji);
+
+                    if (!rawReactions.find(x => x.user_id === reactionRow.user_id && JSON.stringify(x.emoji) === reactionKey)) {
+                        rawReactions.push({
                             user_id: reactionRow.user_id,
                             emoji: reactionRow.emoji
                         });
                     }
+                }
+
+                let finalReactions = rawReactions;
+
+                if (includeReactions && rawReactions.length > 0) {
+                    const reactionMap = rawReactions.reduce((acc, reaction) => {
+                        const key = JSON.stringify(reaction.emoji); 
+
+                        if (!acc[key]) {
+                            acc[key] = {
+                                emoji: reaction.emoji,
+                                count: 0,
+                                me: false
+                            };
+                        }
+
+                        acc[key].count++;
+
+                        if (reaction.user_id === requester_id) {
+                            acc[key].me = true;
+                        }
+
+                        return acc;
+                    }, {});
+
+                    finalReactions = Object.values(reactionMap);
                 }
 
                 let message = {
@@ -2268,41 +2289,11 @@ const database = {
                     nonce: row.nonce,
                     edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
                     timestamp: row.timestamp,
-                    reactions: reactions,
+                    reactions: finalReactions,
                     tts: row.tts === 1,
                     pinned: row.pinned === 1,
                     overrides: (!row.overrides || row.overrides === 'NULL' ? null : JSON.parse(row.overrides))
                 };
-
-                if (includeReactions && message.reactions.length > 0) {
-                    const reactionMap = message.reactions.reduce((acc, reaction) => {
-                        const key = reaction.emoji;
-
-                        if (!acc[key]) {
-                            acc[key] = {
-                                emoji: reaction.emoji,
-                                count: 0,
-                                user_ids: new Set()
-                            };
-                        }
-
-                        acc[key].count++;
-                        acc[key].user_ids.add(reaction.user_id);
-
-                        return acc;
-                    }, {});
-
-                    const fixedReactions = [];
-                    for (const key in reactionMap) {
-                        fixedReactions.push({
-                            emoji: reactionMap[key].emoji,
-                            count: reactionMap[key].count,
-                            user_ids: Array.from(reactionMap[key].user_ids),
-                            me: false
-                        });
-                    }
-                    message.reactions = fixedReactions;
-                }
 
                 finalMessages.push(message);
             }
@@ -2480,16 +2471,6 @@ const database = {
 
                 const messageAttachments = attachmentsMap.get(row.message_id) || [];
 
-                const reactionRet = [];
-                const msgReactions = JSON.parse(row.reactions);
-
-                for (const reactionRow of msgReactions) {
-                    reactionRet.push({
-                        user_id: reactionRow.user_id,
-                        emoji: reactionRow.emoji
-                    });
-                }
-
                 messages.push({
                     id: row.message_id,
                     content: row.content,
@@ -2503,7 +2484,7 @@ const database = {
                     nonce: row.nonce,
                     edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
                     timestamp: row.timestamp,
-                    reactions: reactionRet,
+                    reactions: [], //We dont use reactions from here anyways
                     tts: row.tts === 1,
                     pinned: row.pinned === 1,
                     overrides: (!row.overrides || row.overrides === 'NULL' ? null : JSON.parse(row.overrides))
@@ -3524,6 +3505,8 @@ const database = {
             await Promise.all([
                 database.runQuery(`DELETE FROM permissions WHERE channel_id = $1`, [channel_id]),
                 database.runQuery(`DELETE FROM channels WHERE id = $1`, [channel_id]),
+                database.runQuery(`DELETE FROM dm_channels WHERE id = $1`, [channel_id]),
+                database.runQuery(`DELETE FROM group_channels WHERE id = $1`, [channel_id]),
                 database.runQuery(`DELETE FROM acknowledgements WHERE channel_id = $1`, [channel_id])
             ]);
 

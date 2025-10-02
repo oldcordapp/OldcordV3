@@ -33,8 +33,6 @@ router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), qu
     } catch (error) {
         logText(error, "error");
     
-        
-
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"

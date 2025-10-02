@@ -124,8 +124,6 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
     } catch (error) {
         logText(error, "error");
     
-        
-
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"
