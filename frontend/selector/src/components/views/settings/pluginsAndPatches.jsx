@@ -11,7 +11,7 @@ export default function () {
         Press the cog wheel or info icon to get more info on a plugin or a
         patch.
         <br />
-        Plugins and patches that has a cog wheel button have settings that you
+        Plugins and patches that have a cog wheel button have settings that you
         can modify!
         <br />
         You can also select different enabled plugins and patches for each
