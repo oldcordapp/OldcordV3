@@ -1,12 +1,15 @@
 import { Text } from "@oldcord/frontend-shared";
+import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 
 export default function () {
   return (
     <>
       <Text variant="h1">Oldplunger</Text>
-      <Text variant="body" style={{ marginBottom: "16px" }}>
+      <PageInfo>
         Oldplunger is the next version of Oldcord modding.
-      </Text>
+        <br />
+        This page will be removed a bit after Oldplunger reaches a usable state.
+      </PageInfo>
       <Text variant="h2" style={{ marginBottom: "0" }}>
         What is Oldplunger?
       </Text>
