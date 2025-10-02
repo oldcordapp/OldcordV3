@@ -17,6 +17,9 @@
   color: #72767d;
   flex-shrink: 0;
   white-space: nowrap;
+  transform: scaleY(
+    1.08
+  ); /* for some reason Nebula Sans' bold height isn't like Whitney Bold??? */
 }
 
 .nav-list .nav-header:first-child {

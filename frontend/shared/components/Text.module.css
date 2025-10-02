@@ -1,0 +1,63 @@
+.h1 {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 44px;
+  text-transform: uppercase;
+  transform: scaleY(
+    1.08
+  ); /* for some reason Nebula Sans' bold height isn't like Whitney Bold??? */
+}
+
+.h2 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 30px;
+  text-transform: uppercase;
+}
+
+.h3 {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 28px;
+  text-transform: uppercase;
+}
+
+.h4 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.h5 {
+  font-size: 18px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.body {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.description {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.caption {
+  font-size: 12px;
+  font-weight: 400;
+  color: #72767d;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+}

@@ -1,13 +1,6 @@
-.close-part-wrapper {
-  display: flex;
-  justify-content: flex-start;
-}
-
 .close-button-container {
-  margin-top: 60px;
-  margin-right: 35px;
-  z-index: 1000;
-
+  position: fixed;
+  top: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,7 +23,7 @@
 }
 
 .close-button:hover {
-    background-color: #484c52;
+  background-color: #484c52;
 }
 
 .x-mark {

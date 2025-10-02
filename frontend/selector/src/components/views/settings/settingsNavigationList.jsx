@@ -22,7 +22,7 @@ export default function () {
 
   const navItems = [
     { type: "header", label: "Oldplunger" },
-    { type: "item", label: "Info", view: SETTINGS_VIEWS.INFO },
+    { type: "item", label: "Transition Info", view: SETTINGS_VIEWS.INFO },
     {
       type: "item",
       label: "Oldplunger Settings",

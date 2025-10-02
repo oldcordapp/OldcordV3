@@ -1,3 +1,3 @@
 export default function () {
-  return <div>Themes View</div>;
+  return <div>Oldplunger is in development...</div>;
 }
