@@ -1,3 +1,3 @@
 export default function () {
-  return <div>Download Queue View</div>;
+  return <div>OPFS is coming soon!</div>;
 }

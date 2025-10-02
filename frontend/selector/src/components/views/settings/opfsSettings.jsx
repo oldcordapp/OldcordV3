@@ -1,3 +1,3 @@
 export default function () {
-  return <div>OPFS Settings View</div>;
+  return <div>OPFS is coming soon!</div>;
 }

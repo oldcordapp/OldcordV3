@@ -1,0 +1,113 @@
+.list-container {
+  font-family: "Nebula Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+  position: relative;
+  width: 100%;
+}
+
+.list-label {
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  color: #b9bbbe;
+}
+
+.list-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  color: #f6f6f7;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.list-button:hover {
+  border-color: #040405;
+}
+
+.list-button.is-open {
+  border-color: #040405;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.list-button-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #72767d;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  margin-left: 10px;
+}
+
+.list-button:hover .list-arrow,
+.list-button.is-open .list-arrow {
+  border-top-color: #f6f6f7;
+}
+
+.list-button.is-open .list-arrow {
+  transform: rotate(180deg);
+}
+
+.list-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #303237;
+  border: 1px solid #202225;
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.list-option {
+  padding: 10px;
+  color: #f6f6f7;
+  cursor: pointer;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.list-option:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.list-option.is-selected {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.list-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+.list-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+.list-dropdown::-webkit-scrollbar-thumb {
+  background-color: #202225;
+  border-radius: 4px;
+}

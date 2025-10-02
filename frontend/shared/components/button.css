@@ -1,0 +1,44 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #7289da;
+  color: #fff;
+
+  height: 32px;
+  padding: 2px 16px;
+  border: none;
+  border-radius: 3px;
+  box-sizing: border-box;
+
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.17s ease, transform 0.1s ease;
+  outline: none;
+  font-family: "Nebula Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.button:hover {
+  background-color: #677bc4;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button:focus-visible {
+  box-shadow: 0 0 0 2px rgba(114, 137, 218, 0.5);
+}
+
+.button:disabled {
+  background-color: #a6b2e6;
+  cursor: not-allowed;
+  transform: none;
+}

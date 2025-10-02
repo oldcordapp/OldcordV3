@@ -1,4 +1,4 @@
-import Card from "@oldcord/frontend-shared/components/Card";
+import Card from "@oldcord/frontend-shared/components/card";
 import Background from "./background";
 import Logo from "./logo";
 import "./main.css";

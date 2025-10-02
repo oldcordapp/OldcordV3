@@ -43,6 +43,31 @@ export default function () {
         Patches" tab will still allow to control the patches currently available
         in the current patching system.
       </Text>
+      <Text variant="h2" style={{ marginBottom: "0" }}>
+        I am a plugin developer! Will I be able to make plugins for Oldcord?
+      </Text>
+      <Text variant="body" style={{ marginBottom: "16px" }}>
+        Yes.
+      </Text>
+      <Text variant="h2" style={{ marginBottom: "0" }}>
+        I am a mod developer!
+      </Text>
+      <Text variant="body" style={{ marginBottom: "16px" }}>
+        Please help Oldcord out by contributing! We are just a small team of
+        people that had various skills, and making a client mod isn't one of
+        them.
+      </Text>
+      <Text variant="h2" style={{ marginBottom: "0" }}>
+        Would that decrease the value of the revival/archival aspect of the
+        project?
+      </Text>
+      <Text variant="body" style={{ marginBottom: "16px" }}>
+        No, people will be able to enable and disable plugins if they choose to.
+        Most plugins/patches will be 100% optional and can be turned off. The
+        default enabled options will be minimal QoL fixes or things that are
+        required to work, for example: User Select in 2015, Modernize WebRTC
+        patch, Disable Telemetry and Modern Electron Compatibility patch.
+      </Text>
     </>
   );
 }
