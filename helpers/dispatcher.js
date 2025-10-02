@@ -126,7 +126,7 @@ const dispatcher = {
             }
         }
 
-        logText(`(Event in group channel) -> ${type}`, 'dispatcher');
+        logText(`(Event in group/dm channel) -> ${type}`, 'dispatcher');
 
         return true;
     },

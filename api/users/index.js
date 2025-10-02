@@ -80,11 +80,14 @@ router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_con
 
         if (type === 3) {
             for(var validRecipientId of validRecipientIDs) {
+                if (validRecipientId === account.id) {
+                    continue;
+                }
+
                 let userObject = map[validRecipientId];
 
                 if (!globalUtils.areWeFriends(account, userObject)) {
                     validRecipientIDs = validRecipientIDs.filter(x => x !== validRecipientId);
-
                     continue;
                 }
             }

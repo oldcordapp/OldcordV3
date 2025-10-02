@@ -150,7 +150,9 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
             });
         }
 
-        req.body.name = req.body.name.replace(/ /g, "-");
+        if (req.body.name) {
+            req.body.name = req.body.name.replace(/ /g, "-");
+        } //For when you just update group icons
 
         channel.name = req.body.name ?? channel.name;
 
@@ -788,11 +790,28 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
             });
             
             if (channel.type == 3) {
-                //Remove user from recipients list
-                if (!await global.database.updateChannelRecipients(channel.id, channel.recipients))
+                let newRecipientsList = channel.recipients.filter(recipientObject => recipientObject.id !== sender.id);
+
+                channel.recipients = newRecipientsList;
+
+                //handover logic
+                if (channel.owner_id === sender.id && newRecipientsList.length > 0) {
+                    let newOwnerId = newRecipientsList[0].id;
+
+                    channel.owner_id = newOwnerId;
+
+                    if (!await global.database.updateChannel(channel.id, channel, true)) {
+                        throw "Failed to transfer ownership of group channel";
+                    }
+                } else if (newRecipientsList.length === 0) {
+                    await global.database.deleteChannel(channel.id);
+                    return res.status(204).send(); //delete group channel to free up the db
+                }
+
+                if (!await global.database.updateChannelRecipients(channel.id, newRecipientsList))
                     throw "Failed to update recipients list in channel";
 
-                await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", async function() {
+                await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", async function () {
                     return globalUtils.personalizeChannelObject(this.socket, channel);
                 });
             }
