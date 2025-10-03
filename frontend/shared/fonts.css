@@ -141,14 +141,23 @@ code,
 
 .font-semibold {
   font-weight: 600 !important;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .font-bold {
   font-weight: 700 !important;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .font-extrabold {
   font-weight: 800 !important;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .font-size-10 {

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './dropdownList.css';
 
-export default function ({ label, options, defaultOption }) {
+export default function ({ label, options, defaultOption, style }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(defaultOption || (options.length > 0 ? options[0] : ''));
   const wrapperRef = useRef(null);
@@ -28,7 +28,7 @@ export default function ({ label, options, defaultOption }) {
   };
 
   return (
-    <div className="list-container" ref={wrapperRef}>
+    <div className="list-container" ref={wrapperRef} style={style}>
       <label className="list-label">{label}</label>
       <button
         type="button"

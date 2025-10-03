@@ -38,11 +38,12 @@
 
 .keybind-hint {
   color: #72767d;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
   font-size: 13px;
   font-weight: 600;
   margin-top: 8px;
   text-align: center;
   user-select: none;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }

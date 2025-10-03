@@ -1,5 +1,6 @@
 import NavigationList from "@oldcord/frontend-shared/components/navigationList";
 import ViewHandler from "../../../hooks/viewHandler";
+import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
 
 export const SETTINGS_VIEWS = {
   INFO: "info",
@@ -19,6 +20,7 @@ const { Provider, useContextHook } = ViewHandler({
 
 export default function () {
   const { activeView, changeView } = useContextHook();
+  const { hasUnsavedChanges, triggerNudge } = useUnsavedChanges();
 
   const navItems = [
     { type: "header", label: "Oldplunger" },
@@ -63,11 +65,19 @@ export default function () {
     },
   ];
 
+  function handleItemClick(view) {
+    if (hasUnsavedChanges) {
+      triggerNudge();
+      return;
+    }
+    changeView(view);
+  }
+
   return (
     <NavigationList
       navItems={navItems}
       activeView={activeView}
-      onItemClick={changeView}
+      onItemClick={handleItemClick}
     />
   );
 }

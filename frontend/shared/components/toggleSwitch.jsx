@@ -21,7 +21,7 @@ export default function ({ isChecked, onChange, uniqueId }) {
         className="toggle-checkbox"
         type="checkbox"
         checked={isChecked}
-        onChange={onChange}
+        readOnly
         tabIndex={-1}
       />
     </div>

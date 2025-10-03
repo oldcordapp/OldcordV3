@@ -13,3 +13,72 @@
   height: 800px;
   align-items: unset;
 }
+
+.selector-card {
+  width: 740px;
+  min-width: 460px;
+  max-width: 100%;
+}
+
+.selector-card h1 {
+  font-size: 26px;
+  line-height: 32px;
+  text-transform: capitalize;
+  font-weight: 400;
+  text-align: center;
+}
+
+.selector-card h2 {
+  font-size: 18px;
+  line-height: 22px;
+  text-transform: capitalize;
+  font-weight: 400;
+  color: #72767d;
+  text-align: center;
+}
+
+.selector-card p {
+  text-align: center;
+}
+
+.build-option-section {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
+}
+
+.instance-section {
+  background-color: #2f3136;
+  border: 1px solid #202225;
+  border-radius: 5px;
+  padding: 20px;
+  box-sizing: border-box;
+  color: #dcddde;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.instance-section .legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+
+.selector-card .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.notice {
+  position: fixed;
+  bottom: 10px;
+  left: 15px;
+  font-size: 12px !important;
+  line-height: 14px !important;
+  color: white;
+  opacity: 0.5;
+}

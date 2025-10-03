@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./Text.module.css";
+import styles from "./textComponent.module.css";
 
 const variantMap = {
   h1: "h1",
@@ -40,5 +40,3 @@ export const Text = React.forwardRef(
     );
   }
 );
-
-Text.displayName = "Text";

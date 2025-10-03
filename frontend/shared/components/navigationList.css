@@ -18,8 +18,8 @@
   flex-shrink: 0;
   white-space: nowrap;
   transform: scaleY(
-    1.08
-  ); /* for some reason Nebula Sans' bold height isn't like Whitney Bold??? */
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .nav-list .nav-header:first-child {

@@ -39,3 +39,8 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 }
+
+* {
+  font-family: "Nebula Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+}

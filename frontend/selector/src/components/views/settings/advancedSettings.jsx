@@ -1,4 +1,4 @@
-import { Text } from "@oldcord/frontend-shared";
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import Button from "@oldcord/frontend-shared/components/button";
 import ToggleSetting from "@oldcord/frontend-shared/components/toggleSettings";
 

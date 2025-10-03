@@ -1,28 +1,59 @@
-import { useState } from "react";
-import { Text } from "@oldcord/frontend-shared";
+import { useState, useCallback, useEffect } from "react";
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
 import { builds } from "../../../constants/builds";
 import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 import { PATCHES } from "../../../constants/patches";
 import OptionsCard from "@oldcord/frontend-shared/components/optionsCard";
+import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
 
 export default function () {
   const [selectedBuild, setSelectedBuild] = useState(null);
 
-  const [patches, setPatches] = useState(() => {
+  function resetToDefault() {
     const newPatches = {};
     Object.keys(PATCHES).forEach((key) => {
       newPatches[key] = PATCHES[key].defaultEnabled;
     });
     return newPatches;
-  });
+  }
+
+  const [patches, setPatches] = useState(resetToDefault());
+
+  const { setHasUnsavedChanges, registerHandlers } = useUnsavedChanges();
 
   const handleToggle = (id) => {
-    setPatches((prevPatches) => ({
-      ...prevPatches,
-      [id]: !prevPatches[id],
-    }));
+    // Get the original values from the localstorage and then compare and set to false if there is no unsaved changes
+    setPatches((prevPatches) => {
+      return {
+        ...prevPatches,
+        [id]: !prevPatches[id],
+      };
+    });
+    setHasUnsavedChanges(true);
   };
+
+  const handleSave = useCallback(() => {
+    console.log("[Selector] Not implemented!");
+    setHasUnsavedChanges(false);
+  }, [setHasUnsavedChanges]);
+
+  const handleReset = useCallback(() => {
+    setPatches(resetToDefault());
+    setHasUnsavedChanges(false);
+  }, [setHasUnsavedChanges]);
+
+  useEffect(() => {
+    registerHandlers(handleSave, handleReset);
+
+    return () => {
+      setHasUnsavedChanges(false);
+      registerHandlers(
+        () => {},
+        () => {}
+      );
+    };
+  }, [registerHandlers, handleSave, handleReset, setHasUnsavedChanges]);
 
   return (
     <>
@@ -50,17 +81,17 @@ export default function () {
       <Text variant="h2">Patches</Text>
       <div className="options-grid">
         {Object.keys(PATCHES).map((key) => {
-        return (
-          <OptionsCard
-            key={key}
-            title={PATCHES[key].label}
-            description={PATCHES[key].description}
-            iconType={"info"}
-            isEnabled={patches[key]}
-            onToggle={() => handleToggle(key)}
-          />
-        );
-      })}
+          return (
+            <OptionsCard
+              key={key}
+              title={PATCHES[key].label}
+              description={PATCHES[key].description}
+              iconType={"info"}
+              isEnabled={patches[key]}
+              onToggle={() => handleToggle(key)}
+            />
+          );
+        })}
       </div>
     </>
   );

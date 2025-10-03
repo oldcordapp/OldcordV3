@@ -21,8 +21,6 @@
   user-select: none;
   transition: background-color 0.17s ease, transform 0.1s ease;
   outline: none;
-  font-family: "Nebula Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .button:hover {

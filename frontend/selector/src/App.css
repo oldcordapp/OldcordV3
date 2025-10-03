@@ -14,13 +14,9 @@ body {
 }
 
 body {
-  font-family: "Nebula Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-  height: auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   color: var(--text-normal);
   background-color: var(--background);
+  user-select: none;
 }
 
 /*

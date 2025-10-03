@@ -1,4 +1,4 @@
-import { Text } from "@oldcord/frontend-shared";
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 
 export default function () {
