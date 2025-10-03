@@ -1,5 +1,6 @@
 import { useId } from "react";
 import "./toggleSettings.css";
+import ToggleSwitch from "./toggleSwitch";
 
 export default function ({ title, description, isChecked, onChange }) {
   const uniqueId = useId();
@@ -13,21 +14,11 @@ export default function ({ title, description, isChecked, onChange }) {
           </label>
         </div>
 
-        <div
-          className={`toggle-switch ${isChecked ? "checked" : ""}`}
-          tabIndex={0}
-          onClick={onChange}
-          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onChange()}
-        >
-          <input
-            id={uniqueId}
-            className="toggle-checkbox"
-            type="checkbox"
-            checked={isChecked}
-            onChange={onChange}
-            tabIndex={-1}
-          />
-        </div>
+        <ToggleSwitch
+          isChecked={isChecked}
+          onChange={onChange}
+          uniqueId={uniqueId}
+        />
       </div>
 
       <div className="setting-description">{description}</div>

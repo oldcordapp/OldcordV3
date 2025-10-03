@@ -21,4 +21,13 @@
 .settings-view-container p {
   font-size: 16px;
   line-height: 24px;
+  margin-bottom: 8px;
+}
+
+.settings-view-container .options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 960px;
+  width: 100%;
 }

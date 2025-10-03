@@ -1,5 +1,5 @@
 import "./settingsButton.css";
-import Gear from "../../../assets/gear.svg?react";
+import Gear from "@oldcord/frontend-shared/assets/gear.svg?react";
 import { useLayer } from "../../../hooks/layerHandler";
 
 export default function () {
