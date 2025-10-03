@@ -64,6 +64,9 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
      }
    ```
    After setting this up, authorize the SDK by running `gcloud auth login` and `gcloud auth application-default login`. You may also need to configure CORS on your bucket.
+   - `includePortInUrl`: If set to `false` will force the server to use ports 443/80 instead of the instance port. Good for reverse proxies.
+   - `includePortInWsUrl`: If set to `false` will force the server gateway to use ports 443/80 instead of the instance port. Good for reverse proxies.
+   - `tenor_api_key`: Needed if you want `/tenor` support. You can get an API key [here](https://tenor.com/developer/dashboard).
 
  # FAQ
  **What is WebRTC P2P?**
