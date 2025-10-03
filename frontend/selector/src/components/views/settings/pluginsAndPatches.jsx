@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
 import { builds } from "../../../constants/builds";
@@ -6,42 +6,86 @@ import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 import { PATCHES } from "../../../constants/patches";
 import OptionsCard from "@oldcord/frontend-shared/components/optionsCard";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
+import localStorageManager from "../../../lib/localStorageManager";
+import { convertBuildIds } from "../../../lib/convertBuildIds";
+
+const localStorageKey = "oldcord_selected_patches";
 
 export default function () {
-  const [selectedBuild, setSelectedBuild] = useState(null);
+  const friendlyBuildIds = convertBuildIds(builds);
+  const [selectedBuild, setSelectedBuild] = useState(friendlyBuildIds[0]);
 
-  function resetToDefault() {
-    const newPatches = {};
-    Object.keys(PATCHES).forEach((key) => {
-      newPatches[key] = PATCHES[key].defaultEnabled;
-    });
-    return newPatches;
+  let selectedBuildOriginal = builds[friendlyBuildIds.indexOf(selectedBuild)];
+
+  let localStorageCEP = localStorageManager.get(localStorageKey);
+
+  function initializeSelectedPatches() {
+    if (typeof localStorageCEP !== "object" || !localStorageCEP) {
+      const initializedObject = {};
+
+      builds.forEach((build) => {
+        initializedObject[build] = Object.keys(PATCHES).filter((key) => {
+          const compatibleBuilds = PATCHES[key].compatibleVersions;
+
+          if (
+            (compatibleBuilds === "all" ||
+              build.includes(compatibleBuilds) ||
+              compatibleBuilds.includes(build)) &&
+            PATCHES[key].defaultEnabled
+          ) {
+            return key;
+          }
+        });
+      });
+
+      localStorageCEP = initializedObject;
+
+      localStorageManager.set(localStorageKey, initializedObject);
+    }
+
+    return localStorageCEP[selectedBuildOriginal];
   }
 
-  const [patches, setPatches] = useState(resetToDefault());
+  const [pendingChangePatches, setPendingChangePatches] = useState(
+    initializeSelectedPatches()
+  );
 
-  const { setHasUnsavedChanges, registerHandlers } = useUnsavedChanges();
+  function resetToSelected() {
+    return localStorageCEP[selectedBuildOriginal];
+  }
 
-  const handleToggle = (id) => {
-    // Get the original values from the localstorage and then compare and set to false if there is no unsaved changes
-    setPatches((prevPatches) => {
-      return {
-        ...prevPatches,
-        [id]: !prevPatches[id],
-      };
+  const {
+    setHasUnsavedChanges,
+    hasUnsavedChanges,
+    registerHandlers,
+    triggerNudge,
+  } = useUnsavedChanges();
+
+  const handleToggle = (patchToChange) => {
+    if (PATCHES[patchToChange].notControllable) {
+      return;
+    }
+    setPendingChangePatches((previousPatches) => {
+      let newPatches;
+      if (previousPatches.includes(patchToChange)) {
+        newPatches = previousPatches.filter((patch) => patch !== patchToChange);
+      } else {
+        newPatches = [...previousPatches, patchToChange];
+      }
+      return newPatches;
     });
-    setHasUnsavedChanges(true);
   };
 
   const handleSave = useCallback(() => {
-    console.log("[Selector] Not implemented!");
+    localStorageCEP[selectedBuildOriginal] = pendingChangePatches;
+    localStorageManager.set(localStorageKey, localStorageCEP);
     setHasUnsavedChanges(false);
-  }, [setHasUnsavedChanges]);
+  }, [setHasUnsavedChanges, pendingChangePatches, selectedBuild]);
 
   const handleReset = useCallback(() => {
-    setPatches(resetToDefault());
+    setPendingChangePatches(resetToSelected());
     setHasUnsavedChanges(false);
-  }, [setHasUnsavedChanges]);
+  }, [setHasUnsavedChanges, selectedBuild]);
 
   useEffect(() => {
     registerHandlers(handleSave, handleReset);
@@ -54,6 +98,37 @@ export default function () {
       );
     };
   }, [registerHandlers, handleSave, handleReset, setHasUnsavedChanges]);
+
+  useEffect(() => {
+    if (
+      JSON.stringify(localStorageCEP[selectedBuildOriginal]) ===
+      JSON.stringify(pendingChangePatches)
+    ) {
+      setHasUnsavedChanges(false);
+    } else {
+      setHasUnsavedChanges(true);
+    }
+  }, [pendingChangePatches]);
+
+  function changeSelectedBuild(selectedBuild) {
+    if (hasUnsavedChanges) {
+      triggerNudge();
+      return false;
+    }
+    setSelectedBuild(selectedBuild);
+    selectedBuildOriginal = builds[friendlyBuildIds.indexOf(selectedBuild)];
+    setPendingChangePatches(localStorageCEP[selectedBuildOriginal]);
+  }
+
+  function controlEnabled(key) {
+    if (window.DiscordNative && key === "electronPatch") {
+      return "forcedEnabled";
+    } else if (!window.DiscordNative && key === "electronPatch") {
+      return "forcedDisabled";
+    } else {
+      return pendingChangePatches.includes(key);
+    }
+  }
 
   return (
     <>
@@ -73,24 +148,32 @@ export default function () {
       </PageInfo>
       <DropdownList
         label={"Client Build"}
-        options={builds}
-        defaultOption={builds[0]}
+        options={friendlyBuildIds}
+        defaultOption={selectedBuild}
+        onSelected={changeSelectedBuild}
       />
       <Text variant="h2">Plugins</Text>
       <Text variant="body">Oldplunger is in development...</Text>
       <Text variant="h2">Patches</Text>
       <div className="options-grid">
         {Object.keys(PATCHES).map((key) => {
-          return (
-            <OptionsCard
-              key={key}
-              title={PATCHES[key].label}
-              description={PATCHES[key].description}
-              iconType={"info"}
-              isEnabled={patches[key]}
-              onToggle={() => handleToggle(key)}
-            />
-          );
+          const compatibleBuilds = PATCHES[key].compatibleVersions;
+
+          if (
+            compatibleBuilds === "all" ||
+            selectedBuildOriginal.includes(compatibleBuilds) ||
+            compatibleBuilds.includes(selectedBuildOriginal)
+          )
+            return (
+              <OptionsCard
+                key={key}
+                title={PATCHES[key].label}
+                description={PATCHES[key].description}
+                iconType={"info"}
+                isEnabled={controlEnabled(key)}
+                onToggle={() => handleToggle(key)}
+              />
+            );
         })}
       </div>
     </>

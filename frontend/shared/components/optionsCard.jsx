@@ -1,7 +1,7 @@
 import ToggleSwitch from "./toggleSwitch";
 import Gear from "../assets/gear.svg?react";
 import Info from "../assets/info.svg?react";
-import "./optionsCard.css"
+import "./optionsCard.css";
 import { useId } from "react";
 
 export default function ({
@@ -12,6 +12,7 @@ export default function ({
   onToggle,
 }) {
   const uniqueId = useId();
+  let disabled = false;
 
   function renderIcon() {
     switch (iconType) {
@@ -30,6 +31,14 @@ export default function ({
     }
   }
 
+  if (isEnabled == "forcedEnabled") {
+    isEnabled = true;
+    disabled = true;
+  } else if (isEnabled == "forcedDisabled") {
+    isEnabled = false;
+    disabled = true;
+  }
+
   return (
     <div className="options-card">
       <div className="content">
@@ -42,6 +51,7 @@ export default function ({
           isChecked={isEnabled}
           onChange={onToggle}
           uniqueId={uniqueId}
+          disabled={disabled}
         />
       </div>
     </div>

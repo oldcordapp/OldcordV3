@@ -4,6 +4,7 @@ export const PATCHES = {
     description:
       "Required for client functionality. Automatically enabled on desktop client.",
     mandatory: false,
+    notControllable: true,
     defaultEnabled: false,
     compatibleVersions: "all",
     incompatiblePatches: [],
@@ -12,6 +13,7 @@ export const PATCHES = {
     label: "User Select",
     description: "Enables user selection in 2015 clients",
     mandatory: false,
+    notControllable: false,
     defaultEnabled: true,
     compatibleVersions: "2015",
     incompatiblePatches: [],
@@ -20,6 +22,7 @@ export const PATCHES = {
     label: "Unrestricted Emojis",
     description: "Allows using emojis anywhere without restrictions",
     mandatory: false,
+    notControllable: false,
     defaultEnabled: true,
     compatibleVersions: "all",
     incompatiblePatches: [],
@@ -29,6 +32,7 @@ export const PATCHES = {
     description:
       "Sends more than just ICE & RTP mappings (Like the modern Discord clients) and Unified Plan support - Required for WebRTC Voice Communication",
     mandatory: false,
+    notControllable: false,
     defaultEnabled: true,
     compatibleVersions: [
       //"january_23_2017",
@@ -61,6 +65,7 @@ export const PATCHES = {
     description:
       "Forces the client to use webrtc-p2p instead of webrtc, this means, small-scale voice calling without the need for a media server",
     mandatory: false,
+    notControllable: false,
     defaultEnabled: false,
     compatibleVersions: [
       "january_31_2017",

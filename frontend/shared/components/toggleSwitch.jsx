@@ -1,6 +1,6 @@
 import "./toggleSwitch.css";
 
-export default function ({ isChecked, onChange, uniqueId }) {
+export default function ({ isChecked, onChange, uniqueId, disabled = false }) {
   const handleKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -23,6 +23,7 @@ export default function ({ isChecked, onChange, uniqueId }) {
         checked={isChecked}
         readOnly
         tabIndex={-1}
+        disabled={disabled}
       />
     </div>
   );

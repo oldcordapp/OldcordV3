@@ -9,6 +9,8 @@ import { builds } from "../../../constants/builds";
 import Button from "@oldcord/frontend-shared/components/button";
 import Download from "../../../assets/download.svg?react";
 import { useEffect, useState } from "react";
+import { convertBuildIds, convertBuildId } from "../../../lib/convertBuildIds";
+import cookieManager from "../../../lib/cookieManager";
 
 export default function () {
   const [instance, setInstance] = useState(null);
@@ -30,6 +32,15 @@ export default function () {
     }
     fetchInstanceConfig();
   }, []);
+
+  const friendlyBuildIds = convertBuildIds(builds);
+
+  const defaultBuild = cookieManager.get("release_date") ?? cookieManager.get("default_client_build")
+
+  function changeReleaseDate(selectedBuild) {
+    cookieManager.set("release_date", builds[friendlyBuildIds.indexOf(selectedBuild)])
+  }
+
   return (
     <>
       <Background />
@@ -43,9 +54,10 @@ export default function () {
           <div className="build-option-section">
             <DropdownList
               label={"Client Build"}
-              options={builds}
-              defaultOption={builds[0]}
+              options={friendlyBuildIds}
+              defaultOption={convertBuildId(defaultBuild)}
               style={{ marginBottom: "20px" }}
+              onSelected={changeReleaseDate}
             />
             <Button>
               <Download />
@@ -109,7 +121,7 @@ export default function () {
             )}
           </div>
           <div className="buttons">
-            <Button style={{width: "100%"}}>Launch!</Button>
+            <Button style={{ width: "100%" }}>Launch!</Button>
             <SettingsButton />
           </div>
         </Card>
