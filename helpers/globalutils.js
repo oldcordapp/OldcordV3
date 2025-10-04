@@ -24,7 +24,8 @@ const globalUtils = {
     generateGatewayURL: (req) => {
         let host = req.headers['host'];
         if (host) host = host.split(':', 2)[0];
-        return `${config.secure ? 'wss' : 'ws'}://${config.gateway_url == "" ? (host ?? config.base_url) : config.gateway_url}:${config.ws_port}`;
+        let baseUrl = config.gateway_url == "" ? (host ?? config.base_url) : config.gateway_url;
+        return `${config.secure ? 'wss' : 'ws'}://${baseUrl}${(config.includePortInWsUrl && (config.secure ? config.ws_port != 443 : config.ws_port != 80)) ? `:${config.ws_port}` : ""}`;
     },
     generateRTCServerURL: () => {
         return config.signaling_server_url == "" ? (config.base_url + ":" + config.signaling_server_port) : config.signaling_server_url;
