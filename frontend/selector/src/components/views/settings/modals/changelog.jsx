@@ -18,7 +18,7 @@ export default function ({ isOpen, onClose }) {
       style={{width: "490px", minHeight: "unset", maxHeight: "800px"}}
     >
       <div style={{paddingBottom: "20px", userSelect: "all"}}>
-        We've introduced a LOT of changed to Oldcord for the past month or so, let's do a rapid fire of changes that we've done this month!
+        We've introduced a LOT of changes to Oldcord for the past month or so, let's do a rapid fire of changes that we've done this month!
       </div>
     </Modal>
   );

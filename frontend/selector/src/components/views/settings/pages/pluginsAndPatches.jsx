@@ -235,7 +235,7 @@ export default function () {
       />
       <Text variant="h2">Plugins</Text>
       <Text variant="body">Oldplunger is in development...</Text>
-      <Text variant="h2">Patches</Text>
+      <Text variant="h2">Patches (Legacy)</Text>
       <div className="options-grid">
         {Object.keys(PATCHES).map((key) => {
           const compatibleBuilds = PATCHES[key].compatibleVersions;
