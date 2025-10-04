@@ -8,7 +8,6 @@ const router = express.Router({ mergeParams: true });
 
 router.param('code', async (req, res, next, memberid) => {
     req.invite = await global.database.getInvite(req.params.code);
-    
 
     if (!req.guild && req.invite && req.invite.channel.guild_id) {
         req.guild = await global.database.getGuildById(req.invite.channel.guild_id);
@@ -93,8 +92,6 @@ router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.delet
     } catch (error) {
         logText(error, "error");
 
-        
-
         return res.status(500).json({
             code: 500,
             message: "Internal Server Error"
@@ -140,7 +137,7 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
             });
         }
         
-        const joinAttempt = await global.database.useInvite(req.params.code, sender.id);
+        const joinAttempt = await global.database.useInvite(req.invite, req.guild, sender.id);
 
         if (!joinAttempt) {
             return res.status(404).json({
