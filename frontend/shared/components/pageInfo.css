@@ -27,3 +27,7 @@
   font-size: 1rem;
   line-height: 1.5;
 }
+
+.page-info-body ul {
+  padding: 0px 20px 0 20px;
+}

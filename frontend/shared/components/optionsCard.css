@@ -8,6 +8,10 @@
   align-items: flex-start;
 }
 
+.options-card.disabled {
+  opacity: 0.6;
+}
+
 .options-card .content {
   flex-grow: 1;
   padding-right: 16px;

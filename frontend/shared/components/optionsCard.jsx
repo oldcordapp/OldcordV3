@@ -40,7 +40,7 @@ export default function ({
   }
 
   return (
-    <div className="options-card">
+    <div className={`options-card ${disabled ? "disabled" : ""}`}>
       <div className="content">
         <h3 className="title">{title}</h3>
         <p className="description">{description}</p>
