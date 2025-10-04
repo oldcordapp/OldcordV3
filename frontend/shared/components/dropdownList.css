@@ -83,7 +83,7 @@
   margin: 0;
   max-height: 250px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 5;
 }
 
 .list-option {

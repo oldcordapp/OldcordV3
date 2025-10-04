@@ -11,23 +11,22 @@ transform: translateY(150.078%) translateZ(0px);
 
 .notice-region {
   position: fixed;
-  z-index: 1000;
+  z-index: 50;
   width: 740px;
   min-width: 460px;
   max-width: 100%;
   padding: 0 20px 20px;
   pointer-events: none;
   bottom: 0;
-  transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315);
-}
-
-.notice-region.entering,
-.notice-region.exiting {
   transform: translateY(150%);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+    opacity 0.2s ease-out;
 }
 
-.notice-region.entered {
+.notice-region.show {
   transform: translateY(0);
+  opacity: 1;
 }
 
 .notice-container {

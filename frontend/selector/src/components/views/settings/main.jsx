@@ -1,13 +1,13 @@
 import "./main.css";
 import { useSettings, SETTINGS_VIEWS } from "./settingsNavigationList";
 
-import OldplungerInfo from "./oldplungerInfo";
-import OldplungerSettings from "./oldplungerSettings";
-import PluginsAndPatches from "./pluginsAndPatches";
-import Themes from "./themes";
-import DownloadQueue from "./downloadQueue";
-import OpfsSettings from "./opfsSettings";
-import AdvancedSettings from "./advancedSettings";
+import OldplungerInfo from "./pages/oldplungerInfo";
+import OldplungerSettings from "./pages/oldplungerSettings";
+import PluginsAndPatches from "./pages/pluginsAndPatches";
+import Themes from "./pages/themes";
+import DownloadQueue from "./pages/downloadQueue";
+import OpfsSettings from "./pages/opfsSettings";
+import AdvancedSettings from "./pages/advancedSettings";
 
 export default function () {
   const { activeView } = useSettings();
@@ -26,12 +26,8 @@ export default function () {
         return <DownloadQueue />;
       case SETTINGS_VIEWS.OPFS_SETTINGS:
         return <OpfsSettings />;
-      case SETTINGS_VIEWS.CHANGELOG: {
-      }
       case SETTINGS_VIEWS.ADVANCED_SETTINGS:
         return <AdvancedSettings />;
-      default:
-        return <OldplungerInfo />;
     }
   }
 

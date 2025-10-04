@@ -1,0 +1,179 @@
+.modal-layer {
+  position: absolute;
+  z-index: 100;
+}
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  opacity: 0;
+  transition: opacity 0.2s linear;
+}
+
+.open .modal-backdrop {
+  opacity: 0.8;
+}
+
+.modal-root {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  padding: 60px 0;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  background-color: #36393f;
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px rgba(32, 34, 37, 0.6), 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+  max-height: 100%;
+  opacity: 0;
+  transform: scale(0.7);
+  width: 490px;
+  transition: opacity 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+    transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315);
+  z-index: 110;
+  pointer-events: auto;
+}
+
+.open .modal-content {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-content.small {
+  max-height: 660px;
+  min-height: 200px;
+  width: 440px;
+}
+.modal-content.medium {
+  max-height: 800px;
+  min-height: 400px;
+  width: 600px;
+}
+.modal-content.large {
+  max-width: 960px;
+  min-height: 400px;
+  min-width: 800px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 20px;
+  flex-shrink: 0;
+}
+.modal-header-text {
+  flex-grow: 1;
+}
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #f6f6f7;
+  margin: 0;
+  text-transform: uppercase;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
+.modal-subtitle {
+  font-size: 12px;
+  line-height: 16px;
+  color: #b9bbbe;
+}
+.modal-close-button {
+  color: #dcddde;
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 3px;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.17s;
+}
+.modal-close-button:hover {
+  opacity: 1;
+  background-color: rgba(220, 221, 222, 0.05);
+}
+.modal-content .scroller-wrapper {
+  overflow: hidden;
+  position: relative;
+  flex-grow: 1;
+}
+.modal-content .scroller {
+  height: 100%;
+  overflow-y: scroll;
+  padding: 0 12px 0 20px;
+}
+.modal-footer {
+  display: flex;
+  padding: 20px;
+  flex-shrink: 0;
+  background-color: #2f3136;
+  box-shadow: inset 0 1px 0 rgba(47, 49, 54, 0.6);
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+.modal-footer-text {
+  font-size: 12px;
+  color: #b9bbbe;
+}
+.modal-footer-text a {
+  color: #00b0f4;
+  text-decoration: none;
+}
+.modal-footer-text a:hover {
+  text-decoration: underline;
+}
+
+.modal-content .scroller p {
+  font-size: 16px;
+  line-height: 20px;
+  color: #dcddde;
+  margin-top: 0;
+}
+.modal-content .scroller ul {
+  margin: 20px 0 8px 20px;
+  padding: 0;
+}
+.modal-content .scroller li {
+  list-style: none;
+  position: relative;
+  margin-bottom: 8px;
+  padding-left: 15px;
+  color: #dcddde;
+  line-height: 20px;
+}
+.modal-content .scroller li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #dcddde;
+  opacity: 0.3;
+}
+.modal-content .scroller strong {
+  font-weight: 700;
+  color: #f6f6f7;
+}

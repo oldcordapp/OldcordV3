@@ -44,8 +44,6 @@ export default function ({
         type="button"
         className={`list-button ${isOpen ? "is-open" : ""}`}
         onClick={toggleDropdown}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
       >
         <span className="list-button-label">{selectedValue}</span>
         <span className="list-arrow" />
@@ -60,8 +58,6 @@ export default function ({
                 selectedValue === option ? "is-selected" : ""
               }`}
               onClick={() => handleOptionClick(option)}
-              role="option"
-              aria-selected={selectedValue === option}
             >
               {option}
             </li>

@@ -1,6 +1,7 @@
 import NavigationList from "@oldcord/frontend-shared/components/navigationList";
 import ViewHandler from "../../../hooks/viewHandler";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
+import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 
 export const SETTINGS_VIEWS = {
   INFO: "info",
@@ -21,6 +22,7 @@ const { Provider, useContextHook } = ViewHandler({
 export default function () {
   const { activeView, changeView } = useContextHook();
   const { hasUnsavedChanges, triggerNudge } = useUnsavedChanges();
+  const { setActiveModal } = useModal();
 
   const navItems = [
     { type: "header", label: "Oldplunger" },
@@ -55,7 +57,7 @@ export default function () {
       label: "Changelog",
       view: SETTINGS_VIEWS.CHANGELOG,
       onClick: () => {
-        console.log("[Selector] Modal not implemented!");
+        setActiveModal("changelog");
       },
     },
     {

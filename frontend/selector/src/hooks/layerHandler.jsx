@@ -5,10 +5,6 @@ const Context = createContext();
 export function LayerHandler({ children }) {
   const [activeLayer, setActiveLayer] = useState(null);
 
-  const [activeModals, setActiveModals] = useState([]);
-
-  const [activeNotifs, setActiveNotifs] = useState([]);
-
   const [triggeredRedirect, setTriggeredRedirect] = useState(false);
 
   const [exitingLayer, setExitingLayer] = useState(null);
@@ -35,34 +31,12 @@ export function LayerHandler({ children }) {
     }
   }
 
-  function addModal(modalType, data) {
-    setActiveModals((currentModals) => {
-      return [...currentModals, { type: modalType, data: data }];
-    });
-  }
-
-  function removeModal() {
-    setActiveModals((currentModals) => {
-      currentModals.slice(0, 1);
-    });
-  }
-
-  function addNotif(notifType, data) {
-    setActiveNotifs((currentNotifs) => {
-      return [...currentNotifs, { type: notifType, data: data }];
-    });
-  }
 
   const value = {
     activeLayer,
-    activeModals,
-    activeNotifs,
     triggeredRedirect,
     exitingLayer,
     changeLayer,
-    addModal,
-    removeModal,
-    addNotif,
     setTriggeredRedirect,
   };
 

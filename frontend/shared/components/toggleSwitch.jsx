@@ -11,7 +11,6 @@ export default function ({ isChecked, onChange, uniqueId, disabled = false }) {
   return (
     <div
       className={`toggle-switch ${isChecked ? "checked" : ""}`}
-      aria-checked={isChecked}
       tabIndex={0}
       onClick={onChange}
       onKeyDown={handleKeyDown}

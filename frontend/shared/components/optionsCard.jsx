@@ -18,13 +18,13 @@ export default function ({
     switch (iconType) {
       case "settings":
         return (
-          <button className="icon-button" aria-label="Settings">
+          <button className="icon-button">
             <Gear />
           </button>
         );
       case "info":
         return (
-          <button className="icon-button" aria-label="Information">
+          <button className="icon-button">
             <Info />
           </button>
         );

@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
-import { builds } from "../../../constants/builds";
+import { builds } from "../../../../constants/builds";
 import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
-import { PATCHES } from "../../../constants/patches";
+import { PATCHES } from "../../../../constants/patches";
 import OptionsCard from "@oldcord/frontend-shared/components/optionsCard";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
-import localStorageManager from "../../../lib/localStorageManager";
-import { convertBuildIds } from "../../../lib/convertBuildIds";
+import localStorageManager from "../../../../lib/localStorageManager";
+import { convertBuildIds } from "../../../../lib/convertBuildIds";
 
 const localStorageKey = "oldcord_selected_patches";
 

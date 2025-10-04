@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import "./UnsavedChangesNotice.css";
+import { useState, useEffect, useRef } from "react";
+import "./unsavedChangesNotice.css";
 
 export default function ({
   show,
@@ -9,41 +9,40 @@ export default function ({
   message = "Careful — you have unsaved changes!",
   animationDuration = 300,
 }) {
-  const [animationState, setAnimationState] = useState("unmounted");
+  const [shouldRender, setShouldRender] = useState(show);
+  const noticeRef = useRef(null);
 
   useEffect(() => {
-    let enterTimeout;
-    let exitTimeout;
-
-    if (show && animationState === "unmounted") {
-      setAnimationState("entering");
-
-      enterTimeout = setTimeout(() => {
-        setAnimationState("entered");
-      }, 10);
-    } else if (
-      !show &&
-      (animationState === "entered" || animationState === "entering")
-    ) {
-      setAnimationState("exiting");
-
-      exitTimeout = setTimeout(() => {
-        setAnimationState("unmounted");
+    if (show) {
+      setShouldRender(true);
+    } else {
+      if (noticeRef.current) {
+        noticeRef.current.classList.remove("show");
+      }
+      const timer = setTimeout(() => {
+        setShouldRender(false);
       }, animationDuration);
+      return () => clearTimeout(timer);
     }
-
-    return () => {
-      clearTimeout(enterTimeout);
-      clearTimeout(exitTimeout);
-    };
   }, [show, animationDuration]);
 
-  if (animationState === "unmounted") {
+  useEffect(() => {
+    if (shouldRender) {
+      const timer = setTimeout(() => {
+        if (noticeRef.current) {
+          noticeRef.current.classList.add("show");
+        }
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldRender]);
+
+  if (!shouldRender) {
     return null;
   }
 
   return (
-    <div className={`notice-region ${animationState}`}>
+    <div className="notice-region" ref={noticeRef}>
       <div
         className={`notice-container ${displayRedNotice ? "red-notice" : ""}`}
       >

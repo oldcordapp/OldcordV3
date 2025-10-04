@@ -1,75 +1,72 @@
 import { LayerHandler, useLayer } from "./hooks/layerHandler";
-import "./App.css";
-import PrimaryLayer from "./components/layers/primaryLayer";
-import SecondaryLayer from "./components/layers/secondaryLayer";
-import ModalsLayer from "./components/layers/modalsLayer";
-
-import SettingsNavigationList, {
-  SettingsViewHandler,
-} from "./components/views/settings/settingsNavigationList";
-import SettingsView from "./components/views/settings/main";
 import {
   UnsavedChangesHandler,
   useUnsavedChanges,
 } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
+import {
+  ModalHandler,
+  useModal,
+} from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useEffect, useRef } from "react";
+
+import layerConfig from "./components/layerConfig";
+import modalConfig from "./components/modalConfig";
+
+import PrimaryLayer from "./components/layers/primaryLayer";
+import "./App.css";
 
 function Container() {
   const { activeLayer, exitingLayer } = useLayer();
-  const { isNudging, displayRedNotice } = useUnsavedChanges();
+  const { isNudging } = useUnsavedChanges();
+  const { activeModal, exitingModal, removeModal } = useModal();
   const ref = useRef(null);
 
   useEffect(() => {
     let intervalId;
-
     if (isNudging) {
       intervalId = setInterval(() => {
         if (ref.current) {
           const randomY = Math.random() * 30 - 15;
           const randomX = Math.random() < 0.5 ? 15 : -15;
-
           ref.current.style.transform = `translate3d(${randomX}px, ${randomY}px, 0)`;
         }
       }, 10);
-    } else {
-      if (ref.current) {
-        ref.current.style.transform = "";
-      }
+    } else if (ref.current) {
+      ref.current.style.transform = "";
     }
-
-    return () => {
-      clearInterval(intervalId);
-    };
+    return () => clearInterval(intervalId);
   }, [isNudging]);
 
-  let layerContent = null;
+  const layerKey = activeLayer || exitingLayer;
+  const CurrentLayer = layerKey ? layerConfig[layerKey]?.Component : null;
 
-  if (activeLayer === "settings" || exitingLayer === "settings") {
-    layerContent = (
-      <SettingsViewHandler>
-        <SecondaryLayer
-          sidebarComponent={<SettingsNavigationList />}
-          contentComponent={<SettingsView />}
-        />
-      </SettingsViewHandler>
-    );
-  }
+  const modalKey = activeModal || exitingModal;
+  const CurrentModal = modalKey ? modalConfig[modalKey]?.Component : null;
 
   return (
     <div ref={ref}>
       <PrimaryLayer />
-      {layerContent}
+      {CurrentLayer && <CurrentLayer />}
 
-      <ModalsLayer />
+      {CurrentModal && (
+        <CurrentModal
+          isOpen={activeModal === modalKey}
+          onClose={() => {
+            removeModal();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-export default function () {
+export default function App() {
   return (
     <LayerHandler>
       <UnsavedChangesHandler>
-        <Container />
+        <ModalHandler>
+          <Container />
+        </ModalHandler>
       </UnsavedChangesHandler>
     </LayerHandler>
   );
