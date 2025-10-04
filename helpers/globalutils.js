@@ -16,8 +16,8 @@ const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 const globalUtils = {
     config: config,
     badEmails: null,
-    nonStandardPort: config.secure ? config.port != 443 : config.port != 80,
-    nonStandardWsPort: config.secure ? config.ws_port != 443 : config.ws_port != 80,
+    nonStandardPort: config.includePortInUrl ? (config.secure ? config.port != 443 : config.port != 80) : false,
+    nonStandardWsPort: config.includePortInWsUrl ? (config.secure ? config.ws_port != 443 : config.ws_port != 80) : false,
     generateSsrc() {
         return crypto.randomBytes(4).readUInt32BE(0);
     },
