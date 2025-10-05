@@ -967,8 +967,12 @@ const database = {
     banMember: async (guild_id, user_id) => {
         try {
             await database.runQuery(`
-                INSERT INTO bans (guild_id, user_id) VALUES ($1, $2)
-            `, [guild_id, user_id]);
+                INSERT INTO bans (guild_id, user_id)
+                SELECT $1, $2
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM bans WHERE guild_id = $1 AND user_id = $2
+                );
+        `, [guild_id, user_id]);
 
             return true;
         } catch (error) {

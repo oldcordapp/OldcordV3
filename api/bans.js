@@ -53,36 +53,51 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
             });
         }
 
-        const member = req.member;
+        let member = req.member;
+        const userInGuild = member != null;
 
-        if (member == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Member"
-            });
+        if (!userInGuild) {
+            member = {
+                id: req.params.memberid,
+                user: {
+                    id: req.params.memberid
+                }
+            }
         }
 
-        const attempt = await global.database.leaveGuild(member.id, req.params.guildid);
+        if (userInGuild) {
+            const attempt = await global.database.leaveGuild(member.id, req.params.guildid);
+
+            if (!attempt) {
+                return res.status(500).json({
+                    code: 500,
+                    message: "Internal Server Error"
+                });
+            }
+        }
+
         const tryBan = await global.database.banMember(req.params.guildid, member.id);
 
-        if (!attempt || !tryBan) {
+        if (!tryBan) {
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
             });
         }
 
-        await global.dispatcher.dispatchEventTo(member.id, "GUILD_DELETE", {
-            id: req.params.guildid
-        });
+        if (userInGuild) {
+            await global.dispatcher.dispatchEventTo(member.id, "GUILD_DELETE", {
+                id: req.params.guildid
+            });
 
-        await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
-            type: "ban",
-            moderator: globalUtils.miniUserObject(sender),
-            user: globalUtils.miniUserObject(member.user),
-            roles: [],
-            guild_id: req.params.guildid
-        });
+            await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
+                type: "ban",
+                moderator: globalUtils.miniUserObject(sender),
+                user: globalUtils.miniUserObject(member.user),
+                roles: [],
+                guild_id: req.params.guildid
+            });
+        }
 
         if (req.query['delete-message-days']) {
             let deleteMessageDays = parseInt(req.query['delete-message-days']);
