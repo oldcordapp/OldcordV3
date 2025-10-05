@@ -1,0 +1,6 @@
+{
+  "name": "@oldcord/frontend-shared",
+  "peerDependencies": {
+    "react": "^19.1.1"
+  }
+}

@@ -1,0 +1,4 @@
+.primary-layer.transitionToSecondaryLayer {
+  transform: scale(0.93);
+  opacity: 0;
+}

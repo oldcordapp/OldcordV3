@@ -1,0 +1,33 @@
+.settings-view-container {
+  display: flex;
+  flex-direction: column;
+  padding: 60px 40px 80px;
+  position: relative;
+}
+
+.settings-view-container h1 {
+  font-size: 16px;
+  line-height: 20px;
+  margin-bottom: 12px;
+}
+
+.settings-view-container h2 {
+  font-size: 12px;
+  line-height: 16px;
+  margin-bottom: 8px;
+  color: #b9bbbe;
+}
+
+.settings-view-container p {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 8px;
+}
+
+.settings-view-container .options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 960px;
+  width: 100%;
+}

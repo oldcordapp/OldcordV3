@@ -1,0 +1,67 @@
+.options-card {
+  background-color: #2f3136;
+  border: 1px solid #202225;
+  border-radius: 5px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.options-card.disabled {
+  opacity: 0.6;
+}
+
+.options-card .content {
+  flex-grow: 1;
+  padding-right: 16px;
+}
+
+.options-card .title {
+  color: #f6f6f7;
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0 0 4px 0;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
+
+.options-card .description {
+  color: #b9bbbe;
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+  height: 36px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.options-card .controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.options-card .icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #b9bbbe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.options-card .icon-button:hover {
+  opacity: 1;
+  color: #f6f6f7;
+}

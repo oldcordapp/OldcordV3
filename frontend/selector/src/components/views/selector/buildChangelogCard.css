@@ -1,0 +1,58 @@
+.build-changlog-card {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.changelog-header {
+  padding: 20px 0 20px 0;
+  border-bottom: 1px solid var(--background-modifier-accent);
+  flex-shrink: 0;
+}
+
+.changelog-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
+
+.changelog-header .date {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.scroller-wrap {
+  flex-grow: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.changelog-container {
+  padding-right: 20px;
+}
+
+.empty-changelog {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+.cta-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  background-color: var(--brand-experiment);
+  color: white;
+  text-align: center;
+  border-radius: 3px;
+  text-decoration: none;
+  font-weight: 500;
+}

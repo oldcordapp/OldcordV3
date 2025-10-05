@@ -1,0 +1,18 @@
+.sidebar-container {
+  display: flex;
+  flex: 0 0 35%;
+  background: #2f3136;
+  z-index: 1;
+}
+
+.sidebar-container .scroller-wrapper {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.sidebar-content {
+  padding: 60px 6px 60px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}

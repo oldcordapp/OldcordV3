@@ -1,0 +1,96 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 3px;
+  box-sizing: border-box;
+
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.17s ease, transform 0.1s ease;
+  outline: none;
+
+  padding: 2px 16px;
+  height: 32px;
+  min-width: 60px;
+}
+
+.button-primary {
+  background-color: #7289da;
+  color: #fff;
+}
+
+.button-primary:hover {
+  background-color: #677bc4;
+}
+
+.button-primary:focus-visible {
+  box-shadow: 0 0 0 2px rgba(114, 137, 218, 0.5);
+}
+
+.button-success {
+  background-color: #43b581;
+  color: white;
+}
+
+.button-success:hover {
+  background-color: #3ca374;
+}
+
+.button-success:active {
+  background-color: #369167;
+}
+
+.button-danger {
+  background-color: #f04747;
+  color: white;
+}
+
+.button-danger:hover {
+  background-color: #d84040;
+}
+
+.button-danger:active {
+  background-color: #c03939;
+}
+
+.button-ghost {
+  background: none;
+  color: white;
+  position: relative;
+}
+
+.button-ghost:hover {
+  text-decoration: underline;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  background-color: #a6b2e6 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  opacity: 0.6 !important;
+}
+
+.button-success:focus-visible {
+  box-shadow: 0 0 0 2px rgba(67, 181, 129, 0.5);
+}
+
+.button-danger:focus-visible {
+  box-shadow: 0 0 0 2px rgba(227, 67, 67, 0.5);
+}
+
+.button-ghost:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}

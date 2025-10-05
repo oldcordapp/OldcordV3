@@ -1,0 +1,33 @@
+@keyframes backgroundEntering {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.background-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+.background-img {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../../../assets/background.png");
+  background-repeat: repeat;
+  background-position: center;
+  opacity: 0;
+  animation: backgroundEntering 0.2s linear 0.2s;
+}
+
+.background-img.entered {
+  opacity: 1;
+}
+
+.background-img.exit {
+  opacity: 0;
+}

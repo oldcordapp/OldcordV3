@@ -1,0 +1,33 @@
+.page-info-card {
+  background-color: #2f3136;
+  border: 1px solid #202225;
+  border-radius: 5px;
+  padding: 20px;
+  margin-bottom: 40px;
+  box-sizing: border-box;
+  color: #dcddde;
+}
+
+.page-info-title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  color: rgba(255, 255, 255, 0.4);
+
+  margin: 0 0 4px 0;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
+
+.page-info-body {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.page-info-body ul {
+  padding: 0px 20px 0 20px;
+}

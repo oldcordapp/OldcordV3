@@ -1,0 +1,232 @@
+/* Nebula Sans Font Declarations - Based of 2018 Discord Whitney Declarations, 92.5% scale down is required since Nebula Sans is larger than Whitney */
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-LightItalic.woff2") format("woff2");
+  font-weight: 300;
+  font-style: italic;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-Book.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-BookItalic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-MediumItalic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-Semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-SemiboldItalic.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-Black.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  size-adjust: 92.5%;
+}
+
+@font-face {
+  font-family: "Nebula Sans";
+  src: url("/assets/fonts/NebulaSans-BlackItalic.woff2") format("woff2");
+  font-weight: 800;
+  font-style: italic;
+  size-adjust: 92.5%;
+}
+
+:root {
+  --font-code: "SourceCodePro", Consolas, "Liberation Mono", Menlo, Courier,
+    monospace;
+}
+
+a {
+  color: #00b0f4;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+strong {
+  font-weight: 700;
+}
+
+em {
+  font-style: italic;
+}
+
+code,
+.code {
+  font-family: var(--font-code);
+  background-color: #2f3136;
+  border-radius: 3px;
+  padding: 0.2em;
+  font-size: 85%;
+}
+
+.font-light {
+  font-weight: 300 !important;
+}
+
+.font-normal {
+  font-weight: 400 !important;
+}
+
+.font-medium {
+  font-weight: 500 !important;
+}
+
+.font-semibold {
+  font-weight: 600 !important;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
+
+.font-bold {
+  font-weight: 700 !important;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
+
+.font-extrabold {
+  font-weight: 800 !important;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
+
+.font-size-10 {
+  font-size: 10px !important;
+}
+.font-size-12 {
+  font-size: 12px !important;
+}
+.font-size-14 {
+  font-size: 14px !important;
+}
+.font-size-16 {
+  font-size: 16px !important;
+}
+.font-size-18 {
+  font-size: 18px !important;
+}
+.font-size-20 {
+  font-size: 20px !important;
+}
+.font-size-22 {
+  font-size: 22px !important;
+}
+.font-size-24 {
+  font-size: 24px !important;
+}
+.font-size-26 {
+  font-size: 26px !important;
+}
+.font-size-36 {
+  font-size: 36px !important;
+}
+
+.line-height-12 {
+  line-height: 12px !important;
+}
+.line-height-14 {
+  line-height: 14px !important;
+}
+.line-height-16 {
+  line-height: 16px !important;
+}
+.line-height-20 {
+  line-height: 20px !important;
+}
+.line-height-24 {
+  line-height: 24px !important;
+}
+.line-height-28 {
+  line-height: 28px !important;
+}
+.line-height-30 {
+  line-height: 30px !important;
+}
+.line-height-36 {
+  line-height: 36px !important;
+}
+.line-height-44 {
+  line-height: 44px !important;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.selectable {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  cursor: text;
+}

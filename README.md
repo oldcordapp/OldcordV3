@@ -1,4 +1,4 @@
-![Herple...](/hurple.png)
+![Herple...](/.assets/hurple.png)
 <!-- Oldcord: bring back the past -->
 
 # OldcordV3
@@ -12,12 +12,18 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
 **Configuration File**:
    - **Always ensure your config.json file matches the structure and entries in config.example.json when you pull new updates.** Instances created before November 14, 2024, must update their configuration file to the new format to function.
 
+**Node.js update**:
+   - **If you have your own Oldcord instance before October 5, 2025, please update your Node.js version to either the latest LTS version or the latest version.** This is because of the new Selector update requiring the latest Node.js version to build.
+
 **Help Wanted**! <br>
 There are some features we need help with, if you're up for the task, feel free to submit a PR!
 
 - Audit Logs
 - Giphy Integration
 - The other social media platforms (not just Twitch) for account connections
+- Refactor/Improve code
+- Full fledged Discord mod to replace the current patching system
+- If anyone knows how to fix the modals in the main selector screen not playing the exit animation before other modals get mounted we would be happy about it
   
 # Project Status & Features
 
@@ -42,7 +48,7 @@ There are some features we need help with, if you're up for the task, feel free 
   1. **Setup the Database**: Create a new database via PgAdmin or commandline for PostgreSQL, make sure this database (user & password login as well) matches what's in your future config.json file.
   2. **Install Dependencies**: In the project directory, run the command `npm install`.
   3. **Configure**: Copy `config.example.json` to a new file named `config.json`. Edit the values to match your setup (See the configuration section below for further details).
-  4. **Start the Server**: Run the command `node server.js`.
+  4. **Start the Server**: Run the command `npm run start`.
 
 **Configuration** (`config.json`):
   - `custom_invite_url`: Sets the domain for your instance's invite links (e.g., setting it to example.com will make it so every invite has the prefix example.com - similar to discord.gg)
@@ -85,5 +91,6 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
   - **ziad87**: Hummus2 source code for token generation, permissions and sessions.
   - **discord.js**: Snowflake implementation.
   - **unkn0w**: Disposable email domain list.
-  - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which discord used before 2022), used in the bootloader and build selector.
-  - [**s074 & the Spacebar team**](https://github.com/spacebarchat/mediasoup-webrtc): WebRTC media server implementation.
+  - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which Discord used before 2022), used in the bootloader and build selector.
+  - **s074 & the Spacebar team**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc).
+  - **Google**: [Material Design Icons](https://fonts.google.com/icons).

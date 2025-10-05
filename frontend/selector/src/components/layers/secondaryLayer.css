@@ -1,0 +1,38 @@
+.secondary-layer {
+  background-color: var(--background-secondary);
+  z-index: 10;
+  transform: scale(1.07);
+  opacity: 0;
+  display: flex;
+}
+
+.secondary-layer.transitionToSecondaryLayer {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.content-part {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.content-part .scroller {
+  display: flex;
+  overflow-x: hidden;
+}
+
+.content-view {
+  width: 740px;
+  min-width: 460px;
+  max-width: 100%;
+}
+
+.secondary-layer .divider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.06);
+  margin-bottom: 20px;
+}
+
+.secondary-layer .list-container {
+  margin-bottom: 20px;
+}

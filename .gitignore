@@ -1,8 +1,9 @@
 config.json*
 node_modules
 package-lock.json
-package.json
 www_dynamic
+www_static/assets/selector/*
+!.gitkeep
 *.un~
 *.swp
 *.pem

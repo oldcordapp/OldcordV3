@@ -1,0 +1,66 @@
+/* 
+From Discord:
+transform: translateY(0%) translateZ(0px);
+transform: translateY(-17.1248%) translateZ(0px);
+transform: translateY(156.918%) translateZ(0px);
+transform: translateY(156.376%) translateZ(0px);
+transform: translateY(149.092%) translateZ(0px);
+transform: translateY(149.689%) translateZ(0px);
+transform: translateY(150.078%) translateZ(0px);
+*/
+
+.notice-region {
+  position: fixed;
+  z-index: 50;
+  width: 740px;
+  min-width: 460px;
+  max-width: 100%;
+  padding: 0 20px 20px;
+  pointer-events: none;
+  bottom: 0;
+  transform: translateY(150%);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+    opacity 0.2s ease-out;
+}
+
+.notice-region.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.notice-container {
+  display: flex;
+  align-items: center;
+  background-color: rgba(32, 34, 37, 0.9);
+  color: white;
+  padding: 10px 10px 10px 16px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  box-sizing: border-box;
+  transition: background-color 0.2s linear;
+}
+
+.red-notice {
+  background-color: rgba(240, 71, 71, 0.9);
+}
+
+.notice-message {
+  flex: 1 1 auto;
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.button-group {
+  display: flex;
+  flex: 0 0 auto;
+  margin-left: 16px;
+}
+
+.button-group .button:not(:first-child) {
+  margin-left: 10px;
+}

@@ -1,0 +1,68 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  color: var(--text-normal);
+  background-color: var(--background);
+  user-select: none;
+}
+
+/*
+  From original transformations on every 2 breakpoints:
+
+  opacity: 0; transform: scale(0.93) translateZ(0px);
+  opacity: 0.0100021; transform: scale(0.93) translateZ(0px);
+  opacity: 0.521859; transform: scale(0.962104) translateZ(0px);
+  opacity: 0.922527; transform: scale(0.992699) translateZ(0px);
+  opacity: 1.03101; transform: scale(1.00194) translateZ(0px);
+  opacity: 1.02445; transform: scale(1.00187) translateZ(0px);
+  opacity: 1.00665; transform: scale(1.00057) translateZ(0px);
+  opacity: 0.999613; transform: scale(0.999997) translateZ(0px);
+  After 4 breakpoints: opacity: 0.99957; transform: scale(1) translateZ(0px);
+  opacity: 1.00004; transform: scale(1) translateZ(0px);
+  Ends after 4 breakpoints to opacity: 1; transform: scale(1) translateZ(0px);
+*/
+
+.primary-layer,
+.secondary-layer {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  transition: transform 0.3s cubic-bezier(0.4032, -0.1454, 0, 1.3799),
+    opacity 0.3s cubic-bezier(0.3024, 0.0675, 0, 1.394);
+}
+
+.scroller-wrapper {
+  height: 100%;
+}
+
+.scroller {
+  height: 100%;
+  overflow-y: scroll;
+}
+
+.scroller::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroller::-webkit-scrollbar-thumb {
+  background-color: rgba(32, 34, 37, 0.6);
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+
+.scroller::-webkit-scrollbar-track {
+  background-color: transparent;
+}

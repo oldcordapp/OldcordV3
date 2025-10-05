@@ -1,0 +1,65 @@
+@keyframes logoEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes logoFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.logo-container {
+  position: fixed;
+  top: 48px;
+  left: 45px;
+  z-index: 1;
+  text-decoration: none;
+  cursor: pointer;
+  will-change: opacity;
+}
+
+/* 
+  From original transformations on every 2 breakpoints:
+  ```
+  opacity: 0;
+  opacity: 0.458627; transform: translateY(-100px) translateZ(0px);
+  opacity: 0.895704; transform: translateY(-54.1373px) translateZ(0px);
+  opacity: 1.02772; transform: translateY(-10.4296px) translateZ(0px);
+  opacity: 1.02666; transform: translateY(2.77173px) translateZ(0px);
+  opacity: 1.00809; transform: translateY(2.66582px) translateZ(0px);
+  opacity: 0.999951; transform: translateY(0.808675px) translateZ(0px);
+  opacity: 0.998869; transform: translateY(-0.004899px) translateZ(0px);
+  opacity: 0.999503; transform: translateY(-0.113055px) translateZ(0px);
+  opacity: 0.999933; transform: translateY(-0.0497391px) translateZ(0px);
+  opacity: 1.00004; transform: translateY(-0.0066786px) translateZ(0px);
+  opacity: 1; transform: translateY(0px) translateZ(0px);
+  ``` 
+*/
+
+.logo-container.mounted {
+  opacity: 0;
+}
+
+.logo-container.enter {
+  animation: logoEntrance 0.6s cubic-bezier(0.3284, 1.4241, 0.0486, 0.9329) 0.2s
+    forwards;
+}
+
+.logo-container.exit {
+  animation: logoFadeOut 0.3s ease-out forwards;
+}
+
+.logo-svg {
+  width: 140px;
+  height: auto;
+}

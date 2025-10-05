@@ -1,0 +1,48 @@
+.close-button-container {
+  position: fixed;
+  top: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.close-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #72767d;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: none;
+  padding: 0;
+  outline: none;
+}
+
+.close-button:hover {
+  background-color: #484c52;
+}
+
+.x-mark {
+  fill: var(--text-normal);
+  width: 18px;
+  height: 18px;
+}
+
+.close-button .close-icon-path {
+  fill: #dcddde;
+}
+
+.keybind-hint {
+  color: #72767d;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+  text-align: center;
+  transform: scaleY(
+    1.04
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+}
