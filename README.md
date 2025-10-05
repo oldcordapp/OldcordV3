@@ -20,6 +20,7 @@ There are some features we need help with, if you're up for the task, feel free 
 - The other social media platforms (not just Twitch) for account connections
 - Refactor/Improve code
 - Full fledged Discord mod to replace the current patching system
+- If anyone knows how to fix the modals in the main selector screen not playing the exit animation before another modals get mounted we would be happy about it
   
 # Project Status & Features
 
