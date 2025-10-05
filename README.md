@@ -18,6 +18,8 @@ There are some features we need help with, if you're up for the task, feel free 
 - Audit Logs
 - Giphy Integration
 - The other social media platforms (not just Twitch) for account connections
+- Refactor/Improve code
+- Full fledged Discord mod to replace the current patching system
   
 # Project Status & Features
 
