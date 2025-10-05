@@ -593,10 +593,10 @@ const globalUtils = {
             username: user.username,
             discriminator: user.discriminator,
             id: user.id,
-            avatar: user.avatar,
+            avatar: user.avatar === 'NULL' ? null : user.avatar, //just in case
             bot: user.bot,
             flags: user.flags,
-            premium: user.premium
+            premium: user.premium || true
         };
     },
     miniBotObject: (bot) => {

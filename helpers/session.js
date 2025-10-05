@@ -470,7 +470,7 @@ class session {
                     discriminator: this.user.discriminator,
                     verified: this.user.verified,
                     bot: this.user.bot,
-                    premium: this.user.premium
+                    premium: this.user.premium || true
                 },
                 user_settings: this.user.settings,
                 session_id: this.id,

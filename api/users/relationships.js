@@ -170,8 +170,10 @@ router.put("/:userid", async (req, res) => {
                         }); 
                     }
     
-                    let compareWith = await global.database.getUsersGuilds(user.id).map(i => i.id);
-    
+                    let compareWith = await global.database.getUsersGuilds(user.id);
+
+                    compareWith = compareWith.map(i => i.id);
+
                     if (compareWith.length === 0) {
                         return res.status(403).json({
                             code: 403,
@@ -181,9 +183,9 @@ router.put("/:userid", async (req, res) => {
 
                     let sharedGuilds = [];
 
-                    for(var guild of guilds) {
+                    for(var guild of ourGuilds) {
                         if (compareWith.includes(guild.id)) {
-                            sharedGuilds.push(theirGuild.id);
+                            sharedGuilds.push(guild.id);
                         }
                     }
 
@@ -428,7 +430,9 @@ router.post("/", async (req, res) => {
                         }); 
                     }
     
-                    let compareWith = await global.database.getUsersGuilds(user.id).map(i => i.id);
+                    let compareWith = await global.database.getUsersGuilds(user.id);
+
+                    compareWith = compareWith.map(i => i.id);
     
                     if (compareWith.length === 0) {
                         return res.status(403).json({
@@ -439,9 +443,9 @@ router.post("/", async (req, res) => {
 
                     let sharedGuilds = [];
 
-                    for(var guild of guilds) {
+                    for(var guild of ourGuilds) {
                         if (compareWith.includes(guild.id)) {
-                            sharedGuilds.push(theirGuild.id);
+                            sharedGuilds.push(guild.id);
                         }
                     }
 

@@ -331,6 +331,15 @@ const database = {
                 username TEXT DEFAULT NULL
             );`, []);
 
+            await database.runQuery(`CREATE TABLE IF NOT EXISTS audit_logs (
+                id TEXT PRIMARY KEY,
+                guild_id TEXT,
+                action_type INTEGER,
+                target_id TEXT,
+                user_id TEXT,
+                changes JSONB
+            );`, []);
+
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -427,6 +436,21 @@ const database = {
             return false;
         }
     },
+    addToGuildAuditLogs: async (guild_id, action_type, target_id, user_id, changes) => {
+        try {
+            let audit_log_id = Snowflake.generate();
+
+            await database.runQuery(`
+                INSERT INTO audit_logs (id, guild_id, action_type, target_id, user_id, changes) VALUES ($1, $2, $3, $4, $5, $6)
+            `, [audit_log_id, guild_id, action_type, target_id, user_id, changes]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
     setPrivateChannels: async (user_id, private_channels) => {
         try {
             await database.runQuery(`
@@ -463,7 +487,7 @@ const database = {
                     username: row.username,
                     discriminator: row.discriminator,
                     id: row.user_id_real,
-                    avatar: row.avatar,
+                    avatar: row.avatar == 'NULL' ? null : row.avatar,
                     bot: row.bot == 1,
                     flags: row.flags,
                     premium: true
@@ -506,7 +530,7 @@ const database = {
                     username: row.username,
                     discriminator: row.discriminator,
                     id: row.user_id_real,
-                    avatar: row.avatar,
+                    avatar: row.avatar == 'NULL' ? null : row.avatar,
                     bot: row.bot == 1,
                     flags: row.flags,
                     premium: true
@@ -1581,7 +1605,7 @@ const database = {
                 }
 
                 await database.runQuery(`UPDATE group_channels SET name = $1 WHERE id = $2`, [channel.name ?? '', channel_id]);
-                
+
                 if (groupOwnerPassOver) {
                     await database.runQuery(`UPDATE group_channels SET owner_id = $1 WHERE id = $2`, [channel.owner_id, channel_id]);
                 }
@@ -2257,7 +2281,7 @@ const database = {
 
                 if (includeReactions && rawReactions.length > 0) {
                     const reactionMap = rawReactions.reduce((acc, reaction) => {
-                        const key = JSON.stringify(reaction.emoji); 
+                        const key = JSON.stringify(reaction.emoji);
 
                         if (!acc[key]) {
                             acc[key] = {
@@ -2637,197 +2661,91 @@ const database = {
         }
     },
     getGuildById: async (id) => {
-        const rows = await database.runQuery(`
+        const guildRows = await database.runQuery(`
                 SELECT * FROM guilds WHERE id = $1
         `, [id]);
 
         try {
-            if (rows === null || rows.length === 0) {
+            if (guildRows === null || guildRows.length === 0) {
                 return null;
             }
 
-            //#region Channels Logic
-            const channelRows = await database.runQuery(`
-                SELECT * FROM channels WHERE guild_id = $1
-            `, [id]);
+            const guildRow = guildRows[0];
 
-            if (channelRows === null || channelRows.length === 0) {
-                return null;
-            }
-
-            let channels = [];
-
-            for (var row of channelRows) {
-                if (!row) continue;
-
-                let overwrites = [];
-
-                if (row.permission_overwrites && row.permission_overwrites.includes(":")) {
-                    for (var overwrite of row.permission_overwrites.split(':')) {
-                        let role_id = overwrite.split('_')[0];
-                        let allow_value = overwrite.split('_')[1];
-                        let deny_value = overwrite.split('_')[2];
-
-                        overwrites.push({
-                            id: role_id,
-                            allow: parseInt(allow_value),
-                            deny: parseInt(deny_value),
-                            type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
-                        });
-                    }
-                } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
-                    let overwrite = row.permission_overwrites;
-                    let role_id = overwrite.split('_')[0];
-                    let allow_value = overwrite.split('_')[1];
-                    let deny_value = overwrite.split('_')[2];
-
-                    overwrites.push({
-                        id: role_id,
-                        allow: parseInt(allow_value),
-                        deny: parseInt(deny_value),
-                        type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
-                    });
-                }
-
-                let channel_obj = {
-                    id: row.id,
-                    name: row.name,
-                    guild_id: row.guild_id == 'NULL' ? null : row.guild_id,
-                    parent_id: row.parent_id == 'NULL' ? null : row.parent_id,
-                    type: parseInt(row.type),
-                    topic: row.topic == 'NULL' ? null : row.topic,
-                    nsfw: row.nsfw == 1 ?? false,
-                    last_message_id: row.last_message_id,
-                    permission_overwrites: overwrites,
-                    position: row.position
-                }
-
-                if (parseInt(row.type) === 4) {
-                    delete channel_obj.parent_id;
-                }
-
-                channels.push(channel_obj);
-            }
-
-            //#endregion
-
-            //#region Roles Logic
-
-            const roleRows = await database.runQuery(`
-                SELECT * FROM roles WHERE guild_id = $1
-            `, [id]);
-
-            if (roleRows === null || roleRows.length === 0) {
-                return null;
-            }
+            const [
+                channelRows,
+                roleRows,
+                memberRows,
+                webhookRows,
+                auditLogRows
+            ] = await Promise.all([
+                database.runQuery(`SELECT * FROM channels WHERE guild_id = $1`, [id]),
+                database.runQuery(`SELECT * FROM roles WHERE guild_id = $1`, [id]),
+                database.runQuery(`SELECT * FROM members WHERE guild_id = $1`, [id]),
+                database.runQuery(`SELECT * FROM webhooks WHERE guild_id = $1`, [id]),
+                database.runQuery(`SELECT * FROM audit_logs WHERE guild_id = $1`, [id])
+            ]);
 
             let roles = [];
 
-            for (var row of roleRows) {
-                roles.push({
-                    id: row.role_id,
-                    name: row.name,
-                    permissions: row.permissions,
-                    position: row.position,
-                    color: row.color,
-                    hoist: row.hoist == 1,
-                    mentionable: row.mentionable == 1
-                });
+            if (roleRows && roleRows.length > 0) {
+                for (const row of roleRows) {
+                    roles.push({
+                        id: row.role_id,
+                        name: row.name,
+                        permissions: row.permissions,
+                        position: row.position,
+                        color: row.color,
+                        hoist: row.hoist == 1,
+                        mentionable: row.mentionable == 1
+                    });
+                }
             }
 
-            //#endregion
+            let userIds = new Set();
 
-            //#region Guild Members Logic
-
-            const memberRows = await database.runQuery(`
-                SELECT * FROM members WHERE guild_id = $1
-            `, [id]);
-
-            if (memberRows === null || memberRows.length === 0) {
-                return null;
+            if (memberRows) {
+                memberRows.forEach(row => userIds.add(row.user_id));
             }
+
+            if (webhookRows) {
+                webhookRows.forEach(row => userIds.add(row.creator_id));
+            }
+
+            let userIdsArr = [...userIds];
+            let userAccounts = await database.getAccountsByIds(userIdsArr);
+            let usersMap = new Map(userAccounts.map(user => [user.id, user]));
 
             let members = [];
 
-            for (var row of memberRows) {
-                let member_roles = JSON.parse(row.roles) ?? [];
+            if (memberRows && memberRows.length > 0) {
+                for (const row of memberRows) {
+                    const user = usersMap.get(row.user_id);
 
-                member_roles = member_roles.filter(role_id => roles.find(guild_role => guild_role.id === role_id) !== undefined);
+                    if (!user) continue;
 
-                const user = await database.getAccountByUserId(row.user_id);
+                    let member_roles = JSON.parse(row.roles) ?? [];
 
-                if (user == null) {
-                    continue;
-                }
+                    member_roles = member_roles.filter(role_id => roles.find(guild_role => guild_role.id === role_id) !== undefined);
+                    member_roles = member_roles.filter(x => x !== id);
 
-                member_roles = member_roles.filter(x => x !== id); //exclude @ everyone just in case
-
-                members.push({
-                    id: user.id,
-                    nick: row.nick == 'NULL' ? null : row.nick,
-                    deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
-                    mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
-                    roles: member_roles,
-                    joined_at: new Date().toISOString(),
-                    user: globalUtils.miniUserObject(user)
-                })
-            }
-
-            //#endregion
-
-            //#region Custom Emojis Logic
-
-            let emojis = JSON.parse(rows[0].custom_emojis); //???
-
-            for (var emoji of emojis) {
-                emoji.roles = [];
-                emoji.require_colons = true;
-                emoji.managed = false;
-                emoji.allNamesString = `:${emoji.name}:`
-            }
-
-            //#endregion
-
-            //#region Guild Presences Logic
-
-            let presences = [];
-
-            for (var member of members) {
-                let sessions = global.userSessions.get(member.id);
-
-                if (global.userSessions.size === 0 || !sessions) {
-                    presences.push({
-                        game_id: null,
-                        status: 'offline',
-                        activities: [],
-                        user: globalUtils.miniUserObject(member.user)
+                    members.push({
+                        id: user.id,
+                        nick: row.nick == 'NULL' ? null : row.nick,
+                        deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
+                        mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
+                        roles: member_roles,
+                        joined_at: new Date().toISOString(),
+                        user: globalUtils.miniUserObject(user)
                     });
-                } else {
-                    let session = sessions[sessions.length - 1]
-
-                    if (!session.presence) {
-                        presences.push({
-                            game_id: null,
-                            status: 'offline',
-                            activities: [],
-                            user: globalUtils.miniUserObject(member.user)
-                        });
-                    } else presences.push(session.presence);
                 }
             }
-
-            //#endregion
-
-            //#region Guild Webhooks Logic
-            const webhookRows = await database.runQuery(`
-                SELECT * FROM webhooks WHERE guild_id = $1
-            `, [id]);
 
             let webhooks = [];
 
             if (webhookRows !== null) {
-                for (var row of webhookRows) {
-                    let webhookAuthor = await database.getAccountByUserId(row.creator_id);
+                for (const row of webhookRows) {
+                    const webhookAuthor = usersMap.get(row.creator_id);
 
                     if (!webhookAuthor) continue;
 
@@ -2839,26 +2757,111 @@ const database = {
                         avatar: row.avatar == 'NULL' ? null : row.avatar,
                         name: row.name,
                         user: globalUtils.miniUserObject(webhookAuthor),
-                        type: 1,
-                        application_id: null
-                    })
+                        type: 1, application_id: null
+                    });
                 }
             }
 
-            //#endregion
+            let channels = [];
+
+            if (channelRows && channelRows.length > 0) {
+                for (var row of channelRows) {
+                    if (!row) continue;
+
+                    let overwrites = [];
+
+                    if (row.permission_overwrites && row.permission_overwrites.includes(":")) {
+                        for (var overwrite of row.permission_overwrites.split(':')) {
+                            let role_id = overwrite.split('_')[0];
+                            let allow_value = overwrite.split('_')[1];
+                            let deny_value = overwrite.split('_')[2];
+
+                            overwrites.push({
+                                id: role_id,
+                                allow: parseInt(allow_value),
+                                deny: parseInt(deny_value),
+                                type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
+                            });
+                        }
+                    } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
+                        let overwrite = row.permission_overwrites;
+                        let role_id = overwrite.split('_')[0];
+                        let allow_value = overwrite.split('_')[1];
+                        let deny_value = overwrite.split('_')[2];
+
+                        overwrites.push({
+                            id: role_id,
+                            allow: parseInt(allow_value),
+                            deny: parseInt(deny_value),
+                            type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
+                        });
+                    }
+
+                    let channel_obj = {
+                        id: row.id,
+                        name: row.name,
+                        guild_id: row.guild_id == 'NULL' ? null : row.guild_id,
+                        parent_id: row.parent_id == 'NULL' ? null : row.parent_id,
+                        type: parseInt(row.type),
+                        topic: row.topic == 'NULL' ? null : row.topic,
+                        nsfw: row.nsfw == 1 ?? false,
+                        last_message_id: row.last_message_id,
+                        permission_overwrites: overwrites,
+                        position: row.position
+                    }
+
+                    if (parseInt(row.type) === 4) {
+                        delete channel_obj.parent_id;
+                    }
+
+                    channels.push(channel_obj);
+                }
+            }
+
+            let audit_logs = [];
+
+            if (auditLogRows && auditLogRows.length > 0) {
+                audit_logs = auditLogRows.map(row => ({
+                    id: row.id,
+                    guild_id: row.guild_id,
+                    action_type: row.action_type,
+                    target_id: row.target_id,
+                    user_id: row.user_id,
+                    changes: row.changes ? row.changes : []
+                }));
+            }
+
+            let emojis = JSON.parse(guildRow.custom_emojis); //make this jsonb in the future
+
+            for (var emoji of emojis) {
+                emoji.roles = []; emoji.require_colons = true; emoji.managed = false;
+                emoji.allNamesString = `:${emoji.name}:`
+            }
+
+            let presences = [];
+
+            for (var member of members) {
+                let sessions = global.userSessions.get(member.id);
+                if (global.userSessions.size === 0 || !sessions) {
+                    presences.push({ game_id: null, status: 'offline', activities: [], user: globalUtils.miniUserObject(member.user) });
+                } else {
+                    let session = sessions[sessions.length - 1]
+                    if (!session.presence) {
+                        presences.push({ game_id: null, status: 'offline', activities: [], user: globalUtils.miniUserObject(member.user) });
+                    } else presences.push(session.presence);
+                }
+            }
 
             return {
-                id: rows[0].id,
-                name: rows[0].name,
-                icon: rows[0].icon == 'NULL' ? null : rows[0].icon,
-                splash: rows[0].splash == 'NULL' ? null : rows[0].splash,
-                banner: rows[0].banner == 'NULL' ? null : rows[0].banner,
-                region: rows[0].region,
-                owner_id: rows[0].owner_id,
-                afk_channel_id: rows[0].afk_channel_id == 'NULL' ? null : rows[0].afk_channel_id,
-                afk_timeout: rows[0].afk_timeout,
+                id: guildRow.id, name: guildRow.name,
+                icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
+                splash: guildRow.splash == 'NULL' ? null : guildRow.splash,
+                banner: guildRow.banner == 'NULL' ? null : guildRow.banner,
+                region: guildRow.region, owner_id: guildRow.owner_id,
+                afk_channel_id: guildRow.afk_channel_id == 'NULL' ? null : guildRow.afk_channel_id,
+                afk_timeout: guildRow.afk_timeout,
                 channels: channels,
-                exclusions: rows[0].exclusions ? JSON.parse(rows[0].exclusions) : [],
+                exclusions: guildRow.exclusions ? JSON.parse(guildRow.exclusions) : [],
                 member_count: members.length,
                 members: members,
                 large: false,
@@ -2866,21 +2869,283 @@ const database = {
                 emojis: emojis,
                 webhooks: webhooks,
                 presences: presences,
-                voice_states: global.guild_voice_states.get(rows[0].id) || [],
-                vanity_url_code: rows[0].vanity_url == 'NULL' ? null : rows[0].vanity_url,
-                creation_date: rows[0].creation_date,
-                features: rows[0].features ? JSON.parse(rows[0].features) : [],
-                default_message_notifications: rows[0].default_message_notifications ?? 0,
+                voice_states: global.guild_voice_states.get(guildRow.id) || [],
+                vanity_url_code: guildRow.vanity_url == 'NULL' ? null : guildRow.vanity_url,
+                creation_date: guildRow.creation_date,
+                features: guildRow.features ? JSON.parse(guildRow.features) : [],
+                default_message_notifications: guildRow.default_message_notifications ?? 0,
                 joined_at: new Date().toISOString(),
-                verification_level: rows[0].verification_level ?? 0
+                verification_level: guildRow.verification_level ?? 0,
+                audit_logs: audit_logs
             }
         } catch (error) {
             logText(error, "error");
 
             return {
-                id: rows[0].id,
+                id: id,
                 unavailable: true
             }; //fallback ?
+        }
+    },
+    getGuildsByIds: async (ids) => {
+        try {
+            if (!ids || ids.length === 0) {
+                return [];
+            }
+
+            const [
+                guildRows,
+                channelRows,
+                roleRows,
+                memberRows,
+                webhookRows,
+                auditLogRows
+            ] = await Promise.all([
+                database.runQuery(`SELECT * FROM guilds WHERE id = ANY($1::text[])`, [ids]),
+                database.runQuery(`SELECT * FROM channels WHERE guild_id = ANY($1::text[])`, [ids]),
+                database.runQuery(`SELECT * FROM roles WHERE guild_id = ANY($1::text[])`, [ids]),
+                database.runQuery(`SELECT * FROM members WHERE guild_id = ANY($1::text[])`, [ids]),
+                database.runQuery(`SELECT * FROM webhooks WHERE guild_id = ANY($1::text[])`, [ids]),
+                database.runQuery(`SELECT * FROM audit_logs WHERE guild_id = ANY($1::text[])`, [ids])
+            ]);
+
+            if (guildRows === null || guildRows.length === 0) {
+                return [];
+            }
+
+            const rolesByGuild = new Map();
+
+            if (roleRows) {
+                for (const row of roleRows) {
+                    const guildId = row.guild_id;
+
+                    if (!rolesByGuild.has(guildId)) {
+                        rolesByGuild.set(guildId, []);
+                    }
+
+                    rolesByGuild.get(guildId).push({
+                        id: row.role_id, 
+                        name: row.name, 
+                        permissions: row.permissions,
+                        position: row.position, 
+                        color: row.color,
+                        hoist: row.hoist == 1, 
+                        mentionable: row.mentionable == 1
+                    });
+                }
+            }
+
+            let userIds = new Set();
+
+            if (memberRows) {
+                memberRows.forEach(row => userIds.add(row.user_id));
+            }
+
+            if (webhookRows) {
+                webhookRows.forEach(row => userIds.add(row.creator_id));
+            }
+
+            let userAccounts = await database.getAccountsByIds([...userIds]);
+            let usersMap = new Map(userAccounts.map(user => [user.id, user]));
+
+            const membersByGuild = new Map();
+
+            if (memberRows) {
+                for (const row of memberRows) {
+                    const guildId = row.guild_id;
+                    const user = usersMap.get(row.user_id);
+                    const guildRoles = rolesByGuild.get(guildId) || [];
+
+                    if (!user) continue;
+
+                    let member_roles = JSON.parse(row.roles) ?? [];
+
+                    member_roles = member_roles.filter(role_id => guildRoles.find(guild_role => guild_role.id === role_id) !== undefined);
+                    member_roles = member_roles.filter(x => x !== guildId);
+
+                    if (!membersByGuild.has(guildId)) {
+                        membersByGuild.set(guildId, []);
+                    }
+
+                    membersByGuild.get(guildId).push({
+                        id: user.id,
+                        nick: row.nick == 'NULL' ? null : row.nick,
+                        deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
+                        mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
+                        roles: member_roles,
+                        joined_at: new Date().toISOString(),
+                        user: globalUtils.miniUserObject(user)
+                    });
+                }
+            }
+
+            const webhooksByGuild = new Map();
+
+            if (webhookRows) {
+                for (const row of webhookRows) {
+                    const guildId = row.guild_id;
+                    const webhookAuthor = usersMap.get(row.creator_id);
+                    
+                    if (!webhookAuthor) continue;
+
+                    if (!webhooksByGuild.has(guildId)) webhooksByGuild.set(guildId, []);
+
+                    webhooksByGuild.get(guildId).push({
+                        guild_id: guildId, 
+                        channel_id: row.channel_id, 
+                        id: row.id,
+                        token: row.token, 
+                        avatar: row.avatar == 'NULL' ? null : row.avatar,
+                        name: row.name, 
+                        user: globalUtils.miniUserObject(webhookAuthor),
+                        type: 1, 
+                        application_id: null
+                    });
+                }
+            }
+
+            const channelsByGuild = new Map();
+
+            if (channelRows) {
+                for (var row of channelRows) {
+                    const guildId = row.guild_id;
+
+                    if (!row) continue;
+
+                    let overwrites = [];
+
+                    if (row.permission_overwrites && row.permission_overwrites.includes(":")) {
+                        for (var overwrite of row.permission_overwrites.split(':')) {
+                            let role_id = overwrite.split('_')[0];
+                            let allow_value = overwrite.split('_')[1];
+                            let deny_value = overwrite.split('_')[2];
+                            overwrites.push({
+                                id: role_id, allow: parseInt(allow_value), deny: parseInt(deny_value),
+                                type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
+                            });
+                        }
+                    } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
+                        let overwrite = row.permission_overwrites;
+                        let role_id = overwrite.split('_')[0];
+                        let allow_value = overwrite.split('_')[1];
+                        let deny_value = overwrite.split('_')[2];
+                        overwrites.push({
+                            id: role_id, allow: parseInt(allow_value), deny: parseInt(deny_value),
+                            type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
+                        });
+                    }
+ 
+                    let channel_obj = {
+                        id: row.id, 
+                        name: row.name, 
+                        guild_id: guildId == 'NULL' ? null : guildId,
+                        parent_id: row.parent_id == 'NULL' ? null : row.parent_id, 
+                        type: parseInt(row.type),
+                        topic: row.topic == 'NULL' ? null : row.topic, 
+                        nsfw: row.nsfw == 1 ?? false,
+                        last_message_id: row.last_message_id,
+                        permission_overwrites: overwrites,
+                        position: row.position
+                    }
+
+                    if (parseInt(row.type) === 4) {
+                        delete channel_obj.parent_id;
+                    }
+
+                    if (!channelsByGuild.has(guildId)) {
+                        channelsByGuild.set(guildId, []);
+                    }
+                    
+                    channelsByGuild.get(guildId).push(channel_obj);
+                }
+            }
+
+            const auditLogsByGuild = new Map();
+
+            if (auditLogRows) {
+                for (const row of auditLogRows) {
+                    const guildId = row.guild_id;
+
+                    if (!auditLogsByGuild.has(guildId)) {
+                        auditLogsByGuild.set(guildId, []);
+                    }
+
+                    auditLogsByGuild.get(guildId).push({
+                        id: row.id, 
+                        guild_id: guildId, 
+                        action_type: row.action_type,
+                        target_id: row.target_id, 
+                        user_id: row.user_id,
+                        changes: row.changes ? row.changes : []
+                    });
+                }
+            }
+
+            const retGuilds = [];
+
+            for (const guildRow of guildRows) {
+                const guildId = guildRow.id;
+
+                const roles = rolesByGuild.get(guildId) || [];
+                const members = membersByGuild.get(guildId) || [];
+                const webhooks = webhooksByGuild.get(guildId) || [];
+                const channels = channelsByGuild.get(guildId) || [];
+                const audit_logs = auditLogsByGuild.get(guildId) || [];
+
+                let emojis = JSON.parse(guildRow.custom_emojis);
+
+                for (var emoji of emojis) {
+                    emoji.roles = []; emoji.require_colons = true; emoji.managed = false;
+                    emoji.allNamesString = `:${emoji.name}:`
+                }
+
+                let presences = [];
+
+                for (var member of members) {
+                    let sessions = global.userSessions.get(member.id);
+                    if (global.userSessions.size === 0 || !sessions) {
+                        presences.push({ game_id: null, status: 'offline', activities: [], user: globalUtils.miniUserObject(member.user) });
+                    } else {
+                        let session = sessions[sessions.length - 1]
+                        if (!session.presence) {
+                            presences.push({ game_id: null, status: 'offline', activities: [], user: globalUtils.miniUserObject(member.user) });
+                        } else presences.push(session.presence);
+                    }
+                }
+
+                retGuilds.push({
+                    id: guildId, name: guildRow.name,
+                    icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
+                    splash: guildRow.splash == 'NULL' ? null : guildRow.splash,
+                    banner: guildRow.banner == 'NULL' ? null : guildRow.banner,
+                    region: guildRow.region, owner_id: guildRow.owner_id,
+                    afk_channel_id: guildRow.afk_channel_id == 'NULL' ? null : guildRow.afk_channel_id,
+                    afk_timeout: guildRow.afk_timeout,
+                    channels: channels,
+                    exclusions: guildRow.exclusions ? JSON.parse(guildRow.exclusions) : [],
+                    member_count: members.length,
+                    members: members,
+                    large: false, //When is large set to true?
+                    roles: roles,
+                    emojis: emojis,
+                    webhooks: webhooks,
+                    presences: presences,
+                    voice_states: global.guild_voice_states.get(guildId) || [],
+                    vanity_url_code: guildRow.vanity_url == 'NULL' ? null : guildRow.vanity_url,
+                    creation_date: guildRow.creation_date,
+                    features: guildRow.features ? JSON.parse(guildRow.features) : [],
+                    default_message_notifications: guildRow.default_message_notifications ?? 0,
+                    joined_at: new Date().toISOString(),
+                    verification_level: guildRow.verification_level ?? 0,
+                    audit_logs: audit_logs
+                });
+            }
+
+            return retGuilds;
+        } catch (error) {
+            logText(error, "error");
+
+            return []; //fallback ?
         }
     },
     transferGuildOwnership: async (guild_id, new_owner) => {
@@ -2896,18 +3161,16 @@ const database = {
     },
     getUsersGuilds: async (id) => {
         try {
-            const guilds = [];
             const members = await database.runQuery(`
-                SELECT * FROM members WHERE user_id = $1
+                SELECT guild_id FROM members WHERE user_id = $1
             `, [id]);
 
-            if (members != null && members.length > 0) {
-                for (var member of members) {
-                    let guild = await database.getGuildById(member.guild_id);
-
-                    if (guild != null) guilds.push(guild);
-                }
+            if (members === null || members.length === 0) {
+                return [];
             }
+
+            const guildIds = members.map(member => member.guild_id);
+            const guilds = await database.getGuildsByIds(guildIds);
 
             return guilds;
         } catch (error) {

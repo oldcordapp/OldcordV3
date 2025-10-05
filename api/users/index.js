@@ -170,7 +170,7 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
             
                 for (let ourFriend of ourFriends) {
                     if (theirFriendsSet.has(ourFriend.user.id) && ourFriend.type == 1) {
-                        sharedFriends.push(ourFriend.user);
+                        sharedFriends.push(globalUtils.miniUserObject(ourFriend.user));
                     }
                 }
             }
@@ -201,7 +201,8 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
 });
 
 //Never share this cache because it's mutuals and whatnot, different for each requester
-router.get("/:userid/relationships", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
+//We're gonna remove the userMiddleware from this since it needs to work on users we're friends with without any guilds in common
+router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 
@@ -233,7 +234,7 @@ router.get("/:userid/relationships", userMiddleware, quickcache.cacheFor(60 * 5)
         for (var ourFriend of ourFriends) {
             for (var theirFriend of theirFriends) {
                 if (theirFriend.user.id === ourFriend.user.id && theirFriend.type === 1 && ourFriend.type === 1) {
-                    sharedFriends.push(theirFriend.user);
+                    sharedFriends.push(globalUtils.miniUserObject(theirFriend.user));
                 }
             }
         }
