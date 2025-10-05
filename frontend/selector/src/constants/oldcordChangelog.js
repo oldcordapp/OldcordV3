@@ -31,14 +31,14 @@ export const oldcordChangelog = {
       title: "SELECTOR! SELECTOR! SELECTOR! SELECTOR! SELECTOR!",
       items: [
         "The selector is improved! And it looks that one instant messaging service you like back in 2018! So great!",
-        "We now have rate limiting so that bots that are not misbehaving can get fucked off. Don't say the C word though!",
+        "We now have rate limiting so that bots that are not misbehaving can get bonked off. Don't say the C word though! <small>Okay for real though, please don't use any word to mask your internal bigotry. It's not cool. /srs</small>",
       ],
     },
     {
       type: "default",
       title: "WE NEED HELP!",
       items: [
-        "Please help us out in some stuff like Giphy support, improving the code, making a new Discord mod, etc! Your power make us increase by 10x! <small>And yes that includes the Selector too despite it's goodiness... please help us fix the issues...</small>",
+        "Please help us out in some stuff like Giphy support, improving the code, making a new Discord mod, etc! Your power make us increase by 10x! <small>And yes that includes the Selector too despite it's goodiness... please help us fix the issues...</small> If you love this old Discord revival project, please help us!",
       ],
     },
   ],

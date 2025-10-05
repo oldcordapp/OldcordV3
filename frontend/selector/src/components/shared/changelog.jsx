@@ -50,8 +50,9 @@ export default function Changelog({ sections, video, style }) {
                 <li
                   key={itemIndex}
                   className="changelog-list-item"
-                  dangerouslySetInnerHTML={{ __html: item }}
-                />
+                >
+                    <Text variant="body" dangerouslySetInnerHTML={{ __html: item }}/>
+                </li>
               ))}
             </ul>
           )}
