@@ -9,6 +9,7 @@ export default function ({ isOpen, onClose }) {
       subtitle="4 October 2025"
       showCloseButton={true}
       size="medium"
+      footerAlignment="left"
       footer={
         <div className="modal-footer-text">
           Missed an update?{" "}

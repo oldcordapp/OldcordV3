@@ -18,7 +18,7 @@
 }
 
 .options-card .title {
-  color: #F6F6F7;
+  color: #f6f6f7;
   font-weight: 600;
   font-size: 16px;
   margin: 0 0 4px 0;
@@ -28,10 +28,17 @@
 }
 
 .options-card .description {
-  color: #B9BBBE;
+  color: #b9bbbe;
   font-size: 14px;
   line-height: 20px;
   margin: 0;
+  height: 36px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .options-card .controls {
@@ -46,7 +53,7 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: #B9BBBE;
+  color: #b9bbbe;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,5 +63,5 @@
 
 .options-card .icon-button:hover {
   opacity: 1;
-  color: #F6F6F7;
+  color: #f6f6f7;
 }

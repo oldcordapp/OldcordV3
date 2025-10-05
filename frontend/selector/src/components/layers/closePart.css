@@ -42,7 +42,6 @@
   font-weight: 600;
   margin-top: 8px;
   text-align: center;
-  user-select: none;
   transform: scaleY(
     1.04
   ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */

@@ -214,12 +214,12 @@ export default function () {
               {Object.keys(hasIncompatiblePatches).map((patch) => {
                 return (
                   <li key={patch}>
-                    {PATCHES[patch].label} is not comptaible with{" "}
+                    <Text variant="body">{PATCHES[patch].label} is not comptaible with{" "}
                     {hasIncompatiblePatches[patch]
                       .map((patch) => {
                         return PATCHES[patch].label;
                       })
-                      .join(", ")}
+                      .join(", ")}</Text>
                   </li>
                 );
               })}
@@ -248,6 +248,7 @@ export default function () {
             return (
               <OptionsCard
                 key={key}
+                cardId={key}
                 title={PATCHES[key].label}
                 description={PATCHES[key].description}
                 iconType={"info"}

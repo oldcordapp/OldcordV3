@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "./unsavedChangesNotice.css";
+import Button from "./button";
 
 export default function ({
   show,
@@ -48,16 +49,18 @@ export default function ({
       >
         <div className="notice-message">{message}</div>
         <div className="button-group">
-          <button
-            type="button"
-            className="action-button reset"
+          <Button
+            variant="ghost"
             onClick={onReset}
           >
             Reset
-          </button>
-          <button type="button" className="action-button save" onClick={onSave}>
+          </Button>
+          <Button
+            variant="success"
+            onClick={onSave}
+          >
             Save Changes
-          </button>
+          </Button>
         </div>
       </div>
     </div>

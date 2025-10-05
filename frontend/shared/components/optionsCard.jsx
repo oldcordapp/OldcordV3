@@ -2,29 +2,36 @@ import ToggleSwitch from "./toggleSwitch";
 import Gear from "../assets/gear.svg?react";
 import Info from "../assets/info.svg?react";
 import "./optionsCard.css";
-import { useId } from "react";
+import { useModal } from "../hooks/modalHandler";
 
 export default function ({
+  cardId,
   title,
   description,
   iconType,
   isEnabled,
   onToggle,
 }) {
-  const uniqueId = useId();
+  const { addModal } = useModal();
   let disabled = false;
 
   function renderIcon() {
     switch (iconType) {
       case "settings":
         return (
-          <button className="icon-button">
+          <button
+            className="icon-button"
+            onClick={() => addModal("pluginInfo", { plugin: cardId })}
+          >
             <Gear />
           </button>
         );
       case "info":
         return (
-          <button className="icon-button">
+          <button
+            className="icon-button"
+            onClick={() => addModal("pluginInfo", { plugin: cardId })}
+          >
             <Info />
           </button>
         );
@@ -50,7 +57,7 @@ export default function ({
         <ToggleSwitch
           isChecked={isEnabled}
           onChange={onToggle}
-          uniqueId={uniqueId}
+          uniqueId={cardId}
           disabled={disabled}
         />
       </div>

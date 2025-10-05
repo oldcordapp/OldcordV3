@@ -22,7 +22,7 @@ const { Provider, useContextHook } = ViewHandler({
 export default function () {
   const { activeView, changeView } = useContextHook();
   const { hasUnsavedChanges, triggerNudge } = useUnsavedChanges();
-  const { setActiveModal } = useModal();
+  const { addModal } = useModal();
 
   const navItems = [
     { type: "header", label: "Oldplunger" },
@@ -57,7 +57,7 @@ export default function () {
       label: "Changelog",
       view: SETTINGS_VIEWS.CHANGELOG,
       onClick: () => {
-        setActiveModal("changelog");
+        addModal("changelog");
       },
     },
     {

@@ -13,6 +13,7 @@ export default function ({
   footer,
   size = "medium",
   showCloseButton = false,
+  footerAlignment = "right",
   style
 }) {
   const ref = useRef();
@@ -86,7 +87,7 @@ export default function ({
             <div className="scroller">{children}</div>
           </div>
 
-          {footer && <div className="modal-footer">{footer}</div>}
+          {footer && <div className={`modal-footer ${footerAlignment === "left" ? "footer-left" : "footer-right"}`}>{footer}</div>}
         </div>
       </div>
     </div>,

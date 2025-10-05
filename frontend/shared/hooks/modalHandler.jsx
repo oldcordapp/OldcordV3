@@ -2,32 +2,35 @@ import contextFactory from "@oldcord/frontend-shared/hooks/contextFactory";
 import { useState, useEffect } from "react";
 
 function useModalState() {
-  const [activeModal, setActiveModal] = useState(null);
-
-  const [exitingModal, setExitingModal] = useState(null);
+  const [modal, setModal] = useState({ name: null, props: {} });
+  const [exitingModal, setExitingModal] = useState({ name: null, props: {} });
   const [exitDuration, setExitDuration] = useState(null);
 
   useEffect(() => {
-    if (exitingModal) {
+    if (exitingModal.name) {
       const timer = setTimeout(() => {
-        setExitingModal(null);
+        setExitingModal({ name: null, props: {} });
       }, exitDuration);
 
       return () => clearTimeout(timer);
     }
-  }, [exitingModal]);
+  }, [exitingModal.name]);
+
+  function addModal(name, props = {}) {
+    setModal({ name, props });
+  }
 
   function removeModal(exitDuration = 300) {
-    setExitingModal(activeModal);
+    setExitingModal(modal);
     setExitDuration(exitDuration);
-
-    setActiveModal(null);
+    setModal({ name: null, props: {} });
   }
 
   return {
-    activeModal,
-    exitingModal,
-    setActiveModal,
+    activeModal: modal.name,
+    exitingModal: exitingModal.name,
+    modalProps: modal.props,
+    addModal,
     removeModal,
   };
 }

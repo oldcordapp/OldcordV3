@@ -3,6 +3,7 @@ export const PATCHES = {
     label: "Electron Patches",
     description:
       "Required for client functionality. Automatically enabled on desktop client.",
+    authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: true,
     defaultEnabled: false,
@@ -12,6 +13,7 @@ export const PATCHES = {
   userSelect: {
     label: "User Select",
     description: "Enables user selection in 2015 clients",
+    authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: true,
@@ -21,6 +23,7 @@ export const PATCHES = {
   emojiAnywhere: {
     label: "Unrestricted Emojis",
     description: "Allows using emojis anywhere without restrictions",
+    authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: true,
@@ -31,6 +34,7 @@ export const PATCHES = {
     label: "Modernize WebRTC",
     description:
       "Sends more than just ICE & RTP mappings (Like the modern Discord clients) and Unified Plan support - Required for WebRTC Voice Communication",
+    authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: true,
@@ -64,6 +68,7 @@ export const PATCHES = {
     label: "Force WebRTC P2P",
     description:
       "Forces the client to use webrtc-p2p instead of webrtc, this means, small-scale voice calling without the need for a media server",
+    authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: false,

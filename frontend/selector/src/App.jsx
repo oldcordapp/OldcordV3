@@ -18,7 +18,7 @@ import "./App.css";
 function Container() {
   const { activeLayer, exitingLayer } = useLayer();
   const { isNudging } = useUnsavedChanges();
-  const { activeModal, exitingModal, removeModal } = useModal();
+  const { activeModal, exitingModal, modalProps, removeModal } = useModal();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -50,6 +50,7 @@ function Container() {
 
       {CurrentModal && (
         <CurrentModal
+          {...modalProps}
           isOpen={activeModal === modalKey}
           onClose={() => {
             removeModal();

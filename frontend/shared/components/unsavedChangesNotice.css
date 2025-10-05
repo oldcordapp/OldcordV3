@@ -61,42 +61,6 @@ transform: translateY(150.078%) translateZ(0px);
   margin-left: 16px;
 }
 
-.action-button {
-  border: none;
-  border-radius: 3px;
-  font-size: 14px;
-  font-weight: 500;
-  height: 32px;
-  min-width: 60px;
-  padding: 2px 16px;
-  cursor: pointer;
-  transition: background-color 0.17s ease, opacity 0.17s ease;
-}
-
-.action-button:not(:first-child) {
+.button-group .button:not(:first-child) {
   margin-left: 10px;
-}
-
-.action-button.reset {
-  background: none;
-  color: white;
-  padding: 2px 0;
-  position: relative;
-}
-
-.action-button.reset:hover {
-  text-decoration: underline;
-}
-
-.action-button.save {
-  background-color: #43b581;
-  color: white;
-}
-
-.action-button.save:hover {
-  background-color: #3ca374;
-}
-
-.action-button.save:active {
-  background-color: #369167;
 }

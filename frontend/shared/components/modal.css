@@ -50,6 +50,7 @@
     transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315);
   z-index: 110;
   pointer-events: auto;
+  user-select: none;
 }
 
 .open .modal-content {
@@ -132,6 +133,14 @@
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
 }
+
+.modal-footer.footer-left {
+  justify-content: flex-start;
+}
+
+.modal-footer.footer-right {
+  justify-content: flex-end;
+}
 .modal-footer-text {
   font-size: 12px;
   color: #b9bbbe;
@@ -176,4 +185,11 @@
 .modal-content .scroller strong {
   font-weight: 700;
   color: #f6f6f7;
+}
+
+.modal-footer button {
+  height: 38px;
+  min-height: 38px;
+  min-width: 96px;
+  width: 96px;
 }
