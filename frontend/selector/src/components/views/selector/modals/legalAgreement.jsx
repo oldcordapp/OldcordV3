@@ -12,7 +12,7 @@ export default function ({ onClose, onConfirm, legalLinks }) {
       footerAlignment="right"
       footer={
         <>
-          <Button onClick={() => onClose(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onClose(false)}>Cancel</Button>
           <Button onClick={() => onConfirm()}>I Agree</Button>
         </>
       }

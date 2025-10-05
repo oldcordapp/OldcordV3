@@ -28,7 +28,7 @@ export default function ({ onClose, onConfirm, environment }) {
       footerAlignment="right"
       footer={
         <>
-          <Button onClick={() => onClose(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onClose(false)}>Cancel</Button>
           <Button onClick={() => onConfirm()}>Continue</Button>
         </>
       }

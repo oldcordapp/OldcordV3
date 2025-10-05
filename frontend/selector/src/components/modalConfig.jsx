@@ -4,6 +4,7 @@ import RemoveChunkCache from "./views/settings/modals/removeChunkCache";
 import BuildConfirmation from "./views/selector/modals/buildConfirmation";
 import EnvironmentWarning from "./views/selector/modals/environmentWarning";
 import LegalAgreement from "./views/selector/modals/legalAgreement";
+import OpfsComingSoon from "./views/selector/modals/opfsComingSoon";
 
 export default {
   changelog: {
@@ -13,7 +14,7 @@ export default {
     Component: PluginInfo,
   },
   removeChunkCache: {
-    Component: RemoveChunkCache
+    Component: RemoveChunkCache,
   },
   buildConfirmation: {
     Component: BuildConfirmation,
@@ -23,5 +24,8 @@ export default {
   },
   legalAgreement: {
     Component: LegalAgreement,
-  }
+  },
+  opfsComingSoon: {
+    Component: OpfsComingSoon,
+  },
 };

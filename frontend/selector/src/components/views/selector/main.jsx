@@ -174,7 +174,11 @@ export default function () {
               style={{ marginBottom: "20px" }}
               onSelected={changeReleaseDate}
             />
-            <Button>
+            <Button
+              onClick={() => {
+                addModal("opfsComingSoon");
+              }}
+            >
               <Download />
             </Button>
           </div>
