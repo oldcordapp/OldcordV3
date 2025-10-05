@@ -63,11 +63,13 @@
   min-height: 200px;
   width: 440px;
 }
+
 .modal-content.medium {
   max-height: 800px;
-  min-height: 400px;
+  /*min-height: 400px;*/
   width: 600px;
 }
+
 .modal-content.large {
   max-width: 960px;
   min-height: 400px;

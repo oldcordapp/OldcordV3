@@ -52,6 +52,18 @@
   gap: 10px;
 }
 
+.unimplemented-button {
+  background-color: #464952 !important;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0px,
+    transparent 2px,
+    #5a5e68 2px, 
+    #5a5e68 4px
+  ) !important;
+  opacity: 0.3;
+}
+
 .oldcord-header {
   margin-top: -10em;
 }

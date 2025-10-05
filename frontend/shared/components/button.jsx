@@ -6,6 +6,7 @@ export default function ({
   type = "button",
   variant = "primary",
   disabled = false,
+  notImplemented = false,
   ...props
 }) {
   const getClassName = () => {
@@ -13,6 +14,7 @@ export default function ({
 
     if (variant) classes.push(`button-${variant}`);
     if (disabled) classes.push("button-disabled");
+    if (notImplemented) classes.push("unimplemented-button");
 
     return classes.join(" ");
   };

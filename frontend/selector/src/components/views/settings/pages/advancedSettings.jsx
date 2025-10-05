@@ -38,7 +38,7 @@ export default function () {
       <div className="divider" />
       <Text variant="h1">Deprecated</Text>
       <Button
-        style={{ width: "max-content" }}
+        style={{ width: "100%" }}
         onClick={() => {
           addModal("removeChunkCache");
         }}

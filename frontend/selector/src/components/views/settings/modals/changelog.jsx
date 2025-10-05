@@ -19,7 +19,7 @@ export default function ({ onClose }) {
           </a>
         </div>
       }
-      style={{ width: "490px", height: "800px", maxHeight: "100%" }}
+      style={{ height: "800px", maxHeight: "100%" }}
     >
       <Changelog
           sections={oldcordChangelog.sections}

@@ -232,10 +232,11 @@ export default function () {
         options={friendlyBuildIds}
         defaultOption={selectedBuild}
         onSelected={changeSelectedBuild}
+        style={{marginTop: '-20px'}}
       />
       <Text variant="h2">Plugins</Text>
-      <Text variant="body">Oldplunger is in development...</Text>
-      <Text variant="h2">Patches (Legacy)</Text>
+      <Text variant="body" style={{marginTop: '0px'}}>Oldplunger is in development...</Text>
+      <Text variant="h2" style={{marginTop: '10px'}}>Patches (Legacy)</Text>
       <div className="options-grid">
         {Object.keys(PATCHES).map((key) => {
           const compatibleBuilds = PATCHES[key].compatibleVersions;
