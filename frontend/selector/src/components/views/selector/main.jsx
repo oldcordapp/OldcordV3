@@ -13,6 +13,7 @@ import { convertBuildIds, convertBuildId } from "../../../lib/convertBuildIds";
 import cookieManager from "../../../lib/cookieManager";
 import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useLayer } from "../../../hooks/layerHandler";
+import localStorageManager from "../../../lib/localStorageManager";
 
 export default function () {
   const [instance, setInstance] = useState(null);
@@ -39,17 +40,25 @@ export default function () {
 
   async function handleLaunch() {
     const selectedBuild = convertBuildId(defaultBuild);
-    const enabledMods = [];
+    const allSelectedPatches =
+      localStorageManager.get("oldcord_selected_patches") ?? {};
+    const enabledPlugins = allSelectedPatches[defaultBuild] ?? [];
 
     const buildConfirmed = await new Promise((resolve) => {
       addModal("buildConfirmation", {
         selectedBuild,
-        enabledMods,
+        enabledPlugins,
         onClose: (confirmed) => {
           removeModal();
           resolve(confirmed);
         },
         onConfirm: () => {
+          const enabledPatches = JSON.stringify(enabledPlugins);
+          const expires = new Date();
+          expires.setDate(expires.getDate() + 365);
+
+          document.cookie = `enabled_patches=${enabledPatches}; expires=${expires.toUTCString()}; path=/`;
+
           removeModal();
           resolve(true);
         },
@@ -227,7 +236,12 @@ export default function () {
             )}
           </div>
           <div className="buttons">
-            <Button onClick={() => {handleLaunch()}} style={{ width: "100%" }}>
+            <Button
+              onClick={() => {
+                handleLaunch();
+              }}
+              style={{ width: "100%" }}
+            >
               Launch!
             </Button>
             <SettingsButton />

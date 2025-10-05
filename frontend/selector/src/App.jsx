@@ -39,9 +39,11 @@ function Container() {
 
   useEffect(() => {
     if (triggeredRedirect) {
-      window.location = `${location.protocol}//${location.host}`;
+      setInterval(() => {
+        window.location = `${location.protocol}//${location.host}`;
+      }, 300);
     }
-  }, [triggeredRedirect])
+  }, [triggeredRedirect]);
 
   const layerKey = activeLayer || exitingLayer;
   const CurrentLayer = layerKey ? layerConfig[layerKey]?.Component : null;

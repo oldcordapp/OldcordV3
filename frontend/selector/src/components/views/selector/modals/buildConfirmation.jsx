@@ -3,6 +3,8 @@ import Button from "@oldcord/frontend-shared/components/button";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import { useState, useEffect } from "react";
 
+import { PATCHES } from "../../../../constants/patches";
+
 export default function ({
   onClose,
   onConfirm,
@@ -43,12 +45,12 @@ export default function ({
         {displayedPlugins && displayedPlugins.length > 0 && (
           <>
             <Text variant="body" style={{ marginTop: "16px" }}>
-              Enabled plugins:
+              Enabled plugins and patches:
             </Text>
             <ul style={{ margin: "8px 0 0 20px", padding: 0 }}>
-              {displayedPlugins.map((mod, index) => (
+              {displayedPlugins.map((plugin, index) => (
                 <li key={index} style={{ margin: "4px 0" }}>
-                  <Text variant="body">{mod}</Text>
+                  <Text variant="body">{PATCHES[plugin].label}</Text>
                 </li>
               ))}
             </ul>
