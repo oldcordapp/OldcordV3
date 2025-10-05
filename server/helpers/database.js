@@ -967,8 +967,12 @@ const database = {
     banMember: async (guild_id, user_id) => {
         try {
             await database.runQuery(`
-                INSERT INTO bans (guild_id, user_id) VALUES ($1, $2)
-            `, [guild_id, user_id]);
+                INSERT INTO bans (guild_id, user_id)
+                SELECT $1, $2
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM bans WHERE guild_id = $1 AND user_id = $2
+                );
+        `, [guild_id, user_id]);
 
             return true;
         } catch (error) {
@@ -3060,34 +3064,18 @@ const database = {
     isBannedFromGuild: async (guild_id, user_id) => {
         try {
             const rows = await database.runQuery(`
-                SELECT * FROM bans WHERE user_id = $1 AND guild_id = $2
+                SELECT user_id FROM bans WHERE user_id = $1 AND guild_id = $2 LIMIT 1
             `, [user_id, guild_id]);
 
-            if (rows == null || rows.length == 0) {
-                return false;
-            }
-
-            return true;
+            return rows !== null && rows.length > 0;
         } catch (error) {
             logText(error, "error");
 
             return false;
         }
     },
-    useInvite: async (code, user_id) => {
+    useInvite: async (invite, guild, user_id) => {
         try {
-            const invite = await database.getInvite(code);
-
-            if (invite == null) {
-                return false;
-            }
-
-            const guild = await database.getGuildById(invite.guild.id); //hate this
-
-            if (!guild) {
-                return false;
-            }
-
             const member = guild.members.find(x => x.id === user_id);
 
             if (member != null) {
@@ -3095,12 +3083,12 @@ const database = {
             }
 
             if (invite.max_uses && invite.max_uses != 0 && invite.uses >= invite.max_uses) {
-                await database.deleteInvite(code);
+                await database.deleteInvite(invite.code);
 
                 return false;
             }
 
-            const isBanned = await database.isBannedFromGuild(invite.guild.id, user_id);
+            const isBanned = await database.isBannedFromGuild(guild.id, user_id);
 
             if (isBanned) {
                 return false;

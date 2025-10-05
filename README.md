@@ -12,6 +12,13 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
 **Configuration File**:
    - **Always ensure your config.json file matches the structure and entries in config.example.json when you pull new updates.** Instances created before November 14, 2024, must update their configuration file to the new format to function.
 
+**Help Wanted**! <br>
+There are some features we need help with, if you're up for the task, feel free to submit a PR!
+
+- Audit Logs
+- Giphy Integration
+- The other social media platforms (not just Twitch) for account connections
+  
 # Project Status & Features
 
 **Client Year Support**:
