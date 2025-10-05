@@ -14,11 +14,19 @@ import cookieManager from "../../../lib/cookieManager";
 import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useLayer } from "../../../hooks/layerHandler";
 import localStorageManager from "../../../lib/localStorageManager";
+import BuildChangelogCard from "./buildChangelogCard";
 
 export default function () {
   const [instance, setInstance] = useState(null);
   const { addModal, removeModal } = useModal();
   const { changeLayer, setTriggeredRedirect } = useLayer();
+
+  const defaultBuild =
+    cookieManager.get("release_date") ??
+    cookieManager.get("default_client_build") ??
+    builds[0];
+
+  const [selectedBuild, setSelectedBuild] = useState(defaultBuild);
 
   useEffect(() => {
     async function fetchInstanceConfig() {
@@ -39,14 +47,14 @@ export default function () {
   }, []);
 
   async function handleLaunch() {
-    const selectedBuild = convertBuildId(defaultBuild);
+    const selectedBuildInfo = convertBuildId(selectedBuild);
     const allSelectedPatches =
       localStorageManager.get("oldcord_selected_patches") ?? {};
-    const enabledPlugins = allSelectedPatches[defaultBuild] ?? [];
+    const enabledPlugins = allSelectedPatches[selectedBuild] ?? [];
 
     const buildConfirmed = await new Promise((resolve) => {
       addModal("buildConfirmation", {
-        selectedBuild,
+        selectedBuild: selectedBuildInfo,
         enabledPlugins,
         onClose: (confirmed) => {
           removeModal();
@@ -145,15 +153,10 @@ export default function () {
 
   const friendlyBuildIds = convertBuildIds(builds);
 
-  const defaultBuild =
-    cookieManager.get("release_date") ??
-    cookieManager.get("default_client_build");
-
-  function changeReleaseDate(selectedBuild) {
-    cookieManager.set(
-      "release_date",
-      builds[friendlyBuildIds.indexOf(selectedBuild)]
-    );
+  function onBuildChange(selectedFriendlyBuild) {
+    const buildId = builds[friendlyBuildIds.indexOf(selectedFriendlyBuild)];
+    cookieManager.set("release_date", buildId);
+    setSelectedBuild(buildId);
   }
 
   return (
@@ -170,9 +173,9 @@ export default function () {
             <DropdownList
               label={"Client Build"}
               options={friendlyBuildIds}
-              defaultOption={convertBuildId(defaultBuild)}
+              defaultOption={convertBuildId(selectedBuild)}
               style={{ marginBottom: "20px" }}
-              onSelected={changeReleaseDate}
+              onSelected={onBuildChange}
             />
             <Button
               onClick={() => {
@@ -230,7 +233,7 @@ export default function () {
                   )}
                   {Object.keys(instance.instance.legal.extras).map((key) => {
                     return (
-                      <a href={instance.instance.legal.extras[key]}>
+                      <a href={instance.instance.legal.extras[key]} key={key}>
                         <Text>{key}</Text>
                       </a>
                     );
@@ -251,9 +254,7 @@ export default function () {
             <SettingsButton />
           </div>
         </Card>
-        <Card className="build-changlog-card">
-          Build changelogs will be implemented soon!
-        </Card>
+        <BuildChangelogCard selectedBuild={selectedBuild} />
         <Text variant="label" className="notice">
           Oldcord is an old Discord historical preservation/revival project and
           is not affiliated with or endorsed by Discord, Inc.
