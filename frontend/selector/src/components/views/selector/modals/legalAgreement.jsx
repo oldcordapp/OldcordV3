@@ -8,7 +8,7 @@ export default function ({ onClose, onConfirm, legalLinks }) {
       onClose={onClose}
       title="Legal Agreement"
       showCloseButton={false}
-      size="medium"
+      size="small"
       footerAlignment="right"
       footer={
         <>
