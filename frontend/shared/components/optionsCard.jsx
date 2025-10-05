@@ -50,7 +50,7 @@ export default function ({
     <div className={`options-card ${disabled ? "disabled" : ""}`}>
       <div className="content">
         <h3 className="title">{title}</h3>
-        <p className="description">{description}</p>
+        <p className="description" title={description}>{description}</p>
       </div>
       <div className="controls">
         {renderIcon()}
