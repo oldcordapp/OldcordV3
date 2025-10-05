@@ -165,10 +165,12 @@ export default function () {
       <Logo />
       <div className="selector-view">
         <Card className="selector-card">
-          <Text variant="h1">Oldcord Build Selector</Text>
-          <Text variant="h2" style={{ marginBottom: "20px" }}>
-            Choose your preferred Discord build below
-          </Text>
+          <div className="oldcord-header">
+            <Text variant="h1">Oldcord Build Selector</Text>
+            <Text variant="h2">
+              Choose your preferred Discord build below
+            </Text>
+          </div>
           <div className="build-option-section">
             <DropdownList
               label={"Client Build"}
@@ -186,24 +188,32 @@ export default function () {
             </Button>
           </div>
 
-          <Text variant="body" style={{ marginBottom: "20px" }}>
-            Looking for patches? They've moved to the settings menu!
-          </Text>
+            <Text variant="body" style={{ marginTop: "-10px"}}>
+              Looking for patches? They've moved to the settings menu!
+            </Text>
 
-          <Text variant="body">
-            While there is only an official instance running with Oldcord,
-            please keep in mind the defined rules that may exist in 3rd party
-            Oldcord instances.
-          </Text>
+          <div className="important-information">
+            <Text variant="body" style={{
+              color: "gray",
+              borderBottom: "0.2px dotted #585757",
+              borderTop: "0.2px dotted #585757",
+              padding: "5px",
+              background: "#33363b"
+            }}>
+              While there is only an official instance running with Oldcord,
+              please keep in mind the defined rules that may exist in 3rd party
+              Oldcord instances.
+            </Text>
 
-          <Text
-            variant="body"
-            style={{ marginBottom: "20px", color: "rgb(240, 71, 71)" }}
-          >
-            Please be mindful of what you post, illegal content will be
-            reported.
-          </Text>
-
+            <Text
+              variant="body"
+              style={{ marginBottom: "10px", marginTop: "20px", color: "rgb(240, 71, 71)" }}
+            >
+              Please be mindful of what you post, illegal content will be
+              reported.
+            </Text>
+          </div>
+          
           <div className="instance-section">
             {instance === null && <Text variant="h1">Loading...</Text>}
             {instance && instance.error && (
