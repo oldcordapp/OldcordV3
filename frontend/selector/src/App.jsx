@@ -16,7 +16,7 @@ import PrimaryLayer from "./components/layers/primaryLayer";
 import "./App.css";
 
 function Container() {
-  const { activeLayer, exitingLayer } = useLayer();
+  const { activeLayer, exitingLayer, triggeredRedirect } = useLayer();
   const { isNudging } = useUnsavedChanges();
   const { activeModal, exitingModal, modalProps, removeModal } = useModal();
   const ref = useRef(null);
@@ -36,6 +36,12 @@ function Container() {
     }
     return () => clearInterval(intervalId);
   }, [isNudging]);
+
+  useEffect(() => {
+    if (triggeredRedirect) {
+      window.location = `${location.protocol}//${location.host}`;
+    }
+  }, [triggeredRedirect])
 
   const layerKey = activeLayer || exitingLayer;
   const CurrentLayer = layerKey ? layerConfig[layerKey]?.Component : null;

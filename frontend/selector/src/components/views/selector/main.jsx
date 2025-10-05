@@ -11,9 +11,13 @@ import Download from "../../../assets/download.svg?react";
 import { useEffect, useState } from "react";
 import { convertBuildIds, convertBuildId } from "../../../lib/convertBuildIds";
 import cookieManager from "../../../lib/cookieManager";
+import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
+import { useLayer } from "../../../hooks/layerHandler";
 
 export default function () {
   const [instance, setInstance] = useState(null);
+  const { addModal, removeModal } = useModal();
+  const { changeLayer, setTriggeredRedirect } = useLayer();
 
   useEffect(() => {
     async function fetchInstanceConfig() {
@@ -32,6 +36,88 @@ export default function () {
     }
     fetchInstanceConfig();
   }, []);
+
+  async function handleLaunch() {
+    const selectedBuild = convertBuildId(defaultBuild);
+    const enabledMods = [];
+
+    const buildConfirmed = await new Promise((resolve) => {
+      addModal("buildConfirmation", {
+        selectedBuild,
+        enabledMods,
+        onClose: (confirmed) => {
+          removeModal();
+          resolve(confirmed);
+        },
+        onConfirm: () => {
+          removeModal();
+          resolve(true);
+        }
+      });
+    });
+
+    if (!buildConfirmed) return;
+
+    if (instance && instance.instance && instance.instance.environment !== "stable") {
+      const envConfirmed = await new Promise((resolve) => {
+        addModal("environmentWarning", {
+          environment: instance.instance.environment,
+          onClose: (confirmed) => {
+            removeModal();
+            resolve(confirmed);
+          },
+          onConfirm: () => {
+            removeModal();
+            resolve(true);
+          }
+        });
+      });
+
+      if (!envConfirmed) return;
+    }
+
+    if (!cookieManager.has("legal_agreed")) {
+      const legalLinks = [];
+
+      if (instance && instance.instance && instance.instance.legal) {
+        if (instance.instance.legal.terms) {
+          legalLinks.push({ title: "Terms", url: instance.instance.legal.terms });
+        }
+        if (instance.instance.legal.privacy) {
+          legalLinks.push({ title: "Privacy", url: instance.instance.legal.privacy });
+        }
+        if (instance.instance.legal.instanceRules) {
+          legalLinks.push({ title: "Instance Rules", url: instance.instance.legal.instanceRules });
+        }
+
+        if (instance.instance.legal.extras) {
+          Object.entries(instance.instance.legal.extras).forEach(([key, url]) => {
+            legalLinks.push({ title: key, url });
+          });
+        }
+      }
+
+      const legalConfirmed = await new Promise((resolve) => {
+        addModal("legalAgreement", {
+          legalLinks,
+          onClose: (confirmed) => {
+            removeModal();
+            resolve(confirmed);
+          },
+          onConfirm: () => {
+            cookieManager.set("legal_agreed", "true", { expires: 365 });
+            removeModal();
+            resolve(true);
+          }
+        });
+      });
+
+      if (!legalConfirmed) return;
+    }
+
+    setTriggeredRedirect(true);
+    changeLayer("redirect", 300);
+  }
 
   const friendlyBuildIds = convertBuildIds(builds);
 
@@ -121,7 +207,7 @@ export default function () {
             )}
           </div>
           <div className="buttons">
-            <Button style={{ width: "100%" }}>Launch!</Button>
+            <Button onClick={handleLaunch} style={{ width: "100%" }}>Launch!</Button>
             <SettingsButton />
           </div>
         </Card>

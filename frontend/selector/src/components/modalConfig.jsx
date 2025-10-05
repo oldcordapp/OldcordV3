@@ -1,6 +1,9 @@
 import Changelog from "./views/settings/modals/changelog";
 import PluginInfo from "./views/settings/modals/pluginInfo";
 import RemoveChunkCache from "./views/settings/modals/removeChunkCache";
+import BuildConfirmation from "./views/selector/modals/buildConfirmation";
+import EnvironmentWarning from "./views/selector/modals/environmentWarning";
+import LegalAgreement from "./views/selector/modals/legalAgreement";
 
 export default {
   changelog: {
@@ -11,5 +14,14 @@ export default {
   },
   removeChunkCache: {
     Component: RemoveChunkCache
+  },
+  buildConfirmation: {
+    Component: BuildConfirmation,
+  },
+  environmentWarning: {
+    Component: EnvironmentWarning,
+  },
+  legalAgreement: {
+    Component: LegalAgreement,
   }
 };
