@@ -31,7 +31,7 @@ export const oldcordChangelog = {
       title: "SELECTOR! SELECTOR! SELECTOR! SELECTOR! SELECTOR!",
       items: [
         "The selector is improved! And it looks that one instant messaging service you like back in 2018! So great!",
-        "Our rate limit system has been improved with catching so bots that want real time updates can do it without strainging the server. Don't say the C word though! <small>Okay for real though, please don't use any word to mask your internal bigotry. It's not cool. /srs</small>",
+        "Our rate limit system has been improved with caching so bots that want real time updates can do it without strainging the server. Don't say the C word though! <small>Okay for real though, please don't use any word to mask your internal bigotry. It's not cool. /srs</small>",
       ],
     },
     {
