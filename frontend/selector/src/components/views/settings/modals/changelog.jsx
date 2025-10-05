@@ -1,9 +1,8 @@
 import Modal from "@oldcord/frontend-shared/components/modal";
 
-export default function ({ isOpen, onClose }) {
+export default function ({ onClose }) {
   return (
     <Modal
-      isOpen={isOpen}
       onClose={onClose}
       title="Changelog"
       subtitle="4 October 2025"

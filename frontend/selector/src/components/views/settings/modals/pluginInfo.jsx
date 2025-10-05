@@ -3,7 +3,7 @@ import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import { PATCHES } from "../../../../constants/patches";
 import { useState, useEffect } from "react";
 
-export default function ({ isOpen, onClose, plugin }) {
+export default function ({ onClose, plugin }) {
   const [displayedPlugin, setDisplayedPlugin] = useState(plugin);
 
   useEffect(() => {
@@ -18,7 +18,6 @@ export default function ({ isOpen, onClose, plugin }) {
 
   return (
     <Modal
-      isOpen={isOpen}
       onClose={onClose}
       title={PATCHES[displayedPlugin].label}
       showCloseButton={true}

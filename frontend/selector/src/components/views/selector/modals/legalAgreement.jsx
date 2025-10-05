@@ -2,10 +2,9 @@ import Modal from "@oldcord/frontend-shared/components/modal";
 import Button from "@oldcord/frontend-shared/components/button";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 
-export default function ({ isOpen, onClose, onConfirm, legalLinks }) {
+export default function ({ onClose, onConfirm, legalLinks }) {
   return (
     <Modal
-      isOpen={isOpen}
       onClose={onClose}
       title="Legal Agreement"
       showCloseButton={false}

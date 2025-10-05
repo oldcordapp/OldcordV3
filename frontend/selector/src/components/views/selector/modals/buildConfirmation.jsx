@@ -4,7 +4,6 @@ import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import { useState, useEffect } from "react";
 
 export default function ({
-  isOpen,
   onClose,
   onConfirm,
   selectedBuild,
@@ -27,7 +26,6 @@ export default function ({
   }
   return (
     <Modal
-      isOpen={isOpen}
       onClose={onClose}
       title="Build Confirmation"
       showCloseButton={false}

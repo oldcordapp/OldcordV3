@@ -7,7 +7,7 @@ import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 
 const failedCacheKey = "oldcord_failed_urls";
 
-export default function ({ isOpen, onClose }) {
+export default function ({ onClose }) {
   const { removeModal } = useModal();
 
   function removeCache() {
@@ -21,7 +21,6 @@ export default function ({ isOpen, onClose }) {
   }
   return (
     <Modal
-      isOpen={isOpen}
       onClose={onClose}
       title="Reset Failed Chunk Cache?"
       size="medium"
