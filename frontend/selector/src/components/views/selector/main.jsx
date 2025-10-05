@@ -52,13 +52,17 @@ export default function () {
         onConfirm: () => {
           removeModal();
           resolve(true);
-        }
+        },
       });
     });
 
     if (!buildConfirmed) return;
 
-    if (instance && instance.instance && instance.instance.environment !== "stable") {
+    if (
+      instance &&
+      instance.instance &&
+      instance.instance.environment !== "stable"
+    ) {
       const envConfirmed = await new Promise((resolve) => {
         addModal("environmentWarning", {
           environment: instance.instance.environment,
@@ -69,7 +73,7 @@ export default function () {
           onConfirm: () => {
             removeModal();
             resolve(true);
-          }
+          },
         });
       });
 
@@ -81,19 +85,30 @@ export default function () {
 
       if (instance && instance.instance && instance.instance.legal) {
         if (instance.instance.legal.terms) {
-          legalLinks.push({ title: "Terms", url: instance.instance.legal.terms });
+          legalLinks.push({
+            title: "Terms",
+            url: instance.instance.legal.terms,
+          });
         }
         if (instance.instance.legal.privacy) {
-          legalLinks.push({ title: "Privacy", url: instance.instance.legal.privacy });
+          legalLinks.push({
+            title: "Privacy",
+            url: instance.instance.legal.privacy,
+          });
         }
         if (instance.instance.legal.instanceRules) {
-          legalLinks.push({ title: "Instance Rules", url: instance.instance.legal.instanceRules });
+          legalLinks.push({
+            title: "Instance Rules",
+            url: instance.instance.legal.instanceRules,
+          });
         }
 
         if (instance.instance.legal.extras) {
-          Object.entries(instance.instance.legal.extras).forEach(([key, url]) => {
-            legalLinks.push({ title: key, url });
-          });
+          Object.entries(instance.instance.legal.extras).forEach(
+            ([key, url]) => {
+              legalLinks.push({ title: key, url });
+            }
+          );
         }
       }
 
@@ -108,7 +123,7 @@ export default function () {
             cookieManager.set("legal_agreed", "true", { expires: 365 });
             removeModal();
             resolve(true);
-          }
+          },
         });
       });
 
@@ -121,10 +136,15 @@ export default function () {
 
   const friendlyBuildIds = convertBuildIds(builds);
 
-  const defaultBuild = cookieManager.get("release_date") ?? cookieManager.get("default_client_build")
+  const defaultBuild =
+    cookieManager.get("release_date") ??
+    cookieManager.get("default_client_build");
 
   function changeReleaseDate(selectedBuild) {
-    cookieManager.set("release_date", builds[friendlyBuildIds.indexOf(selectedBuild)])
+    cookieManager.set(
+      "release_date",
+      builds[friendlyBuildIds.indexOf(selectedBuild)]
+    );
   }
 
   return (
@@ -207,7 +227,9 @@ export default function () {
             )}
           </div>
           <div className="buttons">
-            <Button onClick={handleLaunch} style={{ width: "100%" }}>Launch!</Button>
+            <Button onClick={() => {handleLaunch()}} style={{ width: "100%" }}>
+              Launch!
+            </Button>
             <SettingsButton />
           </div>
         </Card>

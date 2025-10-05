@@ -57,7 +57,6 @@ function Container() {
       {CurrentModal && (
         <CurrentModal
           {...modalProps}
-          isOpen={activeModal === modalKey}
           onClose={() => {
             removeModal();
           }}

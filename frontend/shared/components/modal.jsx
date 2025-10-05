@@ -5,7 +5,6 @@ import Xmark from "../assets/xmark.svg?react";
 import { useModal } from "../hooks/modalHandler";
 
 export default function ({
-  isOpen,
   onClose,
   title,
   subtitle,
@@ -25,15 +24,13 @@ export default function ({
         onClose();
       }
     };
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", handleEscapeKey);
-    }
+
+    document.addEventListener("keydown", handleEscapeKey);
+
     return () => {
-      document.body.style.overflow = "unset";
       document.removeEventListener("keydown", handleEscapeKey);
     };
-  }, [isOpen, onClose]);
+  }, [onClose]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
