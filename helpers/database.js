@@ -2823,7 +2823,7 @@ const database = {
             if (auditLogRows && auditLogRows.length > 0) {
                 audit_logs = auditLogRows.map(row => ({
                     id: row.id,
-                    guild_id: row.guild_id,
+                    //guild_id: row.guild_id,
                     action_type: row.action_type,
                     target_id: row.target_id,
                     user_id: row.user_id,
@@ -3072,7 +3072,7 @@ const database = {
 
                     auditLogsByGuild.get(guildId).push({
                         id: row.id, 
-                        guild_id: guildId, 
+                        //guild_id: guildId, 
                         action_type: row.action_type,
                         target_id: row.target_id, 
                         user_id: row.user_id,

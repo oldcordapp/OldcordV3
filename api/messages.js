@@ -49,6 +49,13 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache
             });
         }
 
+        if (channel.type === 2) {
+            return res.status(400).json({
+                code: 400,
+                message: "Cannot get text messages from a voice channel.", //I mean we're cool with you doing that and everything but realistically, who is going to read these messages?
+            });
+        }
+
         let limit = parseInt(req.query.limit) || 200;
 
         if (limit > 200) {
@@ -93,6 +100,13 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             return res.status(404).json({
                 code: 404,
                 message: "Unknown Channel"
+            });
+        }
+
+        if (req.channel.type === 2) {
+            return res.status(400).json({
+                code: 400,
+                message: "Cannot send a text message in a voice channel.", //I mean we're cool with you doing that and everything but realistically, who is going to read these messages?
             });
         }
 

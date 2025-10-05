@@ -502,62 +502,67 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
 });
 
 router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("MAANGE_GUILD"), quickcache.cacheFor(60 * 5), async (req, res) => {
-    const sender = req.account;
+    try {
+        const sender = req.account;
 
-    if (sender == null) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
+        if (sender == null) {
+            return res.status(401).json({
+                code: 401,
+                message: "Unauthorized"
+            });
+        }
+
+        /*
+        ALL: null,
+            GUILD_UPDATE: 1,
+            CHANNEL_CREATE: 10,
+            CHANNEL_UPDATE: 11,
+            CHANNEL_DELETE: 12,
+            CHANNEL_OVERWRITE_CREATE: 13,
+            CHANNEL_OVERWRITE_UPDATE: 14,
+            CHANNEL_OVERWRITE_DELETE: 15,
+            MEMBER_KICK: 20,
+            MEMBER_PRUNE: 21,
+            MEMBER_BAN_ADD: 22,
+            MEMBER_BAN_REMOVE: 23,
+            MEMBER_UPDATE: 24,
+            MEMBER_ROLE_UPDATE: 25,
+            ROLE_CREATE: 30,
+            ROLE_UPDATE: 31,
+            ROLE_DELETE: 32,
+            INVITE_CREATE: 40,
+            INVITE_UPDATE: 41,
+            INVITE_DELETE: 42,
+            WEBHOOK_CREATE: 50,
+            WEBHOOK_UPDATE: 51,
+            WEBHOOK_DELETE: 52,
+            EMOJI_CREATE: 60,
+            EMOJI_UPDATE: 61,
+            EMOJI_DELETE: 62,
+            MESSAGE_DELETE: 72
+        */ //action_type for audit log
+
+        let limit = (req.query.limit > 50 ? 50 : req.query.limit) || 50;
+
+        let audit_log_entries = req.guild.audit_logs;
+        let audit_log_user_ids = [...new Set(audit_log_entries.map(entry => entry.user_id).filter(id => id))];
+        let audit_log_users = await global.database.getAccountsByIds(audit_log_user_ids);
+
+        audit_log_users = audit_log_users.map(user => globalUtils.miniUserObject(user));
+
+        return res.status(200).json({
+            audit_log_entries: audit_log_entries,
+            users: audit_log_users,
+            webhooks: []
+        })
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
         });
     }
-
-    /*
-    ALL: null,
-        GUILD_UPDATE: 1,
-        CHANNEL_CREATE: 10,
-        CHANNEL_UPDATE: 11,
-        CHANNEL_DELETE: 12,
-        CHANNEL_OVERWRITE_CREATE: 13,
-        CHANNEL_OVERWRITE_UPDATE: 14,
-        CHANNEL_OVERWRITE_DELETE: 15,
-        MEMBER_KICK: 20,
-        MEMBER_PRUNE: 21,
-        MEMBER_BAN_ADD: 22,
-        MEMBER_BAN_REMOVE: 23,
-        MEMBER_UPDATE: 24,
-        MEMBER_ROLE_UPDATE: 25,
-        ROLE_CREATE: 30,
-        ROLE_UPDATE: 31,
-        ROLE_DELETE: 32,
-        INVITE_CREATE: 40,
-        INVITE_UPDATE: 41,
-        INVITE_DELETE: 42,
-        WEBHOOK_CREATE: 50,
-        WEBHOOK_UPDATE: 51,
-        WEBHOOK_DELETE: 52,
-        EMOJI_CREATE: 60,
-        EMOJI_UPDATE: 61,
-        EMOJI_DELETE: 62,
-        MESSAGE_DELETE: 72
-    */ //action_type for audit log
-
-    let limit = (req.query.limit > 50 ? 50 : req.query.limit) || 50;
-
-    return res.status(200).json({
-        audit_log_entries: [{
-            action_type: 11,
-            id: "1309778313816047740",
-            target_id: req.guild.channels[2].id,
-            user_id: sender.id,
-            changes: [{
-                key: "name",
-                old_value: req.guild.channels[2].name,
-                new_value: "the_bad_channel"
-            }]
-        }],
-        users: [globalUtils.miniUserObject(sender)],
-        webhooks: []
-    })
 });
 
 router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), quickcache.cacheFor(60 * 5), async (req, res) => {
