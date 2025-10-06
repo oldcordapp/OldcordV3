@@ -84,7 +84,6 @@
 @keyframes floatv3 {
   0% {
     transform: rotate(-0.5deg) translateY(-12px);
-
     text-shadow: 
       -5px 5px 0px #4b4b4b70,
       -10px 10px 0px #4b4b4b40;
@@ -92,7 +91,6 @@
 
   25% {
     transform: rotate(0.5deg) translateY(0px);
-
     text-shadow: 
       -2px 5px 0px #4b4b4b70,
       -5px 8px 0px #4b4b4b40;
