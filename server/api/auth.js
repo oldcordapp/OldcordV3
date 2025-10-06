@@ -215,6 +215,10 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
 
 router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
     try {
+        if (req.body.login) {
+            req.body.email = req.body.login
+        }
+
         if (!req.body.email) {
             return res.status(400).json({
                 code: 400,
@@ -248,6 +252,7 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
 
         return res.status(200).json({
             token: loginAttempt.token,
+            settings: {}
         });
     } catch (error) {
         logText(error, "error");

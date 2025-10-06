@@ -8,6 +8,8 @@ const { Storage } = require('@google-cloud/storage');
 
 const config = globalUtils.config;
 
+const spacebarApis = ["/.well-known/spacebar", "/policies/instance/domains"];
+
 let cached404s = {};
 let bucket = null;
 
@@ -19,7 +21,9 @@ if (config.gcs_config && config.gcs_config.autoUploadBucket && config.gcs_config
 
 async function clientMiddleware(req, res, next) {
     try {
-        if (req.url.includes("/selector") || req.url.includes("/launch") || req.url.includes("/api/admin") || req.url.includes("/webhooks") || req.url.includes("/instance")) return next();
+        if (spacebarApis.includes(req.path)) return next();
+
+        if (req.url.includes("/selector") || req.url.includes("/launch") || req.url.includes("/api") || req.url.includes("/webhooks") || req.url.includes("/instance")) return next();
 
         let cookies = req.cookies;
 
@@ -241,6 +245,10 @@ async function authMiddleware(req, res, next) {
             return next();
         } //exclude webhooks and invites from this
 
+        if (spacebarApis.includes(req.path)) {
+            return next();
+        } // exclude spacebar related apis
+
         let token = req.headers['authorization'];
         
         req.cannot_pass = false;
@@ -273,62 +281,6 @@ async function authMiddleware(req, res, next) {
                     req.cannot_pass = true;
                 }
             } catch { }
-        }
-
-        let release_date = req.cookies['release_date'];
-
-        let valid_releases = [
-            "june_12_2015",
-            "july_10_2015",
-            "august_10_2015",
-            "september_2_2015",
-            "november_6_2015",
-            "december_23_2015",
-            "january_22_2016",
-            "february_9_2016",
-            "february_18_2016",
-            "march_4_2016",
-            "march_18_2016",
-            "april_8_2016",
-            "may_5_2016",
-            "may_19_2016",
-            "june_3_2016",
-            "june_23_2016",
-            "july_11_2016",
-            "july_28_2016",
-            "august_24_2016",
-            "september_8_2016",
-            "september_26_2016",
-            "october_13_2016",
-            "november_3_2016",
-            "november_22_2016",
-            "december_22_2016",
-            "january_23_2017",
-            "january_31_2017",
-            "march_30_2017",
-            "may_3_2017",
-            "may_17_2017",
-            "july_20_2017",
-            "august_17_2017",
-            "september_28_2017",
-            "october_5_2017",
-            "november_16_2017",
-            "december_21_2017",
-            "january_25_2018",
-            "february_25_2018",
-            "march_7_2018",
-            "april_1_2018",
-            "april_23_2018",
-            "may_28_2018",
-            "june_29_2018",
-            "august_28_2018",
-            "september_29_2018",
-            "november_30_2018",
-            "december_31_2018",
-        ]; //forgive me
-
-        if (release_date.length < 2 || typeof release_date !== 'string' || !valid_releases.includes(release_date)) {
-            req.cannot_pass = true;
         }
 
         if (req.cannot_pass) {

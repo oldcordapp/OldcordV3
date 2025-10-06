@@ -413,6 +413,9 @@ class session {
                             this.read_states.push(getLatestAcknowledgement);
                         }
                     }
+                    
+                    guild.properties = structuredClone(guild)
+
                 }
             }
 
@@ -474,6 +477,7 @@ class session {
                 },
                 user_settings: this.user.settings,
                 session_id: this.id,
+                sessions: [ {session_id: this.id} ], // spacebar compat
                 friend_suggestion_count: 0,
                 notes: notes,
                 analytics_token: globalUtils.generateString(20),

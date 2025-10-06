@@ -379,6 +379,78 @@ router.patch("/settings", async (req, res) => {
   }
 });
 
+router.get("/settings-proto/*", async (req, res) => {
+  try {
+    let account = req.account;
+
+    if (!account) {
+        return res.status(401).json({
+            code: 401,
+            message: "Unauthorized"
+        });
+    }
+
+    return res.status(200).json({settings: {...account.settings}});
+  } catch (error) {
+    logText(error, "error");
+
+    return res.status(500).json({
+      code: 500,
+      message: "Internal Server Error"
+    });
+  }
+})
+
+router.patch("/settings-proto/*", async (req, res) => {
+  try {
+    let account = req.account;
+
+    if (!account) {
+        return res.status(401).json({
+            code: 401,
+            message: "Unauthorized"
+        });
+    }
+
+    let new_settings = account.settings;
+    
+    if (new_settings == null) {
+      return res.status(500).json({
+        code: 500,
+        message: "Internal Server Error"
+      });
+    }
+
+    for (let key in req.body) {
+        if (new_settings.hasOwnProperty(key)) {
+          new_settings[key] = req.body[key];
+        }
+    }
+
+    const attempt = await global.database.updateSettings(account.id, new_settings);
+
+    if (attempt) {
+      const settings = new_settings;
+
+      await global.dispatcher.dispatchEventTo(account.id, "USER_SETTINGS_UPDATE", settings);
+
+      return res.status(204).send();
+    } else {
+      return res.status(500).json({
+        code: 500,
+        message: "Internal Server Error"
+      })
+    }
+  } catch (error) {
+    logText(error, "error");
+
+    return res.status(500).json({
+      code: 500,
+      message: "Internal Server Error"
+    })
+  }
+});
+
 router.put("/notes/:userid", async (req, res) => {
   //updateNoteForUserId
   try {

@@ -85,6 +85,12 @@ const globalUtils = {
         return code;
     },
     addClientCapabilities: (client_build, obj) => {
+        if (client_build === "spacebar") {
+            obj.client_build = "Spacebar";
+            obj.client_build_date = new Date();
+            obj.channel_types_are_ints = false;
+            return true;
+        }
         let parts = client_build ? client_build.split('_') : null;
         if (!parts || parts.length < 3) {
             //Invalid release date format. Use defaults.

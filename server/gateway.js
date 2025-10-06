@@ -56,32 +56,29 @@ const gateway = {
     handleClientConnect: async function (socket, req) {
         let cookies = req.headers.cookie;
 
-        if (!cookies && globalUtils.config.require_release_date_cookie) {
-            socket.close(4000, 'Cookies are required to use the Oldcord gateway.');
-
-            return;
-        }
-
         if (!cookies && !globalUtils.config.require_release_date_cookie) {
             cookies = `release_date=${globalUtils.config.default_client_build || "october_5_2017"};default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
         }
 
-        let cookieStore = cookies.split(';').reduce((acc, cookie) => {
+        let cookieStore = cookies?.split(';').reduce((acc, cookie) => {
             const [key, value] = cookie.split('=').map(v => v.trim());
             acc[key] = value;
             return acc;
         }, {});
 
-        if (!cookies && !cookies.includes('release_date') && !globalUtils.config.require_release_date_cookie) {
-            cookies['release_date'] = globalUtils.config.default_client_build || "october_5_2017"
+        if (!cookieStore) {
+            cookieStore = {}
+        }
+
+        if (!cookies && !cookies?.includes('release_date') && !globalUtils.config.require_release_date_cookie) {
+            cookieStore['release_date'] = globalUtils.config.default_client_build || "october_5_2017";
         }
 
         if (!cookieStore['release_date']) {
-            socket.close(1000, 'The release_date cookie is required to establish a connection to the Oldcord gateway.');
-
-            return;
+            cookies += `release_date=spacebar;`;
+            cookieStore['release_date'] = "spacebar";
         }
-
+        
         if (!globalUtils.addClientCapabilities(cookieStore['release_date'], socket)) {
             socket.close(1000, 'The release_date cookie is in an invalid format.');
 

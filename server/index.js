@@ -11,6 +11,7 @@ const path = require('path');
 const globalUtils = require('./helpers/globalutils');
 const { assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
+const spacebarPolicies = require('./spacebar-compat/policies');
 const Jimp = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
@@ -515,12 +516,36 @@ app.use("/api/v2/", router);
 
 app.use("/api/", router);
 
-app.use("/api/v*/", (_, res) => {
-    return res.status(400).json({
-        code: 400,
-        message: "Invalid API Version"
-    });
+app.use("/api/policies/", spacebarPolicies);
+
+app.use("/api/v*/*", (req, res) => {
+    const originalSuffix = req.params[0]; 
+
+    let pathWithoutApiVersion = '';
+
+    const firstSlashIndex = originalSuffix.indexOf('/');
+    if (firstSlashIndex === -1) {
+        pathWithoutApiVersion = originalSuffix;
+    } else {
+        pathWithoutApiVersion = originalSuffix.slice(firstSlashIndex + 1);
+    }
+
+    const newPath = `/api/v6/${pathWithoutApiVersion}`;
+
+    const queryString = Object.keys(req.query)
+        .map(key => `${key}=${req.query[key]}`)
+        .join('&');
+    const fullNewPath = queryString ? `${newPath}?${queryString}` : newPath;
+
+    res.redirect(fullNewPath);
 });
+
+app.get("/.well-known/spacebar",
+(req, res) => {
+    res.json({
+      api: `${req.protocol}://${req.get('host')}/api`,
+    });
+  })
 
 if (config.serve_selector) {
     app.get("/selector", (req, res) => {
