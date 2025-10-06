@@ -78,6 +78,46 @@
     margin-top: -10px;
     line-height: 180px;
     margin-bottom: 20px;
+    animation: floatv3 10s infinite alternate ease-in-out;
+}
+
+@keyframes floatv3 {
+  0% {
+    transform: rotate(-0.5deg) translateY(-12px);
+
+    text-shadow: 
+      -5px 5px 0px #4b4b4b70,
+      -10px 10px 0px #4b4b4b40;
+  }
+
+  25% {
+    transform: rotate(0.5deg) translateY(0px);
+
+    text-shadow: 
+      -2px 5px 0px #4b4b4b70,
+      -5px 8px 0px #4b4b4b40;
+  }
+
+  50% {
+    transform: rotate(-0.5deg) translateY(12px);
+    text-shadow: 
+      5px 5px 0px #4b4b4b70,
+      10px 10px 0px #4b4b4b40;
+  }
+
+  75% {
+    transform: rotate(0.5deg) translateY(0px);
+    text-shadow: 
+      4px 5px 0px #4b4b4b70,
+      7px 8px 0px #4b4b4b40;
+  }
+
+  100% {
+    transform: rotate(-0.5deg) translateY(-12px);
+    text-shadow: 
+      -5px 5px 0px #4b4b4b70,
+      -10px 10px 0px #4b4b4b40;
+  }
 }
 
 .instance-section {
