@@ -143,6 +143,10 @@ const embedder = {
         }
     },
     generateMsgEmbeds: async (content, attachment, force) => {
+        if (!global.config.auto_embed_urls) {
+            return [];
+        }
+        
         let ret = [];
         
         if (attachment && (attachment.name.endsWith(".mp4") || attachment.name.endsWith(".webm"))) {

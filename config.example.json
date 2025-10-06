@@ -15,6 +15,7 @@
     "serve_selector": true,
     "require_release_date_cookie": true,
     "cache_authenticated_get_requests" : true,
+    "auto_embed_urls" : false,
     "tenor_api_key": "",
     "mr_server": {
         "enabled" : false,
