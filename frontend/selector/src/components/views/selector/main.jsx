@@ -15,6 +15,7 @@ import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useLayer } from "../../../hooks/layerHandler";
 import localStorageManager from "../../../lib/localStorageManager";
 import BuildChangelogCard from "./buildChangelogCard";
+import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 
 export default function () {
   const [instance, setInstance] = useState(null);
@@ -165,12 +166,17 @@ export default function () {
       <Logo />
       <div className="selector-view">
         <Card className="selector-card">
-          <div className="oldcord-header">
-            <Text variant="h1">Oldcord Build Selector</Text>
-            <Text variant="h2">
-              Choose your preferred Discord build below
+          <PageInfo className="welcome-back-header">
+            <div>
+              <Text variant="h1">Welcome Back!</Text>
+          <Text variant="h2">We're so excited to see you again!</Text>
+            </div>
+            <Text variant="body" className="version-three-text">
+              V3
             </Text>
-          </div>
+          </PageInfo>
+          <Text variant="h1">Oldcord Build Selector</Text>
+          <Text variant="h2">Choose your preferred Discord build below</Text>
           <div className="build-option-section">
             <DropdownList
               label={"Client Build"}
@@ -179,7 +185,9 @@ export default function () {
               style={{ marginBottom: "20px" }}
               onSelected={onBuildChange}
             />
-            <Button style={{marginTop: '10px'}} notImplemented={true}
+            <Button
+              style={{ marginTop: "10px" }}
+              notImplemented={true}
               onClick={() => {
                 addModal("opfsComingSoon");
               }}
@@ -188,18 +196,21 @@ export default function () {
             </Button>
           </div>
 
-            <Text variant="body" style={{ marginTop: "-10px"}}>
-              Looking for patches? They've moved to the settings menu!
-            </Text>
+          <Text variant="body" style={{ marginTop: "-10px" }}>
+            Looking for patches? They've moved to the settings menu!
+          </Text>
 
           <div className="important-information">
-            <Text variant="body" style={{
-              color: "gray",
-              borderBottom: "0.2px dotted #585757",
-              borderTop: "0.2px dotted #585757",
-              padding: "5px",
-              background: "#33363b"
-            }}>
+            <Text
+              variant="body"
+              style={{
+                color: "gray",
+                borderBottom: "0.2px dotted #585757",
+                borderTop: "0.2px dotted #585757",
+                padding: "5px",
+                background: "#33363b",
+              }}
+            >
               While there is only an official instance running with Oldcord,
               please keep in mind the defined rules that may exist in 3rd party
               Oldcord instances.
@@ -207,13 +218,17 @@ export default function () {
 
             <Text
               variant="body"
-              style={{ marginBottom: "10px", marginTop: "20px", color: "rgb(240, 71, 71)" }}
+              style={{
+                marginBottom: "10px",
+                marginTop: "20px",
+                color: "rgb(240, 71, 71)",
+              }}
             >
               Please be mindful of what you post, illegal content will be
               reported.
             </Text>
           </div>
-          
+
           <div className="instance-section">
             {instance === null && <Text variant="h1">Loading...</Text>}
             {instance && instance.error && (

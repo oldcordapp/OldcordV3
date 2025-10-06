@@ -64,25 +64,30 @@
   opacity: 0.3;
 }
 
-.oldcord-header {
-  margin-top: -10em;
+.welcome-back-header {
+  width: 100%;
 }
 
-.oldcord-header::before {
-    content: "V3";
+.welcome-back-header .page-info-body {
+  display: flex;
+  width: 100%;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.welcome-back-header h2 {
+  text-transform: unset;
+}
+
+.version-three-text {
     -webkit-text-stroke: .5px gray;
     color: #1c191c21;
     text-align: center;
-    justify-content: center;
     font-family: Nebula Sans;
-    /*font-size: 100px;*/
-    font-size: 160px;
+    font-size: 70px;
     font-weight: 700;
-    display: flex;
-    position: relative;
     text-shadow: -5px 5px #4b4b4b70;
     filter: contrast(.4) drop-shadow(5px -6px 0px gray);
-    margin-top: 1em;
     opacity: 0.8; /* a bit darker for readibility*/
     letter-spacing: 5px;
 }

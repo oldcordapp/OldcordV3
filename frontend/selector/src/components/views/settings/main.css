@@ -30,3 +30,7 @@
   max-width: 960px;
   width: 100%;
 }
+
+.settings-view-container .page-info-card {
+  margin-top: 10px;
+}
