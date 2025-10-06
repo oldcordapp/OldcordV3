@@ -85,10 +85,8 @@ const patcher = {
         /(var \w+=(\w+)\._pc=new RTCPeerConnection\({iceServers:\w+,sdpSemantics:)"plan-b"(.+?\);)/g,
         '$1"unified-plan"$3$2._audioTransceiver=$2._pc.addTransceiver("audio",{direction:"recvonly"});$2._videoTransceiver=$2._pc.addTransceiver("video",{direction:"recvonly"});'
       );
-      script = script.replaceAll(
-        /t\.prototype\._handleNewListener=function\(e\)\{.*?_handleVideo\(.*?getVideoStreamId.*?\)(?:.*?case"connectionstatechange":.*?)?\s*\}\s*\}/g,
-        't.prototype._handleNewListener=function(e){var t=this;switch(e){case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;case"connectionstatechange":this.emit(e,this.connectionState)}}'
-      ); //2017-2018
+      script = script.replaceAll(/case"video":[a-zA-Z]\(function\(\)\{return t\._handleVideo\(t\.input\.getVideoStreamId\(\)\)\}\);break;/g, 
+      `case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e => setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;`); //2017-2018
       script = script.replaceAll(
         /[a-zA-Z]\(function\(\)\{return t\._handleVideo\(t\.input\.getVideoURL\(\)\)\}\);/g,
         `(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoURL())})();`

@@ -8,12 +8,20 @@ import OptionsCard from "@oldcord/frontend-shared/components/optionsCard";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
 import localStorageManager from "../../../../lib/localStorageManager";
 import { convertBuildIds } from "../../../../lib/convertBuildIds";
+import cookieManager from "../../../../lib/cookieManager";
+import { convertBuildId } from "../../../../lib/convertBuildIds";
 
 const localStorageKey = "oldcord_selected_patches";
 
 export default function () {
   const friendlyBuildIds = convertBuildIds(builds);
-  const [selectedBuild, setSelectedBuild] = useState(friendlyBuildIds[0]);
+
+  const defaultBuild =
+    cookieManager.get("release_date") ??
+    cookieManager.get("default_client_build") ??
+    builds[0];
+
+  const [selectedBuild, setSelectedBuild] = useState(convertBuildId(defaultBuild));
 
   let selectedBuildOriginal = builds[friendlyBuildIds.indexOf(selectedBuild)];
 
@@ -148,8 +156,8 @@ export default function () {
     return () => {
       setHasUnsavedChanges(false);
       registerHandlers(
-        () => {},
-        () => {}
+        () => { },
+        () => { }
       );
     };
   }, [registerHandlers, handleSave, handleReset, setHasUnsavedChanges]);
@@ -215,11 +223,11 @@ export default function () {
                 return (
                   <li key={patch}>
                     <Text variant="body">{PATCHES[patch].label} is not comptaible with{" "}
-                    {hasIncompatiblePatches[patch]
-                      .map((patch) => {
-                        return PATCHES[patch].label;
-                      })
-                      .join(", ")}</Text>
+                      {hasIncompatiblePatches[patch]
+                        .map((patch) => {
+                          return PATCHES[patch].label;
+                        })
+                        .join(", ")}</Text>
                   </li>
                 );
               })}
@@ -232,11 +240,11 @@ export default function () {
         options={friendlyBuildIds}
         defaultOption={selectedBuild}
         onSelected={changeSelectedBuild}
-        style={{marginTop: '-20px'}}
+        style={{ marginTop: '-20px' }}
       />
       <Text variant="h2">Plugins</Text>
-      <Text variant="body" style={{marginTop: '0px'}}>Oldplunger is in development...</Text>
-      <Text variant="h2" style={{marginTop: '10px'}}>Patches (Legacy)</Text>
+      <Text variant="body" style={{ marginTop: '0px' }}>Oldplunger is in development...</Text>
+      <Text variant="h2" style={{ marginTop: '10px' }}>Patches (Legacy)</Text>
       <div className="options-grid">
         {Object.keys(PATCHES).map((key) => {
           const compatibleBuilds = PATCHES[key].compatibleVersions;
