@@ -6,6 +6,7 @@ export default function ({
   options,
   defaultOption,
   style,
+  informativeText = "",
   onSelected = () => {},
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,7 +39,7 @@ export default function ({
   };
 
   return (
-    <div className="list-container" ref={wrapperRef} style={style}>
+    <div className="list-container" ref={wrapperRef} style={style} title={informativeText}>
       <label className="list-label">{label}</label>
       <button
         type="button"

@@ -240,7 +240,8 @@ export default function () {
         options={friendlyBuildIds}
         defaultOption={selectedBuild}
         onSelected={changeSelectedBuild}
-        style={{ marginTop: '-20px' }}
+        style={{ marginTop: '-20px' }} 
+        informativeText="This dropdown only manages patches/plugins for the selected build and does not change the client build launched."
       />
       <Text variant="h2">Plugins</Text>
       <Text variant="body" style={{ marginTop: '0px' }}>Oldplunger is in development...</Text>
