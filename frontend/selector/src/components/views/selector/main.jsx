@@ -166,15 +166,9 @@ export default function () {
       <Logo />
       <div className="selector-view">
         <Card className="selector-card">
-          <PageInfo className="welcome-back-header">
-            <div>
-              <Text variant="h1">Welcome Back!</Text>
-          <Text variant="h2">We're so excited to see you again!</Text>
-            </div>
-            <Text variant="body" className="version-three-text">
-              V3
-            </Text>
-          </PageInfo>
+          <Text variant="body" className="version-three-text">
+            V3
+          </Text>
           <Text variant="h1">Oldcord Build Selector</Text>
           <Text variant="h2">Choose your preferred Discord build below</Text>
           <div className="build-option-section">
