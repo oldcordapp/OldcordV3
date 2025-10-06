@@ -205,7 +205,7 @@ export default function () {
                 background: "#33363b",
               }}
             >
-              While there is only an official instance running with Oldcord,
+              While there is only one official instance running with Oldcord,
               please keep in mind the defined rules that may exist in 3rd party
               Oldcord instances.
             </Text>
