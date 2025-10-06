@@ -10,6 +10,10 @@
   flex-shrink: 0;
 }
 
+.changelog-header p {
+  margin-top: unset;
+}
+
 .changelog-header h4 {
   margin: 0;
   font-size: 16px;
