@@ -200,8 +200,6 @@ class session {
                 user: globalUtils.miniUserObject(our_member.user),
                 guild_id: guild.id
             });
-
-            await global.dispatcher.dispatchEventInGuild(guild, "USER_UPDATE", our_member);
         }
     }
     async terminate() {
@@ -473,7 +471,8 @@ class session {
                     discriminator: this.user.discriminator,
                     verified: this.user.verified,
                     bot: this.user.bot,
-                    premium: this.user.premium || true
+                    premium: this.user.premium || true,
+                    claimed: this.user.claimed || true
                 },
                 user_settings: this.user.settings,
                 session_id: this.id,

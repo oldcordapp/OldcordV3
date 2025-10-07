@@ -5,13 +5,6 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    if (!req.account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-    
     return res.status(200).json({
         indicators_suppressed: true,
         indicators_confirmed: [
@@ -39,13 +32,6 @@ router.get("/", async (req, res) => {
 
 router.post("/indicators/suppress", async (req, res) => {
     try {
-        if (!req.account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         return res.status(200).json({
             indicators_suppressed: true,
             indicators_confirmed: [
@@ -73,13 +59,6 @@ router.post("/indicators/suppress", async (req, res) => {
 
 router.put("/indicators/:indicator", async (req, res) => {
     try {
-        if (!req.account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         return res.status(200).json({
             indicators_suppressed: true,
             indicators_confirmed: [

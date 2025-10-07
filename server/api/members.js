@@ -19,14 +19,6 @@ router.get("/:memberid", quickcache.cacheFor(60 * 30), async (req, res) => {
 router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimitMiddleware(global.config.ratelimit_config.kickMember.maxPerTimeFrame, global.config.ratelimit_config.kickMember.timeFrame), async (req, res) => {
     try {
         const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const member = req.member;
 
         if (member == null) {
@@ -154,15 +146,6 @@ async function updateMember(member, guild, roles, nick) {
 
 router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPermissionsMiddleware("MANAGE_NICKNAMES"), rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         if (req.member == null) {
             return res.status(404).json({
                 code: 404,
@@ -198,14 +181,6 @@ router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPerm
 router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLimitMiddleware(global.config.ratelimit_config.updateNickname.maxPerTimeFrame, global.config.ratelimit_config.updateNickname.timeFrame), async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-        
         let member = req.guild.members.find(y => y.id == account.id);
 
         if (!member) {
@@ -231,9 +206,7 @@ router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLim
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
-    
-        
-        
+ 
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"

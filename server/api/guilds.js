@@ -37,13 +37,6 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
 
         const creator = req.account;
 
-        if (!creator) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         if (!req.body.region) {
             return res.status(400).json({
                 name: "A valid server region is required."
@@ -80,7 +73,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
             } else if (year != 2016) selected_region = "everything";
         }
 
-        const guild = await global.database.createGuild(creator.id, req.body.icon, req.body.name, req.body.region, exclusions, client_date);
+        const guild = await global.database.createGuild(creator, req.body.icon, req.body.name, req.body.region, exclusions, client_date);
 
         if (guild == null) {
             return res.status(500).json({
@@ -98,9 +91,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
         }
       } catch (error) {
         logText(error, "error");
-    
-        
-        
+
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"
@@ -111,22 +102,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
 async function guildDeleteRequest(req, res) {
     try {
         const user = req.account;
-
-        if (!user) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
-        }
 
         if (guild.owner_id == user.id) {
             await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
@@ -168,9 +144,7 @@ async function guildDeleteRequest(req, res) {
         }
     } catch(error) {
         logText(error, "error");
-    
-        
-        
+ 
         return res.status(500).json({
             code: 500,
             message: "Internal Server Error"
@@ -188,23 +162,8 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
 router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddleware("READ_MESSAGE_HISTORY"), rateLimitMiddleware(global.config.ratelimit_config.messageSearching.maxPerTimeFrame, global.config.ratelimit_config.messageSearching.timeFrame), async (req, res) => {
     try {
         const account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
         
         let guild = req.guild;
-
-        if (!guild) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
-        }
-
         let channelsMap = new Map();
         
         for (let channel of guild.channels) {
@@ -289,21 +248,7 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
     try {
         const sender = req.account;
 
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let what = req.guild;
-
-        if (what == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
-        }
 
         if (req.body.name && (req.body.name.length < global.config.limits['guild_name'].min || req.body.name.length >= global.config.limits['guild_name'].max)) {
             return res.status(400).json({
@@ -408,8 +353,6 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
         return res.status(200).json(what);
       } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -428,15 +371,6 @@ router.post("/:guildid/prune", guildMiddleware, guildPermissionsMiddleware("MANA
 
 router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30, true), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const widget = await global.database.getGuildWidget(req.params.guildid);
 
         if (widget == null) {
@@ -449,8 +383,6 @@ router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30, true
         return res.status(200).json(widget);
       } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -461,15 +393,6 @@ router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30, true
 
 router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const update = await global.database.updateGuildWidget(req.params.guildid, req.body.channel_id, req.body.enabled);
 
         if (!update) {
@@ -491,8 +414,6 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
         return res.status(200).json(widget);
       } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -503,15 +424,6 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
 
 router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("MAANGE_GUILD"), quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         /*
         ALL: null,
             GUILD_UPDATE: 1,
@@ -567,22 +479,11 @@ router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("
 
 router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const invites = await global.database.getGuildInvites(req.params.guildid);
 
         return res.status(200).json(invites);
       } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -594,20 +495,6 @@ router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MAN
 router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame), async (req, res) => {
     try {
         const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-        
-        if (!req.guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
-        }
 
         if (req.guild.channels.length >= global.config.limits['channels_per_guild'].max) {
             return res.status(400).json({
@@ -695,15 +582,6 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
 
 router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let ret = [];
 
         for(var shit of req.body) {
@@ -751,8 +629,6 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
     } catch(error) {
         logText(error, "error");
 
-        
-    
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"
@@ -770,14 +646,6 @@ router.use("/:guildid/emojis", emojis);
 router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         let guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
-        }
-
         let webhooks = guild.webhooks;
 
         return res.status(200).json(webhooks);
@@ -797,20 +665,11 @@ router.get("/:guildid/regions", guildMiddleware, quickcache.cacheFor(60 * 60 * 5
 
 router.get("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware("ADMINISTRATOR"), quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
-        if (!req.guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
-        }
-
         return res.status(200).json({
             code: req.guild.vanity_url_code
         });
     } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -821,13 +680,6 @@ router.get("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware("
 
 router.patch("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware("ADMINISTRATOR"), async (req, res) => {
     try {
-        if (!req.guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
-        }
-
         let code = req.body.code;
 
         if (!code || code === "") {
@@ -855,9 +707,7 @@ router.patch("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware
         }
     } catch (error) {
         logText(error, "error");
-    
-        
-        
+
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"

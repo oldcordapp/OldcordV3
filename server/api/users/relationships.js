@@ -16,13 +16,6 @@ router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
 
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
     if (account.bot) {
         return res.status(200).json([]); //bots.. ermm
     }
@@ -44,13 +37,6 @@ router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
 router.delete("/:userid", async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
 
         if (account.bot) {
             return res.status(204).send();
@@ -105,13 +91,6 @@ router.delete("/:userid", async (req, res) => {
 router.put("/:userid", async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
 
         if (account.bot) {
             return res.status(204).send();
@@ -291,13 +270,6 @@ router.put("/:userid", async (req, res) => {
 router.post("/", async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
 
         if (account.bot) {
             return res.status(403).json({

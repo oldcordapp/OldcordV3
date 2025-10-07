@@ -23,16 +23,7 @@ router.param('guildid', async (req, _, next, guildid) => {
 //Or this 
 router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
-    return res.status(200).json(globalUtils.sanitizeObject(account, ['settings', 'token', 'password', 'relationships', 'claimed']));
+    return res.status(200).json(globalUtils.sanitizeObject(req.account, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
   }
   catch (error) {
     logText(error, "error");
@@ -48,13 +39,6 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
   try {
     let account = req.account;
     let originalAcc = account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
 
     if (account.bot) {
       if (req.body.username) {
@@ -151,7 +135,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
     if (update.email == account.email && update.new_password == null && update.password == null && update.username == account.username && update.discriminator == account.discriminator) {
        //avatar change
        
-       let tryUpdate = await global.database.updateAccount(account.id, update.avatar, account.username, account.discriminator, null, null);
+       let tryUpdate = await global.database.updateAccount(account, update.avatar, account.username, account.discriminator, null, null);
 
        if (tryUpdate !== 3 && tryUpdate !== 2) {
           return res.status(500).json({
@@ -169,13 +153,31 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
           });
        }
 
-       retAccount = globalUtils.sanitizeObject(retAccount, ['settings', 'created_at', 'password', 'relationships', 'claimed']);
-
-       await global.dispatcher.dispatchEventTo(retAccount.id, "USER_UPDATE", retAccount);
+       await global.dispatcher.dispatchEventTo(retAccount.id, "USER_UPDATE", {
+         avatar: retAccount.avatar,
+         discriminator: retAccount.discriminator,
+         email: retAccount.email,
+         flags: retAccount.flags,
+         id: retAccount.id,
+         token: retAccount.token,
+         username: retAccount.username,
+         verified: retAccount.verified,
+         claimed: true
+       });
 
        await global.dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(retAccount.id, retAccount);
 
-       return res.status(200).json(retAccount);
+       return res.status(200).json({
+          avatar: retAccount.avatar,
+          discriminator: retAccount.discriminator,
+          email: retAccount.email,
+          flags: retAccount.flags,
+          id: retAccount.id,
+          token: retAccount.token,
+          username: retAccount.username,
+          verified: retAccount.verified,
+          claimed: true
+       });
     }
 
     if (account.password && update.password == null) {
@@ -246,7 +248,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
       }
     }
 
-    const attemptToUpdate = await global.database.updateAccount(account.id, update.avatar, update.username, update.discriminator, update.password, update.new_password, update.new_email);
+    const attemptToUpdate = await global.database.updateAccount(account, update.avatar, update.username, update.discriminator, update.password, update.new_password, update.new_email);
 
     if (attemptToUpdate !== 3) {
       if (attemptToUpdate === -1) {
@@ -287,7 +289,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
       });
     }
 
-    account = globalUtils.sanitizeObject(account, ['settings', 'created_at', 'password', 'relationships', 'claimed']);
+    account = globalUtils.sanitizeObject(account, ['settings', 'created_at', 'password', 'relationships', 'disabled_until', 'disabled_reason']);
 
     if (originalAcc.email != account.email) {
        account.verified = false;
@@ -295,7 +297,29 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
        await global.database.unverifyEmail(account.id);
     } //unverify them as they need to uh verify with their new email thingimajig
 
-    return res.status(200).json(account);
+    await global.dispatcher.dispatchEventTo(account.id, "USER_UPDATE", {
+      avatar: account.avatar,
+      discriminator: account.discriminator,
+      email: account.email,
+      flags: account.flags,
+      id: account.id,
+      token: account.token,
+      username: account.username,
+      verified: account.verified,
+      claimed: true
+    });
+
+    return res.status(200).json({
+          avatar: account.avatar,
+          discriminator: account.discriminator,
+          email: account.email,
+          flags: account.flags,
+          id: account.id,
+          token: account.token,
+          username: account.username,
+          verified: account.verified,
+          claimed: true
+    });
   } catch (error) {
     logText(error, "error");
 
@@ -309,16 +333,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
 //Or this
 router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
-    return res.status(200).json(account.settings);
+    return res.status(200).json(req.account.settings);
   } catch (error) {
     logText(error, "error");
 
@@ -332,14 +347,6 @@ router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
 router.patch("/settings", async (req, res) => {
   try {
     let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
     let new_settings = account.settings;
     
     if (new_settings == null) {
@@ -455,14 +462,6 @@ router.put("/notes/:userid", async (req, res) => {
   //updateNoteForUserId
   try {
     let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
     let user = req.user;
 
     if (!user) {
@@ -514,7 +513,7 @@ router.get("/connections", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"
@@ -539,7 +538,7 @@ router.delete("/connections/:platform/:connectionid", async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"
@@ -596,7 +595,7 @@ router.patch("/connections/:platform/:connectionid", async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"
@@ -654,22 +653,7 @@ router.delete("/guilds/:guildid", guildMiddleware, rateLimitMiddleware(global.co
     try {
         try {
             const user = req.account;
-    
-            if (!user) {
-                return res.status(401).json({
-                    code: 401,
-                    message: "Unauthorized"
-                });
-            }
-    
             const guild = req.guild;
-    
-            if (!guild) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Guild"
-                });
-            }
     
             if (guild.owner_id == user.id) {
                 await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
@@ -730,22 +714,7 @@ router.delete("/guilds/:guildid", guildMiddleware, rateLimitMiddleware(global.co
 router.patch("/guilds/:guildid/settings", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateUsersGuildSettings.maxPerTimeFrame, global.config.ratelimit_config.updateUsersGuildSettings.timeFrame), async (req, res) => {
     try {
         const user = req.account;
-    
-        if (!user) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
-        }
 
         let usersGuildSettings = await global.database.getUsersGuildSettings(user.id);
         let guildSettings = usersGuildSettings.find(x => x.guild_id == guild.id);
@@ -828,14 +797,6 @@ router.patch("/guilds/:guildid/settings", guildMiddleware, rateLimitMiddleware(g
 router.get("/mentions", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
-
-    if (!account) {
-      return res.status(401).json({
-          code: 401,
-          message: "Unauthorized"
-      });
-    }
-
     let limit = req.query.limit ?? 25;
     let guild_id = req.query.guild_id ?? null;
     let include_roles = req.query.roles == "true" ?? false;
