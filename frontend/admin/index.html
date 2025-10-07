@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" name="viewport" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Oldcord Admin</title>
+  </head>
+  <body>
+    <div id="app-mount"></div>
+    <script>
+      window.ADMIN_ENV = {
+          API_ENDPOINT: "http://127.0.0.1:8000/api",
+          IMAGE_ENDPOINT: "https://cdn.discordapp.com",
+          SMYTE_BASE_URL: "https://discord.smyte.com",
+      };
+  </script>
+  <script type="module" src="/src/index.jsx"></script>
+  </body>
+</html>

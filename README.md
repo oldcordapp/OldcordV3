@@ -24,6 +24,7 @@ There are some features we need help with, if you're up for the task, feel free 
 - Refactor/Improve code
 - Full fledged Discord mod to replace the current patching system
 - If anyone knows how to fix the modals in the main selector screen not playing the exit animation before other modals get mounted we would be happy about it
+- Admin panel
   
 # Project Status & Features
 

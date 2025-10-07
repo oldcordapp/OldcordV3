@@ -574,6 +574,10 @@ app.get("/instance", (req, res) => {
     });
 });
 
+app.get("/admin*", (req, res) => {
+    return res.send(fs.readFileSync(`./www_static/assets/admin/index.html`, 'utf8'));
+});
+
 app.get("*", (req, res) => {
     try {
         if (!req.client_build && config.require_release_date_cookie) {
