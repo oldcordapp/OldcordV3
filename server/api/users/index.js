@@ -22,16 +22,8 @@ router.get("/:userid", userMiddleware, quickcache.cacheFor(60 * 5), async (req, 
 //new dm system / group dm system
 router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame, global.config.ratelimit_config.createPrivateChannel.timeFrame), async (req, res) => {
     try {
-        const account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-        
         let recipients = req.body.recipients;
+        let account = req.account;
         
         if (req.body.recipient_id) {
             recipients = [req.body.recipient_id];
@@ -119,23 +111,7 @@ router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_con
 router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let user = req.user;
-
-        if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown User"
-            });
-        }
-
         let ret = {};
 
         let guilds = await global.database.getUsersGuilds(user.id);
@@ -206,7 +182,7 @@ router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, re
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"

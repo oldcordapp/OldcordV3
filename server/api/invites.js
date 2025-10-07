@@ -42,14 +42,6 @@ router.get("/:code", quickcache.cacheFor(60 * 30), async (req, res) => {
 router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.deleteInvite.maxPerTimeFrame, global.config.ratelimit_config.deleteInvite.timeFrame), async (req, res) => {
     try {
         const sender = req.account;
-
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const invite = req.invite;
 
         if (invite == null) {
@@ -69,6 +61,13 @@ router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.delet
         }
 
         const guild = req.guild;
+
+        if (guild == null) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Guild"
+            });
+        }
 
         const hasPermission = await global.permissions.hasChannelPermissionTo(channel, guild, sender.id, "MANAGE_CHANNELS");
 
@@ -103,7 +102,7 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
     try {
         const sender = req.account;
 
-        if (!sender || sender.bot) {
+        if (sender.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"

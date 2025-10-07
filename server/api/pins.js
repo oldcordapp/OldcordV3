@@ -16,32 +16,13 @@ router.param('messageid', async (req, res, next, messageid) => {
 
 router.get("/", channelMiddleware, quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
-        const account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
-
-        if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-
         let pinned_messages = await global.database.getPinnedMessagesInChannel(channel.id);
 
         return res.status(200).json(pinned_messages);
     }  catch(error) {
         logText(error, "error");
-    
-        
-        
+
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"
@@ -51,24 +32,7 @@ router.get("/", channelMiddleware, quickcache.cacheFor(60 * 5, true), async (req
 
 router.put("/:messageid", channelMiddleware, async (req, res) => {
     try {
-        const account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
-
-        if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-
         let message = req.message;
 
         if (!message) {
@@ -115,9 +79,7 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
         return res.status(204).send();
     } catch(error) {
         logText(error, "error");
-    
-        
-        
+
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"
@@ -127,24 +89,7 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
 
 router.delete("/:messageid", channelMiddleware, async (req, res) => {
     try {
-        const account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
-
-        if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-
         let message = req.message;
 
         if (!message) {
@@ -179,9 +124,7 @@ router.delete("/:messageid", channelMiddleware, async (req, res) => {
         return res.status(204).send();
     } catch(error) {
         logText(error, "error");
-    
-        
-        
+
         return res.status(500).json({
           code: 500,
           message: "Internal Server Error"

@@ -9,24 +9,7 @@ const quickcache = require('../helpers/quickcache');
 
 router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
-        let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
-        }
-
         let emojis = guild.emojis;
 
         return res.status(200).json(emojis);
@@ -43,22 +26,7 @@ router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), qu
 router.post("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
-        }
 
         if (guild.emojis.length >= global.config.limits['emojis_per_guild'].max) {
             return res.status(404).json({
@@ -132,8 +100,6 @@ router.post("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), a
         })
     } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -144,26 +110,8 @@ router.post("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), a
 
 router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), async (req, res) => {
     try {
-        let account = req.account;
-        
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
-        }
-
         let emoji_id = req.params.emoji;
-        
         let emoji = req.guild.emojis.find(x => x.id === emoji_id);
 
         if (emoji == null) {
@@ -213,8 +161,6 @@ router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJ
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -225,26 +171,8 @@ router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJ
 
 router.delete("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), async (req, res) => {
     try {
-        let account = req.account;
-        
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
-        }
-
         let emoji_id = req.params.emoji;
-        
         let emoji = req.guild.emojis.find(x => x.id === emoji_id);
 
         if (emoji == null) {
@@ -280,8 +208,6 @@ router.delete("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMO
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
-    
-        
         
         return res.status(500).json({
           code: 500,

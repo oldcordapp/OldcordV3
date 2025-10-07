@@ -14,14 +14,6 @@ router.param('userid', async (req, res, next, userid) => {
 router.delete("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
 
         if (!channel) {
@@ -103,15 +95,6 @@ router.delete("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"),
 
 router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), async (req, res) => {
     try {
-        let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let user = req.user;
 
         if (!user) {
@@ -203,14 +186,6 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
 router.put("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame), async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
 
         if (!channel) {
@@ -301,15 +276,6 @@ router.put("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), ra
 
 router.get("/:urlencoded", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
-        let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
 
         if (!channel) {

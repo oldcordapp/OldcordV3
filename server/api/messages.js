@@ -32,22 +32,7 @@ function handleJsonAndMultipart(req, res, next) {
 router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache.cacheFor(15, false), async (req, res) => {
     try {
         const creator = req.account;
-
-        if (creator == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const channel = req.channel;
-
-        if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
 
         if (channel.type === 2) {
             return res.status(400).json({
@@ -84,24 +69,9 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache
 });
 
 router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMultipart, channelPermissionsMiddleware("SEND_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.sendMessage.maxPerTimeFrame, global.config.ratelimit_config.sendMessage.timeFrame), async (req, res) => {
-    try {
-        const author = req.account;
-
-        if (author == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-        
-        const account = author;
-
-        if (req.channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
+    try {  
+        const account = req.account;
+        const author = account;
 
         if (req.channel.type === 2) {
             return res.status(400).json({
@@ -408,14 +378,6 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 router.delete("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelPermissionsMiddleware("MANAGE_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.deleteMessage.maxPerTimeFrame, global.config.ratelimit_config.deleteMessage.timeFrame), async (req, res) => {
     try {
         const guy = req.account;
-
-        if (guy == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const message = req.message;
 
         if (message == null) {
@@ -427,7 +389,7 @@ router.delete("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
 
         const channel = req.channel;
 
-        if (channel == null || (!channel.recipients && !channel.guild_id)) {
+        if ((!channel.recipients && !channel.guild_id)) {
             return res.status(404).json({
                 code: 404,
                 message: "Unknown Channel"
@@ -478,13 +440,6 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
         
         const caller = req.account;
 
-        if (caller == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let message = req.message;
 
         if (message == null) {
@@ -495,9 +450,6 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
         }
 
         const channel = req.channel;
-
-        if (channel == null)
-            throw "Message update in null channel";
 
         if (!channel.recipients && !channel.guild_id) {
             return res.status(404).json({
@@ -557,14 +509,6 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
 router.post("/:messageid/ack", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateLimitMiddleware(global.config.ratelimit_config.ackMessage.maxPerTimeFrame, global.config.ratelimit_config.ackMessage.timeFrame), async (req, res) => {
     try {
         const guy = req.account;
-
-        if (guy == null || !guy.token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const message = req.message;
 
         if (message == null) {
@@ -575,13 +519,6 @@ router.post("/:messageid/ack", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), ra
         }
 
         const channel = req.channel;
-
-        if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
 
         let msgAlreadyAcked = await global.database.isMessageAcked(guy.id, channel.id, message.id);
 

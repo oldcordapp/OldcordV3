@@ -23,16 +23,7 @@ router.param('guildid', async (req, _, next, guildid) => {
 //Or this 
 router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
-    return res.status(200).json(globalUtils.sanitizeObject(account, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
+    return res.status(200).json(globalUtils.sanitizeObject(req.account, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
   }
   catch (error) {
     logText(error, "error");
@@ -48,13 +39,6 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
   try {
     let account = req.account;
     let originalAcc = account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
 
     if (account.bot) {
       if (req.body.username) {
@@ -349,16 +333,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
 //Or this
 router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
-    return res.status(200).json(account.settings);
+    return res.status(200).json(req.account.settings);
   } catch (error) {
     logText(error, "error");
 
@@ -372,14 +347,6 @@ router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
 router.patch("/settings", async (req, res) => {
   try {
     let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
     let new_settings = account.settings;
     
     if (new_settings == null) {
@@ -423,14 +390,6 @@ router.put("/notes/:userid", async (req, res) => {
   //updateNoteForUserId
   try {
     let account = req.account;
-
-    if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
-    }
-
     let user = req.user;
 
     if (!user) {
@@ -482,7 +441,7 @@ router.get("/connections", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"
@@ -507,7 +466,7 @@ router.delete("/connections/:platform/:connectionid", async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"
@@ -564,7 +523,7 @@ router.patch("/connections/:platform/:connectionid", async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"
@@ -622,22 +581,7 @@ router.delete("/guilds/:guildid", guildMiddleware, rateLimitMiddleware(global.co
     try {
         try {
             const user = req.account;
-    
-            if (!user) {
-                return res.status(401).json({
-                    code: 401,
-                    message: "Unauthorized"
-                });
-            }
-    
             const guild = req.guild;
-    
-            if (!guild) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Guild"
-                });
-            }
     
             if (guild.owner_id == user.id) {
                 await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
@@ -698,22 +642,7 @@ router.delete("/guilds/:guildid", guildMiddleware, rateLimitMiddleware(global.co
 router.patch("/guilds/:guildid/settings", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateUsersGuildSettings.maxPerTimeFrame, global.config.ratelimit_config.updateUsersGuildSettings.timeFrame), async (req, res) => {
     try {
         const user = req.account;
-    
-        if (!user) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const guild = req.guild;
-
-        if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
-        }
 
         let usersGuildSettings = await global.database.getUsersGuildSettings(user.id);
         let guildSettings = usersGuildSettings.find(x => x.guild_id == guild.id);
@@ -796,14 +725,6 @@ router.patch("/guilds/:guildid/settings", guildMiddleware, rateLimitMiddleware(g
 router.get("/mentions", quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
     let account = req.account;
-
-    if (!account) {
-      return res.status(401).json({
-          code: 401,
-          message: "Unauthorized"
-      });
-    }
-
     let limit = req.query.limit ?? 25;
     let guild_id = req.query.guild_id ?? null;
     let include_roles = req.query.roles == "true" ?? false;

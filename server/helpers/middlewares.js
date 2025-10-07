@@ -275,7 +275,7 @@ async function authMiddleware(req, res, next) {
             } catch { }
         }
 
-        let release_date = req.cookies['release_date'];
+        let release_date = req.cookies['release_date'] ?? req.cookies['default_client_build'] ?? 'october_5_2017';
 
         let valid_releases = [
             "june_12_2015",

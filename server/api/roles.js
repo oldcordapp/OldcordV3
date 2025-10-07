@@ -17,15 +17,6 @@ router.get("/:roleid", quickcache.cacheFor(60 * 15, true), async (req, res) => {
 
 router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.updateRole.maxPerTimeFrame, global.config.ratelimit_config.updateRole.timeFrame), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
 
         if (!guild) {
@@ -105,15 +96,6 @@ router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMi
 
 router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.deleteRole.maxPerTimeFrame, global.config.ratelimit_config.deleteRole.timeFrame), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
 
         if (!guild) {
@@ -176,15 +158,6 @@ router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitM
 
 router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.updateRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
 
         if (!guild) {
@@ -255,15 +228,6 @@ router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddlewar
 
 router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.createRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null || !sender.token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
 
         if (!guild) {

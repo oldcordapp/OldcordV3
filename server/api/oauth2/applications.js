@@ -69,15 +69,6 @@ router.get("/", quickcache.cacheFor(60 * 10), async (req, res) => {
 
 router.post("/", async (req, res) => {
     try {
-        let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
-        }
-
         let name = req.body.name;
 
         if (!name) {
@@ -118,13 +109,6 @@ router.get("/:applicationid", quickcache.cacheFor(60 * 10), async (req, res) => 
     try {
         let account = req.account;
 
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
-        }
-
         if (req.application.owner.id != account.id) {
             return res.status(404).json({
                 code: 404,
@@ -146,14 +130,6 @@ router.get("/:applicationid", quickcache.cacheFor(60 * 10), async (req, res) => 
 router.patch("/:applicationid", async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
-        }
-
         let application = req.application;
 
         if (!application || application.owner.id !== account.id) {
@@ -250,14 +226,6 @@ router.patch("/:applicationid", async (req, res) => {
 router.post("/:applicationid/bot", async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
-        }
-
         let application = req.application;
 
         if (!application || application.owner.id != account.id) {

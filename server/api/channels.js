@@ -98,8 +98,6 @@ router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
         return res.status(204).send();
       } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
@@ -110,23 +108,7 @@ router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
 
 router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
-
-        if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
 
         if (!channel.guild_id && channel.type !== 3) {
             return res.status(404).json({
@@ -207,15 +189,6 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
 
 router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_CHANNELS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const invites = await global.database.getChannelInvites(req.params.channelid);
 
         return res.status(200).json(invites);
@@ -232,13 +205,6 @@ router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
 router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("CREATE_INSTANT_INVITE"), async (req, res) => {
     try {
         const sender = req.account;
-
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
 
         if (config.instance.flags.includes("NO_INVITE_CREATION")) {
             return res.status(400).json({
@@ -306,30 +272,12 @@ router.use("/:channelid/messages", channelMiddleware, messages);
 
 router.get("/:channelid/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_WEBHOOKS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
-        let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let guild = req.guild;
 
         if (!guild) {
             return res.status(404).json({
                 code: 404,
                 message: "Unknown Guild"
-            });  
-        }
-
-        let channel = req.channel;
-        
-        if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
             });  
         }
 
@@ -349,29 +297,12 @@ router.get("/:channelid/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
 router.post("/:channelid/webhooks",  instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_WEBHOOKS"), async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        } 
-
         let guild = req.guild;
 
         if (!guild) {
             return res.status(404).json({
                 code: 404,
                 message: "Unknown Guild"
-            });  
-        }
-
-        let channel = req.channel;
-
-        if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
             });  
         }
 
@@ -403,15 +334,6 @@ router.post("/:channelid/webhooks",  instanceMiddleware("VERIFIED_EMAIL_REQUIRED
 
 router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, guildPermissionsMiddleware("MANAGE_ROLES"), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-    
         let id = req.params.id;
         let channel_id = req.params.channelid;
         let type = req.body.type;
@@ -428,14 +350,6 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
         }
         
         let channel = req.channel;
-
-        if (channel == null || !channel.guild_id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-
         let channel_overwrites = await global.database.getChannelPermissionOverwrites(req.guild, channel.id);
         let overwrites = channel_overwrites;
         let overwriteIndex = channel_overwrites.findIndex(x => x.id == id);
@@ -515,27 +429,10 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
 
 router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, guildPermissionsMiddleware("MANAGE_ROLES"), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (!sender || !sender.token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let id = req.params.id;
         let channel_id = req.params.channelid;
         
         let channel = req.channel;
-
-        if (channel == null || !channel.guild_id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-
         let channel_overwrites = await global.database.getChannelPermissionOverwrites(req.guild, channel.id);
         let overwriteIndex = channel_overwrites.findIndex(x => x.id == id);
 
@@ -581,23 +478,9 @@ router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_
 router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), async (req, res) => {
     try {
         const sender = req.account;
-        
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-        
+
         let channel = req.channel;
 
-        if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-        
         if (channel.type !== 3) {
             return res.status(403).json({
                 code: 403,
@@ -663,23 +546,9 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
 router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), async (req, res) => {
     try {
         const sender = req.account;
-        
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-        
+
         let channel = req.channel;
 
-        if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-        
         if (channel.type !== 3) {
             return res.status(403).json({
                 code: 403,
@@ -729,21 +598,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
     try {
         const sender = req.account;
 
-        if (!sender) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         let channel = req.channel;
-
-        if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
 
         if (channel.type !== 3 && channel.type !== 1) {
             if (req.guild && req.guild.channels.length === 1) {

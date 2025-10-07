@@ -20,13 +20,6 @@ router.patch("/:webhookid", async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        } 
-
         if (!req.body.channel_id) {
             return res.status(404).json({
                 code: 404,
@@ -115,14 +108,6 @@ router.patch("/:webhookid", async (req, res) => {
 router.delete("/:webhookid", async (req, res) => {
     try {
         let account = req.account;
-
-        if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        } 
-
         let webhook = req.webhook;
 
         if (!webhook) {

@@ -13,7 +13,7 @@ router.get("/authorize", quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"
@@ -148,7 +148,7 @@ router.post("/authorize", async (req, res) => {
     try {
         let account = req.account;
 
-        if (!account || account.bot) {
+        if (account.bot) {
             return res.status(401).json({
                 code: 401,
                 message: "Unauthorized"

@@ -13,15 +13,6 @@ router.param('memberid', async (req, res, next, memberid) => {
 
 router.get("/", guildPermissionsMiddleware("BAN_MEMBERS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
-        const sender = req.account;
-
-        if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         const bans = await global.database.getGuildBans(req.params.guildid);
 
         return res.status(200).json(bans);
@@ -39,13 +30,6 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
     try {
         const sender = req.account;
 
-        if (!sender || !sender.token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         if (sender.id == req.params.memberid) {
             return res.status(403).json({
                 code: 403,
@@ -54,6 +38,7 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
         }
 
         let member = req.member;
+
         const userInGuild = member != null;
 
         if (!userInGuild) {
@@ -150,13 +135,6 @@ router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimit
     try {
         const sender = req.account;
 
-        if (!sender || !sender.token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
         if (sender.id == req.params.memberid) {
             return res.status(403).json({
                 code: 403,
@@ -193,8 +171,6 @@ router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimit
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
-    
-        
 
         return res.status(500).json({
           code: 500,
