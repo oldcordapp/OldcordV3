@@ -39,6 +39,9 @@ There are some features we need help with, if you're up for the task, feel free 
   - **Video**: 🔴 Not yet supported. Our current focus is on ensuring voice chat works 100% of the time with little to no issues.
   - **Moderation Features**: 🔴Server mute and deafen are planned and actively being worked on.
 
+**Spacebar Clients Compatibility**:
+  - **Fermi**: 🟠 Work in progress
+
 # Setup Guide
 **Prerequisites**:
   - A running PostgreSQL server.
