@@ -229,7 +229,6 @@ router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
     }
 });
 
-//investigate invites 500'ing
 router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("CREATE_INSTANT_INVITE"), async (req, res) => {
     try {
         const sender = req.account;
