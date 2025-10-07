@@ -15,6 +15,7 @@ router.param('webhookid', async (req, res, next, webhookid) => {
     next();
 });
 
+//use middlewares??
 router.patch("/:webhookid", async (req, res) => {
     try {
         let account = req.account;
@@ -69,21 +70,29 @@ router.patch("/:webhookid", async (req, res) => {
             }); 
         }
 
-        if (req.body.name && req.body.name.length < 2) {
+        const newName = req.body.name;
+        
+        if (!newName) {
             return res.status(400).json({
                 code: 400,
                 name: "Must be between 2 and 25 characters."
-            });  
-        }
-
-        if (req.body.name && req.body.name.length > 25) {
+            });   
+        } else if (newName.length < 2 || newName.length > 25) {
             return res.status(400).json({
                 code: 400,
                 name: "Must be between 2 and 25 characters."
-            });  
+            });
         }
 
-        let tryUpdate = await global.database.updateWebhook(webhook.id, channel.id, req.body.name ?? "Captain Hook", req.body.avatar ?? "NULL");
+        const finalName = newName ?? webhook.name ?? "Captain Hook";
+        const finalAvatar = req.body.avatar !== undefined ? req.body.avatar : webhook.avatar;
+
+        let tryUpdate = await global.database.updateWebhook(
+            webhook, 
+            channel, 
+            finalName,
+            finalAvatar
+        );
 
         if (!tryUpdate) {
             return res.status(500).json({
@@ -91,7 +100,7 @@ router.patch("/:webhookid", async (req, res) => {
                 message: "Internal Server Error"
             });
         }
-
+        
         return res.status(200).json(tryUpdate);
     } catch (error) {
         logText(error, "error");

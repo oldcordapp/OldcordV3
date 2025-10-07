@@ -209,7 +209,7 @@ router.patch("/:applicationid", async (req, res) => {
             })
         }
 
-        let tryUpdateApplication = await global.database.updateUserApplication(account, application);
+        let tryUpdateApplication = await global.database.updateUserApplication(application);
 
         if (!tryUpdateApplication) {
             return res.status(500).json({

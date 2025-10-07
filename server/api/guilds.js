@@ -80,7 +80,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
             } else if (year != 2016) selected_region = "everything";
         }
 
-        const guild = await global.database.createGuild(creator.id, req.body.icon, req.body.name, req.body.region, exclusions, client_date);
+        const guild = await global.database.createGuild(creator, req.body.icon, req.body.name, req.body.region, exclusions, client_date);
 
         if (guild == null) {
             return res.status(500).json({

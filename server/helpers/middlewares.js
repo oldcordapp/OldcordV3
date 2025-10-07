@@ -237,9 +237,9 @@ function staffAccessMiddleware(privilege_needed) {
 
 async function authMiddleware(req, res, next) {
     try {
-        if ((req.url.includes("/webhooks/") || (req.url.includes("/invite/")) && req.method === "GET")) {
+        if ((req.url.includes("/webhooks/") || req.url.includes("/invite/")) && req.method === "GET" ) {
             return next();
-        } //exclude webhooks and invites from this
+        }//exclude webhooks and invites from this
 
         let token = req.headers['authorization'];
         

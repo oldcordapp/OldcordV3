@@ -32,7 +32,7 @@ router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
         });
     }
 
-    return res.status(200).json(globalUtils.sanitizeObject(account, ['settings', 'token', 'password', 'relationships', 'claimed']));
+    return res.status(200).json(globalUtils.sanitizeObject(account, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
   }
   catch (error) {
     logText(error, "error");
@@ -151,7 +151,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
     if (update.email == account.email && update.new_password == null && update.password == null && update.username == account.username && update.discriminator == account.discriminator) {
        //avatar change
        
-       let tryUpdate = await global.database.updateAccount(account.id, update.avatar, account.username, account.discriminator, null, null);
+       let tryUpdate = await global.database.updateAccount(account, update.avatar, account.username, account.discriminator, null, null);
 
        if (tryUpdate !== 3 && tryUpdate !== 2) {
           return res.status(500).json({
@@ -169,13 +169,31 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
           });
        }
 
-       retAccount = globalUtils.sanitizeObject(retAccount, ['settings', 'created_at', 'password', 'relationships', 'claimed']);
-
-       await global.dispatcher.dispatchEventTo(retAccount.id, "USER_UPDATE", retAccount);
+       await global.dispatcher.dispatchEventTo(retAccount.id, "USER_UPDATE", {
+         avatar: retAccount.avatar,
+         discriminator: retAccount.discriminator,
+         email: retAccount.email,
+         flags: retAccount.flags,
+         id: retAccount.id,
+         token: retAccount.token,
+         username: retAccount.username,
+         verified: retAccount.verified,
+         claimed: true
+       });
 
        await global.dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(retAccount.id, retAccount);
 
-       return res.status(200).json(retAccount);
+       return res.status(200).json({
+          avatar: retAccount.avatar,
+          discriminator: retAccount.discriminator,
+          email: retAccount.email,
+          flags: retAccount.flags,
+          id: retAccount.id,
+          token: retAccount.token,
+          username: retAccount.username,
+          verified: retAccount.verified,
+          claimed: true
+       });
     }
 
     if (account.password && update.password == null) {
@@ -246,7 +264,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
       }
     }
 
-    const attemptToUpdate = await global.database.updateAccount(account.id, update.avatar, update.username, update.discriminator, update.password, update.new_password, update.new_email);
+    const attemptToUpdate = await global.database.updateAccount(account, update.avatar, update.username, update.discriminator, update.password, update.new_password, update.new_email);
 
     if (attemptToUpdate !== 3) {
       if (attemptToUpdate === -1) {
@@ -287,7 +305,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
       });
     }
 
-    account = globalUtils.sanitizeObject(account, ['settings', 'created_at', 'password', 'relationships', 'claimed']);
+    account = globalUtils.sanitizeObject(account, ['settings', 'created_at', 'password', 'relationships', 'disabled_until', 'disabled_reason']);
 
     if (originalAcc.email != account.email) {
        account.verified = false;
@@ -295,7 +313,29 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
        await global.database.unverifyEmail(account.id);
     } //unverify them as they need to uh verify with their new email thingimajig
 
-    return res.status(200).json(account);
+    await global.dispatcher.dispatchEventTo(account.id, "USER_UPDATE", {
+      avatar: account.avatar,
+      discriminator: account.discriminator,
+      email: account.email,
+      flags: account.flags,
+      id: account.id,
+      token: account.token,
+      username: account.username,
+      verified: account.verified,
+      claimed: true
+    });
+
+    return res.status(200).json({
+          avatar: account.avatar,
+          discriminator: account.discriminator,
+          email: account.email,
+          flags: account.flags,
+          id: account.id,
+          token: account.token,
+          username: account.username,
+          verified: account.verified,
+          claimed: true
+    });
   } catch (error) {
     logText(error, "error");
 

@@ -229,6 +229,7 @@ router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
     }
 });
 
+//investigate invites 500'ing
 router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("CREATE_INSTANT_INVITE"), async (req, res) => {
     try {
         const sender = req.account;
@@ -274,7 +275,7 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
             xkcdpass = req.body.xkcdpass;
         }
 
-        if (req.body.tempoary) {
+        if (req.body.temporary) {
             temporary = req.body.temporary;
         }
 
@@ -282,9 +283,10 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
             regenerate = true;
         }
 
-        const invite = await global.database.createInvite(req.params.guildid, req.params.channelid, sender.id, temporary, max_uses, max_age, xkcdpass, regenerate);
+        const invite = await global.database.createInvite(req.guild, req.channel, sender, temporary, max_uses, max_age, xkcdpass, regenerate);
 
         if (invite == null) {
+            console.log("invite is null");
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -293,6 +295,7 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
 
         return res.status(200).json(invite);
     } catch (error) {
+        console.log(error);
         logText(error, "error");
     
         return res.status(500).json({
