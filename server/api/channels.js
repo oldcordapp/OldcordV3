@@ -286,7 +286,6 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
         const invite = await global.database.createInvite(req.guild, req.channel, sender, temporary, max_uses, max_age, xkcdpass, regenerate);
 
         if (invite == null) {
-            console.log("invite is null");
             return res.status(500).json({
                 code: 500,
                 message: "Internal Server Error"
@@ -295,7 +294,6 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
 
         return res.status(200).json(invite);
     } catch (error) {
-        console.log(error);
         logText(error, "error");
     
         return res.status(500).json({
