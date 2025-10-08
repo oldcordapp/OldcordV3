@@ -20,9 +20,9 @@ const Servers = () => {
         const inputText = searchParams.get('searchInput');
         
         if (inputText) {
-            fetch(`http://127.0.0.1:1337/api/admin/guilds/search?input=${inputText}`, {
+            fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/guilds/search?input=${inputText}`, {
                 headers: {
-                    'Authorization': "", // Please put a token here for testing thank you
+                    'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                     'Cookie' : 'release_date=december_22_2016;',
                   },
             }).then((response) => {
@@ -42,42 +42,44 @@ const Servers = () => {
     }, [location.search]);
 
     return (
-        <div style={{ 'display': 'flex', 'flex': 1, 'minHeight': '100vh' }}>
-            <div className='mainPage-container'>
-                <Sidebar active="Servers"></Sidebar>
-                <div className='mainPage-main'>
-                    <div className='mainPage-main-header'>
-                        <div className='mainPage-main-header-components'>
-                            <Searchbar placeholder="Search Servers..." error={error}></Searchbar>
-                        </div>
-                        <Avatar path={DefaultAvatar}></Avatar>
-                    </div>
-                    <div className='mainPage-main-components' style={ Array.isArray(data) && data.length > 2 ? {flexFlow: 'column'} : {}}>
-                        {data == null ? <>
-                            <div className='search-no-results'>
-                                <img src={NoResults} alt="No Results Found"></img>
-                                <p>No Results Found</p>
+        <>
+            <div style={{ 'display': 'flex', 'flex': 1, 'minHeight': '100vh' }}>
+                <div className='mainPage-container'>
+                    <Sidebar active="Servers"></Sidebar>
+                    <div className='mainPage-main'>
+                        <div className='mainPage-main-header'>
+                            <div className='mainPage-main-header-components'>
+                                <Searchbar placeholder="Search Servers..." error={error}></Searchbar>
                             </div>
-                        </> : <>
-                            {Array.isArray(data) ? (
-                                data.reduce((acc, _, i, arr) => {
-                                    if (i % 2 === 0) acc.push(arr.slice(i, i + 2));
-                                    return acc;
-                                }, []).map((chunk, i) => (
-                                    <div className='server-cards-row' key={i}>
-                                        {chunk.map((item, j) => (
-                                            <ServerCard data={item} key={j} joined={false} />
-                                        ))}
-                                    </div>
-                                ))
-                            ) : (
-                                <Server data={data} />
-                            )}
-                        </>}
+                            <Avatar path={DefaultAvatar}></Avatar>
+                        </div>
+                        <div className='mainPage-main-components' style={Array.isArray(data) && data.length > 2 ? { flexFlow: 'column' } : {}}>
+                            {data == null ? <>
+                                <div className='search-no-results'>
+                                    <img src={NoResults} alt="No Results Found"></img>
+                                    <p>No Results Found</p>
+                                </div>
+                            </> : <>
+                                {Array.isArray(data) ? (
+                                    data.reduce((acc, _, i, arr) => {
+                                        if (i % 2 === 0) acc.push(arr.slice(i, i + 2));
+                                        return acc;
+                                    }, []).map((chunk, i) => (
+                                        <div className='server-cards-row' key={i}>
+                                            {chunk.map((item, j) => (
+                                                <ServerCard data={item} key={j} joined={false} />
+                                            ))}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <Server data={data} />
+                                )}
+                            </>}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </> 
     )
 }
 

@@ -35,6 +35,47 @@ body {
   padding-bottom: 55px;
 }
 
+.confirmation-modal {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 5px 45px 0 rgba(4, 4, 5, .1);
+    color: #36393f;
+    font-size: 18px;
+    line-height: 21px;
+    position: relative;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.largeButton {
+    padding: 15px 40px;
+    border-radius: 3px;
+    margin-right: 20px;
+}
+
+.yes-button {
+    color: #fff;
+    background-color: #7289da;
+}
+
+.yes-button:hover {
+  background-color: #7f98f4;
+}
+
+.no-button {
+    background-color: #4f545c;
+    color: #fff;
+}
+
+.no-button:hover {
+  background-color: #5f656f;
+}
+
 .loginPage-submit-button {
   background-color: #fff;
   color: #7289da;
@@ -100,6 +141,19 @@ button {
   margin-left: 0;
   margin-right: 10px;
   width: 220px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 .mainPage-sidebar-header {

@@ -204,19 +204,14 @@ function staffAccessMiddleware(privilege_needed) {
                 });
             }
 
-            let staffDetails = await global.database.getStaffDetails(account.id);
-
-            if (!staffDetails) {
+            if (!req.is_staff) {
                 return res.status(401).json({
                     code: 401,
                     message: "Unauthorized"
                 });
             }
 
-            req.is_staff = staffDetails != null;
-            req.staff_details = staffDetails;
-
-            if (staffDetails.privilege < privilege_needed) {
+            if (req.staff_details.privilege < privilege_needed) {
                 return res.status(401).json({
                     code: 401,
                     message: "Unauthorized"
@@ -256,6 +251,13 @@ async function authMiddleware(req, res, next) {
     
         if (!account || account.disabled_until != null) {
             req.cannot_pass = true;
+        }
+
+        let staffDetails = await global.database.getStaffDetails(account.id);
+
+        if (staffDetails != null) {
+            req.is_staff = true;
+            req.staff_details = staffDetails;
         }
       
         if (!account.bot) {
@@ -401,6 +403,10 @@ async function guildMiddleware(req, res, next) {
         });
     }
 
+    if (req.is_staff) {
+        return next();
+    }
+
     let member = guild.members.find(y => y.id == sender.id);
 
     if (!member) {
@@ -439,7 +445,7 @@ async function userMiddleware(req, res, next) {
             code: 404,
             message: "Unknown User"
         });
-    }
+    } //investigate later
 
     let share = guilds.some(guild => guild.members != null && guild.members.length > 0 && guild.members.some(member => member.id === account.id));
 
@@ -484,6 +490,10 @@ async function channelMiddleware(req, res, next) {
 
     if (!req.guild) {
         req.guild = await global.database.getGuildById(req.params.guildid); //hate this also
+    }
+
+    if (req.is_staff) {
+        return next();
     }
 
     let member = req.guild.members.find(y => y.id == sender.id);
@@ -540,7 +550,7 @@ function guildPermissionsMiddleware(permission) {
             });
         }
 
-        if (guild.owner_id == sender.id) {
+        if (guild.owner_id == sender.id || (req.is_staff && req.staff_details.privilege >= 3)) {
             return next();
         }
 
@@ -578,6 +588,10 @@ function channelPermissionsMiddleware(permission) {
                 });
             }
 
+            if (req.is_staff && req.staff_details.privilege >= 3) {
+                return next();
+            }
+
             if (message.author.id == sender.id) {
                 return next();
             }
@@ -590,6 +604,10 @@ function channelPermissionsMiddleware(permission) {
                 code: 404,
                 message: "Unknown Channel"
             });
+        }
+
+        if (req.is_staff && req.staff_details.privilege >= 3) {
+            return next();
         }
 
         if (channel.id.includes('12792182114301050')) return next();
