@@ -3,7 +3,11 @@
     "frontend/*"
   ],
   "scripts": {
-    "start": "npm run build --prefix frontend/selector && node server/index.js"
+    "build:selector": "npm run build --workspace=frontend/selector",
+    "build:admin": "npm run build --workspace=frontend/admin",
+    "build:all": "npm run build:selector && npm run build:admin",
+    "start:server": "node server/index.js",
+    "start": "npm run build:all && npm run start:server"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.14.3",

@@ -10,14 +10,14 @@ import ic_experiments from "../../assets/ic_experiments.svg?react"
 import ic_applications from "../../assets/ic_applications.svg?react"
 import ic_archived from "../../assets/ic_archived.svg?react"
 
-import Oldcboard from '../../assets/oldcboard.png'
+import Oldboard from '../../assets/oldboard.png'
 
 const Sidebar = ({ active }) => {
     return (
         <div className='mainPage-sidebar'>
             <div className='mainPage-sidebar-header'>
                 <Link to='/'>
-                    <img src={Oldcboard} alt="Oldcboard logo"></img>
+                    <img src={Oldboard} alt="Oldcboard logo"></img>
                 </Link>
             </div>
             <div className='mainPage-sidebar-components'>

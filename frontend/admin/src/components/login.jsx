@@ -14,8 +14,6 @@ const Login = () => {
     navigate('/');
   };
   
-
-
   return (
     <div style={{ 'display': 'flex', 'flex': 1, 'minHeight': '100vh' }}>
       <div className='loginPage-container' style={{ 'backgroundImage': `url('${LoginSplash}')` }}>
