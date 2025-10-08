@@ -432,6 +432,10 @@ async function userMiddleware(req, res, next) {
         });
     }
 
+    if (globalUtils.areWeFriends(account, user)) {
+        return next();
+    }
+
     let guilds = await global.database.getUsersGuilds(user.id);
 
     if (guilds.length == 0) {

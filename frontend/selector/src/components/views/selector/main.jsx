@@ -22,6 +22,10 @@ export default function () {
   const { addModal, removeModal } = useModal();
   const { changeLayer, setTriggeredRedirect } = useLayer();
 
+  if (!cookieManager.get("release_date")) {
+    cookieManager.set("release_date", cookieManager.get("default_client_build") ?? "october_5_2017");
+  }
+
   const defaultBuild =
     cookieManager.get("release_date") ??
     cookieManager.get("default_client_build") ??
