@@ -178,7 +178,7 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
 
 //Never share this cache because it's mutuals and whatnot, different for each requester
 //We're gonna remove the userMiddleware from this since it needs to work on users we're friends with without any guilds in common
-router.get("/:userid/relationships", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
         let account = req.account;
 
@@ -190,6 +190,13 @@ router.get("/:userid/relationships", userMiddleware, quickcache.cacheFor(60 * 5)
         }
 
         let user = req.user;
+
+        if (!user) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown User"
+            });
+        }
 
         if (user.bot) {
             return res.status(200).json([]);
