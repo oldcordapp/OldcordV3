@@ -10,8 +10,8 @@
     <div id="app-mount"></div>
     <script>
       window.ADMIN_ENV = {
-          BASE_ENDPOINT: `${location.protocol}//${location.hostname}`,
-          API_ENDPOINT: `${location.protocol}//${location.hostname}/api`
+          BASE_ENDPOINT: `${location.protocol}//${location.host}`,
+          API_ENDPOINT: `${location.protocol}//${location.host}/api`
       };
   </script>
   <script type="module" src="/src/index.jsx"></script>
