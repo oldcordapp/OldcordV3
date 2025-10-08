@@ -4489,7 +4489,7 @@ const database = {
             let checkRows = await database.runQuery(`
                 SELECT EXISTS (
                     SELECT 1 FROM guilds WHERE vanity_url = $1
-                ) AS is_taken;`);
+                ) AS is_taken;`, [vanity_url]);
 
             if (checkRows && checkRows.length > 0 && checkRows[0].is_taken) {
                 return 0;
@@ -4796,7 +4796,7 @@ const database = {
             let isEmailTaken = await database.runQuery(`
             SELECT EXISTS (
                 SELECT 1 FROM users WHERE email = $1
-            ) AS is_taken;`);
+            ) AS is_taken;`, [email]);
 
             if (isEmailTaken && isEmailTaken.length > 0 && isEmailTaken[0].is_taken) {
                 return {
