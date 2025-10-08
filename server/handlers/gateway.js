@@ -226,7 +226,7 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
 
     let guild = usersGuilds.find(x => x.id === guild_id);
 
-    if (!guild);
+    if (!guild) return;
 
     let typing = packet.d.typing; //Subscribe to typing events?
 
