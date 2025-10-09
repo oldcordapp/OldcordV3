@@ -166,7 +166,7 @@ const User = ({ data }) => {
                     </div>
                 ) : <></>}
                 <div className="mainPage-main-components-sidebar-guildAvatar">
-                    <div className='guildAvatar avatar' style={{ 'backgroundImage': `url('${data.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + data.id + '/' + data.icon + ".png"}` }}></div>
+                    <div className='guildAvatar avatar' style={{ 'backgroundImage': `url('${data.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + data.id + '/' + data.avatar + ".png"}` }}></div>
                 </div>
                 <div className='mainPage-main-components-sidebar-text'>{data.username}<span style={{
                     color: '#9099a4',
@@ -213,7 +213,7 @@ const User = ({ data }) => {
                             {data.guilds.map((guild, i) => (
                                 <Member
                                     key={i}
-                                    avatarHash={guild.icon == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/icons/` + guild.id + '/' + guild.avatar + '.png'}
+                                    avatarHash={guild.icon == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/icons/` + guild.id + '/' + guild.icon + '.png'}
                                     username={guild.name}
                                     discriminator={guild.id}
                                     id={guild.id}
