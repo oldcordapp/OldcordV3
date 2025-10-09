@@ -26,7 +26,9 @@ const Login = () => {
               <div className='loginPage-account avatar' style={{ 'backgroundImage': `url('${DefaultAvatar}')` }}></div>
               <div className='loginPage-card-text'>Login to the admin panel with your Oldcord instance staff account.</div>
             </div>
-            <button className='loginPage-submit-button' type="submit">SIGN IN WITH OLDCORD</button> {/* Add type="submit" */}
+            <button className='loginPage-submit-button' onClick={() => {
+              location.href = `/login?redirect_to=%2Fadmin`
+            }}>SIGN IN WITH OLDCORD</button> {/* Add type="submit" */}
           </div>
         </form>
       </div>

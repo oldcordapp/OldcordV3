@@ -8,8 +8,9 @@ import Server from './server';
 
 import DefaultAvatar from '../../assets/default-avatar.png'
 import NoResults from '../../assets/img_noresults.svg'
+import User from './user';
 
-const Servers = () => {
+const Users = () => {
     const location = useLocation();
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
@@ -19,7 +20,7 @@ const Servers = () => {
         const inputText = searchParams.get('searchInput');
         
         if (inputText) {
-            fetch(`${window.ADMIN_ENV.API_ENDPOINT}/guilds/${inputText}`, {
+            fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${inputText}`, {
                 headers: {
                     'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                     'Cookie' : 'release_date=december_22_2016;',
@@ -44,11 +45,11 @@ const Servers = () => {
         <>
             <div style={{ 'display': 'flex', 'flex': 1, 'minHeight': '100vh' }}>
                 <div className='mainPage-container'>
-                    <Sidebar active="Servers"></Sidebar>
+                    <Sidebar active="Users"></Sidebar>
                     <div className='mainPage-main'>
                         <div className='mainPage-main-header'>
                             <div className='mainPage-main-header-components'>
-                                <Searchbar placeholder="Lookup a server by ID" error={error}></Searchbar>
+                                <Searchbar placeholder="Lookup a user by ID" error={error}></Searchbar>
                             </div>
                             <Avatar path={DefaultAvatar}></Avatar>
                         </div>
@@ -59,7 +60,7 @@ const Servers = () => {
                                     <p>No Results Found</p>
                                 </div>
                             </> : <>
-                                <Server data={data} />
+                                <User data={data} />
                             </>}
                         </div>
                     </div>
@@ -69,4 +70,4 @@ const Servers = () => {
     )
 }
 
-export default Servers;
+export default Users;

@@ -23,13 +23,13 @@ const Sidebar = ({ active }) => {
             <div className='mainPage-sidebar-components'>
                 <SidebarMenuList name="General">
                     <SidebarMenuItem path="/servers" name="Servers" Icon={ic_servers} active={active}></SidebarMenuItem>
-                    <SidebarMenuItem path="/staff" name="Staff" Icon={ic_staff} active={active}></SidebarMenuItem>
-                    <SidebarMenuItem path="/users" name="Users" Icon={ic_users} active={active}></SidebarMenuItem>
-                    <SidebarMenuItem path="/experiments" name="Experiments" Icon={ic_experiments} active={active}></SidebarMenuItem>
+                    <SidebarMenuItem path="/staff" name="Staff" Icon={ic_staff} active={active} disabled={true}></SidebarMenuItem>
+                    <SidebarMenuItem path="/users" name="Users" Icon={ic_users} active={active} disabled={false}></SidebarMenuItem>
+                    <SidebarMenuItem path="/experiments" name="Experiments" Icon={ic_experiments} active={active} disabled={true}></SidebarMenuItem>
                 </SidebarMenuList>
                 <SidebarMenuList name="Programs">
-                    <SidebarMenuItem path="/applications" name="Applications" Icon={ic_applications} active={active}></SidebarMenuItem>
-                    <SidebarMenuItem path="/archived" name="Archived" Icon={ic_archived}></SidebarMenuItem>
+                    <SidebarMenuItem path="/applications" name="Applications" Icon={ic_applications} active={active} disabled={true}></SidebarMenuItem>
+                    <SidebarMenuItem path="/archived" name="Archived" Icon={ic_archived} active={active} disabled={true}></SidebarMenuItem>
                 </SidebarMenuList>
             </div>
         </div>

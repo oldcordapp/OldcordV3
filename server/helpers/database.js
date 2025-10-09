@@ -386,7 +386,7 @@ const database = {
             return false;
         }
     },
-    internalDisableAccount: async (staff, user_id, disabled_until, public_reason, audit_log_reason) => {
+    internalDisableAccount: async (staff, user_id, disabled_until, audit_log_reason) => {
         try {
             if (user_id === staff.user_id || user_id === '1279218211430105089') {
                 return false;
@@ -399,7 +399,7 @@ const database = {
 
             await database.runQuery(`
                 UPDATE users SET disabled_until = $1, disabled_reason = $2 WHERE id = $3
-            `, [disabled_until, public_reason, user_id]);
+            `, [disabled_until, "Spam", user_id]); //to-do actually do this properly
 
             let audit_log = staff.audit_log;
 
@@ -411,6 +411,36 @@ const database = {
                     id: user_id,
                     until_forever: disabled_until === 'FOREVER',
                     until_when: disabled_until // Storing the text 'FOREVER' or actual date in the audit log
+                },
+                reasoning: audit_log_reason
+            };
+
+            audit_log.push(audit_entry);
+
+            await database.updateInternalAuditLog(staff.user_id, audit_log);
+
+            return audit_entry;
+        } catch (error) {
+            logText(error, "error");
+            return null;
+        }
+    },
+    internalDeleteAccount: async (staff, user_id, audit_log_reason) => {
+        try {
+            if (user_id === staff.user_id || user_id === '1279218211430105089') {
+                return false;
+            } // Safety net
+
+            await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id])
+
+            let audit_log = staff.audit_log;
+
+            let audit_entry = {
+                moderation_id: Snowflake.generate(),
+                timestamp: new Date().toISOString(),
+                action: "delete_user",
+                moderated: {
+                    id: user_id
                 },
                 reasoning: audit_log_reason
             };
@@ -4489,7 +4519,7 @@ const database = {
             let checkRows = await database.runQuery(`
                 SELECT EXISTS (
                     SELECT 1 FROM guilds WHERE vanity_url = $1
-                ) AS is_taken;`);
+                ) AS is_taken;`, [vanity_url]);
 
             if (checkRows && checkRows.length > 0 && checkRows[0].is_taken) {
                 return 0;
@@ -4796,7 +4826,7 @@ const database = {
             let isEmailTaken = await database.runQuery(`
             SELECT EXISTS (
                 SELECT 1 FROM users WHERE email = $1
-            ) AS is_taken;`);
+            ) AS is_taken;`, [email]);
 
             if (isEmailTaken && isEmailTaken.length > 0 && isEmailTaken[0].is_taken) {
                 return {

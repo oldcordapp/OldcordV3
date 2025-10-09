@@ -1,13 +1,9 @@
 import React from 'react';
 
 const Channel = ({ name, id, type, position }) => {
-    function manageChannel () {
-        window.location.href = `/channels/${id}`;
-    }
-
     return (
         <>
-            <tr className='mainPage-main-components-infoCard-table-tr' onClick={manageChannel} title="Click to manage channel">
+            <tr className='mainPage-main-components-infoCard-table-tr'>
                 <td className='mainPage-main-components-infoCard-table-td'>
                     {name}
                 </td>

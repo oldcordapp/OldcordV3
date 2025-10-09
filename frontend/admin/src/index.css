@@ -36,7 +36,7 @@ body {
   padding-bottom: 55px;
 }
 
-.confirmation-modal {
+.confirmation-modal-wrapper {
     background-color: #fff;
     border-radius: 5px;
     box-shadow: 0 5px 45px 0 rgba(4, 4, 5, .1);
@@ -53,15 +53,110 @@ body {
     text-align: center;
 }
 
+.confirmation-modal {
+      display: flex;
+        flex-flow: column;
+        align-items: stretch;
+        justify-content: flex-start;
+}
+
+.confirmation-modal-inner {
+      display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.confirmation-modal-inner-summary {
+  color: #36393f;
+  font-size: 18px;
+  position: relative;
+  max-width: 300px;
+}
+
+.confirmation-modal-inner-span {
+  text-align: left;
+    color: rgb(79, 84, 92);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.confirmation-modal-inner input {
+      border: 0px;
+    border-radius: 3px;
+    box-shadow: rgb(227, 229, 232) 0px 0px 0px 1px;
+    color: rgb(79, 86, 96);
+    font-weight: 500;
+    line-height: 20px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.confirmation-modal-inner input::-webkit-input-placeholder {
+    color: #e3e5e8;
+    font-weight: 500
+}
+
+.confirmation-modal-inner input::placeholder {
+    color: #e3e5e8;
+    font-weight: 500
+}
+
+.confirmation-modal-inner input:hover {
+    box-shadow: 0 0 0 1px #c7d0f0
+}
+
+.confirmation-modal-inner input:hover::-webkit-input-placeholder {
+    color: #9099a4
+}
+
+.confirmation-modal-inner input:hover::placeholder {
+    color: #9099a4
+}
+
+.confirmation-modal-inner input:focus {
+    box-shadow: 0 0 0 1px #7289da, 0 0 6px 0 #c7d0f0;
+    color: #7289da
+}
+
+.confirmation-modal-inner input::-webkit-input-placeholder {
+    color: #9099a4
+}
+
+.confirmation-modal-inner input:focus::placeholder {
+    color: #9099a4
+}
+
+.confirmation-modal-inner-buttons-wrapper {
+    margin-top: 20px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.disabled-btn {
+  background-color: #e3e5e8 !important;
+    color: #9099a4 !important;
+    cursor: not-allowed;
+}
+
 .largeButton {
     padding: 15px 40px;
     border-radius: 3px;
-    margin-right: 20px;
+    width: 100%;
 }
 
 .yes-button {
     color: #fff;
     background-color: #7289da;
+}
+
+.disabled-link {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.3;
 }
 
 .yes-button:hover {
@@ -186,7 +281,7 @@ button {
 
 .mainPage-sidebar-subheader {
   color: #4f5660;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   line-height: 16px;
   padding: 8px 20px;
@@ -203,10 +298,58 @@ button {
   margin-left: 10px;
 }
 
+.mainPage-main-components-popouts-container {
+  height: 0;
+  right: 0;
+  overflow: visible;
+  position: absolute;
+  top: 0;
+  width: 0;
+  z-index: 5;
+}
+
+.mainPage-main-popouts {
+position: absolute;
+  top: 30px;
+  right: 10px;
+}
+
+.mainPage-main-components-dropDownMenu {
+    background-color: #fff;
+    border-radius: 3px;
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, .1);
+    padding: 8px 0;
+    width: 200px;
+}
+
+.mainPage-main-components-dropDownMenu-item {
+    flex-flow: row;
+    justify-content: flex-start;
+    align-items: center;
+    display: flex;
+    color: #4f5660;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 500;
+    padding: 10px 20px;
+}
+
+.mainPage-main-components-dropDownMenu-item:hover {
+  background-color: #e3e7f8;
+    color: #7289da
+}
+
 .mainPage-sidebar-components a {
   color: #00b0f4;
   cursor: pointer;
-  text-decoration: none;
+  text-decoration: none !important;
+}
+
+.not-allowed-dropdown {
+  color: #d4d4d4 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
 .mainPage-sidebar-menuItem {

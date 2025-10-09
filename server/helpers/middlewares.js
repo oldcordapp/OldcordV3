@@ -249,7 +249,14 @@ async function authMiddleware(req, res, next) {
 
         let account = await global.database.getAccountByToken(token);
     
-        if (!account || account.disabled_until != null) {
+        if (!account) {
+            return res.status(401).json({
+                code: 401,
+                message: "Unauthorized"
+            });
+        }
+
+        if (account.disabled_until != null) {
             req.cannot_pass = true;
         }
 
