@@ -1,5 +1,5 @@
   import { useEffect, useState } from "react";
-  import Card from "@oldcord/frontend-shared/components/card";
+  import Card from "@oldcord/frontend-shared/components/Card";
   import { Text } from "@oldcord/frontend-shared/components/textComponent";
   import Changelog from "../../shared/changelog";
   import { CHANGELOGS, videos } from "../../../constants/buildChangelogs";

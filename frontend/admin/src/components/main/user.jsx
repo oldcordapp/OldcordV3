@@ -4,7 +4,7 @@ import Paginator from './paginator';
 import Channel from './channel';
 import DefaultAvatar from '../../assets/default-avatar.png'
 import Confirmation from '../modals/confirmation';
-import Ic_dots from '../../assets/Ic_dots.svg?react';
+import Ic_dots from '../../assets/ic_dots.svg?react';
 import Dropdown from './dropdown';
 import InputSingle from '../modals/inputsingle';
 
