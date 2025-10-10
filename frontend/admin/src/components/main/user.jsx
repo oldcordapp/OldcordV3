@@ -7,6 +7,7 @@ import Confirmation from '../modals/confirmation';
 import Ic_dots from '../../assets/ic_dots.svg?react';
 import Dropdown from './dropdown';
 import InputSingle from '../modals/inputsingle';
+import Relationship from './relationship';
 
 const User = ({ data }) => {
     const [confirmation, setConfirmation] = useState(null);
@@ -21,7 +22,7 @@ const User = ({ data }) => {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                 'Content-Type': 'application/json',
-                'Cookie': 'release_date=december_22_2016;',
+                'Cookie': 'release_date=october_5_2017;',
             },
             method: "PATCH",
             body: JSON.stringify({
@@ -49,7 +50,7 @@ const User = ({ data }) => {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                 'Content-Type': 'application/json',
-                'Cookie': 'release_date=december_22_2016;',
+                'Cookie': 'release_date=october_5_2017;',
             },
             method: "POST",
             body: JSON.stringify({
@@ -77,7 +78,7 @@ const User = ({ data }) => {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                 'Content-Type': 'application/json',
-                'Cookie': 'release_date=december_22_2016;',
+                'Cookie': 'release_date=october_5_2017;',
             },
             method: "POST",
             body: JSON.stringify({
@@ -142,6 +143,18 @@ const User = ({ data }) => {
             }
         },
     ];
+
+    const toRelationshipType = (type) => {
+        let map = {
+            0: "Not Friends",
+            1: 'Friends',
+            2: 'Blocked',
+            3: 'Incoming Friend Request',
+            4: 'Outgoing Friend Request'
+        };
+
+        return map[type] ?? "Unknown";
+    };
 
     return (
         <>
@@ -221,9 +234,14 @@ const User = ({ data }) => {
                                 />
                             ))}
                         </Paginator>
-
                     </> : <></>}
-
+                    {data.relationships && Array.isArray(data.relationships) && data.relationships.length > 0 ? <>
+                         <Paginator header="Relationships" tabs={['Username', 'Discriminator', 'Status']}>
+                            {data.relationships.map((entry, i) => (
+                                <Relationship key={i} avatarHash={entry.user.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + entry.user.id + '/' + entry.user.avatar + '.png'} username={entry.user.username} discriminator={entry.user.discriminator} id={entry.user.id} type={toRelationshipType(entry.type)}></Relationship>
+                            ))}
+                        </Paginator>
+                    </> : <></>}
                 </div>
             </div>
 

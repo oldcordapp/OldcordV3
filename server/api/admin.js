@@ -15,16 +15,12 @@ router.param('userid', async (req, res, next, userid) => {
 
 router.get("/users/:userid", staffAccessMiddleware(3), quickcache.cacheFor(60 * 10, true), async (req, res) => {
     try {
-        let userid = req.params.userid;
+        const userid = req.params.userid;
 
-        if (!userid) {
-            return res.status(400).json({
-                code: 404,
-                message: "Unknown User"
-            });
-        }
-
-        let userRet = await global.database.getAccountByUserId(userid);
+        const [userRet, guilds] = await Promise.all([
+            global.database.getAccountByUserId(userid),
+            global.database.getUsersGuilds(userid)
+        ]); //to-do: make a lite function which just gets the name, id, icon from the database - makes no sense fetching the whole guild object then only using like 3 things from it to fetch it later
 
         if (!userRet) {
             return res.status(404).json({
@@ -33,17 +29,20 @@ router.get("/users/:userid", staffAccessMiddleware(3), quickcache.cacheFor(60 * 
             });
         }
 
-        let guilds = await global.database.getUsersGuilds(userid);
-        
-        userRet.guilds = guilds;
+        const userWithGuilds = {
+            ...userRet,
+            guilds,
+        };
 
-        return res.status(200).json(globalUtils.sanitizeObject(userRet, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
+        return res.status(200).json(globalUtils.sanitizeObject(userWithGuilds, 
+            ['settings', 'token', 'password', 'disabled_until', 'disabled_reason']
+        ));
     } catch (error) {
         logText(error, "error");
     
         return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
+            code: 500,
+            message: "Internal Server Error"
         });
     }
 });

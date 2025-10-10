@@ -7,6 +7,7 @@ import Confirmation from '../modals/confirmation';
 import Ic_dots from '../../assets/ic_dots.svg?react';
 import Dropdown from './dropdown';
 import InputSingle from '../modals/inputsingle';
+import Role from './role';
 
 const Server = ({ data }) => {
     const [confirmation, setConfirmation] = useState(null);
@@ -21,7 +22,7 @@ const Server = ({ data }) => {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                 'Content-Type' : 'application/json',
-                'Cookie': 'release_date=december_22_2016;',
+                'Cookie': 'release_date=october_5_2017;',
             },
             method: "PATCH",
             body: JSON.stringify({
@@ -49,7 +50,7 @@ const Server = ({ data }) => {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                 'Content-Type' : 'application/json',
-                'Cookie': 'release_date=december_22_2016;',
+                'Cookie': 'release_date=october_5_2017;',
             },
             method: "DELETE"
         }).then(() => {
@@ -105,6 +106,16 @@ const Server = ({ data }) => {
          } },
         { name: "Add Member", not_implemented_yet: true, action: () => { console.log("Add Member clicked"); } }
     ];
+
+    const toChannelType = (type) => {
+        let map = {
+            0: 'Text',
+            2: 'Voice',
+            4: 'Category'
+        };
+
+        return map[type] ?? "Text";
+    }
 
     return (
         <>
@@ -176,23 +187,34 @@ const Server = ({ data }) => {
             </div>
             <div className='mainPage-main-components-main'>
                 <div className='mainPage-main-components-wrapper'>
-                    <Paginator header="Members" tabs={['Username', 'Discriminator']}>
-                        {data.members.map((member, i) => (
-                            <Member
-                                key={i}
-                                avatarHash={member.user.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + member.user.id + '/' + member.user.avatar + '.png'}
-                                username={member.user.username}
-                                discriminator={member.user.discriminator}
-                                id={member.user.id}
-                                actuallyServer={false}
-                            />
-                        ))}
-                    </Paginator>
-                    <Paginator header="Channels" tabs={['Name', 'ID', 'Type', 'Position']}>
-                        {data.channels.map((channel, i) => (
-                            <Channel key={i} name={channel.name} id={channel.id} type={channel.type === 0 ? "Text" : "Voice"} position={channel.position}></Channel>
-                        ))}
-                    </Paginator>
+                    {data.members.length > 0 ? <>
+                        <Paginator header="Members" tabs={['Username', 'Discriminator']}>
+                            {data.members.map((member, i) => (
+                                <Member
+                                    key={i}
+                                    avatarHash={member.user.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + member.user.id + '/' + member.user.avatar + '.png'}
+                                    username={member.user.username}
+                                    discriminator={member.user.discriminator}
+                                    id={member.user.id}
+                                    actuallyServer={false}
+                                />
+                            ))}
+                        </Paginator>
+                    </> : <></>}
+                    {data.channels.length > 0 ? <>
+                        <Paginator header="Channels" tabs={['Name', 'ID', 'Type', 'Position']}>
+                            {data.channels.map((channel, i) => (
+                                <Channel key={i} name={channel.name} id={channel.id} type={toChannelType(channel.type)} position={channel.position}></Channel>
+                            ))}
+                        </Paginator>
+                    </> : <></>}
+                    {data.roles.length > 0 ? <>
+                        <Paginator header="Roles" tabs={['Name', 'ID', 'Permissions', 'Position', 'Color', 'Hoist', 'Mentionable']}>
+                            {data.roles.map((role, i) => (
+                                <Role key={i} name={role.name} id={role.id} permissions={role.permissions} position={role.position} color={role.color} hoist={role.hoist} mentionable={role}></Role>
+                            ))}
+                        </Paginator>
+                    </> :<></>}
                 </div>
             </div>
 

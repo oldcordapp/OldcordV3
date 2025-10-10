@@ -23,7 +23,7 @@ const Users = () => {
             fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${inputText}`, {
                 headers: {
                     'Authorization': localStorage.getItem("token").replace(/"/g, ''),
-                    'Cookie' : 'release_date=december_22_2016;',
+                    'Cookie' : 'release_date=october_5_2017;',
                   },
             }).then((response) => {
                 return response.json();
