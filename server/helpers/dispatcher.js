@@ -17,6 +17,7 @@ const dispatcher = {
 
         for(let z = 0; z < sessions.length; z++) {
             sessions[z].socket.close(4004, 'Authentication failed');
+            sessions[z].onClose(4004);
         }
     },
     dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis: async (type, payload) => {
