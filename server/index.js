@@ -172,25 +172,90 @@ app.use(cookieParser());
 
 app.use(cors());
 
-app.get('/proxy', async (req, res) => {
-    let url = req.query.url;
+app.get('/proxy/:url', async (req, res) => {
+    let requestUrl;
+    let width = parseInt(req.query.width); 
+    let height = parseInt(req.query.height);
+
+    if (width > 800) {
+        width = 800;
+    }
+
+    if (height > 800) {
+        height = 800;
+    }
+
+    let shouldResize = !isNaN(width) && width > 0 && !isNaN(height) && height > 0;
+
+    try {
+        requestUrl = decodeURIComponent(req.params.url);
+    } catch (e) {
+        return res.status(400).send('Invalid URL encoding.');
+    }
     
-    if (!url) {
-        url = "https://i-love.nekos.zip/ztn1pSsdos.png"
+    if (!requestUrl) {
+        requestUrl = "https://i-love.nekos.zip/ztn1pSsdos.png";
+    }
+
+    if (!requestUrl.startsWith('http://') && !requestUrl.startsWith('https://')) {
+        return res.status(400).send('Invalid URL format.');
     }
 
     try {
-        const response = await fetch(url);
+        let response = await fetch(requestUrl);
 
         if (!response.ok) {
-            return res.status().send('Failed to proxy URL');
+            return res.status(400).send('Invalid URL.');
         }
 
-        res.setHeader('Content-Type', response.headers.get('content-type'));
+        let contentType = response.headers.get('content-type') || 'image/jpeg';
 
-        response.body.pipe(res);
+        if (!contentType.startsWith('image/')) {
+            response.body.destroy();
+            return res.status(400).send('Only images are supported via this route. Try harder.');
+        }
+
+        let isAnimatedGif = contentType === 'image/gif';
+
+        if (isAnimatedGif) {
+            shouldResize = false;
+        }
+
+        if (shouldResize) {
+            let imageBuffer = await response.buffer();
+            let image;
+
+            try {
+                image = await Jimp.read(imageBuffer);
+            } catch (err) {
+                logText(`Failed to read image with Jimp for resizing: ${requestUrl}: ${err}`, "error");
+
+                return res.status(400).send('Only images are supported via this route. Try harder.');
+            }
+
+            image.resize(width, height); 
+
+            let finalBuffer = await image.getBufferAsync(contentType); 
+
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Length', finalBuffer.length);
+            res.status(200).send(finalBuffer);
+            
+        } else {
+            res.setHeader('Content-Type', contentType);
+
+            let contentLength = response.headers.get('content-length');
+
+            if (contentLength) {
+                res.setHeader('Content-Length', contentLength);
+            }
+
+            response.body.pipe(res);
+        }
     } catch (error) {
-        res.status(500).send('Error fetching the image');
+        logText(error, "error");
+
+        res.status(500).send('Internal server error.');
     }
 });
 
