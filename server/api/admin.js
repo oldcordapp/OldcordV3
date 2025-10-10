@@ -13,7 +13,7 @@ router.param('userid', async (req, res, next, userid) => {
     next();
 });
 
-router.get("/users/:userid", staffAccessMiddleware(3), quickcache.cacheFor(60 * 10, true), async (req, res) => {
+router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
     try {
         const userid = req.params.userid;
 
@@ -47,7 +47,7 @@ router.get("/users/:userid", staffAccessMiddleware(3), quickcache.cacheFor(60 * 
     }
 });
 
-router.delete("/guilds/:guildid", staffAccessMiddleware(3), quickcache.cacheFor(60 * 10, true), async (req, res) => {
+router.delete("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
     try {
         let guildid = req.params.guildid;
 
@@ -68,6 +68,10 @@ router.delete("/guilds/:guildid", staffAccessMiddleware(3), quickcache.cacheFor(
         }
 
         await global.database.deleteGuild(guildid);
+
+        await global.dispatcher.dispatchEventInGuild(guildRet, "GUILD_DELETE", {
+            id: req.params.guildid
+        });
 
         return res.status(204).send();
     } catch (error) {
@@ -131,6 +135,8 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
                 message: "Internal Server Error"
             });
         }
+
+        await global.dispatcher.dispatchLogoutTo(req.params.userid);
         
         return res.status(200).json(tryDisable);
     } catch (error) {
@@ -178,6 +184,8 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
                 message: "Internal Server Error"
             });
         }
+
+        await global.dispatcher.dispatchLogoutTo(req.params.userid);
         
         return res.status(200).json(tryDisable);
     } catch (error) {
