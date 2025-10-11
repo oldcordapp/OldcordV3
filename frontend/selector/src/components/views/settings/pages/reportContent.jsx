@@ -6,7 +6,7 @@ import cookieManager from "../../../../lib/cookieManager";
 import { useState, useEffect } from "react";
 import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
-import InputField from "@oldcord/frontend-shared/components/inputfield";
+import InputField from "@oldcord/frontend-shared/components/inputField";
 
 export default function () {
   const { addModal, removeModal } = useModal();

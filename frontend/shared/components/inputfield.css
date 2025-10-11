@@ -30,6 +30,7 @@
   font-size: 16px;
   text-align: left;
   transition: border-color 0.15s ease;
+  outline: none;
 }
 
 .required-text {
@@ -47,4 +48,8 @@
   border-color: #040405;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+}
+
+.input-field:focus {
+  border-color: #7289da;
 }
