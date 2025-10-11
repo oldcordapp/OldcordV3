@@ -18,6 +18,7 @@ const oauth2 = require('./oauth2/index');
 const entitlements = require('./entitlements');
 const activities = require('./activities');
 const integrations = require('./integrations');
+const reports = require('./reports');
 
 global.config = globalUtils.config;
 //just in case
@@ -84,6 +85,8 @@ app.get("/voice/ice", (req, res) => {
         }]
     })
 });
+
+app.use("/reports", reports);
 
 app.use(authMiddleware);
 

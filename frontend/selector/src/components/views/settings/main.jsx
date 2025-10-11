@@ -8,6 +8,7 @@ import Themes from "./pages/themes";
 import DownloadQueue from "./pages/downloadQueue";
 import OpfsSettings from "./pages/opfsSettings";
 import AdvancedSettings from "./pages/advancedSettings";
+import ReportContent from "./pages/reportContent";
 
 export default function () {
   const { activeView } = useSettings();
@@ -28,6 +29,8 @@ export default function () {
         return <OpfsSettings />;
       case SETTINGS_VIEWS.ADVANCED_SETTINGS:
         return <AdvancedSettings />;
+      case SETTINGS_VIEWS.REPORT_CONTENT:
+        return <ReportContent />
     }
   }
 

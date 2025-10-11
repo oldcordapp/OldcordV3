@@ -195,7 +195,7 @@ export default function () {
           </div>
 
           <Text variant="body" style={{ marginTop: "-10px" }}>
-            Looking for patches? They've moved to the settings menu!
+            Looking for patches or a way to report content? You can now find both options conveniently located in the Settings menu.
           </Text>
 
           <div className="important-information">

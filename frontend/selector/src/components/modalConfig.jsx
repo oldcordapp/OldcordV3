@@ -5,6 +5,7 @@ import BuildConfirmation from "./views/selector/modals/buildConfirmation";
 import EnvironmentWarning from "./views/selector/modals/environmentWarning";
 import LegalAgreement from "./views/selector/modals/legalAgreement";
 import OpfsComingSoon from "./views/selector/modals/opfsComingSoon";
+import SubmitReport from "./views/selector/modals/submitReport";
 
 export default {
   changelog: {
@@ -27,5 +28,8 @@ export default {
   },
   opfsComingSoon: {
     Component: OpfsComingSoon,
+  },
+  submitReport: {
+    Component: SubmitReport
   },
 };

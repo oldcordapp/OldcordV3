@@ -342,6 +342,14 @@ const database = {
                 changes JSONB
             );`, []);
 
+            await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_reports (
+                id TEXT PRIMARY KEY,
+                problem TEXT,
+                subject TEXT,
+                description TEXT,
+                email_address TEXT DEFAULT NULL
+            );`, []);
+
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -423,6 +431,16 @@ const database = {
         } catch (error) {
             logText(error, "error");
             return null;
+        }
+    },
+    submitInstanceReport: async (description, subject, problem, email_address = null) => {
+        try {
+            await database.runQuery(`INSERT INTO instance_reports (id, problem, subject, description, email_address) VALUES ($1, $2, $3, $4, $5)`, [Snowflake.generate(), problem, subject, description, email_address]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+            return false;
         }
     },
     internalDeleteAccount: async (staff, user_id, audit_log_reason) => {
