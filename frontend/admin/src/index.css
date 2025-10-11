@@ -352,6 +352,39 @@ position: absolute;
   pointer-events: none !important;
 }
 
+.textarea-reports {
+  resize: vertical;
+  width: 100%;
+  background-color: #e3e5e8;
+  color: #9099a4;
+  cursor: not-allowed;
+  border: 0;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #e3e5e8;
+  color: #4f5660;
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  height: 40px;
+  line-height: 20px;
+  outline: none;
+  padding: 10px 14px;
+  width: 320px;
+}
+
+.no-margin-override {
+  margin-top: auto !important;
+  margin-bottom: auto !important; 
+}
+
+.textarea-reports:disabled, .textarea-reports:disabled:hover {
+    box-shadow: 0 0 0 1px #e3e5e8;
+}
+
+.selected-report-entry {
+  background: #cbd8eb;
+}
+
 .mainPage-sidebar-menuItem {
   color: #9099a4;
   display: flex;

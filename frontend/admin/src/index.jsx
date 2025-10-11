@@ -7,6 +7,8 @@ import Login from './components/login';
 import Servers from './components/main/servers';
 import AuthCheck from './components/authcheck';
 import Users from './components/main/users';
+import Reports from './components/main/reports';
+
 const root = ReactDOM.createRoot(document.getElementById('app-mount'));
 
 function getBaseUrl() {
@@ -24,6 +26,7 @@ root.render(
         <Route index path="/" element={<AuthCheck appPage={Servers} enforced={true} />} />
         <Route path="/servers" element={<AuthCheck appPage={Servers} enforced={true} />} />
         <Route path="/users" element={<AuthCheck appPage={Users} enforced={true} />} />
+        <Route path="/reports" element={<AuthCheck appPage={Reports} enforced={true} />} />
         <Route path="/login" element={<Login />} />
       </Routes>
     </Router>

@@ -347,8 +347,24 @@ const database = {
                 problem TEXT,
                 subject TEXT,
                 description TEXT,
-                email_address TEXT DEFAULT NULL
+                email_address TEXT DEFAULT NULL,
+                action TEXT DEFAULT 'PENDING',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );`, []);
+
+            let alterCheck = await database.runQuery(`SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'instance_reports'
+                AND column_name = 'action'
+            ) AS column_exists;`);
+
+            if (!alterCheck[0].column_exists) {
+                await database.runQuery(`ALTER TABLE instance_reports ADD COLUMN action TEXT DEFAULT 'PENDING';`);
+                await database.runQuery(`ALTER TABLE instance_reports ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
+            } else {
+                await database.runQuery(`DELETE FROM instance_reports WHERE created_at < NOW() - INTERVAL '1 month';`); //Remove reports older than 1 month to free up db
+            }
 
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
@@ -433,9 +449,76 @@ const database = {
             return null;
         }
     },
+    getInstanceReports: async (filter = 'PENDING') => {
+        try {
+            let rows = await database.runQuery(`SELECT * FROM instance_reports WHERE action = $1`, [filter]);
+
+            if (rows === null || rows.length === 0) {
+                return [];
+            }
+
+            let ret = [];
+
+            for (var row of rows) {
+                ret.push({
+                    id: row.id,
+                    problem: row.problem,
+                    subject: row.subject,
+                    description: row.description,
+                    email_address: row.email_address ?? null
+                });
+            }
+
+            return ret;
+        }
+        catch (error) {
+            logText(error, "error");
+            return [];
+        }
+    },
+    getReportById: async (reportId) => {
+        try {
+            let rows = await database.runQuery(`SELECT * FROM instance_reports WHERE id = $1`, [reportId]);
+
+            if (rows === null || rows.length === 0) {
+                return null;
+            }
+
+            let row = rows[0];
+
+            return {
+                id: row.id,
+                problem: row.problem,
+                subject: row.subject,
+                description: row.description,
+                email_address: row.email_address ?? null,
+                action: row.action
+            };
+        }
+        catch (error) {
+            logText(error, "error");
+            return null;
+        }
+    },
+    updateReport: async (reportId, action) => {
+        try {
+            let report = await database.getReportById(reportId);
+
+            if (report == null || report.action !== 'PENDING') {
+                return false;
+            }
+
+            await database.runQuery(`UPDATE instance_reports SET action = $1 WHERE id = $2`, [action, reportId]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+            return false;
+        }
+    },
     submitInstanceReport: async (description, subject, problem, email_address = null) => {
         try {
-            await database.runQuery(`INSERT INTO instance_reports (id, problem, subject, description, email_address) VALUES ($1, $2, $3, $4, $5)`, [Snowflake.generate(), problem, subject, description, email_address]);
+            await database.runQuery(`INSERT INTO instance_reports (id, problem, subject, description, email_address, action) VALUES ($1, $2, $3, $4, $5, $6)`, [Snowflake.generate(), problem, subject, description, email_address, 'PENDING']);
 
             return true;
         } catch (error) {

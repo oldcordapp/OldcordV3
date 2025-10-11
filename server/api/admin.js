@@ -85,6 +85,73 @@ router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
     }
 });
 
+router.get("/reports", staffAccessMiddleware(3), async (req, res) => {
+    try {
+        let reports = await global.database.getInstanceReports();
+
+        return res.status(200).json(reports);
+    } catch (error) {
+        logText(error, "error");
+    
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.patch("/reports/:reportid", staffAccessMiddleware(1), async (req, res) => {
+    try {
+        let reportid = req.params.reportid;
+
+        if (!reportid) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Report"
+            });
+        }
+
+        let action = req.body.action;
+
+        if (!action) {
+            return res.status(400).json({
+                code: 400,
+                action: "This field is required"
+            });
+        }
+
+        let valid_states = [
+            'approved',
+            'discarded'
+        ]
+
+        if (!valid_states.includes(action.toLowerCase())) {
+            return res.status(400).json({
+                code: 400,
+                message: "Invalid action state"
+            });
+        }
+
+        let tryUpdateReport = await global.database.updateReport(reportid, action.toUpperCase());
+
+        if (!tryUpdateReport) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Report"
+            });
+        }
+
+        return res.status(204).send();
+    } catch (error) {
+        logText(error, "error");
+    
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
 router.delete("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
     try {
         let guildid = req.params.guildid;

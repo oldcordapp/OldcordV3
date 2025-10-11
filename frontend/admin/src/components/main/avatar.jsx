@@ -1,9 +1,9 @@
 import React from 'react';
 
-const Avatar = ({ path }) => {
+const Avatar = ({ path, style }) => {
     return (
         <div className='mainPage-main-header-avatar'>
-            <div className='mainPage-main-header-avatar-icon' style={{ 'backgroundImage': `url(${path})` }}>
+            <div className='mainPage-main-header-avatar-icon' style={{ ...style, 'backgroundImage': `url(${path})` }}>
             </div>
         </div>
     );
