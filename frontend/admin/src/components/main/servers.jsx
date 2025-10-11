@@ -8,11 +8,14 @@ import Server from './server';
 
 import DefaultAvatar from '../../assets/default-avatar.png'
 import NoResults from '../../assets/img_noresults.svg'
+import { useAuthUser } from '../..';
 
 const Servers = () => {
     const location = useLocation();
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
+    const { user } = useAuthUser();
+    const avatarPath = (user && user.avatar) ? `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/${user.id}/${user.avatar}.png` : DefaultAvatar;
 
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
@@ -50,7 +53,7 @@ const Servers = () => {
                             <div className='mainPage-main-header-components'>
                                 <Searchbar placeholder="Lookup a server by ID" error={error}></Searchbar>
                             </div>
-                            <Avatar path={DefaultAvatar}></Avatar>
+                            <Avatar path={avatarPath}></Avatar>
                         </div>
                         <div className='mainPage-main-components'>
                             {data == null ? <>

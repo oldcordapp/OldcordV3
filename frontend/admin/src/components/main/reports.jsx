@@ -14,6 +14,7 @@ import IcReports from '../../assets/ic_reports.svg?react';
 import User from './user';
 import Report from './report';
 import Button from '@oldcord/frontend-shared/components/button';
+import { useAuthUser } from '../..';
 
 const Reports = () => {
     const location = useLocation();
@@ -27,6 +28,8 @@ const Reports = () => {
     const query = new URLSearchParams(location.search);
     const selectedId = query.get('selectedId');
     const navigate = useNavigate();
+    const { user } = useAuthUser();
+    const avatarPath = (user && user.avatar) ? `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/${user.id}/${user.avatar}.png` : DefaultAvatar;
 
     useEffect(() => {
         fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/reports`, {
@@ -95,7 +98,7 @@ const Reports = () => {
                     <Sidebar active="Reports"></Sidebar>
                     <div className='mainPage-main'>
                         <div className='mainPage-main-header'>
-                            <Avatar path={DefaultAvatar} style={{
+                            <Avatar path={avatarPath} style={{
                                 right: '20px',
                                 position: 'absolute'
                             }}></Avatar>
