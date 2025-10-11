@@ -1,6 +1,6 @@
 .sidebar-container {
   display: flex;
-  flex: 0 0 35%;
+  flex: 1 0 auto;
   background: #2f3136;
   z-index: 1;
 }
