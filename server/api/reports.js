@@ -1,8 +1,9 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
 const router = express.Router({ mergeParams: true });
+const { rateLimitMiddleware } = require('../helpers/middlewares');
 
-router.post("/", async (req, res) => {
+router.post("/", rateLimitMiddleware(global.config.ratelimit_config.reports.maxPerTimeFrame, global.config.ratelimit_config.reports.timeFrame), async (req, res) => {
     try {
         let valid_problems = [
             "Child Sexual Abuse Material (CSAM)",
