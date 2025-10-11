@@ -19,7 +19,7 @@ const Servers = () => {
         const inputText = searchParams.get('searchInput');
         
         if (inputText) {
-            fetch(`${window.ADMIN_ENV.API_ENDPOINT}/guilds/${inputText}`, {
+            fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/guilds/${inputText}`, {
                 headers: {
                     'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                     'Cookie' : 'release_date=october_5_2017;',

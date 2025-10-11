@@ -17,6 +17,13 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
     try {
         const userid = req.params.userid;
 
+        if (!userid) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown User"
+            });
+        }
+
         const [userRet, guilds] = await Promise.all([
             global.database.getAccountByUserId(userid),
             global.database.getUsersGuilds(userid)
@@ -37,6 +44,37 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
         return res.status(200).json(globalUtils.sanitizeObject(userWithGuilds, 
             ['settings', 'token', 'password', 'disabled_until', 'disabled_reason']
         ));
+    } catch (error) {
+        logText(error, "error");
+    
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
+    try {
+        const guildid = req.params.guildid;
+
+        if (!guildid) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Guild"
+            });
+        }
+
+        const guildRet = await global.database.getGuildById(guildid);
+
+        if (!guildRet) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Guild"
+            });
+        }
+
+        return res.status(200).json(guildRet);
     } catch (error) {
         logText(error, "error");
     
