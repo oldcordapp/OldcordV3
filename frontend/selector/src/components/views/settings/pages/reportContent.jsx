@@ -102,7 +102,7 @@ export default function () {
             marginBottom: '20px',
             color: '#868686',
             fontSize: '13px'
-        }}><b>Please include all relevant IDs or message links in the Description.</b> Without this specific information, instance administrators cannot take action on your report.</span>
+        }}><b>Please include all relevant IDs, message links or any audiovisual evidence in the Description.</b> Without this specific information, instance administrators cannot take action on your report.</span>
       <div className="divider" />
       <Button
         style={{ width: "100%" }}
