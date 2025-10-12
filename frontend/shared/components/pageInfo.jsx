@@ -1,4 +1,4 @@
-import "./PageInfo.css";
+import "./pageInfo.css";
 
 export default function ({ title, children, style, className }) {
   return (

@@ -11,6 +11,7 @@ export const SETTINGS_VIEWS = {
   DOWNLOAD_QUEUE: "download_queue",
   OPFS_SETTINGS: "opfs_settings",
   CHANGELOG: "changelog",
+  REPORT_CONTENT: "report_content",
   ADVANCED_SETTINGS: "advanced_settings",
 };
 
@@ -51,6 +52,13 @@ export default function () {
       view: SETTINGS_VIEWS.OPFS_SETTINGS,
     },
     { type: "separator" },
+    { type: "header", label: "Instance Specific" },
+    {
+      type: "item",
+      label: "Report Content",
+      view: SETTINGS_VIEWS.REPORT_CONTENT
+    },
+    { type: "separator" },
     { type: "header", label: "Oldcord" },
     {
       type: "openModal",
@@ -64,7 +72,7 @@ export default function () {
       type: "item",
       label: "Advanced Settings",
       view: SETTINGS_VIEWS.ADVANCED_SETTINGS,
-    },
+    }
   ];
 
   function handleItemClick(view) {

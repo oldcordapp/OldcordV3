@@ -44,7 +44,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                 });
             }
 
-            
+
             let badEmail = await globalUtils.badEmail(req.body.email); //WHO THE FUCK MOVED THIS??
 
             if (badEmail) {
@@ -248,6 +248,30 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
                 email: loginAttempt.reason,
                 password: loginAttempt.reason
             });
+        }
+
+        if (req.headers['referer'] && req.headers['referer'].includes("redirect_to=%2Fadmin")) {
+            let tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
+
+            if (!tryGetAcc) {
+                return res.status(500).json({
+                    code: 500,
+                    message: "Internal Server Error"
+                });
+            }
+
+            let tryGetStaffDetails = await global.database.getStaffDetails(tryGetAcc.id);
+
+            if (tryGetStaffDetails === null) {
+                console.log(`[${tryGetAcc.id}] ${tryGetAcc.username}#${tryGetAcc.discriminator} just tried to login to the Oldcord instance staff admin panel without permission. Further investigation necessary.`);
+                return res.status(400).json({
+                    code: 400,
+                    email: "This account is not instance staff. This incident has been logged.",
+                });
+            }
+
+            req.is_staff = true;
+            req.staff_details = tryGetStaffDetails;
         }
 
         return res.status(200).json({

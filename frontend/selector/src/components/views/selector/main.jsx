@@ -1,4 +1,4 @@
-import Card from "@oldcord/frontend-shared/components/card";
+import Card from "@oldcord/frontend-shared/components/Card";
 import Background from "./background";
 import Logo from "./logo";
 import "./main.css";
@@ -21,6 +21,10 @@ export default function () {
   const [instance, setInstance] = useState(null);
   const { addModal, removeModal } = useModal();
   const { changeLayer, setTriggeredRedirect } = useLayer();
+
+  if (!cookieManager.get("release_date")) {
+    cookieManager.set("release_date", cookieManager.get("default_client_build") ?? "october_5_2017");
+  }
 
   const defaultBuild =
     cookieManager.get("release_date") ??
@@ -191,7 +195,7 @@ export default function () {
           </div>
 
           <Text variant="body" style={{ marginTop: "-10px" }}>
-            Looking for patches? They've moved to the settings menu!
+            Looking for patches or a way to report content? You can now find both options conveniently located in the Settings menu.
           </Text>
 
           <div className="important-information">

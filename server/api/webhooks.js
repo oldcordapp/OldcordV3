@@ -250,9 +250,9 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
 
                 if (embed.author) {
                     embedObj.author = {
-                        icon_url: embed.author.icon_url ? `/proxy?url=${embed.author.icon_url}` : null,
+                        icon_url: embed.author.icon_url ? `/proxy/${encodeURIComponent(embed.author.icon_url)}` : null,
                         name: embed.author.name ?? null,
-                        proxy_icon_url: embed.author.icon_url ? `/proxy?url=${embed.author.icon_url}` : null,
+                        proxy_icon_url: embed.author.icon_url ? `/proxy/${encodeURIComponent(embed.author.icon_url)}` : null,
                         url: embed.author.url ?? null
                     }
                 }

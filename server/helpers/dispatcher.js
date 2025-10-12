@@ -10,6 +10,16 @@ const dispatcher = {
             sessions[z].dispatch(type, payload);
         }
     },
+    dispatchLogoutTo: async (user_id) => {
+        let sessions = global.userSessions.get(user_id);
+        
+        if (!sessions || sessions.size === 0) return false;
+
+        for(let z = 0; z < sessions.length; z++) {
+            sessions[z].socket.close(4004, 'Authentication failed');
+            sessions[z].onClose(4004);
+        }
+    },
     dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis: async (type, payload) => {
         global.userSessions.forEach((sessions, userId) => {
             for(let z = 0; z < sessions.length; z++) {

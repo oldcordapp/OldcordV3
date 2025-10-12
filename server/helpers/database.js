@@ -342,6 +342,30 @@ const database = {
                 changes JSONB
             );`, []);
 
+            await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_reports (
+                id TEXT PRIMARY KEY,
+                problem TEXT,
+                subject TEXT,
+                description TEXT,
+                email_address TEXT DEFAULT NULL,
+                action TEXT DEFAULT 'PENDING',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );`, []);
+
+            let alterCheck = await database.runQuery(`SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'instance_reports'
+                AND column_name = 'action'
+            ) AS column_exists;`);
+
+            if (!alterCheck[0].column_exists) {
+                await database.runQuery(`ALTER TABLE instance_reports ADD COLUMN action TEXT DEFAULT 'PENDING';`);
+                await database.runQuery(`ALTER TABLE instance_reports ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
+            } else {
+                await database.runQuery(`DELETE FROM instance_reports WHERE created_at < NOW() - INTERVAL '1 month';`); //Remove reports older than 1 month to free up db
+            }
+
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -386,7 +410,7 @@ const database = {
             return false;
         }
     },
-    internalDisableAccount: async (staff, user_id, disabled_until, public_reason, audit_log_reason) => {
+    internalDisableAccount: async (staff, user_id, disabled_until, audit_log_reason) => {
         try {
             if (user_id === staff.user_id || user_id === '1279218211430105089') {
                 return false;
@@ -399,7 +423,7 @@ const database = {
 
             await database.runQuery(`
                 UPDATE users SET disabled_until = $1, disabled_reason = $2 WHERE id = $3
-            `, [disabled_until, public_reason, user_id]);
+            `, [disabled_until, "Spam", user_id]); //to-do actually do this properly
 
             let audit_log = staff.audit_log;
 
@@ -411,6 +435,113 @@ const database = {
                     id: user_id,
                     until_forever: disabled_until === 'FOREVER',
                     until_when: disabled_until // Storing the text 'FOREVER' or actual date in the audit log
+                },
+                reasoning: audit_log_reason
+            };
+
+            audit_log.push(audit_entry);
+
+            await database.updateInternalAuditLog(staff.user_id, audit_log);
+
+            return audit_entry;
+        } catch (error) {
+            logText(error, "error");
+            return null;
+        }
+    },
+    getInstanceReports: async (filter = 'PENDING') => {
+        try {
+            let rows = await database.runQuery(`SELECT * FROM instance_reports WHERE action = $1`, [filter]);
+
+            if (rows === null || rows.length === 0) {
+                return [];
+            }
+
+            let ret = [];
+
+            for (var row of rows) {
+                ret.push({
+                    id: row.id,
+                    problem: row.problem,
+                    subject: row.subject,
+                    description: row.description,
+                    email_address: row.email_address ?? null
+                });
+            }
+
+            return ret;
+        }
+        catch (error) {
+            logText(error, "error");
+            return [];
+        }
+    },
+    getReportById: async (reportId) => {
+        try {
+            let rows = await database.runQuery(`SELECT * FROM instance_reports WHERE id = $1`, [reportId]);
+
+            if (rows === null || rows.length === 0) {
+                return null;
+            }
+
+            let row = rows[0];
+
+            return {
+                id: row.id,
+                problem: row.problem,
+                subject: row.subject,
+                description: row.description,
+                email_address: row.email_address ?? null,
+                action: row.action
+            };
+        }
+        catch (error) {
+            logText(error, "error");
+            return null;
+        }
+    },
+    updateReport: async (reportId, action) => {
+        try {
+            let report = await database.getReportById(reportId);
+
+            if (report == null || report.action !== 'PENDING') {
+                return false;
+            }
+
+            await database.runQuery(`UPDATE instance_reports SET action = $1 WHERE id = $2`, [action, reportId]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+            return false;
+        }
+    },
+    submitInstanceReport: async (description, subject, problem, email_address = null) => {
+        try {
+            await database.runQuery(`INSERT INTO instance_reports (id, problem, subject, description, email_address, action) VALUES ($1, $2, $3, $4, $5, $6)`, [Snowflake.generate(), problem, subject, description, email_address, 'PENDING']);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+            return false;
+        }
+    },
+    internalDeleteAccount: async (staff, user_id, audit_log_reason) => {
+        try {
+            if (user_id === staff.user_id || user_id === '1279218211430105089') {
+                return false;
+            } // Safety net
+
+            await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id])
+
+            let audit_log = staff.audit_log;
+
+            let audit_entry = {
+                moderation_id: Snowflake.generate(),
+                timestamp: new Date().toISOString(),
+                action: "delete_user",
+                moderated: {
+                    id: user_id
                 },
                 reasoning: audit_log_reason
             };
@@ -4489,7 +4620,7 @@ const database = {
             let checkRows = await database.runQuery(`
                 SELECT EXISTS (
                     SELECT 1 FROM guilds WHERE vanity_url = $1
-                ) AS is_taken;`);
+                ) AS is_taken;`, [vanity_url]);
 
             if (checkRows && checkRows.length > 0 && checkRows[0].is_taken) {
                 return 0;
@@ -4796,7 +4927,7 @@ const database = {
             let isEmailTaken = await database.runQuery(`
             SELECT EXISTS (
                 SELECT 1 FROM users WHERE email = $1
-            ) AS is_taken;`);
+            ) AS is_taken;`, [email]);
 
             if (isEmailTaken && isEmailTaken.length > 0 && isEmailTaken[0].is_taken) {
                 return {

@@ -3,6 +3,7 @@ const ytdl = require('@distube/ytdl-core');
 const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 const cheerio = require('cheerio');
+const Jimp = require('jimp');
 
 const hexToDecimal = (hex) => {
     if (hex.startsWith('#')) {
@@ -18,16 +19,32 @@ const embedder = {
         try {
             let content = await fetch(url, {
                 headers: {
-                    'User-Agent' : 'Bot: Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'
+                    'User-Agent': 'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)'
                 }
             })
-    
+
             if (!content.ok) {
                 return null;
             }
 
+            let fetch2;
+            let image_buffer;
+            let image_data;
+
             if (url.endsWith(".png") || url.endsWith(".jpg") || url.endsWith(".jpeg")) {
-                return null; //external image embeds do not work that well.
+                image_buffer = await content.buffer();
+                image_data = await Jimp.read(image_buffer);
+
+                return {
+                    color: 7506394,
+                    title: "",
+                    description: "",
+                    image: {
+                        url: url,
+                        width: image_data.bitmap.width ?? 400,
+                        height: image_data.bitmap.height ?? 400
+                    }
+                }
             }
 
             let should_embed = false;
@@ -40,15 +57,15 @@ const embedder = {
             let twitterImage = $('meta[property="twitter:image"]').attr('content');
 
             let ogImage = $('meta[property="og:image"]').attr('content');
-            
+
             if (!ogImage && twitterImage) {
                 ogImage = twitterImage;
             }
-            
+
             if (description || color || ogTitle || ogImage) {
                 should_embed = true;
             }
-            
+
             if (should_embed && ogTitle) {
                 title = ogTitle;
             }
@@ -60,12 +77,34 @@ const embedder = {
             }
 
             if (ogImage) {
+                fetch2 = await fetch(ogImage, {
+                    headers: {
+                        'User-Agent': 'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)'
+                    }
+                });
+
+                if (fetch2.ok) {
+                    image_buffer = await fetch2.buffer();
+
+                    try {
+                        image_data = await Jimp.read(image_buffer);
+                    } catch (err) {
+                        logText(`Jimp failed to read image to calculate dimensions for getEmbedInfo: ${ogImage}: ${err}`, "error");
+
+                        image_data = null;
+                    }
+                } else {
+                    image_data = null;
+                }
+            }
+
+            if (ogImage && image_data) {
                 embedObj.image = {
                     url: ogImage,
-                    width: 80,
-                    height: 80
+                    width: image_data.bitmap.width ?? 400,
+                    height: image_data.bitmap.height ?? 400
                 }
-            } //to-do: auto get image width & height
+            }
 
             return should_embed ? embedObj : null;
         } catch (error) {
@@ -75,7 +114,7 @@ const embedder = {
         }
     },
     embedAttachedVideo: (url) => {
-        return { 
+        return {
             type: "video",
             inlineMedia: true,
             thumbnail: {
@@ -122,7 +161,7 @@ const embedder = {
                 description: videoDetails.description,
                 title: videoDetails.title,
                 thumbnail: {
-                    proxy_url: `/proxy?url=${thumbnailUrl}`,
+                    proxy_url: `/proxy/${encodeURIComponent(thumbnailUrl)}`,
                     url: thumbnailUrl,
                     width: thumbnailWidth,
                     height: thumbnailHeight
@@ -146,9 +185,9 @@ const embedder = {
         if (!global.config.auto_embed_urls) {
             return [];
         }
-        
+
         let ret = [];
-        
+
         if (attachment && (attachment.name.endsWith(".mp4") || attachment.name.endsWith(".webm"))) {
             ret.push(embedder.embedAttachedVideo(attachment.url));
         }
@@ -158,8 +197,8 @@ const embedder = {
         if (urls == null || urls.length > 5 || urls.length == 0) {
             return ret;
         }
-        
-        for(var url of urls) {
+
+        for (var url of urls) {
             let checkCache = embedder.embed_cache.find(x => x.url == url);
 
             if (checkCache && !force) {
@@ -169,7 +208,7 @@ const embedder = {
             }
 
             let embed = {};
-            
+
             if (url.includes("youtube.com/watch?v=") || url.includes("youtu.be/")) {
                 embed = await embedder.embedYouTube(url);
             }
@@ -177,7 +216,7 @@ const embedder = {
             if ((global.config.custom_invite_url != "" && url.includes(global.config.custom_invite_url)) || url.includes("oldcord.us") || url.includes("/invite/")) {
                 continue;
             }
-            
+
             if (!embed.title) {
                 let result = await embedder.getEmbedInfo(url);
 
@@ -190,16 +229,24 @@ const embedder = {
                     url: url,
                     color: result.color,
                     description: result.description,
-                    title: result.title,
-                    thumbnail: result.image != null ? {
-                        proxy_url: `/proxy?url=${result.image.url}`,
+                    title: result.title
+                }
+
+                if (url.startsWith("https://tenor.com")) {
+                    embed.thumbnail = result.image != null ? {
+                        proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
                         url: result.image.url,
                         width: (result.image.width > 800 ? 800 : result.image.width),
                         height: (result.image.height > 800 ? 800 : result.image.height)
                     } : null
-                };
-
-                if (!embed.thumbnail) delete embed.thumbnail;
+                } else {
+                    embed.image = result.image != null ? {
+                        proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
+                        url: result.image.url,
+                        width: (result.image.width > 800 ? 800 : result.image.width),
+                        height: (result.image.height > 800 ? 800 : result.image.height)
+                    } : null
+                }
             }
 
             ret.push(embed);
