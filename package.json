@@ -18,6 +18,7 @@
     "cheerio": "^1.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "cross-env": "^10.1.0",
     "esbuild": "^0.25.10",
     "express": "^4.19.2",
     "express-rate-limit": "^7.4.0",

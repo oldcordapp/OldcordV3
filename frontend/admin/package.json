@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "vite build",
+    "build": "node scripts/set-hash.js vite build",
     "dev": "vite"
   },
   "dependencies": {

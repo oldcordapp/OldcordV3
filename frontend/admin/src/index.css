@@ -1169,3 +1169,36 @@ th {
   width: 100px;
   margin-top: 20px;
 }
+
+.update-available {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.update-available-text {
+  display: flex;
+  align-items: center;
+}
+
+.update-available svg {
+  fill: currentColor;
+  width: 24px;
+  height: auto;
+  margin-right: 5px;
+}
+
+.update-available-commit, .update-available-instructions {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.update-available-commit p, .update-available-instructions p, .update-available-instructions li {
+  margin: 5px 0 5px 0;
+}
+
+.block {
+  display: inline-block;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0 5px 0 5px;
+}

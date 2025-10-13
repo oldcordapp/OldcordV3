@@ -37,7 +37,7 @@ const Sidebar = ({ active }) => {
                     <SidebarMenuItem path="/audit-logs" name="Audit Logs" Icon={ic_archived} active={active} disabled={true}></SidebarMenuItem>
                 </SidebarMenuList>
                 <SidebarMenuList name="Instance">
-                    <SidebarMenuItem path="/updates" name="Updates" Icon={ic_updates} active={active} disabled={true}></SidebarMenuItem>
+                    <SidebarMenuItem path="/updates" name="Updates" Icon={ic_updates} active={active}></SidebarMenuItem>
                     <SidebarMenuItem path="/settings" name="Settings" Icon={ic_settings} active={active} disabled={true}></SidebarMenuItem>
                 </SidebarMenuList>
             </div>
