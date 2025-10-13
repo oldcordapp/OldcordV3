@@ -8,6 +8,7 @@ import Servers from './components/main/servers';
 import AuthCheck from './components/authcheck';
 import Users from './components/main/users';
 import Reports from './components/main/reports';
+import Messages from './components/main/messages';
 
 const root = ReactDOM.createRoot(document.getElementById('app-mount'));
 const AuthUserContext = createContext(null);
@@ -97,6 +98,7 @@ root.render(
           <Route path="/servers" element={<AuthCheck appPage={Servers} enforced={true} />} />
           <Route path="/users" element={<AuthCheck appPage={Users} enforced={true} />} />
           <Route path="/reports" element={<AuthCheck appPage={Reports} enforced={true} />} />
+          <Route path="/messages" element={<AuthCheck appPage={Messages} enforced={true} />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </Router>

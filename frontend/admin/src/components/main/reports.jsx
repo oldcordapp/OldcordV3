@@ -108,7 +108,7 @@ const Reports = () => {
                                 {data.length === 0 ? <>
                                     <>
                                         <div className='search-no-results'>
-                                            <IcReports style={{ color: "#4f5660", maxWidth: '125px', maxHeight: '125px' }} />
+                                            <IcReports style={{ color: "#4f5660", maxWidth: '125px', maxHeight: '125px', width: '100px' }} />
                                             <p>No Reports Found! Good Work!</p>
                                         </div>
                                     </>

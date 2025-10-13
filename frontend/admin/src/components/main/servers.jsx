@@ -7,7 +7,7 @@ import Searchbar from './searchbar';
 import Server from './server';
 
 import DefaultAvatar from '../../assets/default-avatar.png'
-import NoResults from '../../assets/img_noresults.svg'
+import NoResults from '../../assets/img_noresults_bluer.svg'
 import { useAuthUser } from '../..';
 
 const Servers = () => {

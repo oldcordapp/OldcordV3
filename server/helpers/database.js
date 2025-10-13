@@ -2225,6 +2225,22 @@ const database = {
             return [];
         }
     },
+    getMessageByCdnLink: async (cdn_link) => {
+        try {
+            const rows = await database.runQuery(`SELECT message_id FROM attachments WHERE url = $1`, [cdn_link]);
+
+            if (rows == null || rows.length == 0) {
+                return null;
+            }
+
+            let message = await database.getMessageById(rows[0].message_id);
+
+            return message; //to-do clean this up
+        } catch (error) {
+            logText(error, "error");
+            return null;
+        }
+    },
     getChannelMessages: async (id, requester_id, limit, before_id, after_id, includeReactions) => {
         try {
             let query = `SELECT * FROM messages WHERE channel_id = $1 `;
