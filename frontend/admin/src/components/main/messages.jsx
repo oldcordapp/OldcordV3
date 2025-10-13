@@ -1,19 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import Sidebar from './sidebar';
 import Avatar from './avatar';
-import Searchbar from './searchbar';
-import Server from './server';
 import Paginator from './paginator';
 import DefaultAvatar from '../../assets/default-avatar.png'
-import Relationship from './relationship';
-import NoResults from '../../assets/img_noresults_bluer.svg'
-import IcReports from '../../assets/ic_reports.svg?react';
+import NoResults from '../../assets/img_noresults.svg'
 import Ic_dots from '../../assets/ic_dots.svg?react';
 import Ic_paperclip from '../../assets/ic_paperclip.svg?react';
-import User from './user';
-import Report from './report';
 import Button from '@oldcord/frontend-shared/components/button';
 import { useAuthUser } from '../..';
 import ExpandableComponent from './expandablecomponent';
@@ -218,13 +212,13 @@ const Messages = () => {
                                                             <h1>{message.content}</h1>
                                                             {message.attachments.length > 0 && (
                                                                 <div className='message-result-attachments'>
-                                                                    <span>🖇️ Attachments:</span>
+                                                                    <span>{message.attachments.length} {message.attachments.length == 1 ? "Attachment" : "Attachments"}:</span>
                                                                     <div className='message-attachments'>
                                                                         {message.attachments.map((attachment) => (
                                                                             <div className='attachment-detail' key={attachment.id} title="Click to copy URL" onClick={() => {
                                                                                 navigator.clipboard.writeText(attachment.url); //dont open it automatically as it could be illegal content & now it's cached on their browser
                                                                             }}>
-                                                                                <span>{attachment.filename}</span>
+                                                                                <Ic_paperclip/> <span>{attachment.filename}</span>
                                                                             </div>
                                                                         ))}
                                                                     </div>

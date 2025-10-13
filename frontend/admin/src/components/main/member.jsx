@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 const Member = ({ avatarHash, username, discriminator, id, actuallyServer = false }) => {
     const navigate = useNavigate();

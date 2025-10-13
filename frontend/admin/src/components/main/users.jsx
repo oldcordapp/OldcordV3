@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import Sidebar from './sidebar';
 import Avatar from './avatar';
 import Searchbar from './searchbar';
-import Server from './server';
 
 import DefaultAvatar from '../../assets/default-avatar.png'
-import NoResults from '../../assets/img_noresults_bluer.svg'
+import NoResults from '../../assets/img_noresults.svg'
 import User from './user';
 import { useAuthUser } from '../..';
 

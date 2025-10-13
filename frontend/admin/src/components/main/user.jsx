@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Member from './member';
 import Paginator from './paginator';
-import Channel from './channel';
 import DefaultAvatar from '../../assets/default-avatar.png'
 import Confirmation from '../modals/confirmation';
 import Ic_dots from '../../assets/ic_dots.svg?react';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import Ic_ArrowUp from '../../assets/ic_arrow_up.svg?react'
 import Ic_Arrow from '../../assets/ic_arrow.svg?react';

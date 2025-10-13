@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Dropdown from './dropdown';
 import { useAuthUser } from '../..';
 

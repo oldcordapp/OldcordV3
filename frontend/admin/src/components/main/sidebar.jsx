@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import SidebarMenuList from './sidebarMenuList';
 import SidebarMenuItem from './sidebarMenuItem';
@@ -11,20 +10,22 @@ import ic_applications from "../../assets/ic_applications.svg?react"
 import ic_archived from "../../assets/ic_archived.svg?react"
 import ic_reports from "../../assets/ic_reports.svg?react";
 import ic_messages from "../../assets/ic_messages.svg?react";
+import ic_bots from "../../assets/ic_bots.svg?react"
 
-import Oldboard from '../../assets/oldboard.png'
+import OldcordAdmin from "../../assets/oldcordAdmin.svg"
 
 const Sidebar = ({ active }) => {
     return (
         <div className='mainPage-sidebar'>
             <div className='mainPage-sidebar-header'>
                 <Link to='/'>
-                    <img src={Oldboard} alt="Oldcboard logo"></img>
+                    <img src={OldcordAdmin} alt="Oldcord Admin logo"></img>
                 </Link>
             </div>
             <div className='mainPage-sidebar-components'>
                 <SidebarMenuList name="General">
-                    <SidebarMenuItem path="/users" name="Users" Icon={ic_users} active={active} disabled={false}></SidebarMenuItem>
+                    <SidebarMenuItem path="/users" name="Users" Icon={ic_users} active={active}></SidebarMenuItem>
+                    <SidebarMenuItem path="/bots" name="Bots" Icon={ic_bots} active={active} disabled={true}></SidebarMenuItem>
                     <SidebarMenuItem path="/servers" name="Servers" Icon={ic_servers} active={active}></SidebarMenuItem>
                     <SidebarMenuItem path="/messages" name="Messages" Icon={ic_messages} active={active}></SidebarMenuItem>
                     <SidebarMenuItem path="/reports" name="Reports" Icon={ic_reports} active={active}></SidebarMenuItem>

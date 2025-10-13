@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import Member from './member';
 import Paginator from './paginator';
 import Channel from './channel';

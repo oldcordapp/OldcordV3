@@ -148,6 +148,11 @@
   width: 100%;
 }
 
+.selector-card .button {
+  font-size: 16px;
+  height: 40px;
+}
+
 .notice {
   position: fixed;
   bottom: 10px;
@@ -157,3 +162,4 @@
   color: white;
   opacity: 0.5;
 }
+
