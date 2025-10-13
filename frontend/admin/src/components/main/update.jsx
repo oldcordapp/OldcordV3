@@ -3,7 +3,7 @@ import ic_update from '../../assets/ic_update.svg';
 import ic_error from '../../assets/ic_error.svg';
 import IcError from '../../assets/ic_error.svg?react';
 
-const Update = ({ status, error, latestCommit, repoUrl }) => {
+const Update = ({ status, error, latestCommit }) => {
     switch (status) {
         case 'checking':
             return <div className="search-no-results"><img src={ic_update} alt="Checking for updates..." /><p>Checking for updates...</p></div>;
@@ -17,7 +17,7 @@ const Update = ({ status, error, latestCommit, repoUrl }) => {
                         <div>An update is available!</div>
                     </div>
                     <div className='update-available-commit'>
-                        <p>Latest commit: <a href={`${repoUrl}/commit/${latestCommit.sha}`} target="_blank" rel="noopener noreferrer">{latestCommit.message}</a></p>
+                        <p>Latest commit: <a href={`https://github.com/oldcordapp/OldcordV3/commit/${latestCommit.sha}`} target="_blank" rel="noopener noreferrer">{latestCommit.message}</a></p>
                         <p>By {latestCommit.author} on {new Date(latestCommit.date).toLocaleString()}</p>
                     </div>
                     <div className='update-instructions'>

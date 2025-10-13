@@ -58,8 +58,6 @@ const Updates = () => {
         checkForUpdates();
     }, [currentCommitHash]);
 
-    const repoUrl = `https://github.com/oldcordapp/OldcordV3`;
-
     return (
         <>
             <div style={{ 'display': 'flex', 'flex': 1, 'minHeight': '100vh' }}>
@@ -82,7 +80,6 @@ const Updates = () => {
                                         status={updateStatus} 
                                         error={error} 
                                         latestCommit={latestCommit}
-                                        repoUrl={repoUrl}
                                     />
                                 </div>
                             </div>
