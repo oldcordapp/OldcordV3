@@ -85,7 +85,25 @@ router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
     }
 });
 
-router.get("/reports", staffAccessMiddleware(3), async (req, res) => {
+router.get("/@me", staffAccessMiddleware(1), async (req, res) => {
+    try {
+        let ret = req.account;
+
+        ret.staff_details = req.staff_details;
+
+        return res.status(200).json(globalUtils.sanitizeObject(ret, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
+
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.get("/reports", staffAccessMiddleware(1), async (req, res) => {
     try {
         let reports = await global.database.getInstanceReports();
 
@@ -254,7 +272,7 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
     }
 });
 
-router.get("/messages", staffAccessMiddleware(1), async (req, res) => {
+router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
     try {
         let channelId = req.query.channelId;
         let messageId = req.query.messageId;

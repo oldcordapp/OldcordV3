@@ -15,8 +15,12 @@ import ic_updates from "../../assets/ic_updates.svg?react";
 import ic_settings from "../../assets/ic_settings.svg?react";
 
 import OldcordAdmin from "../../assets/oldcordAdmin.svg"
+import PRIVILEGE from "./privilege";
 
 const Sidebar = ({ active }) => {
+    let user_data = JSON.parse(localStorage.getItem("user_data"));
+    let privilege = user_data.staff_details.privilege || 0;
+    
     return (
         <div className='mainPage-sidebar'>
             <div className='mainPage-sidebar-header'>
@@ -26,11 +30,11 @@ const Sidebar = ({ active }) => {
             </div>
             <div className='mainPage-sidebar-components'>
                 <SidebarMenuList name="General">
-                    <SidebarMenuItem path="/users" name="Users" Icon={ic_users} active={active}></SidebarMenuItem>
+                    <SidebarMenuItem path="/users" name="Users" Icon={ic_users} active={active} disabled={privilege < PRIVILEGE.ADMIN}></SidebarMenuItem>
                     <SidebarMenuItem path="/bots" name="Bots" Icon={ic_bots} active={active} disabled={true}></SidebarMenuItem>
-                    <SidebarMenuItem path="/servers" name="Servers" Icon={ic_servers} active={active}></SidebarMenuItem>
-                    <SidebarMenuItem path="/messages" name="Messages" Icon={ic_messages} active={active}></SidebarMenuItem>
-                    <SidebarMenuItem path="/reports" name="Reports" Icon={ic_reports} active={active}></SidebarMenuItem>
+                    <SidebarMenuItem path="/servers" name="Servers" Icon={ic_servers} active={active} disabled={privilege < PRIVILEGE.ADMIN}></SidebarMenuItem>
+                    <SidebarMenuItem path="/messages" name="Messages" Icon={ic_messages} active={active} disabled={privilege < PRIVILEGE.MODERATOR}></SidebarMenuItem>
+                    <SidebarMenuItem path="/reports" name="Reports" Icon={ic_reports} active={active} disabled={privilege < PRIVILEGE.JANITOR}></SidebarMenuItem>
                 </SidebarMenuList>
                 <SidebarMenuList name="Internal">
                     <SidebarMenuItem path="/staff" name="Staff" Icon={ic_staff} active={active} disabled={true}></SidebarMenuItem>

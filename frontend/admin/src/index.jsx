@@ -10,6 +10,7 @@ import Users from './components/main/users';
 import Reports from './components/main/reports';
 import Messages from './components/main/messages';
 import Updates from './components/main/updates';
+import PRIVILEGE from "./components/main/privilege";
 
 const root = ReactDOM.createRoot(document.getElementById('app-mount'));
 const AuthUserContext = createContext(null);
@@ -45,7 +46,7 @@ const AuthUserProvider = ({ children }) => {
                 setIsLoading(false);
             }
 
-            const response = await fetch(`${window.ADMIN_ENV.API_ENDPOINT}/users/@me`, {
+            const response = await fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/@me`, {
                 headers: {
                     'Authorization': token.replace(/"/g, ''),
                     'Cookie': 'release_date=october_5_2017;',
@@ -95,12 +96,12 @@ root.render(
     <AuthUserProvider>
       <Router basename={getBaseUrl()}>
         <Routes>
-          <Route index path="/" element={<AuthCheck appPage={Servers} enforced={true} />} />
-          <Route path="/servers" element={<AuthCheck appPage={Servers} enforced={true} />} />
-          <Route path="/users" element={<AuthCheck appPage={Users} enforced={true} />} />
-          <Route path="/reports" element={<AuthCheck appPage={Reports} enforced={true} />} />
-          <Route path="/messages" element={<AuthCheck appPage={Messages} enforced={true} />} />
-          <Route path="/updates" element={<AuthCheck appPage={Updates} enforced={true} />} />
+          <Route index path="/" element={<AuthCheck appPage={Reports} enforced={true} minClearance={PRIVILEGE.JANITOR} />} />
+          <Route path="/servers" element={<AuthCheck appPage={Servers} enforced={true} minClearance={PRIVILEGE.ADMIN} />} />
+          <Route path="/users" element={<AuthCheck appPage={Users} enforced={true} minClearance={PRIVILEGE.ADMIN} />} />
+          <Route path="/reports" element={<AuthCheck appPage={Reports} enforced={true} />} minClearance={PRIVILEGE.JANITOR} />
+          <Route path="/messages" element={<AuthCheck appPage={Messages} enforced={true} minClearance={PRIVILEGE.MODERATOR} />} />
+          <Route path="/updates" element={<AuthCheck appPage={Updates} enforced={true} minClearance={PRIVILEGE.JANITOR} />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </Router>

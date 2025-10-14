@@ -16,6 +16,8 @@ const User = ({ data }) => {
     const closeInputPopup = () => setInputPopup(null);
     const dropdownRef = useRef(null);
 
+    let user_data = JSON.parse(localStorage.getItem("user_data"));
+
     const clearAvatar = () => {
         fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${data.id}`, {
             headers: {
@@ -112,7 +114,7 @@ const User = ({ data }) => {
         { name: "Edit Info", not_implemented_yet: true, action: () => { } },
         { name: "Clear Avatar", not_implemented_yet: true, action: () => setConfirmation({ summary: `Are you sure you want to clear "${data.username}"'s avatar?`, onYes: clearAvatar }) },
         {
-            name: "Disable", not_implemented_yet: false, action: () => {
+            name: "Disable", not_implemented_yet: (user_data && user_data.id === data.id), action: () => {
                 setInputPopup({
                     summary: `Are you sure you want to disable "${data.username}"?`,
                     fieldType: 'text',
@@ -127,7 +129,7 @@ const User = ({ data }) => {
             }
         },
         {
-            name: "Delete", not_implemented_yet: false, action: () => {
+            name: "Delete", not_implemented_yet: (user_data && user_data.id === data.id), action: () => {
                 setInputPopup({
                     summary: `Are you sure you want to delete "${data.username}"?`,
                     fieldType: 'text',
