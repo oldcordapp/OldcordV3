@@ -23,7 +23,7 @@ export const oldcordChangelog = {
       title: "Ah! I hate bugs!",
       items: [
         "Clear logged out sessions from memory. It's like we throw a takeout of Insomia into the trash.",
-        "Crritical bug fix with email existing check and guild vanity existing check. Spiderman meme x2?",
+        "Critical bug fix with email existing check and guild vanity existing check. Spiderman meme x2?",
         "Other bug fixes are on the commit history because the person writing this changelog is lazy and does not want to finish it.",
       ],
     },
