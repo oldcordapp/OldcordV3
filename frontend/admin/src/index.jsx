@@ -96,7 +96,7 @@ root.render(
     <AuthUserProvider>
       <Router basename={getBaseUrl()}>
         <Routes>
-          <Route index path="/" element={<AuthCheck appPage={Reports} enforced={true} minClearance={PRIVILEGE.JANITOR} />} />
+          <Route index path="/" element={<AuthCheck enforced={true} minClearance={PRIVILEGE.JANITOR} />} />
           <Route path="/servers" element={<AuthCheck appPage={Servers} enforced={true} minClearance={PRIVILEGE.ADMIN} />} />
           <Route path="/users" element={<AuthCheck appPage={Users} enforced={true} minClearance={PRIVILEGE.ADMIN} />} />
           <Route path="/reports" element={<AuthCheck appPage={Reports} enforced={true} />} minClearance={PRIVILEGE.JANITOR} />

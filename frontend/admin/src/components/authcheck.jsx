@@ -1,6 +1,13 @@
 import { Navigate } from 'react-router-dom';
+import Sidebar from './main/sidebar';
+import Avatar from './main/avatar';
+import { useAuthUser } from '..';
+import DefaultAvatar from '../assets/default-avatar.png'
 
-function AuthCheck({ appPage, enforced, minClearance }) {
+function AuthCheck({ appPage = null, enforced, minClearance }) {
+    const { user } = useAuthUser();
+    const avatarPath = (user && user.avatar) ? `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/${user.id}/${user.avatar}.png` : DefaultAvatar;
+
     let AppPage = appPage;
 
     let authToken = localStorage.getItem('token');
@@ -17,6 +24,26 @@ function AuthCheck({ appPage, enforced, minClearance }) {
 
     if (user_data.staff_details && user_data.staff_details.privilege < minClearance) {
         return <Navigate to="/"/>;
+    }
+
+    if (AppPage == null) {
+        return (<>
+            <div style={{ 'display': 'flex', 'flex': 1, 'minHeight': '100vh' }}>
+                <div className='mainPage-container'>
+                    <Sidebar></Sidebar>
+                    <div className='mainPage-main'>
+                        <div className='mainPage-main-header'>
+                            <Avatar path={avatarPath} style={{
+                                right: '20px',
+                                position: 'absolute'
+                            }}></Avatar>
+                        </div>
+                        <div className='mainPage-main-components'>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>)
     }
 
     return <AppPage/>;
