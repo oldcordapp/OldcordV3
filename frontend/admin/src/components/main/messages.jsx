@@ -20,6 +20,7 @@ const Messages = () => {
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [popoutContextMenu, setPopoutContextMenu] = useState(null);
     const dropdownRef = useRef(null);
+    const selectedMessageRef = useRef(null); 
     const [cdnLink, setCdnLink] = useState(null);
     const [context, setContext] = useState(null);
     const [messageId, setMessageId] = useState(null);
@@ -40,66 +41,103 @@ const Messages = () => {
     const avatarPath = (user && user.avatar) ? `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/${user.id}/${user.avatar}.png` : DefaultAvatar;
 
     useEffect(() => {
-        if (!chanId || !msgId) {
-            return;
-        } else if (!chanId && !msgId && !cdnlin) {
+        if (chanId || msgId || cdnlin) {
+            const params = new URLSearchParams();
+
+            if (chanId) params.append('channelId', chanId);
+            if (msgId) params.append('messageId', msgId);
+            if (contxt) params.append('context', contxt);
+            if (cdnlin) params.append('cdnLink', cdnlin);
+            
+            const url = `${window.ADMIN_ENV.API_ENDPOINT}/admin/messages?${params.toString()}`;
+
+            setChannelId(chanId || '');
+            setMessageId(msgId || '');
+            setCdnLink(cdnlin || '');
+            setContext(contxt || '');
+
+            fetch(url, {
+                headers: {
+                    'Authorization': localStorage.getItem("token").replace(/"/g, ''),
+                    'Cookie': 'release_date=october_5_2017;',
+                },
+            }).then((response) => {
+                return response.json();
+            }).then((data) => {
+                if (data.code >= 400) {
+                    setError(data.message);
+                    setData([]);
+                } else {
+                    setData(data);
+                    
+                    const targetMessage = data.find(m => m.id === msgId);
+                    if (targetMessage) {
+                        setSelectedMessage(targetMessage);
+                    }
+                }
+            }).catch((error) => {
+                setError(error.message);
+                setData([]);
+            });
+        } else {
+            setData([]);
+            setError(null);
+            setChannelId('');
+            setMessageId('');
+            setCdnLink('');
+            setContext('');
+        }
+    }, [chanId, msgId, cdnlin, contxt]);
+
+    useEffect(() => {
+        if (data.length > 0 && selectedMessageRef.current) {
+            selectedMessageRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        }
+    }, [data, msgId]); 
+
+    const searchMsgID = () => {
+        const newParams = new URLSearchParams();
+
+        if (channelId) newParams.append('channelid', channelId);
+        if (messageId) newParams.append('messageid', messageId);
+        if (context) newParams.append('context', context);
+        if (cdnLink) newParams.append('cdnlink', cdnLink);
+
+        const newSearchString = newParams.toString();
+        const currentSearchString = location.search.substring(1);
+
+        if (newSearchString === currentSearchString) {
             return;
         }
 
-        fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/messages?channelId=${chanId}&messageId=${msgId}&context=${contxt}&cdnLink=${cdnlin}`, {
-            headers: {
-                'Authorization': localStorage.getItem("token").replace(/"/g, ''),
-                'Cookie': 'release_date=october_5_2017;',
-            },
-        }).then((response) => {
-            return response.json();
-        }).then((data) => {
-            if (data.code >= 400) {
-                setError(data.message);
-            } else {
-                setData(data);
-            }
-        }).catch((error) => {
-            setError(error.message);
-        });
-    }, []);
+        setData([]);
+        setSelectedMessage(null);
+        setError(null);
 
-    const searchMsgID = () => {
-        fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/messages?channelId=${channelId}&messageId=${messageId}&context=${context}&cdnLink=${cdnLink}`, {
-            headers: {
-                'Authorization': localStorage.getItem("token").replace(/"/g, ''),
-                'Cookie': 'release_date=october_5_2017;',
-            },
-        }).then((response) => {
-            return response.json();
-        }).then((data) => {
-            if (data.code >= 400) {
-                setError(data.message);
-            } else {
-                setData(data);
-            }
-        }).catch((error) => {
-            setError(error.message);
-        });
+        navigate(`?${newSearchString}`);
     };
 
     const searchCdnLink = () => {
-        fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/messages?channelId=${channelId}&messageId=${messageId}&context=${context}&cdnLink=${cdnLink}`, {
-            headers: {
-                'Authorization': localStorage.getItem("token").replace(/"/g, ''),
-                'Cookie': 'release_date=october_5_2017;',
-            },
-        }).then((response) => {
-            return response.json();
-        }).then((data) => {
-            if (data.code >= 400) {
-                setError(data.message);
-            } else {
-                setData(data);
-            }
-        }).catch((error) => {
-            setError(error.message);
-        });
+        const newParams = new URLSearchParams();
+
+        if (cdnLink) newParams.append('cdnlink', cdnLink);
+        if (context) newParams.append('context', context);
+
+        const newSearchString = newParams.toString();
+        const currentSearchString = location.search.substring(1);
+
+        if (newSearchString === currentSearchString) {
+            return;
+        }
+
+        setData([]);
+        setSelectedMessage(null);
+        setError(null);
+
+        navigate(`?${newSearchString}`);
     };
 
     const deleteMessage = (message) => {
@@ -119,6 +157,16 @@ const Messages = () => {
             setError(error.message);
         });
     };
+
+    useEffect(() => {
+        if (data.length > 0 && selectedMessageRef.current) {
+            selectedMessageRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        }
+
+    }, [data, msgId]); 
 
     return (
         <>
@@ -193,9 +241,9 @@ const Messages = () => {
                                             </div>
                                         </> : <>
                                                 {data.map((message, i) => (
-                                                    <div className={`message-result-container ${selectedMessage && selectedMessage.id === message.id ? 'selected-message' : ''}`} key={message.id} onClick={() => setSelectedMessage(message)}>
+                                                    <div ref={msgId === message.id ? selectedMessageRef : null} className={`message-result-container ${(selectedMessage && selectedMessage.id === message.id || messageId && messageId === message.id && !selectedMessage) ? 'selected-message' : ''}`} key={message.id} onClick={() => setSelectedMessage(message)}>
                                                         <img
-                                                            src={DefaultAvatar}
+                                                            src={message.author.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + message.author.id + '/' + message.author.avatar + ".png"}
                                                             alt={`${message.author.username}'s avatar`}
                                                             style={{
                                                                 width: '40px',
@@ -209,7 +257,7 @@ const Messages = () => {
                                                                 <h1>{message.author.username}</h1>
                                                                 <span>{new Date().toLocaleDateString()} at {new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}</span>
                                                             </div>
-                                                            <h1>{message.content}</h1>
+                                                            <h1 title={message.content.length > 175 ? message.content : ''}>{message.content.length > 175 ? message.content.substring(0, 175) + "..." : message.content}</h1>
                                                             {message.attachments.length > 0 && (
                                                                 <div className='message-result-attachments'>
                                                                     <span>{message.attachments.length} {message.attachments.length == 1 ? "Attachment" : "Attachments"}:</span>

@@ -36,7 +36,7 @@ const ResultsCard = ({ header, children, maxPerPage = 10 }) => {
                 <div className='mainPage-main-components-infoCard-components' style={{
                     flexDirection: 'column',
                     maxHeight: '800px',
-                    overflowX: 'hidden',
+                    overflowX: 'clip',
                     overflowY: 'auto'
                 }}>
                     {paginatedChildren}

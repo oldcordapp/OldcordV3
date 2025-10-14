@@ -326,14 +326,33 @@ router.get("/messages", staffAccessMiddleware(1), async (req, res) => {
             });
         }
 
-        //to-do fix pagination for the resultscard element
-        let messages = await global.database.getChannelMessages(channelId, "", 50, null, messageId, false);
+        let retMessages = [];
 
-        if (messages.length === 0) {
-            return res.status(200).json([message]); //fallback if no context
+        let targetMessageId = messageId || null;
+
+        let messagesBefore = await global.database.getChannelMessages(channelId, "", 25, targetMessageId, null, false);
+
+        retMessages.push(...messagesBefore);
+
+        if (message != null) {
+            retMessages.push(message);
         }
 
-        return res.status(200).json(messages);
+        let messagesAfter = await global.database.getChannelMessages(channelId, "", 25, null, targetMessageId, false);
+
+        retMessages.push(...messagesAfter);
+
+        let uniqueMessagesMap = new Map();
+
+        for (const msg of retMessages) {
+            uniqueMessagesMap.set(msg.id, msg);
+        }
+
+        let finalMessages = Array.from(uniqueMessagesMap.values());
+
+        finalMessages.sort((a, b) => a.id.localeCompare(b.id));
+
+        return res.status(200).json(finalMessages);
     } catch (error) {
         logText(error, "error");
 
