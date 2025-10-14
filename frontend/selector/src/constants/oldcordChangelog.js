@@ -39,7 +39,7 @@ export const oldcordChangelog = {
       type: "default",
       title: "Woo!",
       items: [
-        "Oldcord has some so far it's like watching a baby grow. Thank you for joining the Oldcord family.",
+        "Oldcord has come so far it's like watching a baby grow. Thank you for joining the Oldcord family.",
         "If you want to help us create Oldplunger, or if you have any skills to improve Oldcord, please contribute!",
       ],
     },
