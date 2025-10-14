@@ -1,6 +1,7 @@
 import React from "react";
 import "./changelog.css";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
+import changlogImage from "../../assets/changelogImage.png";
 
 const headerTypeClasses = {
   added: "header-added",
@@ -10,7 +11,7 @@ const headerTypeClasses = {
   default: "header-default",
 };
 
-export default function Changelog({ sections, video, style }) {
+export default function Changelog({ sections, video, image = false, style }) {
   const videoId = video ? new URL(video.url).pathname.split("/").pop() : null;
 
   return (
@@ -23,6 +24,12 @@ export default function Changelog({ sections, video, style }) {
             allowFullScreen
             title="Changelog Video"
           ></iframe>
+        </div>
+      )}
+
+      {image && (
+        <div className="changelog-image">
+          <img src={changlogImage} />
         </div>
       )}
 
@@ -47,11 +54,11 @@ export default function Changelog({ sections, video, style }) {
           {section.items && (
             <ul className="changelog-list">
               {section.items.map((item, itemIndex) => (
-                <li
-                  key={itemIndex}
-                  className="changelog-list-item"
-                >
-                    <Text variant="body" dangerouslySetInnerHTML={{ __html: item }}/>
+                <li key={itemIndex} className="changelog-list-item">
+                  <Text
+                    variant="body"
+                    dangerouslySetInnerHTML={{ __html: item }}
+                  />
                 </li>
               ))}
             </ul>

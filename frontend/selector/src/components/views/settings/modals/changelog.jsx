@@ -7,7 +7,7 @@ export default function ({ onClose }) {
     <Modal
       onClose={onClose}
       title="Changelog"
-      subtitle="5 October 2025"
+      subtitle="14 October 2025"
       showCloseButton={true}
       size="medium"
       footerAlignment="left"
@@ -23,6 +23,7 @@ export default function ({ onClose }) {
     >
       <Changelog
           sections={oldcordChangelog.sections}
+          image={oldcordChangelog.image}
           style={{
             paddingBottom: "20px",
             userSelect: "all",

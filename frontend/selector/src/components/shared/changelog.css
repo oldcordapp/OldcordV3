@@ -28,6 +28,11 @@
   border: none;
 }
 
+.changelog-image img {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
 .changelog-section-header {
   display: flex;
   align-items: center;

@@ -4,41 +4,43 @@ export const oldcordChangelog = {
     thumbnail: "",
   },
    */
+  image: true,
   sections: [
     {
       type: "default",
-      body: "Woah! What's this? New selector? I don't even... know how to express this! Like this is incredible!<br>Yes. Oldcord's selector got a whole new look! And it looks so <strong>FRESH!</strong>",
+      body: "Welcome to another changelog where we explain how awesome we are by releasing updates that are so cool you'll say @someone at any time!",
     },
     {
       type: "added",
-      title: "WAIT WHAT?!",
+      title: "Oldcord mods? Oldcord staff!",
       items: [
-        "Voice is now voicing! You can now talk to people <small>in servers only, for now...</small>",
-        "Tenor is now usable! Just don't search cok in gifs!",
+        "Admin panel is now active! Instance owners can now appoint people to manage the instance. <small>But please go touch some grass.</small>",
+        "Reporting is now available in Selector. <small>Don't ask why in the selector and not in the client, you already know.</small>",
       ],
     },
     {
       type: "fixed",
-      title: "BUGS ARE SQUASHED IN THIS INSTANT!",
+      title: "Ah! I hate bugs!",
       items: [
-        "Fixed some security issues with message searching. Now you can search in peace.",
-        "Fixing duplicate ban entries, now you don't have to do the spiderman meme anymore!",
-        "Relationships are now fixed! But you don't have your partner, don't you?",
+        "Clear logged out sessions from memory. It's like we throw a takeout of Insomia into the trash.",
+        "Crritical bug fix with email existing check and guild vanity existing check. Spiderman meme x2?",
+        "Other bug fixes are on the commit history because the person writing this changelog is lazy and does not want to finish it.",
       ],
     },
     {
       type: "improved",
-      title: "SELECTOR! SELECTOR! SELECTOR! SELECTOR! SELECTOR!",
+      title: "The things that are improved, are improved.",
       items: [
-        "The selector is improved! And it looks that one instant messaging service you like back in 2018! So great!",
-        "Our rate limit system has been improved with caching so bots that want real time updates can do it without strainging the server. Don't say the C word though! <small>Okay for real though, please don't use any word to mask your internal bigotry. It's not cool. /srs</small>",
+        "Selector got some design changes! It still looks familiar, at least.",
+        "Changelog modal can now display images just so it can catch your eye and stuff. I have now fallen and I need @someone!",
       ],
     },
     {
       type: "default",
-      title: "WE NEED HELP!",
+      title: "Woo!",
       items: [
-        "Please help us out in some stuff like Giphy support, improving the code, making a new Discord mod, etc! Your power make us increase by 10x! <small>And yes that includes the Selector too despite it's goodiness... please help us fix the issues...</small> If you love this old Discord revival project, please help us!",
+        "Oldcord has some so far it's like watching a baby grow. Thank you for joining the Oldcord family.",
+        "If you want to help us create Oldplunger, or if you have any skills to improve Oldcord, please contribute!",
       ],
     },
   ],
