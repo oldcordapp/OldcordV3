@@ -21,41 +21,16 @@ export default function () {
     cookieManager.get("default_client_build") ??
     builds[0];
 
-  const [selectedBuild, setSelectedBuild] = useState(convertBuildId(defaultBuild));
+  const [selectedBuild, setSelectedBuild] = useState(
+    convertBuildId(defaultBuild)
+  );
 
   let selectedBuildOriginal = builds[friendlyBuildIds.indexOf(selectedBuild)];
 
-  let localStorageCEP = localStorageManager.get(localStorageKey);
-
-  function initializeSelectedPatches() {
-    if (typeof localStorageCEP !== "object" || !localStorageCEP) {
-      const initializedObject = {};
-
-      builds.forEach((build) => {
-        initializedObject[build] = Object.keys(PATCHES).filter((key) => {
-          const compatibleBuilds = PATCHES[key].compatibleVersions;
-
-          if (
-            (compatibleBuilds === "all" ||
-              build.includes(compatibleBuilds) ||
-              compatibleBuilds.includes(build)) &&
-            PATCHES[key].defaultEnabled
-          ) {
-            return key;
-          }
-        });
-      });
-
-      localStorageCEP = initializedObject;
-
-      localStorageManager.set(localStorageKey, initializedObject);
-    }
-
-    return localStorageCEP[selectedBuildOriginal];
-  }
+  const localStorageCEP = localStorageManager.get(localStorageKey);
 
   const [pendingChangePatches, setPendingChangePatches] = useState(
-    initializeSelectedPatches()
+    localStorageCEP[selectedBuildOriginal]
   );
 
   const [hasIncompatiblePatches, setHasIncompatiblePatches] = useState(null);
@@ -156,8 +131,8 @@ export default function () {
     return () => {
       setHasUnsavedChanges(false);
       registerHandlers(
-        () => { },
-        () => { }
+        () => {},
+        () => {}
       );
     };
   }, [registerHandlers, handleSave, handleReset, setHasUnsavedChanges]);
@@ -222,12 +197,14 @@ export default function () {
               {Object.keys(hasIncompatiblePatches).map((patch) => {
                 return (
                   <li key={patch}>
-                    <Text variant="body">{PATCHES[patch].label} is not comptaible with{" "}
+                    <Text variant="body">
+                      {PATCHES[patch].label} is not comptaible with{" "}
                       {hasIncompatiblePatches[patch]
                         .map((patch) => {
                           return PATCHES[patch].label;
                         })
-                        .join(", ")}</Text>
+                        .join(", ")}
+                    </Text>
                   </li>
                 );
               })}
@@ -240,12 +217,16 @@ export default function () {
         options={friendlyBuildIds}
         defaultOption={selectedBuild}
         onSelected={changeSelectedBuild}
-        style={{ marginTop: '-20px' }} 
+        style={{ marginTop: "-20px" }}
         informativeText="This dropdown only manages patches/plugins for the selected build and does not change the client build launched."
       />
       <Text variant="h2">Plugins</Text>
-      <Text variant="body" style={{ marginTop: '0px' }}>Oldplunger is in development...</Text>
-      <Text variant="h2" style={{ marginTop: '10px' }}>Patches (Legacy)</Text>
+      <Text variant="body" style={{ marginTop: "0px" }}>
+        Oldplunger is in development...
+      </Text>
+      <Text variant="h2" style={{ marginTop: "10px" }}>
+        Patches (Legacy)
+      </Text>
       <div className="options-grid">
         {Object.keys(PATCHES).map((key) => {
           const compatibleBuilds = PATCHES[key].compatibleVersions;

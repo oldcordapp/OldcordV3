@@ -15,6 +15,10 @@ import modalConfig from "./components/modalConfig";
 import PrimaryLayer from "./components/layers/primaryLayer";
 import "./App.css";
 
+import localStorageManager from "./lib/localStorageManager";
+import { PATCHES } from "./constants/patches";
+import { builds } from "./constants/builds";
+
 function Container() {
   const { activeLayer, exitingLayer, triggeredRedirect } = useLayer();
   const { isNudging } = useUnsavedChanges();
@@ -69,6 +73,31 @@ function Container() {
 }
 
 export default function App() {
+  const localStorageKey = "oldcord_selected_patches";
+
+  const localStorageCEP = localStorageManager.get(localStorageKey);
+
+  if (typeof localStorageCEP !== "object" || !localStorageCEP) {
+    const initializedObject = {};
+
+    builds.forEach((build) => {
+      initializedObject[build] = Object.keys(PATCHES).filter((key) => {
+        const compatibleBuilds = PATCHES[key].compatibleVersions;
+
+        if (
+          (compatibleBuilds === "all" ||
+            build.includes(compatibleBuilds) ||
+            compatibleBuilds.includes(build)) &&
+          PATCHES[key].defaultEnabled
+        ) {
+          return key;
+        }
+      });
+    });
+
+    localStorageManager.set(localStorageKey, initializedObject);
+  }
+
   return (
     <LayerHandler>
       <UnsavedChangesHandler>
