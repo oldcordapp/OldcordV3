@@ -12,6 +12,7 @@ export const SETTINGS_VIEWS = {
   OPFS_SETTINGS: "opfs_settings",
   CHANGELOG: "changelog",
   REPORT_CONTENT: "report_content",
+  DEVELOPER_PORTAL: "developer_portal",
   ADVANCED_SETTINGS: "advanced_settings",
 };
 
@@ -53,6 +54,13 @@ export default function () {
     },
     { type: "separator" },
     { type: "header", label: "Instance Specific" },
+    {
+      type: "openUrl",
+      label: "Developer Portal",
+      onClick: () => {
+        window.open('/developers');
+      },
+    },
     {
       type: "item",
       label: "Report Content",
