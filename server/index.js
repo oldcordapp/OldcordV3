@@ -11,7 +11,7 @@ const path = require('path');
 const globalUtils = require('./helpers/globalutils');
 const { assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
@@ -580,7 +580,7 @@ app.use("/api/v2/", router);
 
 app.use("/api/", router);
 
-app.use("/api/v*/", (_, res) => {
+app.use(/\/api\/v*\//, (_, res) => {
     return res.status(400).json({
         code: 400,
         message: "Invalid API Version"
@@ -639,11 +639,11 @@ app.get("/instance", (req, res) => {
     });
 });
 
-app.get("/admin*", (req, res) => {
+app.get(/\/admin*/, (req, res) => {
     return res.send(fs.readFileSync(`./www_static/assets/admin/index.html`, 'utf8'));
 });
 
-app.get("*", (req, res) => {
+app.get(/.*/, (req, res) => {
     try {
         if (!req.client_build && config.require_release_date_cookie) {
             return res.redirect("/selector");
