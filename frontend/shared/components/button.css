@@ -16,6 +16,8 @@
   user-select: none;
   transition: background-color 0.17s ease, transform 0.1s ease;
   outline: none;
+
+  padding: 2px 16px;
   height: 32px;
   min-width: 60px;
 }

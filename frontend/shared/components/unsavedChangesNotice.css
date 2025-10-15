@@ -63,5 +63,4 @@ transform: translateY(150.078%) translateZ(0px);
 
 .button-group .button:not(:first-child) {
   margin-left: 10px;
-  padding: 5px;
 }
