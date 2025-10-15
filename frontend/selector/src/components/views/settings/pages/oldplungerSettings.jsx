@@ -22,7 +22,7 @@ export default function () {
       <PageInfo title="Oldplunger Development Notice">
         Oldplunger is in development!
         <br />
-        All settings below with either be removed or changed upon release.
+        All settings below will either be removed or changed upon release.
         <br />
         Please help us test Oldplunger!
       </PageInfo>
