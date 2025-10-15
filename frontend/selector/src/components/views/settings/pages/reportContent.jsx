@@ -1,6 +1,6 @@
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import Button from "@oldcord/frontend-shared/components/button";
-import ToggleSetting from "@oldcord/frontend-shared/components/toggleSettings";
+import ToggleSetting from "@oldcord/frontend-shared/components/toggleSetting";
 import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import cookieManager from "../../../../lib/cookieManager";
 import { useState, useEffect } from "react";

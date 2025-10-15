@@ -212,7 +212,7 @@ class Bootloader {
     // Set up chunk loading progress tracking first
     this.loader.onChunkProgress = (current, total, type) => {
       if (type === "find") {
-        this.setLoadingText(`DETERMINING CHUNKS (${current}/${total})`);
+        this.setLoadingText(`CHECKING VALID CHUNKS (${current}/${total})`);
       } else if (type === "load") {
         this.setLoadingText(
           `LOADING AND PATCHING CHUNKS (${current}/${total})`
@@ -256,6 +256,11 @@ class Bootloader {
     }
 
     this.setupDOM(head, body, styles, scripts);
+
+    if (utils.isOldplungerEnabled()) {
+      utils.loadScript("/assets/oldplunger/main.js").then(() => (utils.loadLog("[Selector] Oldplunger is loaded!"))).catch((error) => {utils.loadLog(`[Selector] Oldplunger failed to load: ${error}`, "error")})
+    }
+
     this.setupResourceInterceptor();
 
     shim();

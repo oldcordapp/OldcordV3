@@ -1,6 +1,6 @@
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import Button from "@oldcord/frontend-shared/components/button";
-import ToggleSetting from "@oldcord/frontend-shared/components/toggleSettings";
+import ToggleSetting from "@oldcord/frontend-shared/components/toggleSetting";
 import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import cookieManager from "../../../../lib/cookieManager";
 import { useState, useEffect } from "react";
@@ -9,16 +9,7 @@ const verboseModeKey = "debug_mode";
 
 export default function () {
   const { addModal } = useModal();
-  const [verboseMode, setVerboseMode] = useState(false);
-
-  useEffect(() => {
-    try {
-      const current = cookieManager.get(verboseModeKey);
-      setVerboseMode(current === true);
-    } catch {
-      setVerboseMode(false);
-    }
-  }, []);
+  const [verboseMode, setVerboseMode] = useState(cookieManager.get(verboseModeKey) === "true" ? true : false);
 
   function enableVerboseMode() {
     const newValue = !verboseMode;

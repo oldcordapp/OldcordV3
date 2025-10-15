@@ -1,0 +1,11 @@
+{
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.js",
+    "dev": "node esbuild.config.js --watch"
+  },
+  "peerDependencies": {
+    "esbuild": "^0.25.11"
+  }
+}

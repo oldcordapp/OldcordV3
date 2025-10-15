@@ -1,11 +1,13 @@
 {
   "workspaces": [
-    "frontend/*"
+    "frontend/*",
+    "oldplunger"
   ],
   "scripts": {
+    "build:oldplunger": "npm run build --workspace=oldplunger",
     "build:selector": "npm run build --workspace=frontend/selector",
     "build:admin": "npm run build --workspace=frontend/admin",
-    "build:all": "npm run build:selector && npm run build:admin",
+    "build:all": "npm run build:selector && npm run build:admin && npm run build:oldplunger",
     "start:server": "node server/index.js",
     "start": "npm run build:all && npm run start:server",
     "dev:admin": "npm run dev --workspace=frontend/admin",
