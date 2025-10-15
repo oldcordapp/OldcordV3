@@ -44,14 +44,15 @@ class Bootloader {
 
     if (!randomQuote.submittedBy) {
       submitter.style.display = "none";
-      return
+      return;
     } else {
       submitter.style.display = "block";
     }
 
     if (randomQuote.fromDiscord) {
       submitterText = `ORIGINALLY APPEARED ON <span>DISCORD</span> IN <span>${randomQuote.appearedIn}</span>`;
-      submitterText += randomQuote.submittedBy === "Discord" ? "" : "<br/>ORIGINALLY ";
+      submitterText +=
+        randomQuote.submittedBy === "Discord" ? "" : "<br/>ORIGINALLY ";
     }
 
     if (randomQuote.submittedBy !== "Discord") {
@@ -257,12 +258,10 @@ class Bootloader {
 
     this.setupDOM(head, body, styles, scripts);
 
-    if (utils.isOldplungerEnabled()) {
-      utils.loadScript("/assets/oldplunger/main.js").then(() => (utils.loadLog("[Selector] Oldplunger is loaded!"))).catch((error) => {utils.loadLog(`[Selector] Oldplunger failed to load: ${error}`, "error")})
-    }
-
     this.setupResourceInterceptor();
 
+    this.loadOldplunger();
+    
     shim();
 
     this.setProgress(0, 1, false);
@@ -415,6 +414,20 @@ class Bootloader {
         }
       });
     }, 1000);
+  }
+
+  loadOldplunger() {
+    if (utils.isOldplungerEnabled()) {
+      utils
+        .loadScript("/assets/oldplunger/main.js")
+        .then(() => utils.loadLog("[Selector] Oldplunger is loaded!"))
+        .catch((error) => {
+          utils.loadLog(
+            `[Selector] Oldplunger failed to load: ${error}`,
+            "error"
+          );
+        });
+    }
   }
 
   async fetchAppHtml() {

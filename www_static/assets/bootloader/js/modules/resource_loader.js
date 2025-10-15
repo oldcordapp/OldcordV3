@@ -67,6 +67,7 @@ export class ResourceLoader {
         utils.loadLog(
           `Successfully loaded ${type} ${normalizedPath} as blob URL: ${blobUrl}`
         );
+        
         return result;
       } catch (error) {
         if (error.message.startsWith("HTTP ")) return null;
@@ -97,7 +98,8 @@ export class ResourceLoader {
     const shouldIntercept = (url) =>
       typeof url === "string" &&
       !url.includes("/bootloader/") &&
-      !url.startsWith("blob:");
+      !url.startsWith("blob:") &&
+      !url.includes("oldplunger");
 
     const originalCreateElement = document.createElement.bind(document);
     document.createElement = (tagName) => {
