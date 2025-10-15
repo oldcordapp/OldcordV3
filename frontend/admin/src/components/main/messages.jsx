@@ -242,19 +242,41 @@ const Messages = () => {
                                         </> : <>
                                                 {data.map((message, i) => (
                                                     <div ref={msgId === message.id ? selectedMessageRef : null} className={`message-result-container ${(selectedMessage && selectedMessage.id === message.id || messageId && messageId === message.id && !selectedMessage) ? 'selected-message' : ''}`} key={message.id} onClick={() => setSelectedMessage(message)}>
-                                                        <img
-                                                            src={message.author.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + message.author.id + '/' + message.author.avatar + ".png"}
-                                                            alt={`${message.author.username}'s avatar`}
-                                                            style={{
-                                                                width: '40px',
-                                                                height: '40px',
-                                                                borderRadius: '50%',
-                                                                marginRight: '15px'
-                                                            }}
-                                                        />
+                                                        {message.author.id !== "1279218211430105088" && message.author.username !== "Deleted User" ? <>
+                                                            <img
+                                                                src={message.author.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + message.author.id + '/' + message.author.avatar + ".png"}
+                                                                alt={`${message.author.username}'s avatar`}
+                                                                style={{
+                                                                    width: '40px',
+                                                                    height: '40px',
+                                                                    borderRadius: '50%',
+                                                                    marginRight: '15px',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                className='message-result-avatar'
+                                                                onClick={() => navigate(`/users?searchInput=${message.author.id}`)}
+                                                            />
+                                                        </> : <>
+                                                                <img
+                                                                    src={message.author.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + message.author.id + '/' + message.author.avatar + ".png"}
+                                                                    alt={`${message.author.username}'s avatar`}
+                                                                    style={{
+                                                                        width: '40px',
+                                                                        height: '40px',
+                                                                        borderRadius: '50%',
+                                                                        marginRight: '15px'
+                                                                    }}
+                                                                />
+                                                        </>}
                                                         <div className='message-result-body'>
                                                             <div className='message-header-details'>
-                                                                <h1>{message.author.username}</h1>
+                                                                {message.author.id !== "1279218211430105088" && message.author.username !== "Deleted User" ? <>
+                                                                    <h1 style={{
+                                                                        cursor: 'pointer'
+                                                                    }} className='message-result-username' onClick={() => navigate(`/users?searchInput=${message.author.id}`)}>{message.author.username}</h1>
+                                                                </> : <>
+                                                                    <h1>{message.author.username}</h1>
+                                                                </>}
                                                                 <span>{new Date().toLocaleDateString()} at {new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}</span>
                                                             </div>
                                                             <h1 title={message.content.length > 175 ? message.content : ''}>{message.content.length > 175 ? message.content.substring(0, 175) + "..." : message.content}</h1>
@@ -291,20 +313,29 @@ const Messages = () => {
 
                                                                     setPopoutContextMenu(popoutContextMenu ? null : [
                                                                         {
-                                                                            name: "Copy", not_implemented_yet: false, action: () => {
+                                                                            name: "Copy Message", not_implemented_yet: false, action: () => 
+                                                                            {
                                                                                 navigator.clipboard.writeText(message.content);
                                                                             }
                                                                         },
+                                                                        {
+                                                                            name: "Copy Message ID", not_implemented_yet: false, action: () => 
+                                                                            {
+                                                                                navigator.clipboard.writeText(message.id);
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            name: "Copy Author ID", not_implemented_yet: false, action: () => 
+                                                                            {
+                                                                                navigator.clipboard.writeText(message.author.id);
+                                                                            }
+                                                                        },
                                                                         { 
-                                                                            name: "Delete Message", not_implemented_yet: false, action: () => {
+                                                                            name: "Delete Message", not_implemented_yet: false, action: () => 
+                                                                            {
                                                                                 deleteMessage(message);
                                                                             } 
                                                                         },
-                                                                        {
-                                                                            name: "Copy ID", not_implemented_yet: false, action: () => {
-                                                                                navigator.clipboard.writeText(message.id);
-                                                                            }
-                                                                        }
                                                                     ]);
                                                                 }}
                                                             />
