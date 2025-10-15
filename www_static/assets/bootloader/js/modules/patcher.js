@@ -45,7 +45,7 @@ const patcher = {
     // Fix client misidentification
     script = script.replace("__[STANDALONE]__", "");
 
-    if (!utils.isOldplungerEnabled) {
+    if (!utils.isOldplungerEnabled()) {
       if (getEnabledPatches().includes("modernizeWebRTC")) {
         script = script.replaceAll(
           `l(e,t,n,a,i,(r||4e4)/1e3)`,
