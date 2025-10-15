@@ -260,8 +260,6 @@ class Bootloader {
 
     this.setupResourceInterceptor();
 
-    this.loadOldplunger();
-    
     shim();
 
     this.setProgress(0, 1, false);
@@ -272,6 +270,8 @@ class Bootloader {
     await this.waitForMount();
     this.originalBuild && this.startTokenMonitor();
     this.startHeadCleanup();
+
+    this.loadOldplunger();
   }
 
   extractResourceUrls(head, body) {
