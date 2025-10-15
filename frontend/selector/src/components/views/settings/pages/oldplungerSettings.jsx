@@ -28,7 +28,7 @@ export default function () {
       </PageInfo>
       <ToggleSetting
         title={"Enable Oldplunger"}
-        description={"Enable the next generation of Oldcord modding. !In development!"}
+        description={"Enable the next generation of Oldcord modding. ! In development !"}
         isChecked={oldplungerEnabled}
         onChange={enableOldplunger}
       />
