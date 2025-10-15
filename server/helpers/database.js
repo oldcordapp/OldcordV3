@@ -532,7 +532,7 @@ const database = {
                 return false;
             } // Safety net
 
-            await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id])
+            await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id]); //figure out messages
 
             let audit_log = staff.audit_log;
 
@@ -996,6 +996,43 @@ const database = {
             return false;
         }
     }, //rewrite asap
+    getBotByUserId: async (id) => {
+        try {
+            if (!id)
+                return null;
+
+            let rows = await database.runQuery(`
+                    SELECT * FROM bots WHERE id = $1
+                `, [id]);
+
+            if (rows === null || rows.length === 0) {
+                return null;
+            }
+
+            let application = await database.getApplicationById(rows[0].application_id);
+
+            if (application === null) {
+                return null;
+            }
+
+            delete application.secret;
+
+            return {
+                avatar: rows[0].avatar == 'NULL' ? null : rows[0].avatar,
+                discriminator: rows[0].discriminator,
+                username: rows[0].username,
+                id: rows[0].id,
+                public: rows[0].public === 1,
+                require_code_grant: rows[0].require_code_grant === 1,
+                application: application
+            }
+        }
+        catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    }, //to-do deprecate this
     getAccountByUserId: async (id) => {
         try {
             if (!id)
@@ -1729,10 +1766,18 @@ const database = {
                 return null;
             }
 
-            const author = await database.getAccountByUserId(rows[0].author_id);
+            let author = await database.getAccountByUserId(rows[0].author_id);
 
             if (author == null) {
-                return null;
+                author = {
+                    id: "1279218211430105088",
+                    username: "Deleted User",
+                    discriminator: "0000",
+                    avatar: null,
+                    premium: false,
+                    bot: false,
+                    flags: 0
+                }
             }
 
             const mentions_data = globalUtils.parseMentions(rows[0].content);
@@ -1885,7 +1930,7 @@ const database = {
     },
     updateBotUser: async (bot) => {
         try {
-            let send_icon = 'NULL';
+            let send_icon = bot.avatar;
 
             if (bot.avatar != null) {
                 if (bot.avatar.includes("data:image")) {
@@ -2068,6 +2113,17 @@ const database = {
             return null;
         }
     }, //rewrite asap
+    deleteBotById: async (id) => {
+        try {
+            await Promise.all([
+                database.runQuery(`DELETE FROM applications WHERE id = $1`, [id]),
+                database.runQuery(`DELETE FROM bots WHERE id = $1`, [id]),
+                //database.runQuery(`DELETE FROM messages WHERE author_id = $1`, [id]),
+            ]);
+        } catch (error) {
+            return false;
+        }
+    },
     getUsersApplications: async (user) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM applications WHERE owner_id = $1`, [user.id]);
@@ -2089,6 +2145,52 @@ const database = {
                     rpc_origins: [],
                     secret: row.secret,
                     owner: globalUtils.miniUserObject(user)
+                })
+            }
+
+            return ret;
+        } catch (error) {
+            logText(error, "error");
+
+            return [];
+        }
+    },
+    getUsersBots: async (user) => {
+        try {
+            const rows = await database.runQuery(`SELECT a.*, b.id AS bot_id, b.username AS bot_username, b.discriminator AS bot_discriminator, b.avatar AS bot_avatar, b.public, b.require_code_grant, o.username AS owner_username,  o.discriminator AS owner_discriminator,  o.id AS owner_id,  o.avatar AS owner_avatar,  o.flags AS owner_flags FROM applications AS a JOIN bots AS b ON a.id = b.application_id JOIN users AS o ON a.owner_id = o.id WHERE a.owner_id = $1`, [user.id]);
+
+            if (rows == null || rows.length == 0) {
+                return [];
+            }
+
+            const ret = [];
+
+            for (const row of rows) {
+                ret.push({
+                    avatar: row.bot_avatar == 'NULL' ? null : row.bot_avatar,
+                    discriminator: row.bot_discriminator,
+                    username: row.bot_username,
+                    id: row.bot_id,
+                    public: row.public === 1,
+                    require_code_grant: row.require_code_grant === 1,
+                    application: {
+                        id: row.id,
+                        name: row.name,
+                        icon: row.icon == 'NULL' ? null : row.icon,
+                        description: row.description,
+                        redirect_uris: [],
+                        rpc_application_state: 0,
+                        rpc_origins: [],
+                        owner: {
+                            username: row.owner_username,
+                            discriminator: row.owner_discriminator,
+                            id: row.owner_id,
+                            avatar: row.owner_avatar == 'NULL' ? null : row.owner_avatar,
+                            bot: false,
+                            flags: row.owner_flags,
+                            premium: true
+                        }
+                    }
                 })
             }
 
@@ -2180,8 +2282,19 @@ const database = {
 
             const finalMessages = [];
             for (const row of messageRows) {
-                const author = accountMap.get(row.author_id);
-                if (!author) { continue; }
+                let author = accountMap.get(row.author_id);
+
+                if (!author) { 
+                    author = {
+                        id: "1279218211430105088",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        avatar: null,
+                        premium: false,
+                        bot: false,
+                        flags: 0
+                    }
+                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
                 const mentions = [];
@@ -2315,10 +2428,18 @@ const database = {
 
             const finalMessages = [];
             for (const row of messageRows) {
-                const author = accountMap.get(row.author_id);
+                let author = accountMap.get(row.author_id);
 
                 if (!author) {
-                    continue;
+                    author = {
+                        id: "1279218211430105088",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        avatar: null,
+                        premium: false,
+                        bot: false,
+                        flags: 0
+                    }
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -2550,10 +2671,18 @@ const database = {
             const messages = [];
 
             for (const row of messageRows) {
-                const author = accountMap.get(row.author_id);
+                let author = accountMap.get(row.author_id);
 
                 if (!author) {
-                    continue;
+                    author = {
+                        id: "1279218211430105088",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        avatar: null,
+                        premium: false,
+                        bot: false,
+                        flags: 0
+                    }
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -3428,11 +3557,13 @@ const database = {
                 }
 
                 retGuilds.push({
-                    id: guildId, name: guildRow.name,
+                    id: guildId, 
+                    name: guildRow.name,
                     icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
                     splash: guildRow.splash == 'NULL' ? null : guildRow.splash,
                     banner: guildRow.banner == 'NULL' ? null : guildRow.banner,
-                    region: guildRow.region, owner_id: guildRow.owner_id,
+                    region: guildRow.region,
+                    owner_id: guildRow.owner_id,
                     afk_channel_id: guildRow.afk_channel_id == 'NULL' ? null : guildRow.afk_channel_id,
                     afk_timeout: guildRow.afk_timeout,
                     channels: channels,
@@ -4311,7 +4442,15 @@ const database = {
             } else author = await database.getAccountByUserId(author_id);
 
             if (author == null) {
-                return null;
+                author = {
+                    id: "1279218211430105088",
+                    username: "Deleted User",
+                    discriminator: "0000",
+                    avatar: null,
+                    premium: false,
+                    bot: false,
+                    flags: 0
+                }
             }
 
             if (content == undefined) {

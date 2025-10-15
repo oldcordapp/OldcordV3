@@ -109,6 +109,13 @@ router.get("/:applicationid", quickcache.cacheFor(60 * 10), async (req, res) => 
     try {
         let account = req.account;
 
+        if (!req.application) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Application"
+            }); 
+        }
+
         if (req.application.owner.id != account.id) {
             return res.status(404).json({
                 code: 404,
@@ -151,6 +158,10 @@ router.patch("/:applicationid", async (req, res) => {
             application.icon = req.body.icon;
         }
 
+        if (req.body.description != undefined) {
+            application.description = req.body.description;
+        }
+
         let send_update_bot = false;
 
         if (req.body.bot_public != undefined && application.bot) {
@@ -165,10 +176,6 @@ router.patch("/:applicationid", async (req, res) => {
             application.bot.require_code_grant = req.body.bot_require_code_grant;
 
             send_update_bot = true;
-        }
-
-        if (req.body.description) {
-            application.description;
         }
 
         if (application.name.length < 2 || application.name.length > 30) {

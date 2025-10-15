@@ -31,7 +31,7 @@ const Sidebar = ({ active }) => {
             <div className='mainPage-sidebar-components'>
                 <SidebarMenuList name="General">
                     <SidebarMenuItem path="/users" name="Users" Icon={ic_users} active={active} disabled={privilege < PRIVILEGE.ADMIN}></SidebarMenuItem>
-                    <SidebarMenuItem path="/bots" name="Bots" Icon={ic_bots} active={active} disabled={true}></SidebarMenuItem>
+                    <SidebarMenuItem path="/bots" name="Bots" Icon={ic_bots} active={active} disabled={privilege < PRIVILEGE.ADMIN}></SidebarMenuItem>
                     <SidebarMenuItem path="/servers" name="Servers" Icon={ic_servers} active={active} disabled={privilege < PRIVILEGE.ADMIN}></SidebarMenuItem>
                     <SidebarMenuItem path="/messages" name="Messages" Icon={ic_messages} active={active} disabled={privilege < PRIVILEGE.MODERATOR}></SidebarMenuItem>
                     <SidebarMenuItem path="/reports" name="Reports" Icon={ic_reports} active={active} disabled={privilege < PRIVILEGE.JANITOR}></SidebarMenuItem>

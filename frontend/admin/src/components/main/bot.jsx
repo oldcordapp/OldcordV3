@@ -8,9 +8,10 @@ import Dropdown from './dropdown';
 import InputSingle from '../modals/inputsingle';
 import Relationship from './relationship';
 
-const User = ({ data }) => {
+const Bot = ({ data }) => {
     const [confirmation, setConfirmation] = useState(null);
     const [inputPopup, setInputPopup] = useState(null);
+    const [applicationInfoOpen, setApplicationInfoOpen] = useState(false);
     const [popoutContextMenu, setPopoutContextMenu] = useState(null);
     const closeConfirmation = () => setConfirmation(null);
     const closeInputPopup = () => setInputPopup(null);
@@ -19,7 +20,7 @@ const User = ({ data }) => {
     let user_data = JSON.parse(localStorage.getItem("user_data"));
 
     const clearAvatar = () => {
-        fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${data.id}`, {
+        fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/bots/${data.id}`, {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
                 'Content-Type': 'application/json',
@@ -46,7 +47,7 @@ const User = ({ data }) => {
         closeConfirmation();
     };
 
-    const disableUser = (internal_reason) => {
+    const disableBot = (internal_reason) => {
         fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${data.id}/moderate/disable`, {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
@@ -74,7 +75,7 @@ const User = ({ data }) => {
         closeConfirmation();
     };
 
-    const deleteUser = (internal_reason) => {
+    const deleteBot = (internal_reason) => {
         fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${data.id}/moderate/delete`, {
             headers: {
                 'Authorization': localStorage.getItem("token").replace(/"/g, ''),
@@ -122,7 +123,7 @@ const User = ({ data }) => {
                     showFieldSpan: false,
                     cancelName: `No`,
                     onComplete: (internal_reason) => {
-                        disableUser(internal_reason);
+                        disableBot(internal_reason);
                     }, //to-do add support for temporary disabling
                     completeName: `Yes`
                 })
@@ -137,25 +138,13 @@ const User = ({ data }) => {
                     showFieldSpan: false,
                     cancelName: `No`,
                     onComplete: (internal_reason) => {
-                        deleteUser(internal_reason);
+                        deleteBot(internal_reason);
                     },
                     completeName: `Yes`
                 })
             }
         },
     ];
-
-    const toRelationshipType = (type) => {
-        let map = {
-            0: "Not Friends",
-            1: 'Friends',
-            2: 'Blocked',
-            3: 'Incoming Friend Request',
-            4: 'Outgoing Friend Request'
-        };
-
-        return map[type] ?? "Unknown";
-    };
 
     return (
         <>
@@ -189,31 +178,45 @@ const User = ({ data }) => {
                 <div className='mainPage-main-components-sidebar-separator'></div>
                 <div className='mainPage-main-components-sidebar-infoLine'>
                     <div className='mainPage-main-components-sidebar-label'>User ID</div>
-                    {data.id}
+                    {data.application.id}
                 </div>
-                <div className='mainPage-main-components-sidebar-infoLine'>
-                    <div className='mainPage-main-components-sidebar-label'>User Since</div>
-                    {new Date(data.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
-                </div>
-                <div className='mainPage-main-components-sidebar-infoLine'>
-                    <div className='mainPage-main-components-sidebar-label'>Email</div>
-                    {data.email}
-                </div>
-                <div className='mainPage-main-components-sidebar-infoLine'>
-                    <div className='mainPage-main-components-sidebar-label'>Account Claimed?</div>
-                    {data.claimed ? 'Yes' : 'No'}
-                </div>
-                <div className='mainPage-main-components-sidebar-infoLine'>
-                    <div className='mainPage-main-components-sidebar-label'>Email Verified?</div>
-                    {data.verified ? 'Yes' : 'No'}
+                <div className='subsection-sidebar-info' style={{ '--subsection-header': `"Application Info"`, '--subsection-status-symbol' : `"${applicationInfoOpen ? '▲' : '▼'}"` }} onClick={() => setApplicationInfoOpen(!applicationInfoOpen)}>
+                    {applicationInfoOpen ? <>
+                        <div className='mainPage-main-components-sidebar-infoLine' style={{
+                            marginTop: "10px"
+                        }}>
+                            <div className='mainPage-main-components-sidebar-label'>ID</div>
+                            {data.application.id}
+                        </div>
+                        <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Name</div>
+                            {data.application.name}
+                        </div>
+                        <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Description</div>
+                            {(data.application.description === "" || data.application.description === null) ? 'NONE' : data.application.description}
+                        </div>
+                        <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Owner</div>
+                            <a href={`/admin/users?searchInput=${data.application.owner.id}`}>{data.application.owner.username}#{data.application.owner.discriminator}</a>
+                        </div>
+                    </> : <></>}
                 </div>
                 <div className='mainPage-main-components-sidebar-infoLine'>
                     <div className='mainPage-main-components-sidebar-label'>Server Count</div>
                     {data.guilds.length}
                 </div>
                 <div className='mainPage-main-components-sidebar-infoLine'>
+                    <div className='mainPage-main-components-sidebar-label'>Is Public?</div>
+                    {data.public === true ? 'Yes' : 'No'}
+                </div>
+                <div className='mainPage-main-components-sidebar-infoLine'>
+                    <div className='mainPage-main-components-sidebar-label'>Requires Code Grant?</div>
+                    {data.require_code_grant === true ? 'Yes' : 'No'}
+                </div>
+                <div className='mainPage-main-components-sidebar-infoLine'>
                     <div className='mainPage-main-components-sidebar-label'>Flags</div>
-                    {data.flags}
+                    {data.flags || 0}
                 </div>
             </div>
             <div className='mainPage-main-components-main'>
@@ -228,28 +231,6 @@ const User = ({ data }) => {
                                     discriminator={guild.id}
                                     id={guild.id}
                                     actuallyServer={true}
-                                />
-                            ))}
-                        </Paginator>
-                    </> : <></>}
-                    {data.relationships && Array.isArray(data.relationships) && data.relationships.length > 0 ? <>
-                         <Paginator header="Relationships" tabs={['Username', 'Discriminator', 'Status']}>
-                            {data.relationships.map((entry, i) => (
-                                <Relationship key={i} avatarHash={entry.user.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + entry.user.id + '/' + entry.user.avatar + '.png'} username={entry.user.username} discriminator={entry.user.discriminator} id={entry.user.id} type={toRelationshipType(entry.type)}></Relationship>
-                            ))}
-                        </Paginator>
-                    </> : <></>}
-                    {data.bots && Array.isArray(data.bots) && data.bots.length > 0 ? <>
-                         <Paginator header="Bots" tabs={['Username', 'Id']}>
-                            {data.bots.map((bot, i) => (
-                                <Member
-                                    key={i}
-                                    avatarHash={bot.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + bot.id + '/' + bot.avatar + '.png'}
-                                    username={`${bot.username}#${bot.discriminator}`}
-                                    discriminator={bot.id}
-                                    id={bot.id}
-                                    bot={true}
-                                    actuallyServer={false}
                                 />
                             ))}
                         </Paginator>
@@ -273,4 +254,4 @@ const User = ({ data }) => {
 }
 
 
-export default User;
+export default Bot;

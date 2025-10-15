@@ -36,14 +36,63 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
             });
         }
 
+        if (userRet.bot) {
+            return res.status(404).json({
+                code: 400,
+                message: "Please use the \"Bots\" tab to lookup bots."
+            });
+        } //This is because it has application info, etc
+
+        let bots = await global.database.getUsersBots(userRet);
+
+        const userRetTotal = {
+            ...userRet,
+            guilds,
+            bots
+        };
+
+        return res.status(200).json(globalUtils.sanitizeObject(userRetTotal,
+            ['settings', 'token', 'password', 'disabled_until', 'disabled_reason']
+        ));
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.get("/bots/:userid", staffAccessMiddleware(3), async (req, res) => {
+    try {
+        const userid = req.params.userid;
+
+        if (!userid) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Bot"
+            });
+        } // there is no point renaming this shit tbh
+
+        const [userRet, guilds] = await Promise.all([
+            global.database.getBotByUserId(userid),
+            global.database.getUsersGuilds(userid)
+        ]);
+
+        if (!userRet) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Bot"
+            });
+        }
+
         const userWithGuilds = {
             ...userRet,
             guilds,
         };
 
-        return res.status(200).json(globalUtils.sanitizeObject(userWithGuilds,
-            ['settings', 'token', 'password', 'disabled_until', 'disabled_reason']
-        ));
+        return res.status(200).json(userWithGuilds);
     } catch (error) {
         logText(error, "error");
 
@@ -73,6 +122,12 @@ router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
                 message: "Unknown Guild"
             });
         }
+
+        let owner = await global.database.getAccountByUserId(guildRet.owner_id);
+
+        if (owner != null) {
+            guildRet.owner = globalUtils.miniUserObject(owner);
+        } //this fucking sucks ass and we need to fix this ASAP.
 
         return res.status(200).json(guildRet);
     } catch (error) {
@@ -214,21 +269,21 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
         if (!user) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
             });
         }
 
         if (user.id === req.account.id) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
             });
         }
 
         if (user.disabled_until) {
             return res.status(400).json({
                 code: 400,
-                message: "User is already disabled."
+                message: `${user.bot ? 'Bot' : 'User'} is already disabled.`
             });
         }
 
@@ -436,14 +491,14 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
         if (!user) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
             });
         }
 
         if (user.id === req.account.id) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
             });
         }
 
@@ -454,6 +509,13 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
                 code: 400,
                 internal_reason: "This field is required."
             });
+        }
+
+        if (user.bot) {
+            await global.database.deleteBotById(req.params.userid);
+            await global.dispatcher.dispatchLogoutTo(req.params.userid);
+
+            return res.status(204).send();
         }
 
         let tryDisable = await global.database.internalDeleteAccount(req.staff_details, req.params.userid, audit_log_reason);
