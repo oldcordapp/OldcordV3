@@ -90,6 +90,7 @@ const patcher = {
           `this._mute||this._speakingFlags===s.SpeakingFlags.NONE`,
           `this._mute`
         ); //2018
+        
 
         // Rewrite setRemoteDescription to unified-plan based of current setLocalDescription's offer in a similar manner to modern Discord's
         (function () {
@@ -541,12 +542,15 @@ const patcher = {
     if (release_date.endsWith("_2015"))
       script = script.replaceAll(".presence.", ".presences.");
 
+    const inviteLink = config.custom_invite_url.replace('https://', '').replace('http://', '');
+    const escapedLink = inviteLink.replace(/\./g, '\\.').replace(/\//g, '\\/'); //There was a bug fix with the developer portal where invites were improperly being replaced into jank regex expressions.
+
     // Set URLs
     script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
     script = script.replaceAll(/status.discordapp.com/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
     script = script.replaceAll(/discordcdn.com/g, location.host); // ??? DISCORDCDN.COM?!!11
-    script = script.replaceAll(/discord.gg/g, config.custom_invite_url);
+    script = script.replaceAll(/discord.gg/g, escapedLink);
     script = script.replaceAll(/discordapp.com/g, location.host);
     script = script.replaceAll(/([a-z]+\.)?discord.media/g, location.host);
 
