@@ -2,7 +2,11 @@
 
 // Following Vencord's src/Vencord.ts
 
+import * as Webpack from "./webpack";
+
 async function init() {
+    window.oldplunger = {};
+    Webpack.webpack();
     console.log("[Oldplunger] Loaded!")
 }
 
