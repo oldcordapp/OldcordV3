@@ -2533,8 +2533,11 @@ const database = {
 
             const rows = await database.runQuery(`SELECT id, username, discriminator, avatar, flags FROM users WHERE id = ANY($1::text[])`, [ids]) ?? [];
             const accounts = [];
+            const humans = new Set();
 
             for (const row of rows) {
+                humans.add(row.id);
+
                 accounts.push({
                     username: row.username,
                     discriminator: row.discriminator,
@@ -2544,6 +2547,27 @@ const database = {
                     flags: row.flags,
                     premium: true
                 });
+            }
+
+            const bots = ids.filter(id => !humans.has(id));
+
+            if (bots.length > 0) {
+                const botRows = await database.runQuery(
+                    `SELECT id, username, discriminator, avatar FROM bots WHERE id = ANY($1::text[])`,
+                    [bots]
+                ) ?? [];
+
+                for (const row of botRows) {
+                    accounts.push({
+                        username: row.username,
+                        discriminator: row.discriminator,
+                        id: row.id,
+                        avatar: row.avatar === 'NULL' ? null : row.avatar,
+                        bot: true,
+                        flags: 0,
+                        premium: true
+                    });
+                }
             }
 
             //Relationships will never be used in here, and it only works for NORMAL user accounts - neither webhooks nor bots, should be pretty efficient.

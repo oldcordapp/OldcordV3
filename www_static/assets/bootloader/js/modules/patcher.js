@@ -666,8 +666,10 @@ const patcher = {
     script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
     script = script.replaceAll(/discord.media/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
+    script = script.replaceAll(`OAUTH2_AUTHORIZE:"/api/oauth2/authorize"`, `OAUTH2_AUTHORIZE:"/oauth2/authorize"`); //why does this have /api/ appended but other oauth2 urls dont?
+    //Just some last minute housekeeping ^
 
-    // Just for visual verification that it is patched by Oldcord LMAO
+    // Just for visual verification that it is ptached by Oldcord LMAO
     script += "\n// Oldcord Patched";
 
     return script;
