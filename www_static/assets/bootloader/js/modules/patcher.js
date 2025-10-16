@@ -543,7 +543,7 @@ const patcher = {
       script = script.replaceAll(".presence.", ".presences.");
 
     const inviteLink = config.custom_invite_url.replace('https://', '').replace('http://', '');
-    const escapedLink = inviteLink.replace(/\./g, '\\.').replace(/\//g, '\\/'); //There was a bug fix with the developer portal where invites were improperly being replaced into jank regex expressions.
+    const escapedLink = inviteLink.replace(/\./g, '\\.').replace(/\//g, '\\/'); //There was a bug with the developer portal where invites were improperly being replaced into jank regex expressions.
 
     // Set URLs
     script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
