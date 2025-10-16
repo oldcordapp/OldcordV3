@@ -3,7 +3,7 @@ import esbuild from "esbuild";
 const config = {
   entryPoints: ["src/index.js"],
   bundle: true,
-  outfile: "../../www_static/assets/oldplunger/index.js",
+  outfile: "../www_static/assets/oldplunger/index.js",
   format: "esm",
   platform: "browser",
   sourcemap: true,
