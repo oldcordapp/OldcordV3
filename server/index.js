@@ -11,7 +11,7 @@ const path = require('path');
 const globalUtils = require('./helpers/globalutils');
 const { assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
-const { Jimp } = require('jimp');
+const Jimp = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
@@ -484,7 +484,13 @@ app.get('/banners/:serverid/:file', async (req, res) => {
 
 app.get('/avatars/:userid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'avatars', req.params.userid);
+        let userid = req.params.userid;
+
+        if (req.params.userid.includes("WEBHOOK_")) {
+            userid = req.params.userid.split('_')[1];
+        } //to-do think of long term solution to webhook overrides
+
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'avatars', userid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");

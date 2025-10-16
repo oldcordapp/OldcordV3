@@ -2284,7 +2284,7 @@ const database = {
             for (const row of messageRows) {
                 let author = accountMap.get(row.author_id);
 
-                if (!author) { 
+                if (!author) {
                     author = {
                         id: "1279218211430105088",
                         username: "Deleted User",
@@ -2294,7 +2294,7 @@ const database = {
                         bot: false,
                         flags: 0
                     }
-                 }
+                }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
                 const mentions = [];
@@ -2396,11 +2396,14 @@ const database = {
             const userIdArray = Array.from(uniqueUserIds);
 
             const accounts = await database.getAccountsByIds(userIdArray);
+
             const accountMap = new Map();
 
             if (accounts && accounts.length > 0) {
                 accounts.forEach(acc => accountMap.set(acc.id, acc));
             }
+
+            
 
             const attachmentsRows = await database.runQuery(`
             SELECT * FROM attachments WHERE message_id = ANY($1)
@@ -2428,6 +2431,14 @@ const database = {
 
             const finalMessages = [];
             for (const row of messageRows) {
+                let webhookRawId = null;
+
+                if (row.author_id.includes("WEBHOOK_")) {
+                    webhookRawId = row.author_id;
+
+                    row.author_id = row.author_id.split('_')[1];
+                }
+
                 let author = accountMap.get(row.author_id);
 
                 if (!author) {
@@ -2440,6 +2451,9 @@ const database = {
                         bot: false,
                         flags: 0
                     }
+                } else if (author && author.webhook && webhookRawId) {
+                    author.id = webhookRawId.split('_')[2];
+                    webhookRawId = null;
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -2531,33 +2545,53 @@ const database = {
                 return [];
             }
 
-            const rows = await database.runQuery(`SELECT id, username, discriminator, avatar, flags FROM users WHERE id = ANY($1::text[])`, [ids]) ?? [];
             const accounts = [];
             const humans = new Set();
+            const robots = new Set();
+            const humanIds = ids.filter(id => !id.startsWith("WEBHOOK_"));
+            const rawWebhookIds = ids.filter(id => id.startsWith("WEBHOOK_"));
 
-            for (const row of rows) {
-                humans.add(row.id);
+            let bots = [];
 
-                accounts.push({
-                    username: row.username,
-                    discriminator: row.discriminator,
-                    id: row.id,
-                    avatar: row.avatar === 'NULL' ? null : row.avatar,
-                    bot: false,
-                    flags: row.flags,
-                    premium: true
-                });
-            }
+            if (humanIds.length > 0) {
+                const rows = await database.runQuery(`SELECT id, username, discriminator, avatar, flags FROM users WHERE id = ANY($1::text[])`, [humanIds]) ?? [];
 
-            const bots = ids.filter(id => !humans.has(id));
+                const foundHumanIds = new Set(rows.map(row => row.id));
+
+                bots = humanIds.filter(id => !foundHumanIds.has(id));
+
+                for (const row of rows) {
+                    humans.add(row.id);
+
+                    accounts.push({
+                        username: row.username,
+                        discriminator: row.discriminator,
+                        id: row.id,
+                        avatar: row.avatar === 'NULL' ? null : row.avatar,
+                        bot: false,
+                        flags: row.flags,
+                        premium: true
+                    });
+                }
+            } else bots = [...ids];
+
+            let webhooksToFetch = rawWebhookIds;
 
             if (bots.length > 0) {
+                const botOnlyIds = bots.filter(id => !id.startsWith("WEBHOOK_"));
+
                 const botRows = await database.runQuery(
                     `SELECT id, username, discriminator, avatar FROM bots WHERE id = ANY($1::text[])`,
-                    [bots]
+                    [botOnlyIds]
                 ) ?? [];
 
+                const foundBotIds = new Set(botRows.map(row => row.id));
+
+                webhooksToFetch = webhooksToFetch.concat(bots.filter(id => !foundBotIds.has(id)));
+
                 for (const row of botRows) {
+                    robots.add(row.id);
+
                     accounts.push({
                         username: row.username,
                         discriminator: row.discriminator,
@@ -2570,11 +2604,80 @@ const database = {
                 }
             }
 
-            //Relationships will never be used in here, and it only works for NORMAL user accounts - neither webhooks nor bots, should be pretty efficient.
+            if (webhooksToFetch.length > 0) {
+                const uniqueWebhookIds = new Set();
+                const webhookOverrideIds = [];
+
+                for (const id of webhooksToFetch) {
+                    if (id.startsWith("WEBHOOK_")) {
+                        const parts = id.split('_');
+                        const webhookId = parts[1];
+                        const overrideId = parts[2];
+
+                        uniqueWebhookIds.add(webhookId);
+                        webhookOverrideIds.push({ rawId: id, webhookId, overrideId });
+                    }
+                }
+
+                const baseWebhooks = await database.runQuery(`
+                    SELECT id, name, avatar FROM webhooks WHERE id = ANY($1::text[])
+                `, [[...uniqueWebhookIds]]) ?? [];
+
+                const webhookDataMap = new Map(baseWebhooks.map(w => [w.id, w]));
+
+                const overrideIdPairs = webhookOverrideIds
+                    .filter(item => item.overrideId !== null)
+                    .map(item => [item.webhookId, item.overrideId]);
+
+                let overridesMap = new Map();
+
+                if (overrideIdPairs.length > 0) {
+                    const allOverrides = await database.runQuery(`
+                        SELECT id, override_id, avatar_url, username 
+                        FROM webhook_overrides 
+                        WHERE id = ANY($1::text[])
+                    `, [[...uniqueWebhookIds]]) ?? []; 
+
+                    overridesMap = new Map(allOverrides.map(o => [`${o.id}_${o.override_id}`, o]));
+                }
+
+                for (const item of webhookOverrideIds) {
+                    const baseWebhook = webhookDataMap.get(item.webhookId);
+
+                    if (!baseWebhook) {
+                        continue;
+                    }
+
+                    const overrideKey = `${item.webhookId}_${item.overrideId}`;
+                    const override = overridesMap.get(overrideKey);
+
+                    if (override) {
+                        accounts.push({
+                            username: override.username === 'NULL' ? baseWebhook.name : override.username,
+                            discriminator: "0000",
+                            avatar: override.avatar_url === 'NULL' ? null : override.avatar_url,
+                            id: override.id,
+                            bot: true,
+                            webhook: true
+                        });
+                    }
+                    else {
+                        accounts.push({
+                            username: baseWebhook.name,
+                            discriminator: "0000",
+                            id: baseWebhook.id,
+                            bot: true,
+                            webhook: true,
+                            avatar: baseWebhook.avatar === 'NULL' ? null : baseWebhook.avatar,
+                        });
+                    }
+                }
+                //We really need a better way to handle webhooks huh..
+            }
 
             return accounts;
         } catch (error) {
-            logText(error, "error");
+            logText(error, "error"); 
             return [];
         }
     },
@@ -3581,7 +3684,7 @@ const database = {
                 }
 
                 retGuilds.push({
-                    id: guildId, 
+                    id: guildId,
                     name: guildRow.name,
                     icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
                     splash: guildRow.splash == 'NULL' ? null : guildRow.splash,

@@ -236,6 +236,10 @@ async function authMiddleware(req, res, next) {
             return next();
         }//exclude webhooks and invites from this
 
+        if (req.url.match(/webhooks\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+/) && req.method === "POST") {
+            return next();
+        } //bypass sending to webhooks
+
         let token = req.headers['authorization'];
         
         req.cannot_pass = false;
