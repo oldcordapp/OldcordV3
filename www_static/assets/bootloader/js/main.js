@@ -418,7 +418,7 @@ class Bootloader {
   loadOldplunger() {
     if (utils.isOldplungerEnabled()) {
       utils
-        .loadScript("/assets/oldplunger/main.js")
+        .loadScript("/assets/oldplunger/index.js")
         .then(() => utils.loadLog("[Selector] Oldplunger is loaded!"))
         .catch((error) => {
           utils.loadLog(

@@ -2,8 +2,8 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "build": "node esbuild.config.js",
-    "dev": "node esbuild.config.js --watch"
+    "build": "node ./scripts/build.js",
+    "dev": "node ./scripts/build.js --watch"
   },
   "dependencies": {
     "esbuild": "^0.25.11"

@@ -3,10 +3,11 @@ import esbuild from "esbuild";
 const config = {
   entryPoints: ["src/index.js"],
   bundle: true,
-  outfile: "../www_static/assets/oldplunger/main.js",
+  outfile: "../../www_static/assets/oldplunger/index.js",
   format: "esm",
   platform: "browser",
   sourcemap: true,
+  minify: true,
 };
 
 const isWatchMode = process.argv.includes("--watch");
