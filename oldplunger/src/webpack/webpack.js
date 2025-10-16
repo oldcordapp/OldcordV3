@@ -5,7 +5,7 @@ export function webpack() {
     let _webpackJsonp;
     let originalWebpackJsonP;
     let initialized = false;
-    window.oldplunger.oldwebpackVersion = 3;
+    window.oldplunger.webpackVersion = 3;
     
     Object.defineProperty(window, "webpackJsonp", {
         set: (Jsonp) => {
