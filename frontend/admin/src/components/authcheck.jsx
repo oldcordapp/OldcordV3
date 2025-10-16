@@ -18,7 +18,7 @@ function AuthCheck({ appPage = null, enforced, minClearance }) {
 
     let user_data = JSON.parse(localStorage.getItem('user_data'));
     
-    if (!user_data) {
+    if (!user_data || !user_data.staff_details) {
         return <Navigate to="/login"/>;
     }
 
