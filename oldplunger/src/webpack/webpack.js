@@ -1,11 +1,11 @@
 export function webpack() {
     // December 2018 (or maybe earlier) uses Webpack 4 which is an array which we can use modern methods (Moonlight/Vencord).
-    // For Webpack 3, in which webpackJsonp is a function, we have to use another way, which is changing args.
+    // For Webpack 3, in which webpackJsonp is a function, we have to use another way.
 
     let _webpackJsonp;
     let originalWebpackJsonP;
     let initialized = false;
-    window.oldplunger.webpackVersion = 3;
+    window.oldplunger.webpackVersion = "3";
     
     Object.defineProperty(window, "webpackJsonp", {
         set: (Jsonp) => {
@@ -30,8 +30,8 @@ export function webpack() {
                     return originalWebpackJsonP.apply(this, args);
                 }
 
-            } else {
-                window.oldplunger.webpackVersion = 4;
+            } else if (Array.isArray(Jsonp)) {
+                window.oldplunger.webpackVersion = "4+";
                 console.log("[Webpack Patcher] Detected Webpack 4+. Modern patching is used.")
 
                 // Moonlight's method is used, would want to use Vencord's but I don't think it works for us.
@@ -48,6 +48,8 @@ export function webpack() {
                     Jsonp.push.oldplungerPatched = true;
                 }
 
+                _webpackJsonp = Jsonp
+            } else {
                 _webpackJsonp = Jsonp
             }
         },
