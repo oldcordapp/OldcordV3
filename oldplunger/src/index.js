@@ -6,7 +6,7 @@ import * as Webpack from "./webpack";
 
 async function init() {
     window.oldplunger = {};
-    Webpack.webpack();
+    Webpack.patch();
     console.log("[Oldplunger] Loaded!")
 }
 

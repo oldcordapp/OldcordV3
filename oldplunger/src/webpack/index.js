@@ -5,4 +5,4 @@
  - Export React and other tools (useful for backporting the report modal, reply functionality and server banners)
 */
 
-export * from "./webpack"
+export * from "./patch"
