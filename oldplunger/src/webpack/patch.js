@@ -1,3 +1,13 @@
+function initWebpack(webpackRequire) {
+
+  // In Cordwood, it is exported, in here, we assign it to a window property, not sure how useful this would be
+
+  window.oldplunger.webpackRequire = webpackRequire;
+
+  // This is where the Vencord or any other traditional Discord mods would start patching.
+
+}
+
 export function patch() {
   /*
     Webpack Require (wreq below in comments) has a prop named .m that existed since 2015.
@@ -20,6 +30,11 @@ export function patch() {
         return;
       }
 
+      /*
+        Despite being turned into a blob, the code itself did not change, and thus in the code it thinks it is running under
+        /assets/ on .p, therefore the following code still works under Oldcord.
+      */
+
       Object.defineProperty(webpackRequire, "p", {
         configurable: true,
         set: function (bundlePath) {
@@ -39,7 +54,8 @@ export function patch() {
             console.log(
               "[Webpack Patcher] Main Discord Webpack require found!"
             );
-            window.oldplunger.webpackRequire = webpackRequire;
+            
+            initWebpack(webpackRequire);
           }
         },
       });
