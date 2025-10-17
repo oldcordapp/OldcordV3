@@ -23,6 +23,8 @@ const filterModules =
   (filter) => {
     let foundModules = [];
 
+    console.log(modules);
+
     for (const mod in modules) {
       if (modules.hasOwnProperty(mod)) {
         const module = modules[mod].exports;
@@ -43,10 +45,10 @@ const filterModules =
     if (!single) return foundModules;
   };
 
-const modules = window.oldplunger?.webpackRequire;
+const getModules = () => window.oldplunger?.webpackRequire?.c;
 
-export const find = filterModules(modules, true);
-export const findAll = filterModules(modules);
+export const find = (filter) => filterModules(getModules(), true)(filter);
+export const findAll = (filter) => filterModules(getModules())(filter);
 
 const propsFilter = (props) => (m) => props.every((p) => m[p] !== undefined);
 const dNameFilter = (name, defaultExp) =>
