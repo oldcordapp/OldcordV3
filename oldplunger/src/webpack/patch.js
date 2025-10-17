@@ -1,11 +1,14 @@
-function initWebpack(webpackRequire) {
+function patchModules(instanceType, modules) {
+  /*
+    Here we patch the Webpack modules based of what modules it is currently working, for now we patch Discord's.
+    If we ever need to patch Webpack modules that are not from Discord, modify this.
+  */
 
-  // In Cordwood, it is exported, in here, we assign it to a window property, not sure how useful this would be
+  if (instanceType !== "discord") {
+    return;
+  }
 
-  window.oldplunger.webpackRequire = webpackRequire;
-
-  // This is where the Vencord or any other traditional Discord mods would start patching.
-
+  console.log("[Webpack Patcher] Patching Discord's code...");
 }
 
 export function patch() {
@@ -46,7 +49,10 @@ export function patch() {
 
           // The following code is from Vencord
 
-          if (bundlePath !== "/assets/" || /(?:=>|{return)"[^"]/.exec(String(this.u))) {
+          if (
+            bundlePath !== "/assets/" ||
+            /(?:=>|{return)"[^"]/.exec(String(this.u))
+          ) {
             return;
           }
 
@@ -54,8 +60,14 @@ export function patch() {
             console.log(
               "[Webpack Patcher] Main Discord Webpack require found!"
             );
-            
-            initWebpack(webpackRequire);
+
+            // In Cordwood, it is exported, in here, we assign it to a window property, not sure how useful this would be
+
+            window.oldplunger.webpackRequire = webpackRequire;
+
+            // Now we can patch the code
+
+            patchModules("discord", modules);
           }
         },
       });
