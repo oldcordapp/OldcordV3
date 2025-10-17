@@ -23,8 +23,6 @@ const filterModules =
   (filter) => {
     let foundModules = [];
 
-    console.log(modules);
-
     for (const mod in modules) {
       if (modules.hasOwnProperty(mod)) {
         const module = modules[mod].exports;
