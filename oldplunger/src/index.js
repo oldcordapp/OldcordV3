@@ -2,13 +2,16 @@
 
 // Following Vencord's src/Vencord.ts
 
+import { Logger } from "./utils/logger";
 import * as Webpack from "./webpack";
+
+const logger = new Logger("Main");
 
 async function init() {
     window.oldplunger = {};
     Webpack.patch();
     window.oldplunger.findFuncs = Webpack.search;
-    console.log("[Oldplunger] Loaded!")
+    logger.log("Loaded!")
 }
 
 init();

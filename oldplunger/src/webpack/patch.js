@@ -1,3 +1,7 @@
+import { Logger } from "../utils/logger";
+
+const logger = new Logger("Webpack Patcher");
+
 function patchModules(instanceType, modules) {
   /*
     Here we patch the Webpack modules based of what modules it is currently working, for now we patch Discord's.
@@ -8,7 +12,7 @@ function patchModules(instanceType, modules) {
     return;
   }
 
-  console.log("[Webpack Patcher] Patching Discord's code...");
+  logger.log("Patching Discord's code...");
 }
 
 export function patch() {
@@ -57,8 +61,8 @@ export function patch() {
           }
 
           if (!window.oldplunger.webpackRequire && this.c != null) {
-            console.log(
-              "[Webpack Patcher] Main Discord Webpack require found!"
+            logger.log(
+              "Main Discord Webpack require found!"
             );
 
             // In Cordwood, it is exported, in here, we assign it to a window property, not sure how useful this would be
