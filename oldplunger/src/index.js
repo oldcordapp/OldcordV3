@@ -7,6 +7,7 @@ import * as Webpack from "./webpack";
 async function init() {
     window.oldplunger = {};
     Webpack.patch();
+    window.oldplunger.findFuncs = Webpack.search;
     console.log("[Oldplunger] Loaded!")
 }
 

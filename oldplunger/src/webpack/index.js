@@ -6,3 +6,4 @@
 */
 
 export * from "./patch"
+export * as search from "./search"
