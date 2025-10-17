@@ -99,3 +99,4 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
   - **Google**: [Material Design Icons](https://fonts.google.com/icons).
   - **SVGRepo**: [Businessman Wearing Tie With Exclamation Mark - Modified for Reports SVG](https://www.svgrepo.com/svg/109813/businessman-wearing-tie-with-exclamation-mark)
   - **Discord**: Other SVGs, images, fonts, etc - for the base clients (before patches) & some parts of Selector/Admin panel. Discord Developer Portal also has documented API responses for this recreation, along with general reverse engineering.
+  - **Vencord**: Reference to build Oldplunger.
