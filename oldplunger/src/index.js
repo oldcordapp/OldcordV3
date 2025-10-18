@@ -8,10 +8,9 @@ import * as Webpack from "./webpack";
 const logger = new Logger("Main");
 
 async function init() {
-    window.oldplunger = {};
-    Webpack.patch();
-    window.oldplunger.findFuncs = Webpack.search;
-    logger.log("Loaded!")
+  window.oldplunger = {};
+  Webpack.init();
+  logger.log("Loaded!");
 }
 
 init();

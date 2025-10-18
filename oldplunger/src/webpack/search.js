@@ -16,7 +16,11 @@
   - findExportedComponentLazy
 
   And probably many more from https://github.com/Vendicated/Vencord/blob/main/src/webpack/webpack.ts
+
+  Reminder: These only access currently loaded modules into the the cache.
 */
+
+import { getRequire } from ".";
 
 const filterModules =
   (modules, single = false) =>
@@ -43,7 +47,7 @@ const filterModules =
     if (!single) return foundModules;
   };
 
-const getModules = () => window.oldplunger?.webpackRequire?.c;
+const getModules = () => getRequire().c;
 
 export const find = (filter) => filterModules(getModules(), true)(filter);
 export const findAll = (filter) => filterModules(getModules())(filter);
