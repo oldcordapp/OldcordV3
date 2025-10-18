@@ -4,6 +4,7 @@
 
 import { Logger } from "./utils/logger";
 import * as Webpack from "./webpack";
+import { initializePlugins } from "./plugins";
 
 const logger = new Logger("Main");
 
@@ -13,4 +14,5 @@ async function init() {
   logger.log("Loaded!");
 }
 
+initializePlugins();
 init();

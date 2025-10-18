@@ -1,5 +1,6 @@
-import { logger, search } from ".";
-import { patch } from "./patch";
+import { logger } from ".";
+import { applyPatches, patchModule } from "../utils/patch";
+import { startPlugins } from "../plugins";
 
 let webpackRequire;
 
@@ -60,7 +61,28 @@ export function init() {
 
             webpackRequire = potentialWebpackRequire;
 
-            patch("discord", modules);
+            /*
+              We create a new Proxy that intercepts anything, move the original properties
+              to the new Proxy, and then set m to our proxy
+            */
+
+            const handler = {
+              set(target, property, value, receiver) {
+                const patchedModule = patchModule(value, property);
+                return Reflect.set(target, property, patchedModule, receiver);
+              },
+            };
+
+            const proxy = new Proxy({}, handler);
+
+            for (const id in modules) {
+              proxy[id] = modules[id];
+              delete modules[id];
+            }
+
+            Object.setPrototypeOf(modules, proxy);
+
+            startPlugins();
           }
         },
       });

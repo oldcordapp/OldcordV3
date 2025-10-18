@@ -79,8 +79,10 @@ const patcher = {
           /(var \w+=(\w+)\._pc=new RTCPeerConnection\({iceServers:\w+,sdpSemantics:)"plan-b"(.+?\);)/g,
           '$1"unified-plan"$3$2._audioTransceiver=$2._pc.addTransceiver("audio",{direction:"recvonly"});$2._videoTransceiver=$2._pc.addTransceiver("video",{direction:"recvonly"});'
         );
-        script = script.replaceAll(/case"video":[a-zA-Z]\(function\(\)\{return t\._handleVideo\(t\.input\.getVideoStreamId\(\)\)\}\);break;/g, 
-        `case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e => setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;`); //2017-2018
+        script = script.replaceAll(
+          /case"video":[a-zA-Z]\(function\(\)\{return t\._handleVideo\(t\.input\.getVideoStreamId\(\)\)\}\);break;/g,
+          `case"video":(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e => setTimeout(e,50));t._handleVideo(t.input.getVideoStreamId())})();break;`
+        ); //2017-2018
         script = script.replaceAll(
           /[a-zA-Z]\(function\(\)\{return t\._handleVideo\(t\.input\.getVideoURL\(\)\)\}\);/g,
           `(async()=>{while(!t._fpc||!t._fpc._connected)await new Promise(e=>setTimeout(e,50));t._handleVideo(t.input.getVideoURL())})();`
@@ -90,7 +92,6 @@ const patcher = {
           `this._mute||this._speakingFlags===s.SpeakingFlags.NONE`,
           `this._mute`
         ); //2018
-        
 
         // Rewrite setRemoteDescription to unified-plan based of current setLocalDescription's offer in a similar manner to modern Discord's
         (function () {
@@ -263,7 +264,9 @@ const patcher = {
             let currentMBlocks = getMediaBlocks(description.sdp);
 
             if (currentMBlocks.length === 0) {
-              console.error("[SDP Patcher] The description has no media blocks.");
+              console.error(
+                "[SDP Patcher] The description has no media blocks."
+              );
               return originalSetRemoteDescription.apply(this, arguments);
             }
 
@@ -343,13 +346,19 @@ const patcher = {
               sdp: finalSdp,
             });
 
-            console.log("[SDP Patcher] Original Answer SDP:\n", description.sdp);
+            console.log(
+              "[SDP Patcher] Original Answer SDP:\n",
+              description.sdp
+            );
             console.log(
               "[SDP Patcher] Modified Answer SDP:\n",
               newDescription.sdp
             );
 
-            window.oldcord.webRTCPatch.previousDescription.set(this, description);
+            window.oldcord.webRTCPatch.previousDescription.set(
+              this,
+              description
+            );
             return originalSetRemoteDescription.call(this, newDescription);
           };
         })();
@@ -516,7 +525,20 @@ const patcher = {
       );
 
       // TODO: Fix Discord text change in january-august 2018
-      if (!release_date.endsWith("2018") || (release_date.endsWith("2018") && !(release_date.startsWith("january") || release_date.startsWith("february") || release_date.startsWith("march") || release_date.startsWith("april") || release_date.startsWith("may") || release_date.startsWith("june") || release_date.startsWith("july") || release_date.startsWith("august")))) {
+      if (
+        !release_date.endsWith("2018") ||
+        (release_date.endsWith("2018") &&
+          !(
+            release_date.startsWith("january") ||
+            release_date.startsWith("february") ||
+            release_date.startsWith("march") ||
+            release_date.startsWith("april") ||
+            release_date.startsWith("may") ||
+            release_date.startsWith("june") ||
+            release_date.startsWith("july") ||
+            release_date.startsWith("august")
+          ))
+      ) {
         function replaceDiscord(script) {
           const tokenizerRegex =
             /("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(`(?:\\.|[^`\\])*`)|(\/\/.*)|(\/\*[\s\S]*?\*\/)/g;
@@ -532,6 +554,30 @@ const patcher = {
 
         script = replaceDiscord(script);
       }
+
+      const inviteLink = config.custom_invite_url
+        .replace("https://", "")
+        .replace("http://", "");
+      const escapedLink = inviteLink
+        .replace(/\./g, "\\.")
+        .replace(/\//g, "\\/"); //There was a bug with the developer portal where invites were improperly being replaced into jank regex expressions.
+
+      // Set URLs
+      script = script.replaceAll(
+        /d3dsisomax34re.cloudfront.net/g,
+        location.host
+      );
+      script = script.replaceAll(/status.discordapp.com/g, location.host);
+      script = script.replaceAll(/cdn.discordapp.com/g, location.host);
+      script = script.replaceAll(/discordcdn.com/g, location.host); // ??? DISCORDCDN.COM?!!11
+      script = script.replaceAll(/discord.gg/g, escapedLink);
+      script = script.replaceAll(/discordapp.com/g, location.host);
+      script = script.replaceAll(/([a-z]+\.)?discord.media/g, location.host);
+
+      script = script.replaceAll(
+        /e\.exports=n\.p/g,
+        `e.exports="${cdn_url}/assets/"`
+      );
     }
 
     // Disable HTTPS in insecure mode (for local testing)
@@ -541,23 +587,6 @@ const patcher = {
     // Make fields consistent
     if (release_date.endsWith("_2015"))
       script = script.replaceAll(".presence.", ".presences.");
-
-    const inviteLink = config.custom_invite_url.replace('https://', '').replace('http://', '');
-    const escapedLink = inviteLink.replace(/\./g, '\\.').replace(/\//g, '\\/'); //There was a bug with the developer portal where invites were improperly being replaced into jank regex expressions.
-
-    // Set URLs
-    script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
-    script = script.replaceAll(/status.discordapp.com/g, location.host);
-    script = script.replaceAll(/cdn.discordapp.com/g, location.host);
-    script = script.replaceAll(/discordcdn.com/g, location.host); // ??? DISCORDCDN.COM?!!11
-    script = script.replaceAll(/discord.gg/g, escapedLink);
-    script = script.replaceAll(/discordapp.com/g, location.host);
-    script = script.replaceAll(/([a-z]+\.)?discord.media/g, location.host);
-
-    script = script.replaceAll(
-      /e\.exports=n\.p/g,
-      `e.exports="${cdn_url}/assets/"`
-    );
 
     // Do NOT interact with sentry. Better to error than send telemetry.
     script = script.replaceAll("sentry.io", "0.0.0.0");
@@ -666,7 +695,10 @@ const patcher = {
     script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
     script = script.replaceAll(/discord.media/g, location.host);
     script = script.replaceAll(/cdn.discordapp.com/g, location.host);
-    script = script.replaceAll(`OAUTH2_AUTHORIZE:"/api/oauth2/authorize"`, `OAUTH2_AUTHORIZE:"/oauth2/authorize"`); //why does this have /api/ appended but other oauth2 urls dont?
+    script = script.replaceAll(
+      `OAUTH2_AUTHORIZE:"/api/oauth2/authorize"`,
+      `OAUTH2_AUTHORIZE:"/oauth2/authorize"`
+    ); //why does this have /api/ appended but other oauth2 urls dont?
     //Just some last minute housekeeping ^
 
     // Just for visual verification that it is ptached by Oldcord LMAO
