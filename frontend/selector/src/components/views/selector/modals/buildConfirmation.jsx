@@ -4,6 +4,7 @@ import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import { useState, useEffect } from "react";
 import { useOldplugerPlugins } from "../../../../hooks/oldplungerPluginsHandler";
 import cookieManager from "../../../../lib/cookieManager";
+import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 
 import { PATCHES } from "../../../../constants/patches";
 
@@ -83,6 +84,12 @@ export default function ({
               </ul>
             </>
           )}
+        {oldplungerEnabled === "true" && (
+          <PageInfo style={{ marginTop: "20px", marginBottom: "0" }}>
+            Oldplunger is enabled! Oldplunger is Discord mod that replaces the
+            legacy patching system. As such, old patches will not be applied.
+          </PageInfo>
+        )}
       </div>
     </Modal>
   );
