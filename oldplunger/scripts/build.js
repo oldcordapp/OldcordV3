@@ -18,7 +18,7 @@ async function generatePluginData() {
 
   const allMetadata = {};
   const exportContent = [];
-  const keysToExcludeFromMetadata = ["patches", "start", "stop", "flux"];
+  const keysToExcludeFromMetadata = ["patches", "start", "stop", "flux", "doNotDebug"];
 
   for (const dirName of pluginDirs) {
     const pluginPath = path.resolve(PLUGINS_DIR, dirName, "index.js");
