@@ -6,15 +6,18 @@ import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 import { PATCHES } from "../../../../constants/patches";
 import OptionsCard from "@oldcord/frontend-shared/components/optionsCard";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
+import { useOldplugerPlugins } from "../../../../hooks/oldplungerPluginsHandler";
 import localStorageManager from "../../../../lib/localStorageManager";
 import { convertBuildIds } from "../../../../lib/convertBuildIds";
 import cookieManager from "../../../../lib/cookieManager";
 import { convertBuildId } from "../../../../lib/convertBuildIds";
 
-const localStorageKey = "oldcord_selected_patches";
+const settingsLSKey = "oldcord_settings";
 
 export default function () {
   const friendlyBuildIds = convertBuildIds(builds);
+  const { plugins: availablePlugins, loading: pluginsLoading } =
+    useOldplugerPlugins();
 
   const defaultBuild =
     cookieManager.get("release_date") ??
@@ -27,16 +30,50 @@ export default function () {
 
   let selectedBuildOriginal = builds[friendlyBuildIds.indexOf(selectedBuild)];
 
-  const localStorageCEP = localStorageManager.get(localStorageKey);
+  const localStorageCEP = localStorageManager.get(settingsLSKey);
 
   const [pendingChangePatches, setPendingChangePatches] = useState(
-    localStorageCEP[selectedBuildOriginal]
+    localStorageCEP.selectedPatches[selectedBuildOriginal] || []
   );
 
-  const [hasIncompatiblePatches, setHasIncompatiblePatches] = useState(null);
+  const [pendingChangePlugins, setPendingChangePlugins] = useState(
+    localStorageCEP.selectedPlugins[selectedBuildOriginal] || []
+  );
 
-  function resetToSelected() {
-    return localStorageCEP[selectedBuildOriginal];
+  const [hasIncompatibleItems, setHasIncompatibleItems] = useState(null);
+
+  function resetToSelected(type) {
+    switch (type) {
+      case "legacy": {
+        return localStorageCEP.selectedPatches[selectedBuildOriginal] || [];
+      }
+      case "oldplunger": {
+        return localStorageCEP.selectedPlugins[selectedBuildOriginal] || [];
+      }
+    }
+  }
+
+  function getItemConstants(itemKey, type) {
+    switch (type) {
+      case "legacy": {
+        return PATCHES[itemKey];
+      }
+      case "oldplunger": {
+        return availablePlugins?.[itemKey];
+      }
+    }
+  }
+
+  function getPendingItems(type) {
+    return type === "legacy" ? pendingChangePatches : pendingChangePlugins;
+  }
+
+  function setPendingItems(type, itemsOrUpdater) {
+    if (type === "legacy") {
+      setPendingChangePatches(itemsOrUpdater);
+    } else {
+      setPendingChangePlugins(itemsOrUpdater);
+    }
   }
 
   const {
@@ -46,83 +83,97 @@ export default function () {
     triggerNudge,
   } = useUnsavedChanges();
 
-  const handleToggle = (patchToChange) => {
-    if (PATCHES[patchToChange].notControllable) {
+  const handleToggle = (itemKey, type) => {
+    const itemConstants = getItemConstants(itemKey, type);
+    if (!itemConstants || itemConstants.notControllable) {
       return;
     }
 
-    if (!pendingChangePatches.includes(patchToChange)) {
-      const patchesThatAreIncompatible =
-        PATCHES[patchToChange].incompatiblePatches;
+    const currentItems = getPendingItems(type);
 
-      const incompatiblePatches =
-        patchesThatAreIncompatible &&
-        pendingChangePatches.filter((patch) => {
-          return patchesThatAreIncompatible.includes(patch);
+    if (!currentItems.includes(itemKey)) {
+      const incompatibleItems =
+        itemConstants.incompatiblePatches || itemConstants.incompatiblePlugins;
+
+      const foundIncompatibleItems =
+        incompatibleItems &&
+        currentItems.filter((item) => {
+          return incompatibleItems.includes(item);
         });
 
-      if (incompatiblePatches.length > 0) {
-        if (!hasIncompatiblePatches) {
-          setHasIncompatiblePatches({ [patchToChange]: incompatiblePatches });
+      if (foundIncompatibleItems.length > 0) {
+        if (!hasIncompatibleItems) {
+          setHasIncompatibleItems({
+            [`${type}-${itemKey}`]: foundIncompatibleItems,
+          });
         } else {
-          setHasIncompatiblePatches((previousPatches) => {
-            return { ...previousPatches, [patchToChange]: incompatiblePatches };
+          setHasIncompatibleItems((previousItems) => {
+            return {
+              ...previousItems,
+              [`${type}-${itemKey}`]: foundIncompatibleItems,
+            };
           });
         }
       }
-    } else if (hasIncompatiblePatches) {
-      setHasIncompatiblePatches((previousPatches) => {
-        if (previousPatches[patchToChange]) {
-          delete previousPatches[patchToChange];
+    } else if (hasIncompatibleItems) {
+      setHasIncompatibleItems((previousItems) => {
+        const itemKeyWithType = `${type}-${itemKey}`;
+        if (previousItems[itemKeyWithType]) {
+          delete previousItems[itemKeyWithType];
         } else {
-          Object.keys(previousPatches).forEach((patch) => {
-            const newIncompatiblePatches = previousPatches[patch].filter(
-              (patch) => patch !== patchToChange
+          Object.keys(previousItems).forEach((key) => {
+            const newIncompatibleItems = previousItems[key].filter(
+              (item) => item !== itemKey
             );
-            if (newIncompatiblePatches.length > 0) {
-              previousPatches[patch] = newIncompatiblePatches;
+            if (newIncompatibleItems.length > 0) {
+              previousItems[key] = newIncompatibleItems;
             } else {
-              delete previousPatches[patch];
+              delete previousItems[key];
             }
           });
         }
-        if (Object.keys(previousPatches).length === 0) {
+        if (Object.keys(previousItems).length === 0) {
           return null;
         } else {
-          return previousPatches;
+          return previousItems;
         }
       });
     }
 
-    setPendingChangePatches((previousPatches) => {
-      let newPatches;
-      if (previousPatches.includes(patchToChange)) {
-        newPatches = previousPatches.filter((patch) => patch !== patchToChange);
+    setPendingItems(type, (previousItems) => {
+      let newItems;
+      if (previousItems.includes(itemKey)) {
+        newItems = previousItems.filter((item) => item !== itemKey);
       } else {
-        newPatches = [...previousPatches, patchToChange];
+        newItems = [...previousItems, itemKey];
       }
-      return newPatches;
+      return newItems;
     });
   };
 
   const handleSave = useCallback(() => {
-    if (hasIncompatiblePatches) {
+    if (hasIncompatibleItems) {
       return;
     }
-    localStorageCEP[selectedBuildOriginal] = pendingChangePatches;
-    localStorageManager.set(localStorageKey, localStorageCEP);
+    localStorageCEP.selectedPatches[selectedBuildOriginal] =
+      pendingChangePatches;
+    localStorageCEP.selectedPlugins[selectedBuildOriginal] =
+      pendingChangePlugins;
+    localStorageManager.set(settingsLSKey, localStorageCEP);
     setHasUnsavedChanges(false);
   }, [
     setHasUnsavedChanges,
     pendingChangePatches,
-    hasIncompatiblePatches,
+    pendingChangePlugins,
+    hasIncompatibleItems,
     selectedBuild,
   ]);
 
   const handleReset = useCallback(() => {
-    setPendingChangePatches(resetToSelected());
+    setPendingChangePatches(resetToSelected("legacy"));
+    setPendingChangePlugins(resetToSelected("oldplunger"));
     setHasUnsavedChanges(false);
-    setHasIncompatiblePatches(null);
+    setHasIncompatibleItems(null);
   }, [setHasUnsavedChanges, selectedBuild]);
 
   useEffect(() => {
@@ -138,15 +189,26 @@ export default function () {
   }, [registerHandlers, handleSave, handleReset, setHasUnsavedChanges]);
 
   useEffect(() => {
-    if (
-      JSON.stringify(localStorageCEP[selectedBuildOriginal]) ===
-      JSON.stringify(pendingChangePatches)
-    ) {
+    const patchesMatch =
+      JSON.stringify(
+        localStorageCEP.selectedPatches[selectedBuildOriginal] || []
+      ) === JSON.stringify(pendingChangePatches);
+    const pluginsMatch =
+      JSON.stringify(
+        localStorageCEP.selectedPlugins[selectedBuildOriginal] || []
+      ) === JSON.stringify(pendingChangePlugins);
+
+    if (patchesMatch && pluginsMatch) {
       setHasUnsavedChanges(false);
     } else {
       setHasUnsavedChanges(true);
     }
-  }, [pendingChangePatches]);
+  }, [
+    pendingChangePatches,
+    pendingChangePlugins,
+    selectedBuildOriginal,
+    localStorageCEP,
+  ]);
 
   function changeSelectedBuild(selectedBuild) {
     if (hasUnsavedChanges) {
@@ -155,16 +217,27 @@ export default function () {
     }
     setSelectedBuild(selectedBuild);
     selectedBuildOriginal = builds[friendlyBuildIds.indexOf(selectedBuild)];
-    setPendingChangePatches(localStorageCEP[selectedBuildOriginal]);
+    setPendingChangePatches(
+      localStorageCEP.selectedPatches[selectedBuildOriginal] || []
+    );
+    setPendingChangePlugins(
+      localStorageCEP.selectedPlugins[selectedBuildOriginal] || []
+    );
   }
 
-  function controlEnabled(key) {
-    if (window.DiscordNative && key === "electronPatch") {
+  function controlEnabled(key, type) {
+    if (type === "legacy" && window.DiscordNative && key === "electronPatch") {
       return "forcedEnabled";
-    } else if (!window.DiscordNative && key === "electronPatch") {
+    } else if (
+      type === "legacy" &&
+      !window.DiscordNative &&
+      key === "electronPatch"
+    ) {
       return "forcedDisabled";
+    } else if (getItemConstants(key, type).mandatory) {
+      return "forcedEnabled";
     } else {
-      return pendingChangePatches.includes(key);
+      return getPendingItems(type).includes(key)
     }
   }
 
@@ -172,7 +245,7 @@ export default function () {
     <>
       <Text variant="h1">Plugins & Patches</Text>
       <PageInfo title="Plugin & Patches Management">
-        {!hasIncompatiblePatches && (
+        {!hasIncompatibleItems && (
           <>
             Press the cog wheel or info icon to get more info on a plugin or a
             patch.
@@ -183,25 +256,33 @@ export default function () {
             You can also select different enabled plugins and patches for each
             build.
             <br />
-            WARNING: Some patches are not compatible with each other! You'll be
-            warned before saving.
+            WARNING: Some patches/plugins are not compatible with each other!
+            You'll be warned before saving.
           </>
         )}
-        {hasIncompatiblePatches && (
+        {hasIncompatibleItems && (
           <>
-            Incompatible patches are selected!
+            Incompatible items are selected!
             <br />
-            Please make sure the following patches are resolved.
+            Please make sure the following conflicts are resolved.
             <br />
             <ul>
-              {Object.keys(hasIncompatiblePatches).map((patch) => {
+              {Object.keys(hasIncompatibleItems).map((itemKey) => {
+                const [type, key] = itemKey.split("-", 2);
+                const itemConstants = getItemConstants(key, type);
                 return (
-                  <li key={patch}>
+                  <li key={itemKey}>
                     <Text variant="body">
-                      {PATCHES[patch].label} is not comptaible with{" "}
-                      {hasIncompatiblePatches[patch]
-                        .map((patch) => {
-                          return PATCHES[patch].label;
+                      {itemConstants?.name} is not compatible with{" "}
+                      {hasIncompatibleItems[itemKey]
+                        .map((conflictingKey) => {
+                          const conflictingType =
+                            type === "legacy" ? "oldplunger" : "legacy";
+                          const conflictingConstants = getItemConstants(
+                            conflictingKey,
+                            conflictingType
+                          );
+                          return conflictingConstants?.name || conflictingKey;
                         })
                         .join(", ")}
                     </Text>
@@ -221,15 +302,43 @@ export default function () {
         informativeText="This dropdown only manages patches/plugins for the selected build and does not change the client build launched."
       />
       <Text variant="h2">Plugins</Text>
-      <Text variant="body" style={{ marginTop: "0px" }}>
-        Oldplunger is in development...
-      </Text>
+      {!pluginsLoading && availablePlugins ? (
+        <div className="options-grid">
+          {Object.keys(availablePlugins).map((key) => {
+            const plugin = availablePlugins[key];
+            const compatibleBuilds = plugin.compatibleBuilds;
+
+            if (
+              !plugin.doNotDebug &&
+              (compatibleBuilds === "all" ||
+                selectedBuildOriginal.includes(compatibleBuilds) ||
+                compatibleBuilds.includes(selectedBuildOriginal))
+            )
+              return (
+                <OptionsCard
+                  key={key}
+                  cardId={key}
+                  pluginType={"oldplunger"}
+                  title={plugin.name}
+                  description={plugin.description}
+                  iconType={plugin.settings ? "settings" : "info"}
+                  isEnabled={controlEnabled(key, "oldplunger")}
+                  onToggle={() => handleToggle(key, "oldplunger")}
+                />
+              );
+          })}
+        </div>
+      ) : (
+        <Text variant="body" style={{ marginTop: "0px" }}>
+          {pluginsLoading ? "Loading plugins..." : "No plugins available."}
+        </Text>
+      )}
       <Text variant="h2" style={{ marginTop: "10px" }}>
         Patches (Legacy)
       </Text>
       <div className="options-grid">
         {Object.keys(PATCHES).map((key) => {
-          const compatibleBuilds = PATCHES[key].compatibleVersions;
+          const compatibleBuilds = PATCHES[key].compatibleBuilds;
 
           if (
             compatibleBuilds === "all" ||
@@ -240,11 +349,12 @@ export default function () {
               <OptionsCard
                 key={key}
                 cardId={key}
-                title={PATCHES[key].label}
+                pluginType={"legacy"}
+                title={PATCHES[key].name}
                 description={PATCHES[key].description}
-                iconType={"info"}
-                isEnabled={controlEnabled(key)}
-                onToggle={() => handleToggle(key)}
+                iconType={PATCHES[key].settings ? "settings" : "info"}
+                isEnabled={controlEnabled(key, "legacy")}
+                onToggle={() => handleToggle(key, "legacy")}
               />
             );
         })}

@@ -6,6 +6,7 @@ import { useModal } from "../hooks/modalHandler";
 
 export default function ({
   cardId,
+  pluginType,
   title,
   description,
   iconType,
@@ -21,7 +22,9 @@ export default function ({
         return (
           <button
             className="icon-button"
-            onClick={() => addModal("pluginInfo", { plugin: cardId })}
+            onClick={() =>
+              addModal("pluginInfo", { plugin: cardId, type: pluginType })
+            }
           >
             <Gear />
           </button>
@@ -30,7 +33,9 @@ export default function ({
         return (
           <button
             className="icon-button"
-            onClick={() => addModal("pluginInfo", { plugin: cardId })}
+            onClick={() =>
+              addModal("pluginInfo", { plugin: cardId, type: pluginType })
+            }
           >
             <Info />
           </button>
@@ -50,7 +55,9 @@ export default function ({
     <div className={`options-card ${disabled ? "disabled" : ""}`}>
       <div className="content">
         <h3 className="title">{title}</h3>
-        <p className="description" title={description}>{description}</p>
+        <p className="description" title={description}>
+          {description}
+        </p>
       </div>
       <div className="controls">
         {renderIcon()}

@@ -1,44 +1,44 @@
 export const PATCHES = {
   electronPatch: {
-    label: "Electron Patches",
+    name: "Electron Patches",
     description:
       "Required for client functionality. Automatically enabled on desktop client.",
     authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: true,
     defaultEnabled: false,
-    compatibleVersions: "all",
+    compatibleBuilds: "all",
     incompatiblePatches: [],
   },
   userSelect: {
-    label: "User Select",
+    name: "User Select",
     description: "Enables user selection in 2015 clients",
     authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: true,
-    compatibleVersions: "2015",
+    compatibleBuilds: "2015",
     incompatiblePatches: [],
   },
   emojiAnywhere: {
-    label: "Unrestricted Emojis",
+    name: "Unrestricted Emojis",
     description: "Allows using emojis anywhere without restrictions",
     authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: true,
-    compatibleVersions: "all",
+    compatibleBuilds: "all",
     incompatiblePatches: [],
   },
   modernizeWebRTC: {
-    label: "Modernize WebRTC",
+    name: "Modernize WebRTC",
     description:
       "Sends more than just ICE & RTP mappings (Like the modern Discord clients) and Unified Plan support - Required for WebRTC Voice Communication",
     authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: true,
-    compatibleVersions: [
+    compatibleBuilds: [
       //"january_23_2017",
       "january_31_2017",
       "march_30_2017",
@@ -65,14 +65,14 @@ export const PATCHES = {
     incompatiblePatches: ["forceWebRtcP2P"],
   },
   forceWebRtcP2P: {
-    label: "Force WebRTC P2P",
+    name: "Force WebRTC P2P",
     description:
       "Forces the client to use webrtc-p2p instead of webrtc, this means, small-scale voice calling without the need for a media server",
     authors: ["Oldcord Team"],
     mandatory: false,
     notControllable: false,
     defaultEnabled: false,
-    compatibleVersions: [
+    compatibleBuilds: [
       "january_31_2017",
       "march_30_2017",
       "may_3_2017",

@@ -1,37 +1,49 @@
 import contextFactory from "@oldcord/frontend-shared/hooks/contextFactory";
-import { useState, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 
 function useModalState() {
   const [modal, setModal] = useState({ name: null, props: {} });
-  const [exitingModal, setExitingModal] = useState({ name: null, props: {} });
-  const [exitDuration, setExitDuration] = useState(null);
+  const [isExiting, setIsExiting] = useState(false);
+  const exitResolve = useRef(null);
 
-  useEffect(() => {
-    if (exitingModal.name) {
-      const timer = setTimeout(() => {
-        setExitingModal({ name: null, props: {} });
-      }, exitDuration);
+  const addModal = useCallback((name, props = {}) => {
+    return new Promise((resolve) => {
+      setModal({ name, props: { ...props, resolve } });
+      setIsExiting(false);
+    });
+  }, []);
 
-      return () => clearTimeout(timer);
+  const removeModal = useCallback(() => {
+    if (!modal.name) return Promise.resolve();
+
+    setIsExiting(true);
+
+    return new Promise((resolve) => {
+      exitResolve.current = resolve;
+    });
+  }, [modal.name]);
+
+  const onModalExited = useCallback(() => {
+    if (exitResolve.current) {
+      exitResolve.current();
+      exitResolve.current = null;
     }
-  }, [exitingModal.name]);
 
-  function addModal(name, props = {}) {
-    setModal({ name, props });
-  }
+    if (modal.props?.resolve) {
+      modal.props.resolve();
+    }
 
-  function removeModal(exitDuration = 300) {
-    setExitingModal(modal);
-    setExitDuration(exitDuration);
     setModal({ name: null, props: {} });
-  }
+    setIsExiting(false);
+  }, [modal.props]);
 
   return {
     activeModal: modal.name,
-    exitingModal: exitingModal.name,
+    isExiting,
     modalProps: modal.props,
     addModal,
     removeModal,
+    onModalExited,
   };
 }
 

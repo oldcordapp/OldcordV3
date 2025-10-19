@@ -15,7 +15,6 @@ import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useLayer } from "../../../hooks/layerHandler";
 import localStorageManager from "../../../lib/localStorageManager";
 import BuildChangelogCard from "./buildChangelogCard";
-import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 
 export default function () {
   const [instance, setInstance] = useState(null);
@@ -23,7 +22,10 @@ export default function () {
   const { changeLayer, setTriggeredRedirect } = useLayer();
 
   if (!cookieManager.get("release_date")) {
-    cookieManager.set("release_date", cookieManager.get("default_client_build") ?? "october_5_2017");
+    cookieManager.set(
+      "release_date",
+      cookieManager.get("default_client_build") ?? "october_5_2017"
+    );
   }
 
   const defaultBuild =
@@ -51,109 +53,126 @@ export default function () {
     fetchInstanceConfig();
   }, []);
 
-  async function handleLaunch() {
+  async function showBuildConfirmation() {
     const selectedBuildInfo = convertBuildId(selectedBuild);
     const allSelectedPatches =
-      localStorageManager.get("oldcord_selected_patches") ?? {};
-    const enabledPlugins = allSelectedPatches[selectedBuild] ?? [];
+      localStorageManager.get("oldcord_settings") ?? {};
+    const enabledLegacyPatches =
+      allSelectedPatches.selectedPatches[selectedBuild] ?? [];
+    const enabledOldplungerPlugins =
+      allSelectedPatches.selectedPlugins[selectedBuild] ?? [];
 
-    const buildConfirmed = await new Promise((resolve) => {
+    const enabledPlugins = {
+      legacy: enabledLegacyPatches,
+      oldplunger: enabledOldplungerPlugins,
+    };
+
+    return new Promise((resolve) => {
       addModal("buildConfirmation", {
         selectedBuild: selectedBuildInfo,
         enabledPlugins,
         onClose: (confirmed) => {
-          removeModal();
-          resolve(confirmed);
+          removeModal().then(() => resolve(confirmed));
         },
         onConfirm: () => {
-          const enabledPatches = JSON.stringify(enabledPlugins);
+          const enabledPatches = JSON.stringify(enabledLegacyPatches);
+          const enabledPlugins = JSON.stringify(enabledOldplungerPlugins);
           const expires = new Date();
           expires.setDate(expires.getDate() + 365);
 
           document.cookie = `enabled_patches=${enabledPatches}; expires=${expires.toUTCString()}; path=/`;
+          document.cookie = `enabled_plugins=${enabledPlugins}; expires=${expires.toUTCString()}; path=/`;
 
-          removeModal();
-          resolve(true);
+          removeModal().then(() => resolve(true));
         },
       });
     });
+  }
 
-    if (!buildConfirmed) return;
-
-    if (
-      instance &&
-      instance.instance &&
-      instance.instance.environment !== "stable"
-    ) {
-      const envConfirmed = await new Promise((resolve) => {
-        addModal("environmentWarning", {
-          environment: instance.instance.environment,
-          onClose: (confirmed) => {
-            removeModal();
-            resolve(confirmed);
-          },
-          onConfirm: () => {
-            removeModal();
-            resolve(true);
-          },
-        });
-      });
-
-      if (!envConfirmed) return;
+  async function showEnvironmentWarning() {
+    if (!instance?.instance || instance.instance.environment === "stable") {
+      return true;
     }
 
-    if (!cookieManager.has("legal_agreed")) {
-      const legalLinks = [];
+    return new Promise((resolve) => {
+      addModal("environmentWarning", {
+        environment: instance.instance.environment,
+        onClose: (confirmed) => {
+          removeModal().then(() => resolve(confirmed));
+        },
+        onConfirm: () => {
+          removeModal().then(() => resolve(true));
+        },
+      });
+    });
+  }
 
-      if (instance && instance.instance && instance.instance.legal) {
-        if (instance.instance.legal.terms) {
-          legalLinks.push({
-            title: "Terms",
-            url: instance.instance.legal.terms,
-          });
-        }
-        if (instance.instance.legal.privacy) {
-          legalLinks.push({
-            title: "Privacy",
-            url: instance.instance.legal.privacy,
-          });
-        }
-        if (instance.instance.legal.instanceRules) {
-          legalLinks.push({
-            title: "Instance Rules",
-            url: instance.instance.legal.instanceRules,
-          });
-        }
+  async function showLegalAgreement() {
+    if (cookieManager.has("legal_agreed")) {
+      return true;
+    }
 
-        if (instance.instance.legal.extras) {
-          Object.entries(instance.instance.legal.extras).forEach(
-            ([key, url]) => {
-              legalLinks.push({ title: key, url });
-            }
-          );
-        }
+    const legalLinks = [];
+
+    if (instance?.instance?.legal) {
+      if (instance.instance.legal.terms) {
+        legalLinks.push({
+          title: "Terms",
+          url: instance.instance.legal.terms,
+        });
+      }
+      if (instance.instance.legal.privacy) {
+        legalLinks.push({
+          title: "Privacy",
+          url: instance.instance.legal.privacy,
+        });
+      }
+      if (instance.instance.legal.instanceRules) {
+        legalLinks.push({
+          title: "Instance Rules",
+          url: instance.instance.legal.instanceRules,
+        });
       }
 
-      const legalConfirmed = await new Promise((resolve) => {
-        addModal("legalAgreement", {
-          legalLinks,
-          onClose: (confirmed) => {
-            removeModal();
-            resolve(confirmed);
-          },
-          onConfirm: () => {
-            cookieManager.set("legal_agreed", "true", { expires: 365 });
-            removeModal();
-            resolve(true);
-          },
-        });
-      });
-
-      if (!legalConfirmed) return;
+      if (instance.instance.legal.extras) {
+        Object.entries(instance.instance.legal.extras).forEach(
+          ([key, url]) => {
+            legalLinks.push({ title: key, url });
+          }
+        );
+      }
     }
 
-    setTriggeredRedirect(true);
-    changeLayer("redirect", 300);
+    return new Promise((resolve) => {
+      addModal("legalAgreement", {
+        legalLinks,
+        onClose: (confirmed) => {
+          removeModal().then(() => resolve(confirmed));
+        },
+        onConfirm: () => {
+          cookieManager.set("legal_agreed", "true", { expires: 365 });
+          removeModal().then(() => resolve(true));
+        },
+      });
+    });
+  }
+
+  async function handleLaunch() {
+    try {
+      const buildConfirmed = await showBuildConfirmation();
+      if (!buildConfirmed) return;
+
+      const envConfirmed = await showEnvironmentWarning();
+      if (!envConfirmed) return;
+
+      const legalConfirmed = await showLegalAgreement();
+      if (!legalConfirmed) return;
+
+      setTriggeredRedirect(true);
+      changeLayer("redirect", 300);
+    } catch (error) {
+      console.error("Error during launch process:", error);
+    }
   }
 
   const friendlyBuildIds = convertBuildIds(builds);
@@ -195,7 +214,8 @@ export default function () {
           </div>
 
           <Text variant="body" style={{ marginTop: "-10px" }}>
-            Looking for patches or a way to report content? You can now find both options conveniently located in the Settings menu.
+            Looking for patches or a way to report content? You can now find
+            both options conveniently located in the Settings menu.
           </Text>
 
           <div className="important-information">

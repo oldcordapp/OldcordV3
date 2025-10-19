@@ -1,6 +1,7 @@
 {
   "name": "@oldcord/frontend-shared",
   "peerDependencies": {
-    "react": "^19.1.1"
+    "react": "^19.1.1",
+    "react-transition-group": "4.4.5"
   }
 }

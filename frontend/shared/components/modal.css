@@ -21,8 +21,24 @@
   transition: opacity 0.2s linear;
 }
 
-.open .modal-backdrop {
+.modal-enter .modal-backdrop {
+  opacity: 0;
+}
+
+.modal-enter-active .modal-backdrop {
   opacity: 0.8;
+}
+
+.modal-enter-done .modal-backdrop {
+  opacity: 0.8;
+}
+
+.modal-exit .modal-backdrop {
+  opacity: 0.8;
+}
+
+.modal-exit-active .modal-backdrop {
+  opacity: 0;
 }
 
 .modal-root {
@@ -36,6 +52,7 @@
   box-sizing: border-box;
   pointer-events: none;
 }
+
 .modal-content {
   display: flex;
   flex-direction: column;
@@ -53,9 +70,29 @@
   user-select: none;
 }
 
-.open .modal-content {
+.modal-enter .modal-content {
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.modal-enter-active .modal-content {
   opacity: 1;
   transform: scale(1);
+}
+
+.modal-enter-done .modal-content {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-exit .modal-content {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-exit-active .modal-content {
+  opacity: 0;
+  transform: scale(0.7);
 }
 
 .modal-content.small {

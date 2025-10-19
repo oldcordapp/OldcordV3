@@ -4,7 +4,8 @@ export default {
   authors: ["Oldcord Team"],
   mandatory: true,
   notChangeable: false,
-  compatibleBuilds: "",
+  defaultEnabled: true,
+  compatibleBuilds: "all",
   incompatiblePlugins: [],
   doNotDebug: true,
 
@@ -31,7 +32,7 @@ export default {
             replace: location.host,
           },
           {
-            match: /discordcdn.com/g,  // ??? DISCORDCDN.COM?!!11
+            match: /discordcdn.com/g, // ??? DISCORDCDN.COM?!!11
             replace: location.host,
           },
           {
@@ -48,8 +49,8 @@ export default {
           },
           {
             match: /e\.exports=n\.p/g,
-            replace: `e.exports="${window.cdn_url}/assets/"`
-          }
+            replace: `e.exports="${window.cdn_url}/assets/"`,
+          },
         ],
       },
     ];
