@@ -6,6 +6,7 @@ export default {
   notChangeable: false,
   compatibleBuilds: "",
   incompatiblePlugins: [],
+  doNotDebug: true,
 
   patches() {
     const inviteLink = window.oldcord.config.custom_invite_url

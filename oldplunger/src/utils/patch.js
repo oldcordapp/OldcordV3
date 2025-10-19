@@ -44,9 +44,19 @@ export function patchModule(module, id) {
     }
 
     try {
-      module = (0, eval)(moduleString);
+      module = (0, eval)(
+        `${moduleString}${
+          patch.plugin.doNotDebug
+            ? ""
+            : moduleString.match("//# sourceURL")
+            ? ""
+            : "//# sourceURL=oldplunger:///WebpackModule${String(id)}"
+        }`
+      );
     } catch (e) {
-      logger.error(`Failed to patch ${id}, ${patch.plugin} is causing it.`);
+      logger.error(
+        `Failed to patch ${id}, ${patch.plugin.name} is causing it.`
+      );
       module = originalModule;
       moduleString = originalModuleString;
     }

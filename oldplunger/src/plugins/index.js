@@ -16,12 +16,19 @@ export function initializePlugins() {
     plugins[availablePlugin.name] = availablePlugin;
 
     if (availablePlugin.patches) {
-      const patches = typeof availablePlugin.patches === 'function' 
-        ? availablePlugin.patches() 
-        : availablePlugin.patches;
+      const patches =
+        typeof availablePlugin.patches === "function"
+          ? availablePlugin.patches()
+          : availablePlugin.patches;
 
       for (const patch of patches) {
-        patchesToDo.push({...patch, plugin: availablePlugin.name})
+        patchesToDo.push({
+          ...patch,
+          plugin: {
+            name: availablePlugin.name,
+            doNotDebug: availablePlugin.doNotDebug,
+          },
+        });
       }
     }
   }
