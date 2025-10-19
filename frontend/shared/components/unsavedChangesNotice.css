@@ -18,15 +18,30 @@ transform: translateY(150.078%) translateZ(0px);
   padding: 0 20px 20px;
   pointer-events: none;
   bottom: 0;
+}
+
+.notice-region-enter {
   transform: translateY(150%);
   opacity: 0;
+}
+
+.notice-region-enter-active {
+  transform: translateY(0);
+  opacity: 1;
   transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
     opacity 0.2s ease-out;
 }
 
-.notice-region.show {
+.notice-region-exit {
   transform: translateY(0);
   opacity: 1;
+}
+
+.notice-region-exit-active {
+  transform: translateY(150%);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+    opacity 0.2s ease-out;
 }
 
 .notice-container {
