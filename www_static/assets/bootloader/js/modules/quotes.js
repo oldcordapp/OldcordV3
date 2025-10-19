@@ -44,6 +44,7 @@ export const LOADING_QUOTES = [
     text: "Fun fact: If you zoom in the old Discord logo you will see a mistake that you cannot unsee",
   },
   { text: "Discord? More like Deez-" },
+  { text: "I miss the old Discord, straight from the 'Go Discord"},
   // submitted quotes
   {
     text: "you can turn off emoticons being converted into emojis luckily but it's on by default, like WHO MADE IT THAT WAY?!?!",
