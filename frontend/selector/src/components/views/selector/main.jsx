@@ -166,7 +166,7 @@ export default function () {
       if (!legalConfirmed) return;
 
       setTriggeredRedirect(true);
-      changeLayer("redirect", 1000);
+      changeLayer("redirect", 500);
     } catch (error) {
       console.error("Error during launch process:", error);
     }

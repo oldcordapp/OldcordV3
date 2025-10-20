@@ -90,7 +90,7 @@ function Container() {
     if (triggeredRedirect) {
       setInterval(() => {
         window.location = `${location.protocol}//${location.host}`;
-      }, 300);
+      }, 500);
     }
   }, [triggeredRedirect]);
 
