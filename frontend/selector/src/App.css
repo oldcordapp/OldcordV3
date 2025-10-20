@@ -40,8 +40,8 @@ body {
   position: absolute;
   width: 100vw;
   height: 100vh;
-  transition: transform 0.3s cubic-bezier(0.4032, -0.1454, 0, 1.3799),
-    opacity 0.3s cubic-bezier(0.3024, 0.0675, 0, 1.394);
+  transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+    opacity 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315);
 }
 
 .scroller-wrapper {

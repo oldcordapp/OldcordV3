@@ -9,14 +9,16 @@ export default function ({ isOpen, onClose, plugin, type }) {
   const { plugins } = useOldplugerPlugins();
 
   useEffect(() => {
-    if (plugin && !cachedPluginData) {
-      const pluginData =
-        type === "oldplunger" ? plugins[plugin] : PATCHES[plugin];
-      if (pluginData) {
-        setCachedPluginData(pluginData);
+    if (isOpen) {
+      if (plugin) {
+        const pluginData =
+          type === "oldplunger" ? plugins[plugin] : PATCHES[plugin];
+        setCachedPluginData(pluginData ?? null);
+      } else {
+        setCachedPluginData(null);
       }
     }
-  }, [plugin, type, plugins, cachedPluginData]);
+  }, [isOpen, plugin, type, plugins]);
 
   if (!cachedPluginData) {
     return null;

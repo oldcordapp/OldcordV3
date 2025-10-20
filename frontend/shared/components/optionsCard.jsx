@@ -61,14 +61,12 @@ export default function ({
           />
         </div>
       </div>
-      {isModalOpen && (
-        <PluginInfo
-          isOpen={isModalOpen}
-          plugin={cardId}
-          type={pluginType}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
+      <PluginInfo
+        isOpen={isModalOpen}
+        plugin={cardId}
+        type={pluginType}
+        onClose={() => setIsModalOpen(false)}
+      />
     </>
   );
 }

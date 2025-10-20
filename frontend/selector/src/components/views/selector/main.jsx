@@ -304,13 +304,13 @@ export default function () {
         isOpen={isOpfsModalOpen}
         onClose={() => setIsOpfsModalOpen(false)}
       />
-      {buildConfirmationState.isOpen && (
+      {buildConfirmationState.resolve && (
         <BuildConfirmation
           isOpen={buildConfirmationState.isOpen}
           {...buildConfirmationState.props}
           onClose={(confirmed) => {
             buildConfirmationState.resolve(confirmed);
-            setBuildConfirmationState({ isOpen: false, resolve: null, props: {} });
+            setBuildConfirmationState((s) => ({ ...s, isOpen: false }));
           }}
           onConfirm={() => {
             const enabledPatches = JSON.stringify(
@@ -325,36 +325,36 @@ export default function () {
             document.cookie = `enabled_patches=${enabledPatches}; expires=${expires.toUTCString()}; path=/`;
             document.cookie = `enabled_plugins=${enabledPlugins}; expires=${expires.toUTCString()}; path=/`;
             buildConfirmationState.resolve(true);
-            setBuildConfirmationState({ isOpen: false, resolve: null, props: {} });
+            setBuildConfirmationState((s) => ({ ...s, isOpen: false }));
           }}
         />
       )}
-      {environmentWarningState.isOpen && (
+      {environmentWarningState.resolve && (
         <EnvironmentWarning
           isOpen={environmentWarningState.isOpen}
           {...environmentWarningState.props}
           onClose={(confirmed) => {
             environmentWarningState.resolve(confirmed);
-            setEnvironmentWarningState({ isOpen: false, resolve: null, props: {} });
+            setEnvironmentWarningState((s) => ({ ...s, isOpen: false }));
           }}
           onConfirm={() => {
             environmentWarningState.resolve(true);
-            setEnvironmentWarningState({ isOpen: false, resolve: null, props: {} });
+            setEnvironmentWarningState((s) => ({ ...s, isOpen: false }));
           }}
         />
       )}
-      {legalAgreementState.isOpen && (
+      {legalAgreementState.resolve && (
         <LegalAgreement
           isOpen={legalAgreementState.isOpen}
           {...legalAgreementState.props}
           onClose={(confirmed) => {
             legalAgreementState.resolve(confirmed);
-            setLegalAgreementState({ isOpen: false, resolve: null, props: {} });
+            setLegalAgreementState((s) => ({ ...s, isOpen: false }));
           }}
           onConfirm={() => {
             cookieManager.set("legal_agreed", "true", { expires: 365 });
             legalAgreementState.resolve(true);
-            setLegalAgreementState({ isOpen: false, resolve: null, props: {} });
+            setLegalAgreementState((s) => ({ ...s, isOpen: false }));
           }}
         />
       )}
