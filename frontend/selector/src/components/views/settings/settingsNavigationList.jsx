@@ -54,7 +54,7 @@ export default function () {
       view: SETTINGS_VIEWS.OPFS_SETTINGS,
     },
     { type: "separator" },
-    { type: "header", label: "Instance Specific" },
+    { type: "header", label: "Instance" },
     {
       type: "openUrl",
       label: "Developer Portal",
