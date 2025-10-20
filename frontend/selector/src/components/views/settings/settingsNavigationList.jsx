@@ -3,6 +3,8 @@ import ViewHandler from "../../../hooks/viewHandler";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
 import { useState } from "react";
 import Changelog from "./modals/changelog";
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
+import getUserAgent from "../../../lib/getUserAgent";
 
 export const SETTINGS_VIEWS = {
   INFO: "info",
@@ -99,6 +101,22 @@ export default function () {
         activeView={activeView}
         onItemClick={handleItemClick}
       />
+      <div style={{ padding: "8px 10px" }}>
+        <Text
+          variant="body"
+          style={{
+            fontSize: "12px",
+            fontWeight: "400",
+            lineHeight: "1.333",
+            color: "#72767d",
+            marginTop: "0",
+          }}
+        >
+          Oldcord {import.meta.env.VITE_APP_GIT_COMMIT_HASH}
+          <br />
+          {getUserAgent()}
+        </Text>
+      </div>
       <Changelog
         isOpen={isChangelogOpen}
         onClose={() => setIsChangelogOpen(false)}

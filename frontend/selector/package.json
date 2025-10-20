@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "build": "vite build",
-    "dev": "vite"
+    "build": "node ../scripts/set-hash.js vite build",
+    "dev": "node ../scripts/set-hash.js vite"
   },
   "dependencies": {
     "@oldcord/frontend-shared": "*"
