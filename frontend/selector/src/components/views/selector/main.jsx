@@ -11,15 +11,34 @@ import Download from "../../../assets/download.svg?react";
 import { useEffect, useState } from "react";
 import { convertBuildIds, convertBuildId } from "../../../lib/convertBuildIds";
 import cookieManager from "../../../lib/cookieManager";
-import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useLayer } from "../../../hooks/layerHandler";
 import localStorageManager from "../../../lib/localStorageManager";
 import BuildChangelogCard from "./buildChangelogCard";
+import BuildConfirmation from "./modals/buildConfirmation";
+import EnvironmentWarning from "./modals/environmentWarning";
+import LegalAgreement from "./modals/legalAgreement";
+import OpfsComingSoon from "./modals/opfsComingSoon";
 
 export default function () {
   const [instance, setInstance] = useState(null);
-  const { addModal, removeModal } = useModal();
   const { changeLayer, setTriggeredRedirect } = useLayer();
+
+  const [isOpfsModalOpen, setIsOpfsModalOpen] = useState(false);
+  const [buildConfirmationState, setBuildConfirmationState] = useState({
+    isOpen: false,
+    resolve: null,
+    props: {},
+  });
+  const [environmentWarningState, setEnvironmentWarningState] = useState({
+    isOpen: false,
+    resolve: null,
+    props: {},
+  });
+  const [legalAgreementState, setLegalAgreementState] = useState({
+    isOpen: false,
+    resolve: null,
+    props: {},
+  });
 
   if (!cookieManager.get("release_date")) {
     cookieManager.set(
@@ -68,23 +87,10 @@ export default function () {
     };
 
     return new Promise((resolve) => {
-      addModal("buildConfirmation", {
-        selectedBuild: selectedBuildInfo,
-        enabledPlugins,
-        onClose: (confirmed) => {
-          removeModal().then(() => resolve(confirmed));
-        },
-        onConfirm: () => {
-          const enabledPatches = JSON.stringify(enabledLegacyPatches);
-          const enabledPlugins = JSON.stringify(enabledOldplungerPlugins);
-          const expires = new Date();
-          expires.setDate(expires.getDate() + 365);
-
-          document.cookie = `enabled_patches=${enabledPatches}; expires=${expires.toUTCString()}; path=/`;
-          document.cookie = `enabled_plugins=${enabledPlugins}; expires=${expires.toUTCString()}; path=/`;
-
-          removeModal().then(() => resolve(true));
-        },
+      setBuildConfirmationState({
+        isOpen: true,
+        resolve,
+        props: { selectedBuild: selectedBuildInfo, enabledPlugins },
       });
     });
   }
@@ -95,14 +101,10 @@ export default function () {
     }
 
     return new Promise((resolve) => {
-      addModal("environmentWarning", {
-        environment: instance.instance.environment,
-        onClose: (confirmed) => {
-          removeModal().then(() => resolve(confirmed));
-        },
-        onConfirm: () => {
-          removeModal().then(() => resolve(true));
-        },
+      setEnvironmentWarningState({
+        isOpen: true,
+        resolve,
+        props: { environment: instance.instance.environment },
       });
     });
   }
@@ -144,15 +146,10 @@ export default function () {
     }
 
     return new Promise((resolve) => {
-      addModal("legalAgreement", {
-        legalLinks,
-        onClose: (confirmed) => {
-          removeModal().then(() => resolve(confirmed));
-        },
-        onConfirm: () => {
-          cookieManager.set("legal_agreed", "true", { expires: 365 });
-          removeModal().then(() => resolve(true));
-        },
+      setLegalAgreementState({
+        isOpen: true,
+        resolve,
+        props: { legalLinks },
       });
     });
   }
@@ -206,7 +203,7 @@ export default function () {
               style={{ marginTop: "10px" }}
               notImplemented={true}
               onClick={() => {
-                addModal("opfsComingSoon");
+                setIsOpfsModalOpen(true);
               }}
             >
               <Download />
@@ -303,6 +300,64 @@ export default function () {
           is not affiliated with or endorsed by Discord, Inc.
         </Text>
       </div>
+      <OpfsComingSoon
+        isOpen={isOpfsModalOpen}
+        onClose={() => setIsOpfsModalOpen(false)}
+      />
+      {buildConfirmationState.isOpen && (
+        <BuildConfirmation
+          isOpen={buildConfirmationState.isOpen}
+          {...buildConfirmationState.props}
+          onClose={(confirmed) => {
+            buildConfirmationState.resolve(confirmed);
+            setBuildConfirmationState({ isOpen: false, resolve: null, props: {} });
+          }}
+          onConfirm={() => {
+            const enabledPatches = JSON.stringify(
+              buildConfirmationState.props.enabledPlugins.legacy
+            );
+            const enabledPlugins = JSON.stringify(
+              buildConfirmationState.props.enabledPlugins.oldplunger
+            );
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 365);
+
+            document.cookie = `enabled_patches=${enabledPatches}; expires=${expires.toUTCString()}; path=/`;
+            document.cookie = `enabled_plugins=${enabledPlugins}; expires=${expires.toUTCString()}; path=/`;
+            buildConfirmationState.resolve(true);
+            setBuildConfirmationState({ isOpen: false, resolve: null, props: {} });
+          }}
+        />
+      )}
+      {environmentWarningState.isOpen && (
+        <EnvironmentWarning
+          isOpen={environmentWarningState.isOpen}
+          {...environmentWarningState.props}
+          onClose={(confirmed) => {
+            environmentWarningState.resolve(confirmed);
+            setEnvironmentWarningState({ isOpen: false, resolve: null, props: {} });
+          }}
+          onConfirm={() => {
+            environmentWarningState.resolve(true);
+            setEnvironmentWarningState({ isOpen: false, resolve: null, props: {} });
+          }}
+        />
+      )}
+      {legalAgreementState.isOpen && (
+        <LegalAgreement
+          isOpen={legalAgreementState.isOpen}
+          {...legalAgreementState.props}
+          onClose={(confirmed) => {
+            legalAgreementState.resolve(confirmed);
+            setLegalAgreementState({ isOpen: false, resolve: null, props: {} });
+          }}
+          onConfirm={() => {
+            cookieManager.set("legal_agreed", "true", { expires: 365 });
+            legalAgreementState.resolve(true);
+            setLegalAgreementState({ isOpen: false, resolve: null, props: {} });
+          }}
+        />
+      )}
     </>
   );
 }

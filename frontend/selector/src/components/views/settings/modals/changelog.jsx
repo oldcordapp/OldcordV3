@@ -2,9 +2,10 @@ import Modal from "@oldcord/frontend-shared/components/modal";
 import Changelog from "../../../shared/changelog";
 import { oldcordChangelog } from "../../../../constants/oldcordChangelog";
 
-export default function ({ onClose }) {
+export default function ({ isOpen, onClose }) {
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title="Changelog"
       subtitle="14 October 2025"

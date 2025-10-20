@@ -1,7 +1,8 @@
 import NavigationList from "@oldcord/frontend-shared/components/navigationList";
 import ViewHandler from "../../../hooks/viewHandler";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
-import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
+import { useState } from "react";
+import Changelog from "./modals/changelog";
 
 export const SETTINGS_VIEWS = {
   INFO: "info",
@@ -24,7 +25,7 @@ const { Provider, useContextHook } = ViewHandler({
 export default function () {
   const { activeView, changeView } = useContextHook();
   const { hasUnsavedChanges, triggerNudge } = useUnsavedChanges();
-  const { addModal } = useModal();
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   const navItems = [
     { type: "header", label: "Oldplunger" },
@@ -58,13 +59,13 @@ export default function () {
       type: "openUrl",
       label: "Developer Portal",
       onClick: () => {
-        window.open('/developers');
+        window.open("/developers");
       },
     },
     {
       type: "item",
       label: "Report Content",
-      view: SETTINGS_VIEWS.REPORT_CONTENT
+      view: SETTINGS_VIEWS.REPORT_CONTENT,
     },
     { type: "separator" },
     { type: "header", label: "Oldcord" },
@@ -73,14 +74,14 @@ export default function () {
       label: "Changelog",
       view: SETTINGS_VIEWS.CHANGELOG,
       onClick: () => {
-        addModal("changelog");
+        setIsChangelogOpen(true);
       },
     },
     {
       type: "item",
       label: "Advanced Settings",
       view: SETTINGS_VIEWS.ADVANCED_SETTINGS,
-    }
+    },
   ];
 
   function handleItemClick(view) {
@@ -92,11 +93,17 @@ export default function () {
   }
 
   return (
-    <NavigationList
-      navItems={navItems}
-      activeView={activeView}
-      onItemClick={handleItemClick}
-    />
+    <>
+      <NavigationList
+        navItems={navItems}
+        activeView={activeView}
+        onItemClick={handleItemClick}
+      />
+      <Changelog
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
+      />
+    </>
   );
 }
 

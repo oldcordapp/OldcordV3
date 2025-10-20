@@ -9,6 +9,7 @@ import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 import { PATCHES } from "../../../../constants/patches";
 
 export default function ({
+  isOpen,
   onClose,
   onConfirm,
   selectedBuild,
@@ -34,6 +35,7 @@ export default function ({
   }
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title="Build Confirmation"
       showCloseButton={false}

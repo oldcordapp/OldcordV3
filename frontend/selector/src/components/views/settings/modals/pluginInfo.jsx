@@ -4,7 +4,7 @@ import { PATCHES } from "../../../../constants/patches";
 import { useState, useEffect } from "react";
 import { useOldplugerPlugins } from "../../../../hooks/oldplungerPluginsHandler";
 
-export default function ({ onClose, plugin, type }) {
+export default function ({ isOpen, onClose, plugin, type }) {
   const [cachedPluginData, setCachedPluginData] = useState(null);
   const { plugins } = useOldplugerPlugins();
 
@@ -24,6 +24,7 @@ export default function ({ onClose, plugin, type }) {
 
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title={cachedPluginData.name}
       showCloseButton={true}

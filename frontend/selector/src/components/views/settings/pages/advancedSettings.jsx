@@ -1,15 +1,18 @@
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import Button from "@oldcord/frontend-shared/components/button";
 import ToggleSetting from "@oldcord/frontend-shared/components/toggleSetting";
-import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import cookieManager from "../../../../lib/cookieManager";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import RemoveChunkCache from "../modals/removeChunkCache";
 
 const verboseModeKey = "debug_mode";
 
 export default function () {
-  const { addModal } = useModal();
-  const [verboseMode, setVerboseMode] = useState(cookieManager.get(verboseModeKey) === "true" ? true : false);
+  const [isRemoveChunkCacheModalOpen, setIsRemoveChunkCacheModalOpen] =
+    useState(false);
+  const [verboseMode, setVerboseMode] = useState(
+    cookieManager.get(verboseModeKey) === "true" ? true : false
+  );
 
   function enableVerboseMode() {
     const newValue = !verboseMode;
@@ -31,11 +34,15 @@ export default function () {
       <Button
         style={{ width: "100%" }}
         onClick={() => {
-          addModal("removeChunkCache");
+          setIsRemoveChunkCacheModalOpen(true);
         }}
       >
         Remove stored failed chunk cache
       </Button>
+      <RemoveChunkCache
+        isOpen={isRemoveChunkCacheModalOpen}
+        onClose={() => setIsRemoveChunkCacheModalOpen(false)}
+      />
     </>
   );
 }

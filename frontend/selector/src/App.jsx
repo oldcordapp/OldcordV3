@@ -3,14 +3,9 @@ import {
   UnsavedChangesHandler,
   useUnsavedChanges,
 } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
-import {
-  ModalHandler,
-  useModal,
-} from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useEffect, useRef } from "react";
 
 import layerConfig from "./components/layerConfig";
-import modalConfig from "./components/modalConfig";
 
 import PrimaryLayer from "./components/layers/primaryLayer";
 import "./App.css";
@@ -73,7 +68,6 @@ function Container() {
   const { activeLayer, exitingLayer, triggeredRedirect } = useLayer();
   const { isNudging } = useUnsavedChanges();
   const { plugins, loading } = useOldplugerPlugins();
-  const { activeModal, isExiting, modalProps, removeModal } = useModal();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -109,22 +103,10 @@ function Container() {
   const layerKey = activeLayer || exitingLayer;
   const CurrentLayer = layerKey ? layerConfig[layerKey]?.Component : null;
 
-  const modalKey = activeModal;
-  const CurrentModal = modalKey ? modalConfig[modalKey]?.Component : null;
-
   return (
     <div ref={ref}>
       <PrimaryLayer />
       {CurrentLayer && <CurrentLayer />}
-
-      {CurrentModal && (
-        <CurrentModal
-          {...modalProps}
-          onClose={() => {
-            removeModal()
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -133,11 +115,9 @@ export default function App() {
   return (
     <LayerHandler>
       <UnsavedChangesHandler>
-        <ModalHandler>
-          <OldplungerPluginsHandler>
-            <Container />
-          </OldplungerPluginsHandler>
-        </ModalHandler>
+        <OldplungerPluginsHandler>
+          <Container />
+        </OldplungerPluginsHandler>
       </UnsavedChangesHandler>
     </LayerHandler>
   );

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { CSSTransition } from "react-transition-group";
 import "./modal.css";
 import Xmark from "../assets/xmark.svg?react";
-import { useModal } from "../hooks/modalHandler";
 
 export default function ({
+  isOpen,
   onClose,
   title,
   subtitle,
@@ -17,39 +17,37 @@ export default function ({
   style,
 }) {
   const ref = useRef(null);
-  const { activeModal, isExiting, onModalExited } = useModal();
   const [inProp, setInProp] = useState(false);
 
   useEffect(() => {
-    if (activeModal && !isExiting) {
-      if (!inProp) {
-        const timer = setTimeout(() => setInProp(true), 10);
-        return () => clearTimeout(timer);
-      }
+    if (isOpen) {
+      const timer = setTimeout(() => setInProp(true), 10);
+      return () => clearTimeout(timer);
     } else {
       setInProp(false);
     }
-  }, [activeModal, isExiting, inProp]);
+  }, [isOpen]);
+
+  const handleModalClose = useCallback(() => {
+    if (typeof onClose === "function") {
+      onClose();
+    }
+  }, [onClose]);
 
   useEffect(() => {
     const handleEscapeKey = (event) => {
       if (event.key === "Escape" && inProp) {
+        event.stopPropagation();
         handleModalClose();
       }
     };
 
-    document.addEventListener("keydown", handleEscapeKey);
+    document.addEventListener("keydown", handleEscapeKey, true);
 
     return () => {
-      document.removeEventListener("keydown", handleEscapeKey);
+      document.removeEventListener("keydown", handleEscapeKey, true);
     };
-  }, [inProp]);
-
-  const handleModalClose = () => {
-    if (typeof onClose === "function") {
-      onClose();
-    }
-  };
+  }, [inProp, handleModalClose]);
 
   const modalLayer =
     document.querySelector(".modal-layer") || document.createElement("div");
@@ -60,10 +58,6 @@ export default function ({
 
   const sizeClass = `modal-content ${size}`;
 
-  if (!activeModal) {
-    return null;
-  }
-
   return ReactDOM.createPortal(
     <CSSTransition
       nodeRef={ref}
@@ -71,7 +65,6 @@ export default function ({
       timeout={300}
       classNames="modal"
       unmountOnExit
-      onExited={onModalExited}
     >
       <div className="modal-container" ref={ref}>
         <div className="modal-backdrop" onClick={handleModalClose}></div>
