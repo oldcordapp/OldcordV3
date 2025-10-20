@@ -43,7 +43,7 @@ export default function ({ isOpen, onClose }) {
         </div>
       }
     >
-      <div style={{ paddingBottom: "20px", userSelect: "all" }}>
+      <div style={{ paddingBottom: "20px" }}>
         <PageInfo title={"Deprecated option"} style={{ marginBottom: "20px" }}>
           This option will be removed once OPFS has been implemented to Oldcord,
           which will simplify the process with a on-demand download button.

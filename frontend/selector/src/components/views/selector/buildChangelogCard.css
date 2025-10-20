@@ -38,6 +38,7 @@
 
 .changelog-container {
   padding-right: 20px;
+  user-select: text;
 }
 
 .empty-changelog {

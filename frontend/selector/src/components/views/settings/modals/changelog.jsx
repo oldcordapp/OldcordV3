@@ -27,7 +27,7 @@ export default function ({ isOpen, onClose }) {
           image={oldcordChangelog.image}
           style={{
             paddingBottom: "20px",
-            userSelect: "all",
+            userSelect: "text",
             paddingRight: "0"
           }}
         />

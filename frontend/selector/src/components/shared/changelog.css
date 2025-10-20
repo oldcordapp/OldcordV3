@@ -42,6 +42,7 @@
   text-transform: uppercase !important;
   margin-top: 20px;
   margin-bottom: 16px;
+  user-select: none;
 }
 
 .changelog-section-header::after {
