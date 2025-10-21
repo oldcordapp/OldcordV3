@@ -13,7 +13,7 @@ export default function () {
   function enableOldplunger() {
     const newValue = !oldplungerEnabled;
     setOldplungerEnabled(newValue);
-    cookieManager.set(oldplungerEnabledKey, newValue);
+    cookieManager.set(oldplungerEnabledKey, newValue, { expires: 365 });
   }
 
   return (

@@ -17,7 +17,7 @@ export default function () {
   function enableVerboseMode() {
     const newValue = !verboseMode;
     setVerboseMode(newValue);
-    cookieManager.set(verboseModeKey, newValue);
+    cookieManager.set(verboseModeKey, newValue, { expires: 365 });
   }
 
   return (

@@ -43,7 +43,8 @@ export default function () {
   if (!cookieManager.get("release_date")) {
     cookieManager.set(
       "release_date",
-      cookieManager.get("default_client_build") ?? "october_5_2017"
+      cookieManager.get("default_client_build") ?? "october_5_2017",
+      { expires: 365 }
     );
   }
 
@@ -137,11 +138,9 @@ export default function () {
       }
 
       if (instance.instance.legal.extras) {
-        Object.entries(instance.instance.legal.extras).forEach(
-          ([key, url]) => {
-            legalLinks.push({ title: key, url });
-          }
-        );
+        Object.entries(instance.instance.legal.extras).forEach(([key, url]) => {
+          legalLinks.push({ title: key, url });
+        });
       }
     }
 
@@ -176,7 +175,7 @@ export default function () {
 
   function onBuildChange(selectedFriendlyBuild) {
     const buildId = builds[friendlyBuildIds.indexOf(selectedFriendlyBuild)];
-    cookieManager.set("release_date", buildId);
+    cookieManager.set("release_date", buildId, { expires: 365 });
     setSelectedBuild(buildId);
   }
 
