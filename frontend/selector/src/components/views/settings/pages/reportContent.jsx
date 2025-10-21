@@ -1,9 +1,9 @@
-import { Text } from "@oldcord/frontend-shared/components/textComponent";
-import Button from "@oldcord/frontend-shared/components/button";
+import { Text } from "../../../../../../shared/components/textComponent";
+import Button from "../../../../../../shared/components/button";
 import { useState } from "react";
-import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
-import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
-import InputField from "@oldcord/frontend-shared/components/inputField";
+import PageInfo from "../../../../../../shared/components/pageInfo";
+import DropdownList from "../../../../../../shared/components/dropdownList";
+import InputField from "../../../../../../shared/components/inputfield";
 import SubmitReport from "../modals/submitReport";
 
 export default function () {
