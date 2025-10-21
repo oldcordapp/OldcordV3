@@ -5,7 +5,7 @@ export default {
   authors: ["Oldcord Team"],
   mandatory: true,
   notChangeable: false,
-  defaultEnabled: true,
+  defaultEnabled: false,
   compatibleBuilds: "all",
   incompatiblePlugins: [],
   doNotDebug: true,
