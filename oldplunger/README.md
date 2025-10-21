@@ -13,7 +13,7 @@ The AOT part of Oldplunger is still at `/www_assets/bootloader/patcher.js` which
 
 ## How to make plugins
 
-⚠️ If you do not know what you're doing, including the people who only made (current year) plugins for XYZ client mod without any 2015-2018 experience, don't (or tread with risk)!
+**⚠️ If you do not know what you're doing, including people who only made (current year) plugins for XYZ client mod without any 2015-2018 experience, don't (or do it at your own risk)!**
 
 We intend to make our plugin system similar to how Vencord does (but not API compatible). If you want to, [check out this guide](https://gist.github.com/sunnniee/28bd595f8c07992f6d03289911289ba8), 
 just replace Vencord things with Oldplunger things, for example, definePlugin -> plain old export default. Shifting your mind from (current year) to 2015-2018 works too, a.k.a. don't blindly follow the guide.
