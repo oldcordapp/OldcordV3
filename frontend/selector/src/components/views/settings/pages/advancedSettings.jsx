@@ -24,8 +24,10 @@ export default function () {
     <>
       <Text variant="h1">Advanced Settings</Text>
       <ToggleSetting
-        title={"Verbose Mode"}
-        description={"Allows easier debugging."}
+        title={"Debug Mode"}
+        description={
+          "Allows easier debugging. Bootloader becomes more verbose, and Oldplunger plugins can be debugged more easily."
+        }
         isChecked={verboseMode}
         onChange={enableVerboseMode}
       />

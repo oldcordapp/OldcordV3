@@ -1,6 +1,9 @@
+import cookieManager from "./cookieManager";
 import { Logger } from "./logger";
 
 const logger = new Logger("Patcher");
+
+const isDebugMode = cookieManager.get("debug_mode");
 
 // I think from Vencord's side this is for plugins to add in their patches
 
@@ -46,9 +49,9 @@ export function patchModule(module, id) {
     try {
       module = (0, eval)(
         `${moduleString}${
-          patch.plugin.doNotDebug
-            ? ""
-            : moduleString.match("//# sourceURL")
+          patch.plugin.doNotDebug ||
+          isDebugMode !== "true" ||
+          moduleString.match("//# sourceURL")
             ? ""
             : "//# sourceURL=oldplunger:///WebpackModule${String(id)}"
         }`
