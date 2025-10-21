@@ -1,4 +1,4 @@
-import "./inputField.css";
+import "./inputfield.css";
 
 export default function ({
   label,
