@@ -29,6 +29,10 @@ export function initializePlugins() {
       canInitializePlugin = false;
     }
 
+    if (!window.DiscordNative && availablePlugin.target === "electron") {
+      canInitializePlugin = false;
+    }
+
     if (!canInitializePlugin) {
       continue;
     }
