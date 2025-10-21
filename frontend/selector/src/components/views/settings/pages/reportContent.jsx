@@ -3,7 +3,7 @@ import Button from "../../../../../../shared/components/button";
 import { useState } from "react";
 import PageInfo from "../../../../../../shared/components/pageInfo";
 import DropdownList from "../../../../../../shared/components/dropdownList";
-import InputField from "../../../../../../shared/components/inputfield";
+import InputField from "../../../../../../shared/components/inputField";
 import SubmitReport from "../modals/submitReport";
 
 export default function () {
@@ -50,20 +50,20 @@ export default function () {
       <Text variant="h1">Report Content</Text>
       <PageInfo title="Report Content">
         <>
-          Use the form below to report any content that violates this
-          instance's rules.
+          Use the form below to report any content that violates this instance's
+          rules.
           <br />
           Please be aware that the response time depends on the nature of the
-          report; those concerning <b>illegal content</b> (e.g, CSAM,
-          terrorism) will be taken more seriously and prioritized.
+          report; those concerning <b>illegal content</b> (e.g, CSAM, terrorism)
+          will be taken more seriously and prioritized.
           <br />
           Allow up to <b>one week</b> for the instance administrators to
           acknowledge your report. If there is no response, please attempt to
           contact them directly.
           <br />
           If illegal content is still present after this follow up, you may need
-          to report it through <b>legal channels</b> to ensure the safety of
-          all users.
+          to report it through <b>legal channels</b> to ensure the safety of all
+          users.
         </>
       </PageInfo>
       <DropdownList
