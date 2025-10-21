@@ -1,4 +1,5 @@
 export default {
+  target: "all",
   name: "Change URLs",
   description: "Change Discord related URLs to instance URLs and Oldcord CDN",
   authors: ["Oldcord Team"],

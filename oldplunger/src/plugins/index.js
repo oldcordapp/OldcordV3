@@ -12,11 +12,26 @@ const plugins = {};
 export function initializePlugins() {
   logger.log("Initializing plugins...");
   for (const key in availablePlugins) {
-    if (!JSON.parse(cookieManager.get("enabled_plugins")).includes(key)) {
-      continue;
-    }
+    let canInitializePlugin = true;
 
     const availablePlugin = availablePlugins[key];
+
+    if (!JSON.parse(cookieManager.get("enabled_plugins")).includes(key)) {
+      canInitializePlugin = false;
+    }
+
+    if (
+      (window.location.pathname.includes("developers") &&
+        availablePlugin.target === "client") ||
+      (!window.location.pathname.includes("developers") &&
+        availablePlugin.target === "developerPortal")
+    ) {
+      canInitializePlugin = false;
+    }
+
+    if (!canInitializePlugin) {
+      continue;
+    }
 
     plugins[availablePlugin.name] = availablePlugin;
 
