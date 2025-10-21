@@ -8,7 +8,7 @@ export default {
   defaultEnabled: false,
   compatibleBuilds: "all",
   incompatiblePlugins: [],
-  doNotDebug: false,
+  doNotDebug: true,
 
   patches() {
     return [
