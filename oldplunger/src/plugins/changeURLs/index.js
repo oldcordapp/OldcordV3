@@ -49,8 +49,8 @@ export default {
             replace: location.host,
           },
           {
-            match: /e\.exports=n\.p/g,
-            replace: `e.exports="${window.cdn_url}/assets/"`,
+            match: /(.)\.exports=.\.p/g,
+            replace: `$1.exports="${window.cdn_url}/assets/"`,
           },
         ],
       },
