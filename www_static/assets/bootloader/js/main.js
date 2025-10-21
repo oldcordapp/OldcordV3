@@ -94,6 +94,9 @@ class Bootloader {
       window.oldcord.config = await Config.load();
       document.title = window.oldcord.config.instance.name;
 
+      // Load the mod immediately before loading Discord locally
+      this.loadOldplunger();
+
       const envCheck = await this.checkEnvironment();
       if (envCheck.status === "ready") {
         await this.loadApplication();
@@ -260,7 +263,6 @@ class Bootloader {
 
     this.setupResourceInterceptor();
 
-    this.loadOldplunger();
     shim();
 
     this.setProgress(0, 1, false);
