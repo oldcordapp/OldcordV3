@@ -85,10 +85,6 @@ export default function () {
 
   const handleToggle = (itemKey, type) => {
     const itemConstants = getItemConstants(itemKey, type);
-    if (!itemConstants || itemConstants.notControllable) {
-      return;
-    }
-
     const currentItems = getPendingItems(type);
 
     if (!currentItems.includes(itemKey)) {
@@ -225,19 +221,14 @@ export default function () {
     );
   }
 
-  function controlEnabled(key, type) {
-    if (type === "legacy" && window.DiscordNative && key === "electronPatch") {
-      return "forcedEnabled";
-    } else if (
-      type === "legacy" &&
-      !window.DiscordNative &&
-      key === "electronPatch"
+  function isDisabled(key, type) {
+    if (
+      getItemConstants(key, type).mandatory ||
+      getItemConstants(key, type).notChangeable
     ) {
-      return "forcedDisabled";
-    } else if (getItemConstants(key, type).mandatory) {
-      return "forcedEnabled";
+      return true;
     } else {
-      return getPendingItems(type).includes(key)
+      return false;
     }
   }
 
@@ -322,7 +313,8 @@ export default function () {
                   title={plugin.name}
                   description={plugin.description}
                   iconType={plugin.settings ? "settings" : "info"}
-                  isEnabled={controlEnabled(key, "oldplunger")}
+                  isEnabled={getPendingItems("oldplunger").includes(key)}
+                  disabled={isDisabled(key, "oldplunger")}
                   onToggle={() => handleToggle(key, "oldplunger")}
                 />
               );
@@ -353,7 +345,8 @@ export default function () {
                 title={PATCHES[key].name}
                 description={PATCHES[key].description}
                 iconType={PATCHES[key].settings ? "settings" : "info"}
-                isEnabled={controlEnabled(key, "legacy")}
+                isEnabled={getPendingItems("legacy").includes(key)}
+                disabled={isDisabled(key, "legacy")}
                 onToggle={() => handleToggle(key, "legacy")}
               />
             );

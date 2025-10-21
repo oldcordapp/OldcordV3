@@ -12,10 +12,10 @@ export default function ({
   description,
   iconType,
   isEnabled,
+  disabled,
   onToggle,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  let disabled = false;
 
   function renderIcon() {
     switch (iconType) {
@@ -32,14 +32,6 @@ export default function ({
           </button>
         );
     }
-  }
-
-  if (isEnabled == "forcedEnabled") {
-    isEnabled = true;
-    disabled = true;
-  } else if (isEnabled == "forcedDisabled") {
-    isEnabled = false;
-    disabled = true;
   }
 
   return (

@@ -29,7 +29,7 @@ export function patchModule(module, id) {
     const originalModuleString = moduleString;
 
     for (const replacement of patch.replacement) {
-      if (replacement.match.global) {
+      if (replacement.match.global || replacement.global) {
         moduleString = moduleString.replaceAll(
           replacement.match,
           replacement.replace

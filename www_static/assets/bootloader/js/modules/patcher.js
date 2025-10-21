@@ -578,18 +578,18 @@ const patcher = {
         /e\.exports=n\.p/g,
         `e.exports="${cdn_url}/assets/"`
       );
-    }
 
-    // Disable HTTPS in insecure mode (for local testing)
-    if (location.protocol != "https")
-      script = script.replaceAll("https://", location.protocol + "//");
+      // Disable HTTPS in insecure mode (for local testing)
+      if (location.protocol != "https")
+        script = script.replaceAll("https://", location.protocol + "//");
+
+      // Do NOT interact with sentry. Better to error than send telemetry.
+      script = script.replaceAll("sentry.io", "0.0.0.0");
+    }
 
     // Make fields consistent
     if (release_date.endsWith("_2015"))
       script = script.replaceAll(".presence.", ".presences.");
-
-    // Do NOT interact with sentry. Better to error than send telemetry.
-    script = script.replaceAll("sentry.io", "0.0.0.0");
 
     // Use unified UserSearch worker script
     window.userSearchWorker = function (url) {

@@ -29,13 +29,14 @@ function initializeLocalStorageKeys(plugins) {
     builds.forEach((build) => {
       initializedObject.selectedPatches[build] = Object.keys(PATCHES).filter(
         (key) => {
-          const compatibleBuilds = PATCHES[key].compatibleBuilds;
+          const patch = PATCHES[key];
+          const compatibleBuilds = patch.compatibleBuilds;
 
           if (
             (compatibleBuilds === "all" ||
               build.includes(compatibleBuilds) ||
               compatibleBuilds.includes(build)) &&
-            PATCHES[key].defaultEnabled
+            (patch.defaultEnabled || patch.mandatory)
           ) {
             return key;
           }
@@ -43,24 +44,94 @@ function initializeLocalStorageKeys(plugins) {
       );
 
       if (plugins) {
-        initializedObject.selectedPlugins[build] = Object.keys(plugins).filter(
-          (key) => {
-            const compatibleBuilds = plugins[key].compatibleBuilds;
+        initializedObject.selectedPlugins[build] = Object.keys(
+          plugins
+        ).filter((key) => {
+          const plugin = plugins[key];
+          const compatibleBuilds = plugin.compatibleBuilds;
 
-            if (
-              (compatibleBuilds === "all" ||
-                build.includes(compatibleBuilds) ||
-                compatibleBuilds.includes(build)) &&
-              plugins[key].defaultEnabled
-            ) {
-              return key;
-            }
+          if (
+            (compatibleBuilds === "all" ||
+              build.includes(compatibleBuilds) ||
+              compatibleBuilds.includes(build)) &&
+            (plugin.defaultEnabled || plugin.mandatory)
+          ) {
+            return key;
           }
-        );
+        });
       }
     });
 
     localStorageManager.set(localStorageKey, initializedObject);
+    localStorageCEP = initializedObject;
+  }
+
+  let needsUpdate = false;
+  builds.forEach((build) => {
+    if (!localStorageCEP.selectedPatches) localStorageCEP.selectedPatches = {};
+    if (!localStorageCEP.selectedPlugins) localStorageCEP.selectedPlugins = {};
+    if (!localStorageCEP.selectedPatches[build]) {
+      localStorageCEP.selectedPatches[build] = [];
+    }
+    if (!localStorageCEP.selectedPlugins[build]) {
+      localStorageCEP.selectedPlugins[build] = [];
+    }
+
+    const electronPatchIndex =
+      localStorageCEP.selectedPatches[build].indexOf("electronPatch");
+    if (window.DiscordNative) {
+      if (electronPatchIndex === -1) {
+        localStorageCEP.selectedPatches[build].push("electronPatch");
+        localStorageCEP.selectedPlugins[build].push("electronPatch");
+        needsUpdate = true;
+      }
+    } else {
+      if (electronPatchIndex > -1) {
+        localStorageCEP.selectedPatches[build].splice(electronPatchIndex, 1);
+        localStorageCEP.selectedPlugins[build].splice(electronPatchIndex, 1);
+        needsUpdate = true;
+      }
+    }
+
+    Object.keys(PATCHES).forEach((key) => {
+      const patch = PATCHES[key];
+      const compatible =
+        patch.compatibleBuilds === "all" ||
+        build.includes(patch.compatibleBuilds) ||
+        patch.compatibleBuilds.includes(build);
+
+      if (
+        compatible &&
+        patch.mandatory &&
+        !localStorageCEP.selectedPatches[build].includes(key)
+      ) {
+        localStorageCEP.selectedPatches[build].push(key);
+        needsUpdate = true;
+      }
+    });
+
+    if (plugins) {
+      Object.keys(plugins).forEach((key) => {
+        const plugin = plugins[key];
+        const compatible =
+          plugin.compatibleBuilds === "all" ||
+          build.includes(plugin.compatibleBuilds) ||
+          plugin.compatibleBuilds.includes(build);
+
+        if (
+          compatible &&
+          plugin.mandatory &&
+          !localStorageCEP.selectedPlugins[build].includes(key)
+        ) {
+          localStorageCEP.selectedPlugins[build].push(key);
+          needsUpdate = true;
+        }
+      });
+    }
+  });
+
+  if (needsUpdate) {
+    localStorageManager.set(localStorageKey, localStorageCEP);
   }
 }
 
