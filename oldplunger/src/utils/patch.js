@@ -53,7 +53,7 @@ export function patchModule(module, id) {
           isDebugMode !== "true" ||
           moduleString.match("//# sourceURL")
             ? ""
-            : "//# sourceURL=oldplunger:///WebpackModule${String(id)}"
+            : `//# sourceURL=oldplunger:///WebpackModule${String(id)}`
         }`
       );
     } catch (e) {
