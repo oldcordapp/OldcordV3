@@ -9,10 +9,10 @@ import { initializePlugins } from "./plugins";
 const logger = new Logger("Main");
 
 async function init() {
-  logger.log("Starting Oldplunger...");
   window.oldplunger = {};
   Webpack.init();
 }
 
+logger.log("Starting Oldplunger...");
 initializePlugins();
 init();

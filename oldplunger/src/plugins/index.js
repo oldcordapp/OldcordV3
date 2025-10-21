@@ -1,3 +1,4 @@
+import cookieManager from "../utils/cookieManager.js";
 import { Logger } from "../utils/logger";
 import { patches as patchesToDo } from "../utils/patch";
 
@@ -11,6 +12,10 @@ const plugins = {};
 export function initializePlugins() {
   logger.log("Initializing plugins...");
   for (const key in availablePlugins) {
+    if (!JSON.parse(cookieManager.get("enabled_plugins")).includes(key)) {
+      continue;
+    }
+
     const availablePlugin = availablePlugins[key];
 
     plugins[availablePlugin.name] = availablePlugin;

@@ -41,10 +41,7 @@ async function generatePluginData() {
       allMetadata[dirName] = metadata;
 
       exportContent.push(
-        `export { default as ${plugin.name.replace(
-          /\s/g,
-          ""
-        )} } from './${dirName}/index.js';`
+        `export { default as ${dirName} } from './${dirName}/index.js';`
       );
     } catch (e) {
       console.error(`ERROR! Failed to process plugin in '${dirName}':`, e);
