@@ -87,11 +87,13 @@ function Container() {
   }, [isNudging]);
 
   useEffect(() => {
+    let redirectTimeout;
     if (triggeredRedirect) {
-      setInterval(() => {
-        window.location = `${location.protocol}//${location.host}`;
+      redirectTimeout = setInterval(() => {
+        window.location.href = `${location.protocol}//${location.host}`;
       }, 500);
     }
+    return () => clearInterval(redirectTimeout);
   }, [triggeredRedirect]);
 
   useEffect(() => {
