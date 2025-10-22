@@ -14,6 +14,7 @@ class Bootloader {
     this.release_date = window.release_date;
     this.originalBuild = utils.getOriginalBuild();
     this.localStorage = window.localStorage;
+    this.oldplunger = null;
 
     this.originalChildren = [...document.body.children];
     this.setLoadingBackground();
@@ -95,7 +96,7 @@ class Bootloader {
       document.title = window.oldcord.config.instance.name;
 
       // Load the mod immediately before loading Discord locally
-      this.loadOldplunger();
+      this.oldplunger = await import(`${location.protocol}//${window.location.host}/assets/oldplunger/index.js`);
 
       const envCheck = await this.checkEnvironment();
       if (envCheck.status === "ready") {
@@ -261,6 +262,8 @@ class Bootloader {
 
     this.setupDOM(head, body, styles, scripts);
 
+    this.oldplunger.startPlugins("DOMContentLoaded")
+
     this.setupResourceInterceptor();
 
     shim();
@@ -415,20 +418,6 @@ class Bootloader {
         }
       });
     }, 1000);
-  }
-
-  loadOldplunger() {
-    if (utils.isOldplungerEnabled()) {
-      utils
-        .loadScript("/assets/oldplunger/index.js")
-        .then(() => utils.loadLog("[Selector] Oldplunger is loaded!"))
-        .catch((error) => {
-          utils.loadLog(
-            `[Selector] Oldplunger failed to load: ${error}`,
-            "error"
-          );
-        });
-    }
   }
 
   async fetchAppHtml() {

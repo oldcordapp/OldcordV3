@@ -58,11 +58,12 @@ export function initializePlugins() {
   }
 }
 
-export function startPlugins() {
-  logger.log("Starting all plugins...");
+export function startPlugins(stage) {
+  logger.log(`Starting all plugins... Stage: ${stage}`);
   for (const name in plugins) {
     const plugin = plugins[name];
-    if (plugin.start) {
+
+    if ((plugin.startAt ?? "WebpackReady") == stage && plugin.start) {
       try {
         plugin.start();
       } catch (e) {

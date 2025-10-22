@@ -4,7 +4,9 @@
 
 import { Logger } from "./utils/logger";
 import * as Webpack from "./webpack";
-import { initializePlugins } from "./plugins";
+import { initializePlugins, startPlugins } from "./plugins";
+
+export { startPlugins } from "./plugins";
 
 const logger = new Logger("Main");
 
@@ -15,4 +17,5 @@ async function init() {
 
 logger.log("Starting Oldplunger...");
 initializePlugins();
+startPlugins("Init");
 init();

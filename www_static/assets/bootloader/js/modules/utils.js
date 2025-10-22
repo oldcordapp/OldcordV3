@@ -121,14 +121,4 @@ export const utils = {
       // Ignore storage errors
     }
   },
-  loadScript(url) {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = url;
-      script.type = "text/javascript";
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  },
 };

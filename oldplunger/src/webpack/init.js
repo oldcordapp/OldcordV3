@@ -1,5 +1,5 @@
 import { logger } from ".";
-import { applyPatches, patchModule } from "../utils/patch";
+import { patchModule } from "../utils/patch";
 import { startPlugins } from "../plugins";
 
 let webpackRequire;
@@ -82,7 +82,7 @@ export function init() {
 
             Object.setPrototypeOf(modules, proxy);
 
-            startPlugins();
+            startPlugins("WebpackReady");
           }
         },
       });
