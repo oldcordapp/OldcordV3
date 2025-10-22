@@ -26,7 +26,7 @@ export default function () {
         <Text variant="body">
           The current system on the bootloader is a AOT direct patching system
           that, admittedly, had grown out of it's intended purpose. It was
-          supposed to do small patches, but we started heavily relied on it and
+          supposed to do small patches, but we started heavily rely on it and
           thus experiencing development related pains. Not only that, we intend to
           expand the old builds with new features, and so the only way forward is
           to build a Discord mod.
@@ -43,7 +43,7 @@ export default function () {
         </Text>
         <Text variant="body">
           While we develop Oldplunger, we intended to make the transition as
-          smooth as possible. To get farmiliar with Oldplunger, the "Plugins &
+          smooth as possible. To get familiar with Oldplunger, the "Plugins &
           Patches" tab will still allow to control the patches currently available
           in the current patching system.
         </Text>
