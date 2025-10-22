@@ -44,21 +44,21 @@ function initializeLocalStorageKeys(plugins) {
       );
 
       if (plugins) {
-        initializedObject.selectedPlugins[build] = Object.keys(
-          plugins
-        ).filter((key) => {
-          const plugin = plugins[key];
-          const compatibleBuilds = plugin.compatibleBuilds;
+        initializedObject.selectedPlugins[build] = Object.keys(plugins).filter(
+          (key) => {
+            const plugin = plugins[key];
+            const compatibleBuilds = plugin.compatibleBuilds;
 
-          if (
-            (compatibleBuilds === "all" ||
-              build.includes(compatibleBuilds) ||
-              compatibleBuilds.includes(build)) &&
-            (plugin.defaultEnabled || plugin.mandatory)
-          ) {
-            return key;
+            if (
+              (compatibleBuilds === "all" ||
+                build.includes(compatibleBuilds) ||
+                compatibleBuilds.includes(build)) &&
+              (plugin.defaultEnabled || plugin.mandatory)
+            ) {
+              return key;
+            }
           }
-        });
+        );
       }
     });
 
@@ -77,20 +77,24 @@ function initializeLocalStorageKeys(plugins) {
       localStorageCEP.selectedPlugins[build] = [];
     }
 
-    const electronPatchIndex =
-      localStorageCEP.selectedPatches[build].indexOf("electronPatch");
-    if (window.DiscordNative) {
-      if (electronPatchIndex === -1) {
-        localStorageCEP.selectedPatches[build].push("electronPatch");
-        localStorageCEP.selectedPlugins[build].push("electronPatch");
-        needsUpdate = true;
-      }
-    } else {
-      if (electronPatchIndex > -1) {
-        localStorageCEP.selectedPatches[build].splice(electronPatchIndex, 1);
-        localStorageCEP.selectedPlugins[build].splice(electronPatchIndex, 1);
-        needsUpdate = true;
-      }
+    const isDesktop = !!window.DiscordNative;
+    const selectedPatches = localStorageCEP.selectedPatches[build];
+    const hasElectronPatch = selectedPatches.includes("electronPatch");
+
+    if (isDesktop && !hasElectronPatch) {
+      localStorageCEP.selectedPatches[build].push("electronPatch");
+      localStorageCEP.selectedPlugins[build].push("electronPatch");
+      needsUpdate = true;
+    } else if (!isDesktop && hasElectronPatch) {
+      localStorageCEP.selectedPatches[build] = localStorageCEP.selectedPatches[
+        build
+      ].filter((p) => p !== "electronPatch");
+
+      localStorageCEP.selectedPlugins[build] = localStorageCEP.selectedPlugins[
+        build
+      ].filter((p) => p !== "electronPatch");
+
+      needsUpdate = true;
     }
 
     Object.keys(PATCHES).forEach((key) => {
