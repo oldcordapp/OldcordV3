@@ -234,7 +234,7 @@ export default function () {
 
   return (
     <>
-      <Text variant="h1">Plugins & Patches</Text>
+      <Text variant="h2">Plugins & Patches</Text>
       <PageInfo title="Plugin & Patches Management">
         {!hasIncompatibleItems && (
           <>
@@ -292,7 +292,7 @@ export default function () {
         style={{ marginTop: "-20px" }}
         informativeText="This dropdown only manages patches/plugins for the selected build and does not change the client build launched."
       />
-      <Text variant="h2">Plugins</Text>
+      <Text variant="h5" style={{ marginBottom: "10px" }}>Plugins</Text>
       {!pluginsLoading && availablePlugins ? (
         <div className="options-grid">
           {Object.keys(availablePlugins).map((key) => {
@@ -325,7 +325,7 @@ export default function () {
           {pluginsLoading ? "Loading plugins..." : "No plugins available."}
         </Text>
       )}
-      <Text variant="h2" style={{ marginTop: "10px" }}>
+      <Text variant="h5" style={{ marginTop: "20px", marginBottom: "10px" }}>
         Patches (Legacy)
       </Text>
       <div className="options-grid">

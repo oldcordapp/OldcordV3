@@ -18,7 +18,7 @@ export default function () {
 
   return (
     <>
-      <Text variant="h1">Oldplunger Settings</Text>
+      <Text variant="h2">Oldplunger Settings</Text>
       <PageInfo title="Oldplunger Development Notice">
         Oldplunger is in development!
         <br />

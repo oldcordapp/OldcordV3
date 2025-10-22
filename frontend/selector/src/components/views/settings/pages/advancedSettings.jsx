@@ -22,7 +22,7 @@ export default function () {
 
   return (
     <>
-      <Text variant="h1">Advanced Settings</Text>
+      <Text variant="h2">Advanced Settings</Text>
       <ToggleSetting
         title={"Debug Mode"}
         description={
@@ -32,7 +32,7 @@ export default function () {
         onChange={enableVerboseMode}
       />
       <div className="divider" />
-      <Text variant="h1">Deprecated</Text>
+      <Text variant="h2">Deprecated</Text>
       <Button
         style={{ width: "100%" }}
         onClick={() => {

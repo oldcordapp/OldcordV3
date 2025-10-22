@@ -47,7 +47,7 @@ export default function () {
 
   return (
     <>
-      <Text variant="h1">Report Content</Text>
+      <Text variant="h2">Report Content</Text>
       <PageInfo title="Report Content">
         <>
           Use the form below to report any content that violates this instance's
