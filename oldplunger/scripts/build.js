@@ -3,6 +3,21 @@ import { promises as fs } from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
 
+// We need to mock the browser-specific objects if we allow plugins to reference them.
+
+if (typeof globalThis.window === "undefined") {
+  globalThis.window = {};
+}
+if (typeof globalThis.document === "undefined") {
+  globalThis.document = {
+    createElement: () => ({ style: {} }),
+    body: { style: {} },
+  };
+}
+if (typeof globalThis.navigator === "undefined") {
+  globalThis.navigator = {};
+}
+
 const PLUGINS_DIR = "src/plugins";
 const OUTPUT_DIR = "../www_static/assets/oldplunger";
 
@@ -18,7 +33,8 @@ async function generatePluginData() {
 
   const allMetadata = {};
   const exportContent = [];
-  const keysToExcludeFromMetadata = ["patches", "start", "stop", "flux", "doNotDebug"];
+  const keysToExcludeFromMetadata = ["patches", "doNotDebug"];
+  const onlyAllowedTypes = ["string", "number", "boolean", "object", "bigint"];
 
   for (const dirName of pluginDirs) {
     const pluginPath = path.resolve(PLUGINS_DIR, dirName, "index.js");
@@ -37,6 +53,12 @@ async function generatePluginData() {
 
       const metadata = { ...plugin };
       keysToExcludeFromMetadata.forEach((key) => delete metadata[key]);
+
+      Object.keys(metadata).forEach((key) => {
+        if (!onlyAllowedTypes.includes(typeof metadata[key])) {
+          delete metadata[key];
+        }
+      });
 
       allMetadata[dirName] = metadata;
 
