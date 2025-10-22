@@ -1,9 +1,9 @@
-import ToggleSwitch from "./toggleSwitch";
-import Gear from "../assets/gear.svg?react";
-import Info from "../assets/info.svg?react";
+import ToggleSwitch from "@oldcord/frontend-shared/components/toggleSwitch";
+import Gear from "@oldcord/frontend-shared/assets/gear.svg?react";
+import Info from "@oldcord/frontend-shared/assets/info.svg?react";
 import "./optionsCard.css";
 import { useState } from "react";
-import PluginInfo from "../../selector/src/components/views/settings/modals/pluginInfo";
+import PluginInfo from "../modals/pluginInfo";
 
 export default function ({
   cardId,

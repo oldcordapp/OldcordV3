@@ -4,7 +4,7 @@ import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
 import { builds } from "../../../../constants/builds";
 import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 import { PATCHES } from "../../../../constants/patches";
-import OptionsCard from "@oldcord/frontend-shared/components/optionsCard";
+import OptionsCard from "../compoments/optionsCard";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
 import { useOldplugerPlugins } from "../../../../hooks/oldplungerPluginsHandler";
 import localStorageManager from "../../../../lib/localStorageManager";
