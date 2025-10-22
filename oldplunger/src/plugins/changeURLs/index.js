@@ -16,6 +16,8 @@ export default {
       .replace("http://", "");
     const escapedLink = inviteLink.replace(/\./g, "\\.").replace(/\//g, "\\/");
 
+    // We do not modify this part back to a simple array because we can try loading assets from OPFS instead of from CDN in the future which should be dynamic
+
     return [
       {
         find: /.*/,

@@ -10,18 +10,16 @@ export default {
   incompatiblePlugins: [],
   doNotDebug: true,
 
-  patches() {
-    return [
-      {
-        find: /.*/,
-        replacement: [
-          {
-            global: true,
-            match: "https://",
-            replace: `${location.protocol}//`,
-          },
-        ],
-      },
-    ];
-  },
+  patches: [
+    {
+      find: /.*/,
+      replacement: [
+        {
+          global: true,
+          match: "https://",
+          replace: `${location.protocol}//`,
+        },
+      ],
+    },
+  ],
 };

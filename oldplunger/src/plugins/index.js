@@ -3,7 +3,7 @@ import { Logger } from "../utils/logger";
 import { patches as patchesToDo } from "../utils/patch";
 
 // We just import all the plugins that are valid from esbuild
-import * as availablePlugins from "./plugins.export.js";
+import * as availablePlugins from "./plugins.js";
 
 const logger = new Logger("Plugin Manager");
 

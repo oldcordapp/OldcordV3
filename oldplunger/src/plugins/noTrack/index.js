@@ -10,18 +10,16 @@ export default {
   incompatiblePlugins: [],
   doNotDebug: true,
 
-  patches() {
-    return [
-      {
-        find: /.*/,
-        replacement: [
-          {
-            global: true,
-            match: "sentry.io",
-            replace: "0.0.0.0",
-          },
-        ],
-      },
-    ];
-  },
+  patches: [
+    {
+      find: /.*/,
+      replacement: [
+        {
+          global: true,
+          match: "sentry.io",
+          replace: "0.0.0.0",
+        },
+      ],
+    },
+  ],
 };

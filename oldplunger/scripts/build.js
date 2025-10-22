@@ -3,26 +3,41 @@ import { promises as fs } from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
 
-// We need to mock the browser-specific objects if we allow plugins to reference them.
+// We need to mock the browser globals just enough to build so that the plugins can still use them in prod.
 
-if (typeof globalThis.window === "undefined") {
-  globalThis.window = {};
-}
-if (typeof globalThis.document === "undefined") {
-  globalThis.document = {
-    createElement: () => ({ style: {} }),
-    body: { style: {} },
-  };
-}
-if (typeof globalThis.navigator === "undefined") {
-  globalThis.navigator = {};
-}
+const mockHandler = {
+  get(_, key) {
+    if (key === Symbol.toPrimitive) return () => "deez";
+    return new Proxy(() => {}, mockHandler);
+  },
+  apply() {
+    return new Proxy(() => {}, mockHandler);
+  },
+  set() {
+    return true;
+  },
+  has() {
+    return true;
+  },
+};
+
+const mockGlobal = new Proxy(() => {}, mockHandler);
+
+// We do not have all the cases, so if your plugin needs something and the build fails, you can add here.
+
+if (typeof globalThis.window === "undefined") globalThis.window = mockGlobal;
+if (typeof globalThis.document === "undefined")
+  globalThis.document = mockGlobal;
+if (typeof globalThis.navigator === "undefined")
+  globalThis.navigator = mockGlobal;
+if (typeof globalThis.location === "undefined")
+  globalThis.location = mockGlobal;
 
 const PLUGINS_DIR = "src/plugins";
 const OUTPUT_DIR = "../www_static/assets/oldplunger";
 
 const METADATA_FILE = path.join(OUTPUT_DIR, "plugins.json");
-const PLUGIN_EXPORT_FILE = "src/plugins/plugins.export.js";
+const PLUGIN_EXPORT_FILE = "src/plugins/plugins.js";
 
 async function generatePluginData() {
   console.log("Generating plugin data...");
