@@ -4,7 +4,7 @@ const { logText } = require('../helpers/logger');
 const { channelPermissionsMiddleware, rateLimitMiddleware, instanceMiddleware } = require('../helpers/middlewares');
 const fs = require('fs');
 const multer = require('multer');
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 const Snowflake = require('../helpers/snowflake');
 const reactions = require('./reactions');
 const path = require('path');
@@ -332,8 +332,8 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             try {
                 const image = await Jimp.read(req.file.buffer);
                 if (image) {
-                    file_details.width = image.getWidth();
-                    file_details.height = image.getHeight();
+                    file_details.width = image.width;
+                    file_details.height = image.height;
                 }
             } catch {}
         }

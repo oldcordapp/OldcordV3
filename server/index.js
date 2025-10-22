@@ -11,7 +11,7 @@ const path = require('path');
 const globalUtils = require('./helpers/globalutils');
 const { assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
@@ -296,7 +296,7 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
 
         const image = await Jimp.read(imageBuffer);
 
-        image.resize(parseInt(width), parseInt(height));
+        image.resize({ w: parseInt(width), h: parseInt(height)});
 
         const resizedImage = await image.getBufferAsync(mime);
 

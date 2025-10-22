@@ -3,7 +3,7 @@ const ytdl = require('@distube/ytdl-core');
 const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 const cheerio = require('cheerio');
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 
 const hexToDecimal = (hex) => {
     if (hex.startsWith('#')) {
