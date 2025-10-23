@@ -276,11 +276,11 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
             return res.status(200).sendFile(baseFilePath);
         }
 
-        if (parseInt(width) > 800 || parseInt(width) < 0 || isNaN(parseInt(width))) {
+        if (isNaN(parseInt(width)) || parseInt(width) > 800 || parseInt(width) < 0) {
             width = '800';
         }
 
-        if (parseInt(height) > 800 || parseInt(height) < 0 || isNaN(parseInt(height))) {
+        if (isNaN(parseInt(height)) || parseInt(height) > 800 || parseInt(height) < 0) {
             height = '800';
         }
 
