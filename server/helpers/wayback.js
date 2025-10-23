@@ -1,4 +1,3 @@
-const fetch = require('node-fetch').default;
 const { logText } = require('./logger');
 
 const wayback = {

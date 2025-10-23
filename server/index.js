@@ -17,7 +17,6 @@ const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
 const app = express();
 const emailer = require('./helpers/emailer');
-const fetch = require('node-fetch').default;
 const MediasoupSignalingDelegate = require('./helpers/webrtc/MediasoupSignalingDelegate');
 const udpServer = require('./udpserver');
 const rtcServer = require('./rtcserver');

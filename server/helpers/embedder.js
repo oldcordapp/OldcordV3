@@ -1,4 +1,3 @@
-const fetch = require('node-fetch').default;
 const ytdl = require('@distube/ytdl-core');
 const { logText } = require('./logger');
 const globalUtils = require('./globalutils');

@@ -5,7 +5,6 @@ const globalUtils = require('../helpers/globalutils');
 const Snowflake = require('../helpers/snowflake');
 const fs = require('fs');
 const router = express.Router({ mergeParams: true });
-const fetch = require('node-fetch').default;
 const path = require("path");
 const md5 = require('md5');
 
