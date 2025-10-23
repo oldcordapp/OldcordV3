@@ -580,35 +580,11 @@ app.get("/api/users/:userid/avatars/:file", async (req, res) => {
     }
 });
 
-app.use("/api/v6/", router);
-
-app.use("/api/v2/", router);
+app.use(/\/api\/v\d+/, router);
 
 app.use("/api/", router);
 
 app.use("/api/policies/", spacebarPolicies);
-
-app.use(/\/api\/v*\/.*/, (req, res) => {
-    const originalSuffix = req.params[0]; 
-
-    let pathWithoutApiVersion = '';
-
-    const firstSlashIndex = originalSuffix.indexOf('/');
-    if (firstSlashIndex === -1) {
-        pathWithoutApiVersion = originalSuffix;
-    } else {
-        pathWithoutApiVersion = originalSuffix.slice(firstSlashIndex + 1);
-    }
-
-    const newPath = `/api/v6/${pathWithoutApiVersion}`;
-
-    const queryString = Object.keys(req.query)
-        .map(key => `${key}=${req.query[key]}`)
-        .join('&');
-    const fullNewPath = queryString ? `${newPath}?${queryString}` : newPath;
-
-    res.redirect(fullNewPath);
-});
 
 app.get("/.well-known/spacebar",
 (req, res) => {

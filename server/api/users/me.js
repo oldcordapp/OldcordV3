@@ -386,7 +386,7 @@ router.patch("/settings", async (req, res) => {
   }
 });
 
-router.get("/settings-proto/*", async (req, res) => {
+router.get(/\/settings-proto\/.*/, async (req, res) => {
   try {
     let account = req.account;
 
@@ -408,7 +408,7 @@ router.get("/settings-proto/*", async (req, res) => {
   }
 })
 
-router.patch("/settings-proto/*", async (req, res) => {
+router.patch(/\/settings-proto\/.*/, async (req, res) => {
   try {
     let account = req.account;
 

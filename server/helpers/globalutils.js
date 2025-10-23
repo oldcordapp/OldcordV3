@@ -84,11 +84,10 @@ const globalUtils = {
         return code;
     },
     addClientCapabilities: (client_build, obj) => {
-        if (client_build === "spacebar") {
-            obj.client_build = "Spacebar";
-            obj.client_build_date = new Date();
-            obj.channel_types_are_ints = false;
-            return true;
+        if (client_build === "thirdParty") {
+            const now = new Date();
+            const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+            client_build = `${months[now.getMonth()]}_${now.getDate()}_${now.getFullYear()}`;
         }
         let parts = client_build ? client_build.split('_') : null;
         if (!parts || parts.length < 3) {
@@ -225,7 +224,7 @@ const globalUtils = {
 
         if (!req.account) return null;
 
-        if (guild.region != "everything" && client_build.getFullYear() != parseInt(guild.region)) {
+        if (guild.region != "everything" && req.client_build_date && req.client_build_date.getFullYear() != parseInt(guild.region)) {
             let sessions = global.userSessions.get(req.account.id);
 
             if (!sessions) return guild; //fallback ig

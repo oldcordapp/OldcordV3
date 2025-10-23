@@ -75,8 +75,8 @@ const gateway = {
         }
 
         if (!cookieStore['release_date']) {
-            cookies += `release_date=spacebar;`;
-            cookieStore['release_date'] = "spacebar";
+            cookies += `release_date=thirdParty;`;
+            cookieStore['release_date'] = "thirdParty";
         }
         
         if (!globalUtils.addClientCapabilities(cookieStore['release_date'], socket)) {

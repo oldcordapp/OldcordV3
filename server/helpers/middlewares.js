@@ -22,7 +22,7 @@ async function clientMiddleware(req, res, next) {
     try {
         if (spacebarApis.includes(req.path)) return next();
 
-        if (req.url.includes("/selector") || req.url.includes("/launch") || req.url.includes("/api") || req.url.includes("/webhooks") || req.url.includes("/instance")) return next();
+        if (req.url.includes("/selector") || req.url.includes("/launch") || req.url.includes("/webhooks") || req.url.includes("/instance")) return next();
 
         let cookies = req.cookies;
 
