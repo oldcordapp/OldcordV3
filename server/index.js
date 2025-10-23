@@ -17,7 +17,7 @@ const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
 const app = express();
 const emailer = require('./helpers/emailer');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch').default;
 const MediasoupSignalingDelegate = require('./helpers/webrtc/MediasoupSignalingDelegate');
 const udpServer = require('./udpserver');
 const rtcServer = require('./rtcserver');
@@ -211,7 +211,6 @@ app.get('/proxy/:url', async (req, res) => {
         let contentType = response.headers.get('content-type') || 'image/jpeg';
 
         if (!contentType.startsWith('image/')) {
-            response.body.destroy();
             return res.status(400).send('Only images are supported via this route. Try harder.');
         }
 
@@ -222,7 +221,7 @@ app.get('/proxy/:url', async (req, res) => {
         }
 
         if (shouldResize) {
-            let imageBuffer = await response.buffer();
+            let imageBuffer = await response.arrayBuffer();
             let image;
 
             try {
@@ -233,9 +232,9 @@ app.get('/proxy/:url', async (req, res) => {
                 return res.status(400).send('Only images are supported via this route. Try harder.');
             }
 
-            image.resize(width, height); 
+            image.resize({ w: parseInt(width), h: parseInt(height)}); 
 
-            let finalBuffer = await image.getBufferAsync(contentType); 
+            let finalBuffer = await image.getBuffer(contentType);
 
             res.setHeader('Content-Type', contentType);
             res.setHeader('Content-Length', finalBuffer.length);

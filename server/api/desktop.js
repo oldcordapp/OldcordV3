@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch').default;
 const contentDisposition = require('content-disposition');
 const router = express.Router();
 

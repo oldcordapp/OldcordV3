@@ -5,7 +5,7 @@ const globalUtils = require('../helpers/globalutils');
 const Snowflake = require('../helpers/snowflake');
 const fs = require('fs');
 const router = express.Router({ mergeParams: true });
-const fetch = require('node-fetch');
+const fetch = require('node-fetch').default;
 const path = require("path");
 const md5 = require('md5');
 
@@ -217,7 +217,7 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
                         fs.mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
                     }
     
-                    const buffer = await response.buffer();
+                    const buffer = await response.arrayBuffer();
 
                     await fs.promises.writeFile(`./www_dynamic/avatars/${webhook.id}/${name_hash}.${extension}`, buffer);
         
