@@ -24,22 +24,27 @@ async function clientMiddleware(req, res, next) {
 
         if (req.url.includes("/selector") || req.url.includes("/launch") || req.url.includes("/webhooks") || req.url.includes("/instance")) return next();
 
+        const reqHost = req.headers.origin ?? req.headers.host;
+
+        const isInstanceLocal = global.full_url.includes('localhost') || global.full_url.includes('127.0.0.1');
+        const isReqLocal = reqHost.includes('localhost') || reqHost.includes('127.0.0.1');
+
+        const isSameHost = (isInstanceLocal && isReqLocal) || (global.full_url === reqHost);
+
         let cookies = req.cookies;
 
-        if (!cookies && config.require_release_date_cookie) {
-            return res.status(400).json({
-                code: 400,
-                message: "Cookies are required to use the oldcord backend, please enable them and try again."
-            })
+        if ((!cookies) || (!cookies['release_date'] && !isSameHost)) {
+            cookies['release_date'] = "thirdParty"
+            res.cookie('release_date', "thirdParty")
         }
 
-        if (!cookies['release_date'] && !config.require_release_date_cookie) {
+        if (!cookies['release_date'] && isSameHost && !config.require_release_date_cookie) {
             res.cookie('release_date', config.default_client_build || "october_5_2017", {
                 maxAge: 100 * 365 * 24 * 60 * 60 * 1000
             });
         }
 
-        if (!cookies['default_client_build'] || cookies['default_client_build'] !== (config.default_client_build || "october_5_2017")) {
+        if ((!cookies['default_client_build'] || cookies['default_client_build'] !== (config.default_client_build || "october_5_2017")) && isSameHost) {
             res.cookie('default_client_build', config.default_client_build || "october_5_2017", {
                 maxAge: 100 * 365 * 24 * 60 * 60 * 1000
             });

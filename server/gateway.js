@@ -54,9 +54,20 @@ const gateway = {
         await socket.session.updatePresence(setStatusTo, gameField);
     },
     handleClientConnect: async function (socket, req) {
+        const reqHost = req.headers.origin ?? req.headers.host;
+
+        const isInstanceLocal = global.full_url.includes('localhost') || global.full_url.includes('127.0.0.1');
+        const isReqLocal = reqHost.includes('localhost') || reqHost.includes('127.0.0.1');
+
+        const isSameHost = (isInstanceLocal && isReqLocal) || (global.full_url === reqHost);
+
         let cookies = req.headers.cookie;
 
-        if (!cookies && !globalUtils.config.require_release_date_cookie) {
+        if (!cookies) {
+            cookies = `release_date=thirdParty;default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
+        }
+
+        if (!cookies && isSameHost && !globalUtils.config.require_release_date_cookie) {
             cookies = `release_date=${globalUtils.config.default_client_build || "october_5_2017"};default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
         }
 
@@ -70,7 +81,7 @@ const gateway = {
             cookieStore = {}
         }
 
-        if (!cookies && !cookies?.includes('release_date') && !globalUtils.config.require_release_date_cookie) {
+        if (!cookies && isSameHost && !cookies?.includes('release_date') && !globalUtils.config.require_release_date_cookie) {
             cookieStore['release_date'] = globalUtils.config.default_client_build || "october_5_2017";
         }
 

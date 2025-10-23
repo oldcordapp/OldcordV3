@@ -582,9 +582,9 @@ app.get("/api/users/:userid/avatars/:file", async (req, res) => {
 
 app.use(/\/api\/v\d+/, router);
 
-app.use("/api/", router);
+app.use("/api", router);
 
-app.use("/api/policies/", spacebarPolicies);
+app.use("/api/policies", spacebarPolicies);
 
 app.get("/.well-known/spacebar",
 (req, res) => {
