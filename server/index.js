@@ -271,15 +271,16 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
         }
         
         let urlWithoutParams = url.split('?', 2)[0];
-        if (urlWithoutParams.endsWith(".gif") || urlWithoutParams.endsWith(".mp4")|| urlWithoutParams.endsWith(".webm")) {
+        
+        if (urlWithoutParams.endsWith(".gif") || urlWithoutParams.endsWith(".mp4") || urlWithoutParams.endsWith(".webm")) {
             return res.status(200).sendFile(baseFilePath);
         }
 
-        if (parseInt(width) > 800) {
+        if (parseInt(width) > 800 || parseInt(width) < 0 || isNaN(parseInt(width))) {
             width = '800';
         }
 
-        if (parseInt(height) > 800) {
+        if (parseInt(height) > 800 || parseInt(height) < 0 || isNaN(parseInt(height))) {
             height = '800';
         }
 
@@ -298,7 +299,7 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
 
         image.resize({ w: parseInt(width), h: parseInt(height)});
 
-        const resizedImage = await image.getBufferAsync(mime);
+        const resizedImage = await image.getBuffer(mime);
 
         fs.writeFileSync(resizedFilePath, resizedImage);
 

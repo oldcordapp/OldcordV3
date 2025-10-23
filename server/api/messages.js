@@ -331,11 +331,17 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             
             try {
                 const image = await Jimp.read(req.file.buffer);
+                
                 if (image) {
                     file_details.width = image.width;
                     file_details.height = image.height;
                 }
-            } catch {}
+            } catch (error) {
+                file_details.width = 500;
+                file_details.height = 500;
+
+                logText(error, "error");
+            }
         }
 
         //Write message
