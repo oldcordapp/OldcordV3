@@ -4,11 +4,11 @@ export default {
   description: "Change Discord related URLs to instance URLs and Oldcord CDN",
   authors: ["Oldcord Team"],
   mandatory: true,
-  notChangeable: false,
+  configurable: false,
   defaultEnabled: false,
   compatibleBuilds: "all",
   incompatiblePlugins: [],
-  doNotDebug: true,
+  debug: false,
 
   patches() {
     const inviteLink = window.oldcord.config.custom_invite_url

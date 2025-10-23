@@ -48,7 +48,7 @@ async function generatePluginData() {
 
   const allMetadata = {};
   const exportContent = [];
-  const keysToExcludeFromMetadata = ["patches", "doNotDebug"];
+  const keysToExcludeFromMetadata = ["patches", "debug"];
   const onlyAllowedTypes = ["string", "number", "boolean", "object", "bigint"];
 
   for (const dirName of pluginDirs) {

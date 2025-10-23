@@ -49,7 +49,7 @@ export function patchModule(module, id) {
     try {
       module = (0, eval)(
         `${moduleString}${
-          patch.plugin.doNotDebug ||
+          !patch.plugin.debug ||
           isDebugMode !== "true" ||
           moduleString.match("//# sourceURL")
             ? ""

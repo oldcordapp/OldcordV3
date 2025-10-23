@@ -50,7 +50,7 @@ export function initializePlugins() {
           ...patch,
           plugin: {
             name: availablePlugin.name,
-            doNotDebug: availablePlugin.doNotDebug,
+            debug: availablePlugin.debug,
           },
         });
       }

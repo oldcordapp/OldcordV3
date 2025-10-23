@@ -5,9 +5,9 @@ export default {
     "Required for client functionality. Automatically enabled on desktop client. (EMPTY)",
   authors: ["Oldcord Team"],
   mandatory: false,
-  notChangeable: true,
+  configurable: false,
   defaultEnabled: false,
   compatibleBuilds: "all",
   incompatiblePlugins: [],
-  doNotDebug: false,
+  debug: true,
 };

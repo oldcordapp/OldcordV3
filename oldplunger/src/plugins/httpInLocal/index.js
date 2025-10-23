@@ -4,11 +4,11 @@ export default {
   description: "Disable HTTPS in insecure mode (for local testing)",
   authors: ["Oldcord Team"],
   mandatory: true,
-  notChangeable: false,
+  configurable: false,
   defaultEnabled: false,
   compatibleBuilds: "all",
   incompatiblePlugins: [],
-  doNotDebug: true,
+  debug: false,
 
   patches: [
     {

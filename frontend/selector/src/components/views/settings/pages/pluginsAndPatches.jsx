@@ -224,7 +224,7 @@ export default function () {
   function isDisabled(key, type) {
     if (
       getItemConstants(key, type).mandatory ||
-      getItemConstants(key, type).notChangeable
+      !getItemConstants(key, type).configurable
     ) {
       return true;
     } else {
@@ -292,7 +292,9 @@ export default function () {
         style={{ marginTop: "-20px" }}
         informativeText="This dropdown only manages patches/plugins for the selected build and does not change the client build launched."
       />
-      <Text variant="h5" style={{ marginBottom: "10px" }}>Plugins</Text>
+      <Text variant="h5" style={{ marginBottom: "10px" }}>
+        Plugins
+      </Text>
       {!pluginsLoading && availablePlugins ? (
         <div className="options-grid">
           {Object.keys(availablePlugins).map((key) => {
@@ -300,10 +302,9 @@ export default function () {
             const compatibleBuilds = plugin.compatibleBuilds;
 
             if (
-              !plugin.doNotDebug &&
-              (compatibleBuilds === "all" ||
-                selectedBuildOriginal.includes(compatibleBuilds) ||
-                compatibleBuilds.includes(selectedBuildOriginal))
+              compatibleBuilds === "all" ||
+              selectedBuildOriginal.includes(compatibleBuilds) ||
+              compatibleBuilds.includes(selectedBuildOriginal)
             )
               return (
                 <OptionsCard
