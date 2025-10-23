@@ -106,6 +106,9 @@ const globalUtils = {
             obj.client_build_date = date;
             obj.plural_recipients = (date.getFullYear() == 2016 && date.getMonth() >= 6) || date.getFullYear() >= 2017;
             obj.channel_types_are_ints = obj.plural_recipients;
+            if (client_build === "thirdParty") {
+                obj.isThirdParty = true;
+            }
             return true;
         }
     },
