@@ -1,3 +1,38 @@
+import { useEffect, useState } from "react";
+import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
+import ToggleSetting from "@oldcord/frontend-shared/components/toggleSetting";
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
+
+import cookieManager from "../../../../lib/cookieManager";
+
+const oldplungerEnabledKey = "oldplunger_enabled";
+
 export default function () {
-  return <div>Oldplunger is in development...</div>;
+  const [oldplungerEnabled, setOldplungerEnabled] = useState(cookieManager.get(oldplungerEnabledKey) === "true" ? true : false);
+
+  function enableOldplunger() {
+    const newValue = !oldplungerEnabled;
+    setOldplungerEnabled(newValue);
+    cookieManager.set(oldplungerEnabledKey, newValue, { expires: 365 });
+  }
+
+  return (
+    <>
+      <Text variant="h2">Oldplunger Settings</Text>
+      <PageInfo title="Oldplunger Development Notice">
+        Oldplunger is in development!
+        <br />
+        All settings below will either be removed or changed upon release.
+        <br />
+        Please help us test Oldplunger!
+      </PageInfo>
+      <ToggleSetting
+        title={"Enable Oldplunger"}
+        description={"Enable the next generation of Oldcord modding. ! In development !"}
+        isChecked={oldplungerEnabled}
+        onChange={enableOldplunger}
+      />
+      <div className="divider" />
+    </>
+  );
 }

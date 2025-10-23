@@ -1,4 +1,4 @@
-import Card from "@oldcord/frontend-shared/components/Card";
+import Card from "@oldcord/frontend-shared/components/card";
 import Background from "./background";
 import Logo from "./logo";
 import "./main.css";
@@ -11,19 +11,41 @@ import Download from "../../../assets/download.svg?react";
 import { useEffect, useState } from "react";
 import { convertBuildIds, convertBuildId } from "../../../lib/convertBuildIds";
 import cookieManager from "../../../lib/cookieManager";
-import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 import { useLayer } from "../../../hooks/layerHandler";
 import localStorageManager from "../../../lib/localStorageManager";
 import BuildChangelogCard from "./buildChangelogCard";
-import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
+import BuildConfirmation from "./modals/buildConfirmation";
+import EnvironmentWarning from "./modals/environmentWarning";
+import LegalAgreement from "./modals/legalAgreement";
+import OpfsComingSoon from "./modals/opfsComingSoon";
 
 export default function () {
   const [instance, setInstance] = useState(null);
-  const { addModal, removeModal } = useModal();
   const { changeLayer, setTriggeredRedirect } = useLayer();
 
+  const [isOpfsModalOpen, setIsOpfsModalOpen] = useState(false);
+  const [buildConfirmationState, setBuildConfirmationState] = useState({
+    isOpen: false,
+    resolve: null,
+    props: {},
+  });
+  const [environmentWarningState, setEnvironmentWarningState] = useState({
+    isOpen: false,
+    resolve: null,
+    props: {},
+  });
+  const [legalAgreementState, setLegalAgreementState] = useState({
+    isOpen: false,
+    resolve: null,
+    props: {},
+  });
+
   if (!cookieManager.get("release_date")) {
-    cookieManager.set("release_date", cookieManager.get("default_client_build") ?? "october_5_2017");
+    cookieManager.set(
+      "release_date",
+      cookieManager.get("default_client_build") ?? "october_5_2017",
+      { expires: 365 }
+    );
   }
 
   const defaultBuild =
@@ -51,116 +73,109 @@ export default function () {
     fetchInstanceConfig();
   }, []);
 
-  async function handleLaunch() {
+  async function showBuildConfirmation() {
     const selectedBuildInfo = convertBuildId(selectedBuild);
     const allSelectedPatches =
-      localStorageManager.get("oldcord_selected_patches") ?? {};
-    const enabledPlugins = allSelectedPatches[selectedBuild] ?? [];
+      localStorageManager.get("oldcord_settings") ?? {};
+    const enabledLegacyPatches =
+      allSelectedPatches.selectedPatches[selectedBuild] ?? [];
+    const enabledOldplungerPlugins =
+      allSelectedPatches.selectedPlugins[selectedBuild] ?? [];
 
-    const buildConfirmed = await new Promise((resolve) => {
-      addModal("buildConfirmation", {
-        selectedBuild: selectedBuildInfo,
-        enabledPlugins,
-        onClose: (confirmed) => {
-          removeModal();
-          resolve(confirmed);
-        },
-        onConfirm: () => {
-          const enabledPatches = JSON.stringify(enabledPlugins);
-          const expires = new Date();
-          expires.setDate(expires.getDate() + 365);
+    const enabledPlugins = {
+      legacy: enabledLegacyPatches,
+      oldplunger: enabledOldplungerPlugins,
+    };
 
-          document.cookie = `enabled_patches=${enabledPatches}; expires=${expires.toUTCString()}; path=/`;
-
-          removeModal();
-          resolve(true);
-        },
+    return new Promise((resolve) => {
+      setBuildConfirmationState({
+        isOpen: true,
+        resolve,
+        props: { selectedBuild: selectedBuildInfo, enabledPlugins },
       });
     });
+  }
 
-    if (!buildConfirmed) return;
-
-    if (
-      instance &&
-      instance.instance &&
-      instance.instance.environment !== "stable"
-    ) {
-      const envConfirmed = await new Promise((resolve) => {
-        addModal("environmentWarning", {
-          environment: instance.instance.environment,
-          onClose: (confirmed) => {
-            removeModal();
-            resolve(confirmed);
-          },
-          onConfirm: () => {
-            removeModal();
-            resolve(true);
-          },
-        });
-      });
-
-      if (!envConfirmed) return;
+  async function showEnvironmentWarning() {
+    if (!instance?.instance || instance.instance.environment === "stable") {
+      return true;
     }
 
-    if (!cookieManager.has("legal_agreed")) {
-      const legalLinks = [];
+    return new Promise((resolve) => {
+      setEnvironmentWarningState({
+        isOpen: true,
+        resolve,
+        props: { environment: instance.instance.environment },
+      });
+    });
+  }
 
-      if (instance && instance.instance && instance.instance.legal) {
-        if (instance.instance.legal.terms) {
-          legalLinks.push({
-            title: "Terms",
-            url: instance.instance.legal.terms,
-          });
-        }
-        if (instance.instance.legal.privacy) {
-          legalLinks.push({
-            title: "Privacy",
-            url: instance.instance.legal.privacy,
-          });
-        }
-        if (instance.instance.legal.instanceRules) {
-          legalLinks.push({
-            title: "Instance Rules",
-            url: instance.instance.legal.instanceRules,
-          });
-        }
+  async function showLegalAgreement() {
+    if (cookieManager.has("legal_agreed")) {
+      return true;
+    }
 
-        if (instance.instance.legal.extras) {
-          Object.entries(instance.instance.legal.extras).forEach(
-            ([key, url]) => {
-              legalLinks.push({ title: key, url });
-            }
-          );
-        }
+    const legalLinks = [];
+
+    if (instance?.instance?.legal) {
+      if (instance.instance.legal.terms) {
+        legalLinks.push({
+          title: "Terms",
+          url: instance.instance.legal.terms,
+        });
+      }
+      if (instance.instance.legal.privacy) {
+        legalLinks.push({
+          title: "Privacy",
+          url: instance.instance.legal.privacy,
+        });
+      }
+      if (instance.instance.legal.instanceRules) {
+        legalLinks.push({
+          title: "Instance Rules",
+          url: instance.instance.legal.instanceRules,
+        });
       }
 
-      const legalConfirmed = await new Promise((resolve) => {
-        addModal("legalAgreement", {
-          legalLinks,
-          onClose: (confirmed) => {
-            removeModal();
-            resolve(confirmed);
-          },
-          onConfirm: () => {
-            cookieManager.set("legal_agreed", "true", { expires: 365 });
-            removeModal();
-            resolve(true);
-          },
+      if (instance.instance.legal.extras) {
+        Object.entries(instance.instance.legal.extras).forEach(([key, url]) => {
+          legalLinks.push({ title: key, url });
         });
-      });
-
-      if (!legalConfirmed) return;
+      }
     }
 
-    setTriggeredRedirect(true);
-    changeLayer("redirect", 300);
+    return new Promise((resolve) => {
+      setLegalAgreementState({
+        isOpen: true,
+        resolve,
+        props: { legalLinks },
+      });
+    });
+  }
+
+  async function handleLaunch() {
+    try {
+      const buildConfirmed = await showBuildConfirmation();
+      if (!buildConfirmed) return;
+
+      const envConfirmed = await showEnvironmentWarning();
+      if (!envConfirmed) return;
+
+      const legalConfirmed = await showLegalAgreement();
+      if (!legalConfirmed) return;
+
+      setTriggeredRedirect(true);
+      changeLayer("redirect", 500);
+    } catch (error) {
+      console.error("Error during launch process:", error);
+    }
   }
 
   const friendlyBuildIds = convertBuildIds(builds);
 
   function onBuildChange(selectedFriendlyBuild) {
     const buildId = builds[friendlyBuildIds.indexOf(selectedFriendlyBuild)];
-    cookieManager.set("release_date", buildId);
+    cookieManager.set("release_date", buildId, { expires: 365 });
     setSelectedBuild(buildId);
   }
 
@@ -187,7 +202,7 @@ export default function () {
               style={{ marginTop: "10px" }}
               notImplemented={true}
               onClick={() => {
-                addModal("opfsComingSoon");
+                setIsOpfsModalOpen(true);
               }}
             >
               <Download />
@@ -195,7 +210,8 @@ export default function () {
           </div>
 
           <Text variant="body" style={{ marginTop: "-10px" }}>
-            Looking for patches or a way to report content? You can now find both options conveniently located in the Settings menu.
+            Looking for patches or a way to report content? You can now find
+            both options conveniently located in the Settings menu.
           </Text>
 
           <div className="important-information">
@@ -283,6 +299,64 @@ export default function () {
           is not affiliated with or endorsed by Discord, Inc.
         </Text>
       </div>
+      <OpfsComingSoon
+        isOpen={isOpfsModalOpen}
+        onClose={() => setIsOpfsModalOpen(false)}
+      />
+      {buildConfirmationState.resolve && (
+        <BuildConfirmation
+          isOpen={buildConfirmationState.isOpen}
+          {...buildConfirmationState.props}
+          onClose={(confirmed) => {
+            buildConfirmationState.resolve(confirmed);
+            setBuildConfirmationState((s) => ({ ...s, isOpen: false }));
+          }}
+          onConfirm={() => {
+            const enabledPatches = JSON.stringify(
+              buildConfirmationState.props.enabledPlugins.legacy
+            );
+            const enabledPlugins = JSON.stringify(
+              buildConfirmationState.props.enabledPlugins.oldplunger
+            );
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 365);
+
+            document.cookie = `enabled_patches=${enabledPatches}; expires=${expires.toUTCString()}; path=/`;
+            document.cookie = `enabled_plugins=${enabledPlugins}; expires=${expires.toUTCString()}; path=/`;
+            buildConfirmationState.resolve(true);
+            setBuildConfirmationState((s) => ({ ...s, isOpen: false }));
+          }}
+        />
+      )}
+      {environmentWarningState.resolve && (
+        <EnvironmentWarning
+          isOpen={environmentWarningState.isOpen}
+          {...environmentWarningState.props}
+          onClose={(confirmed) => {
+            environmentWarningState.resolve(confirmed);
+            setEnvironmentWarningState((s) => ({ ...s, isOpen: false }));
+          }}
+          onConfirm={() => {
+            environmentWarningState.resolve(true);
+            setEnvironmentWarningState((s) => ({ ...s, isOpen: false }));
+          }}
+        />
+      )}
+      {legalAgreementState.resolve && (
+        <LegalAgreement
+          isOpen={legalAgreementState.isOpen}
+          {...legalAgreementState.props}
+          onClose={(confirmed) => {
+            legalAgreementState.resolve(confirmed);
+            setLegalAgreementState((s) => ({ ...s, isOpen: false }));
+          }}
+          onConfirm={() => {
+            cookieManager.set("legal_agreed", "true", { expires: 365 });
+            legalAgreementState.resolve(true);
+            setLegalAgreementState((s) => ({ ...s, isOpen: false }));
+          }}
+        />
+      )}
     </>
   );
 }

@@ -2,12 +2,13 @@ import Modal from "@oldcord/frontend-shared/components/modal";
 import Changelog from "../../../shared/changelog";
 import { oldcordChangelog } from "../../../../constants/oldcordChangelog";
 
-export default function ({ onClose }) {
+export default function ({ isOpen, onClose }) {
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title="Changelog"
-      subtitle="5 October 2025"
+      subtitle="23 October 2025"
       showCloseButton={true}
       size="medium"
       footerAlignment="left"
@@ -23,9 +24,10 @@ export default function ({ onClose }) {
     >
       <Changelog
           sections={oldcordChangelog.sections}
+          image={oldcordChangelog.image}
           style={{
             paddingBottom: "20px",
-            userSelect: "all",
+            userSelect: "text",
             paddingRight: "0"
           }}
         />

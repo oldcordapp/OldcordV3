@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import Member from './member';
 import Paginator from './paginator';
 import Channel from './channel';
@@ -161,8 +161,8 @@ const Server = ({ data }) => {
                     {data.splash_hash ?? 'NONE'}
                 </div>
                 <div className='mainPage-main-components-sidebar-infoLine'>
-                    <div className='mainPage-main-components-sidebar-label'>Owner Id</div>
-                    <a href={`/admin/users?searchInput=${data.owner_id}`}>{data.owner_id}</a>
+                    <div className='mainPage-main-components-sidebar-label'>Owner</div>
+                    <a href={`/admin/users?searchInput=${data.owner_id}`}>{data.owner.username}#{data.owner.discriminator}</a>
                 </div>
                 <div className='mainPage-main-components-sidebar-infoLine'>
                     <div className='mainPage-main-components-sidebar-label'>Application Id</div>
@@ -188,13 +188,13 @@ const Server = ({ data }) => {
             <div className='mainPage-main-components-main'>
                 <div className='mainPage-main-components-wrapper'>
                     {data.members.length > 0 ? <>
-                        <Paginator header="Members" tabs={['Username', 'Discriminator']}>
+                        <Paginator header="Members" tabs={['Username', 'Id']}>
                             {data.members.map((member, i) => (
                                 <Member
                                     key={i}
                                     avatarHash={member.user.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + member.user.id + '/' + member.user.avatar + '.png'}
-                                    username={member.user.username}
-                                    discriminator={member.user.discriminator}
+                                    username={`${member.user.username}#${member.user.discriminator}`}
+                                    discriminator={member.user.id}
                                     id={member.user.id}
                                     actuallyServer={false}
                                 />

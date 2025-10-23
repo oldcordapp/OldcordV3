@@ -1,50 +1,50 @@
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import Button from "@oldcord/frontend-shared/components/button";
-import ToggleSetting from "@oldcord/frontend-shared/components/toggleSettings";
-import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
+import ToggleSetting from "@oldcord/frontend-shared/components/toggleSetting";
 import cookieManager from "../../../../lib/cookieManager";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import RemoveChunkCache from "../modals/removeChunkCache";
 
 const verboseModeKey = "debug_mode";
 
 export default function () {
-  const { addModal } = useModal();
-  const [verboseMode, setVerboseMode] = useState(false);
-
-  useEffect(() => {
-    try {
-      const current = cookieManager.get(verboseModeKey);
-      setVerboseMode(current === true);
-    } catch {
-      setVerboseMode(false);
-    }
-  }, []);
+  const [isRemoveChunkCacheModalOpen, setIsRemoveChunkCacheModalOpen] =
+    useState(false);
+  const [verboseMode, setVerboseMode] = useState(
+    cookieManager.get(verboseModeKey) === "true" ? true : false
+  );
 
   function enableVerboseMode() {
     const newValue = !verboseMode;
     setVerboseMode(newValue);
-    cookieManager.set(verboseModeKey, newValue);
+    cookieManager.set(verboseModeKey, newValue, { expires: 365 });
   }
 
   return (
     <>
-      <Text variant="h1">Advanced Settings</Text>
+      <Text variant="h2">Advanced Settings</Text>
       <ToggleSetting
-        title={"Verbose Mode"}
-        description={"Allows easier debugging."}
+        title={"Debug Mode"}
+        description={
+          "Allows easier debugging. Bootloader becomes more verbose, and Oldplunger plugins can be debugged more easily."
+        }
         isChecked={verboseMode}
         onChange={enableVerboseMode}
       />
       <div className="divider" />
-      <Text variant="h1">Deprecated</Text>
+      <Text variant="h2">Deprecated</Text>
       <Button
         style={{ width: "100%" }}
         onClick={() => {
-          addModal("removeChunkCache");
+          setIsRemoveChunkCacheModalOpen(true);
         }}
       >
         Remove stored failed chunk cache
       </Button>
+      <RemoveChunkCache
+        isOpen={isRemoveChunkCacheModalOpen}
+        onClose={() => setIsRemoveChunkCacheModalOpen(false)}
+      />
     </>
   );
 }

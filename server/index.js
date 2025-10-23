@@ -12,13 +12,12 @@ const globalUtils = require('./helpers/globalutils');
 const { assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
 const spacebarPolicies = require('./spacebar-compat/policies');
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
 const app = express();
 const emailer = require('./helpers/emailer');
-const fetch = require('node-fetch');
 const MediasoupSignalingDelegate = require('./helpers/webrtc/MediasoupSignalingDelegate');
 const udpServer = require('./udpserver');
 const rtcServer = require('./rtcserver');
@@ -212,7 +211,6 @@ app.get('/proxy/:url', async (req, res) => {
         let contentType = response.headers.get('content-type') || 'image/jpeg';
 
         if (!contentType.startsWith('image/')) {
-            response.body.destroy();
             return res.status(400).send('Only images are supported via this route. Try harder.');
         }
 
@@ -223,7 +221,7 @@ app.get('/proxy/:url', async (req, res) => {
         }
 
         if (shouldResize) {
-            let imageBuffer = await response.buffer();
+            let imageBuffer = await response.arrayBuffer();
             let image;
 
             try {
@@ -234,9 +232,9 @@ app.get('/proxy/:url', async (req, res) => {
                 return res.status(400).send('Only images are supported via this route. Try harder.');
             }
 
-            image.resize(width, height); 
+            image.resize({ w: parseInt(width), h: parseInt(height)}); 
 
-            let finalBuffer = await image.getBufferAsync(contentType); 
+            let finalBuffer = await image.getBuffer(contentType);
 
             res.setHeader('Content-Type', contentType);
             res.setHeader('Content-Length', finalBuffer.length);
@@ -272,15 +270,16 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
         }
         
         let urlWithoutParams = url.split('?', 2)[0];
-        if (urlWithoutParams.endsWith(".gif") || urlWithoutParams.endsWith(".mp4")|| urlWithoutParams.endsWith(".webm")) {
+        
+        if (urlWithoutParams.endsWith(".gif") || urlWithoutParams.endsWith(".mp4") || urlWithoutParams.endsWith(".webm")) {
             return res.status(200).sendFile(baseFilePath);
         }
 
-        if (parseInt(width) > 800) {
+        if (isNaN(parseInt(width)) || parseInt(width) > 800 || parseInt(width) < 0) {
             width = '800';
         }
 
-        if (parseInt(height) > 800) {
+        if (isNaN(parseInt(height)) || parseInt(height) > 800 || parseInt(height) < 0) {
             height = '800';
         }
 
@@ -297,9 +296,9 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
 
         const image = await Jimp.read(imageBuffer);
 
-        image.resize(parseInt(width), parseInt(height));
+        image.resize({ w: parseInt(width), h: parseInt(height)});
 
-        const resizedImage = await image.getBufferAsync(mime);
+        const resizedImage = await image.getBuffer(mime);
 
         fs.writeFileSync(resizedFilePath, resizedImage);
 
@@ -485,7 +484,13 @@ app.get('/banners/:serverid/:file', async (req, res) => {
 
 app.get('/avatars/:userid/:file', async (req, res) => {
     try {
-        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'avatars', req.params.userid);
+        let userid = req.params.userid;
+
+        if (req.params.userid.includes("WEBHOOK_")) {
+            userid = req.params.userid.split('_')[1];
+        } //to-do think of long term solution to webhook overrides
+
+        const directoryPath = path.join(process.cwd(), 'www_dynamic', 'avatars', userid);
 
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
@@ -583,7 +588,7 @@ app.use("/api/", router);
 
 app.use("/api/policies/", spacebarPolicies);
 
-app.use("/api/v*/*", (req, res) => {
+app.use(/\/api\/v*\/.*/, (req, res) => {
     const originalSuffix = req.params[0]; 
 
     let pathWithoutApiVersion = '';
@@ -664,11 +669,11 @@ app.get("/instance", (req, res) => {
     });
 });
 
-app.get("/admin*", (req, res) => {
+app.get(/\/admin*/, (req, res) => {
     return res.send(fs.readFileSync(`./www_static/assets/admin/index.html`, 'utf8'));
 });
 
-app.get("*", (req, res) => {
+app.get(/.*/, (req, res) => {
     try {
         if (!req.client_build && config.require_release_date_cookie) {
             return res.redirect("/selector");

@@ -1,7 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
-const fetch = require('node-fetch');
 const wayback = require('./wayback');
 const fs = require('fs');
 const { Storage } = require('@google-cloud/storage');
@@ -243,6 +242,10 @@ async function authMiddleware(req, res, next) {
         if (spacebarApis.includes(req.path)) {
             return next();
         } // exclude spacebar related apis
+
+        if (req.url.match(/webhooks\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+/) && req.method === "POST") {
+            return next();
+        } //bypass sending to webhooks
 
         let token = req.headers['authorization'];
         

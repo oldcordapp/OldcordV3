@@ -1,4 +1,3 @@
-const { default: fetch } = require('node-fetch')
 const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 const fs = require('fs');

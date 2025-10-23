@@ -3,13 +3,10 @@ import localStorageManager from "../../../../lib/localStorageManager";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
 import Button from "@oldcord/frontend-shared/components/button";
-import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
 
 const failedCacheKey = "oldcord_failed_urls";
 
-export default function ({ onClose }) {
-  const { removeModal } = useModal();
-
+export default function ({ isOpen, onClose }) {
   function removeCache() {
     const failedCaches = localStorageManager.get(failedCacheKey);
 
@@ -17,10 +14,11 @@ export default function ({ onClose }) {
       localStorageManager.remove(failedCacheKey);
     }
 
-    removeModal();
+    onClose();
   }
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title="Reset Failed Chunk Cache?"
       size="medium"
@@ -29,7 +27,7 @@ export default function ({ onClose }) {
           <Button
             variant="ghost"
             onClick={() => {
-              removeModal();
+              onClose();
             }}
           >
             Cancel
@@ -45,7 +43,7 @@ export default function ({ onClose }) {
         </div>
       }
     >
-      <div style={{ paddingBottom: "20px", userSelect: "all" }}>
+      <div style={{ paddingBottom: "20px" }}>
         <PageInfo title={"Deprecated option"} style={{ marginBottom: "20px" }}>
           This option will be removed once OPFS has been implemented to Oldcord,
           which will simplify the process with a on-demand download button.

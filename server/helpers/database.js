@@ -532,7 +532,7 @@ const database = {
                 return false;
             } // Safety net
 
-            await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id])
+            await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id]); //figure out messages
 
             let audit_log = staff.audit_log;
 
@@ -996,6 +996,43 @@ const database = {
             return false;
         }
     }, //rewrite asap
+    getBotByUserId: async (id) => {
+        try {
+            if (!id)
+                return null;
+
+            let rows = await database.runQuery(`
+                    SELECT * FROM bots WHERE id = $1
+                `, [id]);
+
+            if (rows === null || rows.length === 0) {
+                return null;
+            }
+
+            let application = await database.getApplicationById(rows[0].application_id);
+
+            if (application === null) {
+                return null;
+            }
+
+            delete application.secret;
+
+            return {
+                avatar: rows[0].avatar == 'NULL' ? null : rows[0].avatar,
+                discriminator: rows[0].discriminator,
+                username: rows[0].username,
+                id: rows[0].id,
+                public: rows[0].public === 1,
+                require_code_grant: rows[0].require_code_grant === 1,
+                application: application
+            }
+        }
+        catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    }, //to-do deprecate this
     getAccountByUserId: async (id) => {
         try {
             if (!id)
@@ -1729,10 +1766,18 @@ const database = {
                 return null;
             }
 
-            const author = await database.getAccountByUserId(rows[0].author_id);
+            let author = await database.getAccountByUserId(rows[0].author_id);
 
             if (author == null) {
-                return null;
+                author = {
+                    id: "1279218211430105088",
+                    username: "Deleted User",
+                    discriminator: "0000",
+                    avatar: null,
+                    premium: false,
+                    bot: false,
+                    flags: 0
+                }
             }
 
             const mentions_data = globalUtils.parseMentions(rows[0].content);
@@ -1885,7 +1930,7 @@ const database = {
     },
     updateBotUser: async (bot) => {
         try {
-            let send_icon = 'NULL';
+            let send_icon = bot.avatar;
 
             if (bot.avatar != null) {
                 if (bot.avatar.includes("data:image")) {
@@ -2068,6 +2113,17 @@ const database = {
             return null;
         }
     }, //rewrite asap
+    deleteBotById: async (id) => {
+        try {
+            await Promise.all([
+                database.runQuery(`DELETE FROM applications WHERE id = $1`, [id]),
+                database.runQuery(`DELETE FROM bots WHERE id = $1`, [id]),
+                //database.runQuery(`DELETE FROM messages WHERE author_id = $1`, [id]),
+            ]);
+        } catch (error) {
+            return false;
+        }
+    },
     getUsersApplications: async (user) => {
         try {
             const rows = await database.runQuery(`SELECT * FROM applications WHERE owner_id = $1`, [user.id]);
@@ -2089,6 +2145,52 @@ const database = {
                     rpc_origins: [],
                     secret: row.secret,
                     owner: globalUtils.miniUserObject(user)
+                })
+            }
+
+            return ret;
+        } catch (error) {
+            logText(error, "error");
+
+            return [];
+        }
+    },
+    getUsersBots: async (user) => {
+        try {
+            const rows = await database.runQuery(`SELECT a.*, b.id AS bot_id, b.username AS bot_username, b.discriminator AS bot_discriminator, b.avatar AS bot_avatar, b.public, b.require_code_grant, o.username AS owner_username,  o.discriminator AS owner_discriminator,  o.id AS owner_id,  o.avatar AS owner_avatar,  o.flags AS owner_flags FROM applications AS a JOIN bots AS b ON a.id = b.application_id JOIN users AS o ON a.owner_id = o.id WHERE a.owner_id = $1`, [user.id]);
+
+            if (rows == null || rows.length == 0) {
+                return [];
+            }
+
+            const ret = [];
+
+            for (const row of rows) {
+                ret.push({
+                    avatar: row.bot_avatar == 'NULL' ? null : row.bot_avatar,
+                    discriminator: row.bot_discriminator,
+                    username: row.bot_username,
+                    id: row.bot_id,
+                    public: row.public === 1,
+                    require_code_grant: row.require_code_grant === 1,
+                    application: {
+                        id: row.id,
+                        name: row.name,
+                        icon: row.icon == 'NULL' ? null : row.icon,
+                        description: row.description,
+                        redirect_uris: [],
+                        rpc_application_state: 0,
+                        rpc_origins: [],
+                        owner: {
+                            username: row.owner_username,
+                            discriminator: row.owner_discriminator,
+                            id: row.owner_id,
+                            avatar: row.owner_avatar == 'NULL' ? null : row.owner_avatar,
+                            bot: false,
+                            flags: row.owner_flags,
+                            premium: true
+                        }
+                    }
                 })
             }
 
@@ -2180,8 +2282,19 @@ const database = {
 
             const finalMessages = [];
             for (const row of messageRows) {
-                const author = accountMap.get(row.author_id);
-                if (!author) { continue; }
+                let author = accountMap.get(row.author_id);
+
+                if (!author) {
+                    author = {
+                        id: "1279218211430105088",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        avatar: null,
+                        premium: false,
+                        bot: false,
+                        flags: 0
+                    }
+                }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
                 const mentions = [];
@@ -2223,6 +2336,22 @@ const database = {
         } catch (error) {
             logText(error, "error");
             return [];
+        }
+    },
+    getMessageByCdnLink: async (cdn_link) => {
+        try {
+            const rows = await database.runQuery(`SELECT message_id FROM attachments WHERE url = $1`, [cdn_link]);
+
+            if (rows == null || rows.length == 0) {
+                return null;
+            }
+
+            let message = await database.getMessageById(rows[0].message_id);
+
+            return message; //to-do clean this up
+        } catch (error) {
+            logText(error, "error");
+            return null;
         }
     },
     getChannelMessages: async (id, requester_id, limit, before_id, after_id, includeReactions) => {
@@ -2267,11 +2396,14 @@ const database = {
             const userIdArray = Array.from(uniqueUserIds);
 
             const accounts = await database.getAccountsByIds(userIdArray);
+
             const accountMap = new Map();
 
             if (accounts && accounts.length > 0) {
                 accounts.forEach(acc => accountMap.set(acc.id, acc));
             }
+
+            
 
             const attachmentsRows = await database.runQuery(`
             SELECT * FROM attachments WHERE message_id = ANY($1)
@@ -2299,10 +2431,29 @@ const database = {
 
             const finalMessages = [];
             for (const row of messageRows) {
-                const author = accountMap.get(row.author_id);
+                let webhookRawId = null;
+
+                if (row.author_id.includes("WEBHOOK_")) {
+                    webhookRawId = row.author_id;
+
+                    row.author_id = row.author_id.split('_')[1];
+                }
+
+                let author = accountMap.get(row.author_id);
 
                 if (!author) {
-                    continue;
+                    author = {
+                        id: "1279218211430105088",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        avatar: null,
+                        premium: false,
+                        bot: false,
+                        flags: 0
+                    }
+                } else if (author && author.webhook && webhookRawId) {
+                    author.id = webhookRawId.split('_')[2];
+                    webhookRawId = null;
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -2394,26 +2545,139 @@ const database = {
                 return [];
             }
 
-            const rows = await database.runQuery(`SELECT id, username, discriminator, avatar, flags FROM users WHERE id = ANY($1::text[])`, [ids]) ?? [];
             const accounts = [];
+            const humans = new Set();
+            const robots = new Set();
+            const humanIds = ids.filter(id => !id.startsWith("WEBHOOK_"));
+            const rawWebhookIds = ids.filter(id => id.startsWith("WEBHOOK_"));
 
-            for (const row of rows) {
-                accounts.push({
-                    username: row.username,
-                    discriminator: row.discriminator,
-                    id: row.id,
-                    avatar: row.avatar === 'NULL' ? null : row.avatar,
-                    bot: false,
-                    flags: row.flags,
-                    premium: true
-                });
+            let bots = [];
+
+            if (humanIds.length > 0) {
+                const rows = await database.runQuery(`SELECT id, username, discriminator, avatar, flags FROM users WHERE id = ANY($1::text[])`, [humanIds]) ?? [];
+
+                const foundHumanIds = new Set(rows.map(row => row.id));
+
+                bots = humanIds.filter(id => !foundHumanIds.has(id));
+
+                for (const row of rows) {
+                    humans.add(row.id);
+
+                    accounts.push({
+                        username: row.username,
+                        discriminator: row.discriminator,
+                        id: row.id,
+                        avatar: row.avatar === 'NULL' ? null : row.avatar,
+                        bot: false,
+                        flags: row.flags,
+                        premium: true
+                    });
+                }
+            } else bots = [...ids];
+
+            let webhooksToFetch = rawWebhookIds;
+
+            if (bots.length > 0) {
+                const botOnlyIds = bots.filter(id => !id.startsWith("WEBHOOK_"));
+
+                const botRows = await database.runQuery(
+                    `SELECT id, username, discriminator, avatar FROM bots WHERE id = ANY($1::text[])`,
+                    [botOnlyIds]
+                ) ?? [];
+
+                const foundBotIds = new Set(botRows.map(row => row.id));
+
+                webhooksToFetch = webhooksToFetch.concat(bots.filter(id => !foundBotIds.has(id)));
+
+                for (const row of botRows) {
+                    robots.add(row.id);
+
+                    accounts.push({
+                        username: row.username,
+                        discriminator: row.discriminator,
+                        id: row.id,
+                        avatar: row.avatar === 'NULL' ? null : row.avatar,
+                        bot: true,
+                        flags: 0,
+                        premium: true
+                    });
+                }
             }
 
-            //Relationships will never be used in here, and it only works for NORMAL user accounts - neither webhooks nor bots, should be pretty efficient.
+            if (webhooksToFetch.length > 0) {
+                const uniqueWebhookIds = new Set();
+                const webhookOverrideIds = [];
+
+                for (const id of webhooksToFetch) {
+                    if (id.startsWith("WEBHOOK_")) {
+                        const parts = id.split('_');
+                        const webhookId = parts[1];
+                        const overrideId = parts[2];
+
+                        uniqueWebhookIds.add(webhookId);
+                        webhookOverrideIds.push({ rawId: id, webhookId, overrideId });
+                    }
+                }
+
+                const baseWebhooks = await database.runQuery(`
+                    SELECT id, name, avatar FROM webhooks WHERE id = ANY($1::text[])
+                `, [[...uniqueWebhookIds]]) ?? [];
+
+                const webhookDataMap = new Map(baseWebhooks.map(w => [w.id, w]));
+
+                const overrideIdPairs = webhookOverrideIds
+                    .filter(item => item.overrideId !== null)
+                    .map(item => [item.webhookId, item.overrideId]);
+
+                let overridesMap = new Map();
+
+                if (overrideIdPairs.length > 0) {
+                    const allOverrides = await database.runQuery(`
+                        SELECT id, override_id, avatar_url, username 
+                        FROM webhook_overrides 
+                        WHERE id = ANY($1::text[])
+                    `, [[...uniqueWebhookIds]]) ?? []; 
+
+                    overridesMap = new Map(allOverrides.map(o => [`${o.id}_${o.override_id}`, o]));
+                }
+
+                for (const item of webhookOverrideIds) {
+                    const baseWebhook = webhookDataMap.get(item.webhookId);
+
+                    if (!baseWebhook) {
+                        continue;
+                    }
+
+                    const overrideKey = `${item.webhookId}_${item.overrideId}`;
+                    const override = overridesMap.get(overrideKey);
+
+                    if (override) {
+                        accounts.push({
+                            username: override.username === 'NULL' ? baseWebhook.name : override.username,
+                            discriminator: "0000",
+                            avatar: override.avatar_url === 'NULL' ? null : override.avatar_url,
+                            id: override.id,
+                            bot: true,
+                            webhook: true
+                        });
+                    }
+                    else {
+                        accounts.push({
+                            username: baseWebhook.name,
+                            discriminator: "0000",
+                            id: baseWebhook.id,
+                            bot: true,
+                            webhook: true,
+                            avatar: baseWebhook.avatar === 'NULL' ? null : baseWebhook.avatar,
+                        });
+                    }
+                }
+                //We really need a better way to handle webhooks huh..
+            }
 
             return accounts;
         } catch (error) {
-            logText(error, "error");
+            logText(error, "error"); 
             return [];
         }
     },
@@ -2534,10 +2798,18 @@ const database = {
             const messages = [];
 
             for (const row of messageRows) {
-                const author = accountMap.get(row.author_id);
+                let author = accountMap.get(row.author_id);
 
                 if (!author) {
-                    continue;
+                    author = {
+                        id: "1279218211430105088",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        avatar: null,
+                        premium: false,
+                        bot: false,
+                        flags: 0
+                    }
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -3412,11 +3684,13 @@ const database = {
                 }
 
                 retGuilds.push({
-                    id: guildId, name: guildRow.name,
+                    id: guildId,
+                    name: guildRow.name,
                     icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
                     splash: guildRow.splash == 'NULL' ? null : guildRow.splash,
                     banner: guildRow.banner == 'NULL' ? null : guildRow.banner,
-                    region: guildRow.region, owner_id: guildRow.owner_id,
+                    region: guildRow.region,
+                    owner_id: guildRow.owner_id,
                     afk_channel_id: guildRow.afk_channel_id == 'NULL' ? null : guildRow.afk_channel_id,
                     afk_timeout: guildRow.afk_timeout,
                     channels: channels,
@@ -4295,7 +4569,15 @@ const database = {
             } else author = await database.getAccountByUserId(author_id);
 
             if (author == null) {
-                return null;
+                author = {
+                    id: "1279218211430105088",
+                    username: "Deleted User",
+                    discriminator: "0000",
+                    avatar: null,
+                    premium: false,
+                    bot: false,
+                    flags: 0
+                }
             }
 
             if (content == undefined) {

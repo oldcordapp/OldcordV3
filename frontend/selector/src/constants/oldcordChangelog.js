@@ -4,42 +4,55 @@ export const oldcordChangelog = {
     thumbnail: "",
   },
    */
+  image: true,
   sections: [
     {
       type: "default",
-      body: "Woah! What's this? New selector? I don't even... know how to express this! Like this is incredible!<br>Yes. Oldcord's selector got a whole new look! And it looks so <strong>FRESH!</strong>",
+      body: "Oldcord turns three years old! Thank you so much to see us grow! While we do not have a video to showcase how we have grown, here's <a href=\"https://arcadia.noia.site/posts/1759733688246\">noia's blog post about the WebRTC patch we've done and a small tidbit about how much we've grown</a>. <small>And yes we are late by one month but who cares.</small>",
     },
     {
       type: "added",
-      title: "WAIT WHAT?!",
+      title: "Special gifts for the birthday boy.",
       items: [
-        "Voice is now voicing! You can now talk to people <small>in servers only, for now...</small>",
-        "Tenor is now usable! Just don't search cok in gifs!",
+        "Oldplunger is now in development! You can try it out in the <strong>Oldplunger Settings</strong> tab.",
+        "Currently we are focusing on porting the current patches into Oldplunger so that the bootloader can do other things. Like doing your-",
       ],
     },
     {
       type: "fixed",
-      title: "BUGS ARE SQUASHED IN THIS INSTANT!",
+      title: "We bought Hurple a bug swatter!",
       items: [
-        "Fixed some security issues with message searching. Now you can search in peace.",
-        "Fixing duplicate ban entries, now you don't have to do the spiderman meme anymore!",
-        "Relationships are now fixed! But you don't have your partner, don't you?",
+        "We fixed an issue with image embeds related to the improved item below.",
+        "Discord Developer Portal should load the correct asset URL <small>on Oldplunger at least</small>.",
+        "Other bug fixes are on the commit history because the person writing this changelog is lazy and does not want to finish it.",
       ],
     },
     {
       type: "improved",
-      title: "SELECTOR! SELECTOR! SELECTOR! SELECTOR! SELECTOR!",
+      title: "We gave steroids to Hurple.",
       items: [
-        "The selector is improved! And it looks that one instant messaging service you like back in 2018! So great!",
-        "Our rate limit system has been improved with caching so bots that want real time updates can do it without strainging the server. Don't say the C word though! <small>Okay for real though, please don't use any word to mask your internal bigotry. It's not cool. /srs</small>",
+        "We updated all the packages and now we don't have 90+ critical package vulnerabilities! We finally gave Hurple a vaccine! <small>That also lead to image embeds not working, but that's fixed now.</small>",
+        "Selector should look more closer to the service you love back in 2018.",
+      ],
+    },
+    {
+      type: "progress",
+      title: "In progress features coming soon to Oldcord",
+      items: [
+        "Like above, we are porting the current patches into Oldplunger. Here's the plugins we expected to add in Oldplunger in the future:",
+        "Server banners",
+        "Reply functionality",
+        "Themes!",
+        "And many more!",
       ],
     },
     {
       type: "default",
-      title: "WE NEED HELP!",
+      title: "Thank you.",
       items: [
-        "Please help us out in some stuff like Giphy support, improving the code, making a new Discord mod, etc! Your power make us increase by 10x! <small>And yes that includes the Selector too despite it's goodiness... please help us fix the issues...</small> If you love this old Discord revival project, please help us!",
-      ],
+        "Once again, we are happy that you join us on the Oldcord journey, and we hope to see you all in the next disc.",
+        "Say happy birthday to Hurple by the way! He doesn't vacuum hard."
+      ]
     },
   ],
 };

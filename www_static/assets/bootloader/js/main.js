@@ -14,6 +14,7 @@ class Bootloader {
     this.release_date = window.release_date;
     this.originalBuild = utils.getOriginalBuild();
     this.localStorage = window.localStorage;
+    this.oldplunger = null;
 
     this.originalChildren = [...document.body.children];
     this.setLoadingBackground();
@@ -44,14 +45,15 @@ class Bootloader {
 
     if (!randomQuote.submittedBy) {
       submitter.style.display = "none";
-      return
+      return;
     } else {
       submitter.style.display = "block";
     }
 
     if (randomQuote.fromDiscord) {
       submitterText = `ORIGINALLY APPEARED ON <span>DISCORD</span> IN <span>${randomQuote.appearedIn}</span>`;
-      submitterText += randomQuote.submittedBy === "Discord" ? "" : "<br/>ORIGINALLY ";
+      submitterText +=
+        randomQuote.submittedBy === "Discord" ? "" : "<br/>ORIGINALLY ";
     }
 
     if (randomQuote.submittedBy !== "Discord") {
@@ -92,6 +94,9 @@ class Bootloader {
       utils.loadLog("Loading instance config...");
       window.oldcord.config = await Config.load();
       document.title = window.oldcord.config.instance.name;
+
+      // Load the mod immediately before loading Discord locally
+      this.oldplunger = await import(`${location.protocol}//${window.location.host}/assets/oldplunger/index.js`);
 
       const envCheck = await this.checkEnvironment();
       if (envCheck.status === "ready") {
@@ -212,7 +217,7 @@ class Bootloader {
     // Set up chunk loading progress tracking first
     this.loader.onChunkProgress = (current, total, type) => {
       if (type === "find") {
-        this.setLoadingText(`DETERMINING CHUNKS (${current}/${total})`);
+        this.setLoadingText(`CHECKING VALID CHUNKS (${current}/${total})`);
       } else if (type === "load") {
         this.setLoadingText(
           `LOADING AND PATCHING CHUNKS (${current}/${total})`
@@ -256,6 +261,9 @@ class Bootloader {
     }
 
     this.setupDOM(head, body, styles, scripts);
+
+    this.oldplunger.startPlugins("DOMContentLoaded")
+
     this.setupResourceInterceptor();
 
     shim();

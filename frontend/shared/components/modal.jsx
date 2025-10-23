@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import ReactDOM from "react-dom";
+import { CSSTransition } from "react-transition-group";
 import "./modal.css";
 import Xmark from "../assets/xmark.svg?react";
-import { useModal } from "../hooks/modalHandler";
 
 export default function ({
+  isOpen,
   onClose,
   title,
   subtitle,
@@ -13,40 +14,40 @@ export default function ({
   size = "medium",
   showCloseButton = false,
   footerAlignment = "right",
-  style
+  style,
 }) {
-  const ref = useRef();
-  const { exitingModal } = useModal();
+  const ref = useRef(null);
+  const [inProp, setInProp] = useState(false);
 
   useEffect(() => {
-    const handleEscapeKey = (event) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
+    if (isOpen) {
+      const timer = setTimeout(() => setInProp(true), 10);
+      return () => clearTimeout(timer);
+    } else {
+      setInProp(false);
+    }
+  }, [isOpen]);
 
-    document.addEventListener("keydown", handleEscapeKey);
-
-    return () => {
-      document.removeEventListener("keydown", handleEscapeKey);
-    };
+  const handleModalClose = useCallback(() => {
+    if (typeof onClose === "function") {
+      onClose();
+    }
   }, [onClose]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (ref.current) {
-        ref.current.classList.add("open");
+    const handleEscapeKey = (event) => {
+      if (event.key === "Escape" && inProp) {
+        event.stopPropagation();
+        handleModalClose();
       }
-    }, 0);
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    document.addEventListener("keydown", handleEscapeKey, true);
 
-  useEffect(() => {
-    if (ref.current && exitingModal) {
-      ref.current.classList.remove("open");
-    }
-  }, [exitingModal]);
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey, true);
+    };
+  }, [inProp, handleModalClose]);
 
   const modalLayer =
     document.querySelector(".modal-layer") || document.createElement("div");
@@ -58,36 +59,52 @@ export default function ({
   const sizeClass = `modal-content ${size}`;
 
   return ReactDOM.createPortal(
-    <div className="modal-container" ref={ref}>
-      <div className="modal-backdrop" onClick={onClose}></div>
-      <div className="modal-root">
-        <div className={`modal-content ${sizeClass}`} style={style}>
-          {(title || showCloseButton) && (
-            <div className="modal-header">
-              <div className="modal-header-text">
-                {title && <h4 className="modal-title">{title}</h4>}
-                {subtitle && <div className="modal-subtitle">{subtitle}</div>}
+    <CSSTransition
+      nodeRef={ref}
+      in={inProp}
+      timeout={300}
+      classNames="modal"
+      unmountOnExit
+    >
+      <div className="modal-container" ref={ref}>
+        <div className="modal-backdrop" onClick={handleModalClose}></div>
+        <div className="modal-root">
+          <div className={`modal-content ${sizeClass}`} style={style}>
+            {(title || showCloseButton) && (
+              <div className="modal-header">
+                <div className="modal-header-text">
+                  {title && <h4 className="modal-title">{title}</h4>}
+                  {subtitle && <div className="modal-subtitle">{subtitle}</div>}
+                </div>
+                {showCloseButton && (
+                  <button
+                    type="button"
+                    className="modal-close-button"
+                    onClick={handleModalClose}
+                  >
+                    <Xmark />
+                  </button>
+                )}
               </div>
-              {showCloseButton && (
-                <button
-                  type="button"
-                  className="modal-close-button"
-                  onClick={onClose}
-                >
-                  <Xmark />
-                </button>
-              )}
+            )}
+
+            <div className="scroller-wrapper">
+              <div className="scroller">{children}</div>
             </div>
-          )}
 
-          <div className="scroller-wrapper">
-            <div className="scroller">{children}</div>
+            {footer && (
+              <div
+                className={`modal-footer ${
+                  footerAlignment === "left" ? "footer-left" : "footer-right"
+                }`}
+              >
+                {footer}
+              </div>
+            )}
           </div>
-
-          {footer && <div className={`modal-footer ${footerAlignment === "left" ? "footer-left" : "footer-right"}`}>{footer}</div>}
         </div>
       </div>
-    </div>,
+    </CSSTransition>,
     modalLayer
   );
 }

@@ -2,24 +2,33 @@ import Modal from "@oldcord/frontend-shared/components/modal";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import { PATCHES } from "../../../../constants/patches";
 import { useState, useEffect } from "react";
+import { useOldplugerPlugins } from "../../../../hooks/oldplungerPluginsHandler";
 
-export default function ({ onClose, plugin }) {
-  const [displayedPlugin, setDisplayedPlugin] = useState(plugin);
+export default function ({ isOpen, onClose, plugin, type }) {
+  const [cachedPluginData, setCachedPluginData] = useState(null);
+  const { plugins } = useOldplugerPlugins();
 
   useEffect(() => {
-    if (plugin) {
-      setDisplayedPlugin(plugin);
+    if (isOpen) {
+      if (plugin) {
+        const pluginData =
+          type === "oldplunger" ? plugins[plugin] : PATCHES[plugin];
+        setCachedPluginData(pluginData ?? null);
+      } else {
+        setCachedPluginData(null);
+      }
     }
-  }, [plugin]);
+  }, [isOpen, plugin, type, plugins]);
 
-  if (!displayedPlugin) {
+  if (!cachedPluginData) {
     return null;
   }
 
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
-      title={PATCHES[displayedPlugin].label}
+      title={cachedPluginData.name}
       showCloseButton={true}
       size="medium"
     >
@@ -34,7 +43,7 @@ export default function ({ onClose, plugin }) {
               marginBottom: "20px",
             }}
           >
-            {PATCHES[displayedPlugin].description}
+            {cachedPluginData.description}
           </Text>
         </div>
         <Text
@@ -57,7 +66,7 @@ export default function ({ onClose, plugin }) {
             marginBottom: "20px",
           }}
         >
-          {PATCHES[displayedPlugin].authors.join(", ")}
+          {cachedPluginData.authors.join(", ")}
         </Text>
         <Text
           variant="h1"

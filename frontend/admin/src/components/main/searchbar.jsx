@@ -1,4 +1,3 @@
-import React from 'react';
 import Ic_search from '../../assets/ic_search.svg?react'
 
 const Searchbar = ({ placeholder, error }) => {

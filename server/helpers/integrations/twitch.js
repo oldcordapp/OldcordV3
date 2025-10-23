@@ -1,4 +1,3 @@
-const fetch = require('node-fetch');
 const globalUtils = require('../globalutils');
 const { logText } = require('../logger');
 const twitchConfig = globalUtils.config.integration_config.find(x => x.platform == "twitch");

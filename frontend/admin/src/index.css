@@ -269,8 +269,9 @@ button {
 }
 
 .mainPage-sidebar-header a img {
-  margin-top: -30px;
-  height: 40px;
+  height: 25px;
+  margin-top: -15px;
+  margin-left: 5px;
 }
 
 .mainPage-sidebar-components {
@@ -350,6 +351,45 @@ position: absolute;
   color: #d4d4d4 !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
+}
+
+.pd2 {
+  padding: 12px 25px !important;
+}
+
+.input-container {
+  position: relative;
+  width: 100%;
+}
+
+.input-field {
+  width: 275px;
+  height: 33px;
+  padding: 0 10px;
+  border: 1px solid #0000001f;
+  border-radius: 3px;
+  color: #000000;
+  text-align: left;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: #d3d3d366;
+}
+
+.input-field:hover {
+  border-color: #040405;
+}
+
+.input-field::selection {
+  border-color: #040405;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.input-field:focus {
+  border-color: #7289da;
 }
 
 .textarea-reports {
@@ -729,6 +769,210 @@ position: absolute;
   margin-bottom: 4px;
 }
 
+.bold {
+  color: #000000 !important;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.message-result-container {
+    border-bottom: 1px solid #f6f6f7;
+    flex-direction: row;
+    padding: 15px;
+    display: flex;
+    position: relative;
+    width: 100%;
+}
+
+.message-result-top {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.message-result-top img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.message-result-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.message-result-body h1 {
+    font-size: 16px;
+    font-weight: 400;
+    margin: 0 0 8px 0;
+    color: #333;
+    word-wrap: break-word;
+}
+
+.message-result-body span {
+    color: #858484;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.subsection-sidebar-info {
+    background: #f7f5f5;
+    border: 1px solid #eeeeee;
+    border-radius: 3px;
+    padding: 7px;
+}
+
+.subsection-sidebar-info::before {
+    content: var(--subsection-header);
+    text-align: left;
+    position: absolute;
+    left: 40px;
+    background: #7289da;
+    color: white;
+    padding: 5px;
+    width: 336px;
+    margin-top: -15px;
+    font-size: 12px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.subsection-sidebar-info::after {
+    content: var(--subsection-status-symbol);
+    position: absolute; 
+    padding: 5px;
+    font-size: 12px;
+    position: absolute;
+    text-align: right;
+    top: 297px;
+    right: 42px;
+    color: white;
+}
+
+.message-result-attachments {
+    display: flex;
+    align-items: flex-end;
+}
+
+.message-attachments {
+    flex-flow: wrap;
+    gap: 8px;
+    display: flex;
+    margin-left: 10px;
+}
+
+.attachment-detail {
+  color: #333;
+  cursor: pointer;
+  border: 1px solid #f4f4f4;
+  border-radius: 2px;
+  padding: 4px 8px;
+  font-size: 12px;
+  transition: background-color .2s;
+  display: flex;
+  align-items: center;
+}
+
+.attachment-detail svg {
+  height: 15px;
+  width: auto;
+  fill: currentColor;
+  margin-right: 5px;
+}
+
+
+.attachment-detail span {
+  margin-bottom: 0;
+}
+
+.selected-message {
+  background-color: #7289da;
+  color: white;
+   border-bottom: none !important;
+}
+
+
+.selected-message > .message-result-body > .message-header-details > h1 {
+  color: white !important;
+}
+
+.selected-message > .message-result-body > h1 {
+  color: white !important;
+}
+
+.selected-message > .message-result-body > .message-result-attachments > span {
+  color: white !important;
+}
+
+.selected-message > .message-result-body > .message-result-attachments > .message-attachments > .attachment-detail {
+  color: white !important;
+      border: 1px solid #9ca6ff !important;
+
+}
+
+
+.selected-message > .message-result-body > .message-result-attachments > .message-attachments > .attachment-detail:hover {
+       background-color: #687ecb !important;
+}
+
+
+.selected-message > .message-result-body > .message-result-attachments > .message-attachments > .attachment-detail > span {
+  color: white !important;
+}
+
+.attachment-detail:hover {
+    background-color: #d8dce0;
+}
+
+.message-header-details {
+    display: flex;
+    align-items: baseline;
+}
+
+.message-header-details h1 {
+    color: #2c2f33;
+    margin: 0 5px 0 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.message-result-username {
+  transition: border 0.2s ease-out, background-color 0.2s ease-out, padding 0.2s ease-out;
+}
+
+.message-result-username:hover {
+   border: 1px solid #9ca6ff !important;
+    border-radius: 3px;
+    background-color: #687ecb !important;
+    color: white;
+    padding-left: 1px;
+    padding-right: 1px;
+}
+
+.message-result-avatar {
+  transition: border 0.2s ease-out, background-color 0.2s ease-out, padding 0.2s ease-out;
+}
+
+.message-result-avatar:hover {
+   border: 1px solid #9ca6ff !important;
+    background-color: #687ecb !important;
+    padding-left: 1px;
+    padding-right: 1px;
+}
+
+.message-header-details span {
+    font-size: 13px;
+    color: #bababa;
+    font-weight: 400;
+} 
+
+.message-actions {
+    position: absolute;
+    right: 50px;
+}
+
 a {
   color: #00b0f4;
   cursor: pointer;
@@ -982,4 +1226,37 @@ th {
 .search-no-results > img {
   width: 100px;
   margin-top: 20px;
+}
+
+.update-available {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.update-available-text {
+  display: flex;
+  align-items: center;
+}
+
+.update-available svg {
+  fill: currentColor;
+  width: 24px;
+  height: auto;
+  margin-right: 5px;
+}
+
+.update-available-commit, .update-available-instructions {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.update-available-commit p, .update-available-instructions p, .update-available-instructions li {
+  margin: 5px 0 5px 0;
+}
+
+.block {
+  display: inline-block;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0 5px 0 5px;
 }

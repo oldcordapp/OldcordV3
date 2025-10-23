@@ -3,6 +3,10 @@ export const utils = {
     return document.cookie.includes("debug_mode=true");
   },
 
+  isOldplungerEnabled() {
+    return document.cookie.includes("oldplunger_enabled=true");
+  },
+
   loadLog(message, status = "info") {
     const logsElement = document.getElementById("oldcord-loading-logs");
     if (!logsElement) return;
@@ -40,7 +44,9 @@ export const utils = {
 
   getDefaultClientBuild() {
     const parts = `; ${document.cookie}`.split("; default_client_build=");
-    return parts.length === 2 ? parts.pop().split(";").shift() : "october_5_2017";
+    return parts.length === 2
+      ? parts.pop().split(";").shift()
+      : "october_5_2017";
   },
 
   setCookie(name, value) {

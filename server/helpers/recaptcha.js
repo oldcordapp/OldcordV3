@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 module.exports = {
     verify: async (answer) => {
         if (!global.config.captcha_config.secret_key) return false;

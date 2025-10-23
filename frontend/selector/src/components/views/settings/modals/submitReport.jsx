@@ -2,9 +2,10 @@ import Modal from "@oldcord/frontend-shared/components/modal";
 import Button from "@oldcord/frontend-shared/components/button";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 
-export default function ({ onClose, onConfirm }) {
+export default function ({ isOpen, onClose, onConfirm }) {
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title="Report Content"
       showCloseButton={false}

@@ -9,7 +9,7 @@ const globalUtils = require('../helpers/globalutils');
 
 router.param('userid', async (req, res, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
-  
+
     next();
 });
 
@@ -36,17 +36,66 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
             });
         }
 
+        if (userRet.bot) {
+            return res.status(404).json({
+                code: 400,
+                message: "Please use the \"Bots\" tab to lookup bots."
+            });
+        } //This is because it has application info, etc
+
+        let bots = await global.database.getUsersBots(userRet);
+
+        const userRetTotal = {
+            ...userRet,
+            guilds,
+            bots
+        };
+
+        return res.status(200).json(globalUtils.sanitizeObject(userRetTotal,
+            ['settings', 'token', 'password', 'disabled_until', 'disabled_reason']
+        ));
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.get("/bots/:userid", staffAccessMiddleware(3), async (req, res) => {
+    try {
+        const userid = req.params.userid;
+
+        if (!userid) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Bot"
+            });
+        } // there is no point renaming this shit tbh
+
+        const [userRet, guilds] = await Promise.all([
+            global.database.getBotByUserId(userid),
+            global.database.getUsersGuilds(userid)
+        ]);
+
+        if (!userRet) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Bot"
+            });
+        }
+
         const userWithGuilds = {
             ...userRet,
             guilds,
         };
 
-        return res.status(200).json(globalUtils.sanitizeObject(userWithGuilds, 
-            ['settings', 'token', 'password', 'disabled_until', 'disabled_reason']
-        ));
+        return res.status(200).json(userWithGuilds);
     } catch (error) {
         logText(error, "error");
-    
+
         return res.status(500).json({
             code: 500,
             message: "Internal Server Error"
@@ -74,10 +123,16 @@ router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
             });
         }
 
+        let owner = await global.database.getAccountByUserId(guildRet.owner_id);
+
+        if (owner != null) {
+            guildRet.owner = globalUtils.miniUserObject(owner);
+        } //this fucking sucks ass and we need to fix this ASAP.
+
         return res.status(200).json(guildRet);
     } catch (error) {
         logText(error, "error");
-    
+
         return res.status(500).json({
             code: 500,
             message: "Internal Server Error"
@@ -85,14 +140,32 @@ router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
     }
 });
 
-router.get("/reports", staffAccessMiddleware(3), async (req, res) => {
+router.get("/@me", staffAccessMiddleware(1), async (req, res) => {
+    try {
+        let ret = req.account;
+
+        ret.staff_details = req.staff_details;
+
+        return res.status(200).json(globalUtils.sanitizeObject(ret, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
+
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.get("/reports", staffAccessMiddleware(1), async (req, res) => {
     try {
         let reports = await global.database.getInstanceReports();
 
         return res.status(200).json(reports);
     } catch (error) {
         logText(error, "error");
-    
+
         return res.status(500).json({
             code: 500,
             message: "Internal Server Error"
@@ -144,7 +217,7 @@ router.patch("/reports/:reportid", staffAccessMiddleware(1), async (req, res) =>
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
-    
+
         return res.status(500).json({
             code: 500,
             message: "Internal Server Error"
@@ -181,10 +254,10 @@ router.delete("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => 
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
-    
+
         return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
+            code: 500,
+            message: "Internal Server Error"
         });
     }
 });
@@ -196,22 +269,22 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
         if (!user) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
-            });  
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
+            });
         }
 
         if (user.id === req.account.id) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
             });
         }
 
         if (user.disabled_until) {
             return res.status(400).json({
                 code: 400,
-                message: "User is already disabled."
-            }); 
+                message: `${user.bot ? 'Bot' : 'User'} is already disabled.`
+            });
         }
 
         let until = req.body.disabled_until;
@@ -220,7 +293,7 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
             return res.status(400).json({
                 code: 400,
                 disabled_until: "This field is required."
-            });  
+            });
         }
 
         let audit_log_reason = req.body.internal_reason;
@@ -242,14 +315,171 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
         }
 
         await global.dispatcher.dispatchLogoutTo(req.params.userid);
-        
+
         return res.status(200).json(tryDisable);
     } catch (error) {
         logText(error, "error");
-    
+
         return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
+    try {
+        let channelId = req.query.channelId;
+        let messageId = req.query.messageId;
+        let context = req.query.context;
+        let cdnLink = req.query.cdnLink;
+        let message;
+
+        let normalizeParam = (param) => {
+            if (param === "null" || param === "undefined" || param === "") {
+                return null;
+            }
+            return param;
+        };
+
+        channelId = normalizeParam(channelId);
+        messageId = normalizeParam(messageId);
+        context = normalizeParam(context);
+        cdnLink = normalizeParam(cdnLink);
+
+        if (!channelId && !messageId && !cdnLink) {
+            return res.status(400).json({
+                code: 400,
+                message: "channelId or messageId (or cdnLink) is required to search messages."
+            });
+        }
+
+        if (cdnLink) {
+             message = await global.database.getMessageByCdnLink(cdnLink);
+
+             if (message == null) {
+                 return res.status(404).json({
+                     code: 404,
+                     message: "No Message found with that CDN Link"
+                 });
+             }
+
+             messageId = message.id;
+             channelId = message.channel_id;
+        }
+
+        if (messageId) {
+            message = await global.database.getMessageById(messageId);
+
+            if (message == null) {
+                return res.status(404).json({
+                    code: 404,
+                    message: "Unknown Message"
+                });
+            }
+
+            if (!channelId) {
+                channelId = message.channel_id;
+            }
+        }
+
+        if (!channelId) {
+            return res.status(400).json({
+                code: 400,
+                message: "A channelId is required."
+            });
+        }
+
+        let channel = await global.database.getChannelById(channelId);
+
+        if (!channel) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Channel"
+            });
+        }
+
+        let retMessages = [];
+
+        let targetMessageId = messageId || null;
+
+        let messagesBefore = await global.database.getChannelMessages(channelId, "", 25, targetMessageId, null, false);
+
+        retMessages.push(...messagesBefore);
+
+        if (message != null) {
+            retMessages.push(message);
+        }
+
+        let messagesAfter = await global.database.getChannelMessages(channelId, "", 25, null, targetMessageId, false);
+
+        retMessages.push(...messagesAfter);
+
+        let uniqueMessagesMap = new Map();
+
+        for (const msg of retMessages) {
+            uniqueMessagesMap.set(msg.id, msg);
+        }
+
+        let finalMessages = Array.from(uniqueMessagesMap.values());
+
+        finalMessages.sort((a, b) => a.id.localeCompare(b.id));
+
+        return res.status(200).json(finalMessages);
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.delete("/messages/:messageid", staffAccessMiddleware(2), async (req, res) => {
+    try {
+        let messageid = req.params.messageid;
+
+        if (!messageid) {
+            return res.status(400).json({
+                code: 404,
+                message: "Unknown Message"
+            });
+        }
+
+        let msgRet = await global.database.getMessageById(messageid);
+
+        if (!msgRet) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Message"
+            });
+        }
+
+        let guildRet = await global.database.getGuildById(msgRet.guild_id);
+
+        if (!guildRet) {
+            return res.status(500).json({
+                code: 500,
+                message: "Internal Server Error"
+            });
+        }
+
+        await global.database.deleteMessage(messageid);
+
+        await global.dispatcher.dispatchEventInGuild(guildRet, "MESSAGE_DELETE", {
+            id: msgRet.id,
+            guild_id: msgRet.guild_id,
+            channel_id: msgRet.channel_id
+        });
+
+        return res.status(204).send();
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
         });
     }
 });
@@ -261,14 +491,14 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
         if (!user) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
-            });  
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
+            });
         }
 
         if (user.id === req.account.id) {
             return res.status(404).json({
                 code: 404,
-                message: "Unknown User"
+                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
             });
         }
 
@@ -281,6 +511,13 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
             });
         }
 
+        if (user.bot) {
+            await global.database.deleteBotById(req.params.userid);
+            await global.dispatcher.dispatchLogoutTo(req.params.userid);
+
+            return res.status(204).send();
+        }
+
         let tryDisable = await global.database.internalDeleteAccount(req.staff_details, req.params.userid, audit_log_reason);
 
         if (!tryDisable) {
@@ -291,14 +528,14 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
         }
 
         await global.dispatcher.dispatchLogoutTo(req.params.userid);
-        
+
         return res.status(200).json(tryDisable);
     } catch (error) {
         logText(error, "error");
-    
+
         return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
+            code: 500,
+            message: "Internal Server Error"
         });
     }
 });

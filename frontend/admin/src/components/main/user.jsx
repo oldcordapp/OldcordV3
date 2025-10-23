@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Member from './member';
 import Paginator from './paginator';
-import Channel from './channel';
 import DefaultAvatar from '../../assets/default-avatar.png'
 import Confirmation from '../modals/confirmation';
 import Ic_dots from '../../assets/ic_dots.svg?react';
@@ -16,6 +15,8 @@ const User = ({ data }) => {
     const closeConfirmation = () => setConfirmation(null);
     const closeInputPopup = () => setInputPopup(null);
     const dropdownRef = useRef(null);
+
+    let user_data = JSON.parse(localStorage.getItem("user_data"));
 
     const clearAvatar = () => {
         fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${data.id}`, {
@@ -113,7 +114,7 @@ const User = ({ data }) => {
         { name: "Edit Info", not_implemented_yet: true, action: () => { } },
         { name: "Clear Avatar", not_implemented_yet: true, action: () => setConfirmation({ summary: `Are you sure you want to clear "${data.username}"'s avatar?`, onYes: clearAvatar }) },
         {
-            name: "Disable", not_implemented_yet: false, action: () => {
+            name: "Disable", not_implemented_yet: (user_data && user_data.id === data.id), action: () => {
                 setInputPopup({
                     summary: `Are you sure you want to disable "${data.username}"?`,
                     fieldType: 'text',
@@ -128,7 +129,7 @@ const User = ({ data }) => {
             }
         },
         {
-            name: "Delete", not_implemented_yet: false, action: () => {
+            name: "Delete", not_implemented_yet: (user_data && user_data.id === data.id), action: () => {
                 setInputPopup({
                     summary: `Are you sure you want to delete "${data.username}"?`,
                     fieldType: 'text',
@@ -207,10 +208,6 @@ const User = ({ data }) => {
                     {data.verified ? 'Yes' : 'No'}
                 </div>
                 <div className='mainPage-main-components-sidebar-infoLine'>
-                    <div className='mainPage-main-components-sidebar-label'>Is Bot?</div>
-                    {data.bot ? 'Yes' : 'No'}
-                </div>
-                <div className='mainPage-main-components-sidebar-infoLine'>
                     <div className='mainPage-main-components-sidebar-label'>Server Count</div>
                     {data.guilds.length}
                 </div>
@@ -239,6 +236,21 @@ const User = ({ data }) => {
                          <Paginator header="Relationships" tabs={['Username', 'Discriminator', 'Status']}>
                             {data.relationships.map((entry, i) => (
                                 <Relationship key={i} avatarHash={entry.user.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + entry.user.id + '/' + entry.user.avatar + '.png'} username={entry.user.username} discriminator={entry.user.discriminator} id={entry.user.id} type={toRelationshipType(entry.type)}></Relationship>
+                            ))}
+                        </Paginator>
+                    </> : <></>}
+                    {data.bots && Array.isArray(data.bots) && data.bots.length > 0 ? <>
+                         <Paginator header="Bots" tabs={['Username', 'Id']}>
+                            {data.bots.map((bot, i) => (
+                                <Member
+                                    key={i}
+                                    avatarHash={bot.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + bot.id + '/' + bot.avatar + '.png'}
+                                    username={`${bot.username}#${bot.discriminator}`}
+                                    discriminator={bot.id}
+                                    id={bot.id}
+                                    bot={true}
+                                    actuallyServer={false}
+                                />
                             ))}
                         </Paginator>
                     </> : <></>}

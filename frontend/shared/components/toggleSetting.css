@@ -32,6 +32,7 @@
   font-weight: 500;
   color: #b9bbbe;
   margin-top: 4px;
+  max-width: 70ch;
 }
 
 .toggle-switch {

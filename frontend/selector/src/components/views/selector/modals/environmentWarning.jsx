@@ -3,7 +3,7 @@ import Button from "@oldcord/frontend-shared/components/button";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import { useState, useEffect } from "react";
 
-export default function ({ onClose, onConfirm, environment }) {
+export default function ({ isOpen, onClose, onConfirm, environment }) {
   const [displayedEnvironment, setDisplayedEnvironment] = useState(environment);
 
   useEffect(() => {
@@ -21,6 +21,7 @@ export default function ({ onClose, onConfirm, environment }) {
 
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title={`${getEnvironmentName(displayedEnvironment)} Warning`}
       showCloseButton={false}

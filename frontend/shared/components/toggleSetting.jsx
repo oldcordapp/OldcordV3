@@ -1,5 +1,5 @@
 import { useId } from "react";
-import "./toggleSettings.css";
+import "./toggleSetting.css";
 import ToggleSwitch from "./toggleSwitch";
 
 export default function ({ title, description, isChecked, onChange }) {

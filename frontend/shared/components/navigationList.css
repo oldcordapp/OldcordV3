@@ -4,7 +4,7 @@
   flex: 1;
 }
 
-.nav-list * {
+.nav-list *:not(.nav-separator) {
   width: 192px;
 }
 
@@ -56,6 +56,7 @@
   height: 1px;
   margin: 8px 10px;
   background-color: rgba(114, 118, 125, 0.3);
+  width: 172px;
 }
 
 .social-links {

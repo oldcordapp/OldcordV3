@@ -1,9 +1,8 @@
-const fetch = require('node-fetch');
 const ytdl = require('@distube/ytdl-core');
 const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 const cheerio = require('cheerio');
-const Jimp = require('jimp');
+const { Jimp } = require('jimp');
 
 const hexToDecimal = (hex) => {
     if (hex.startsWith('#')) {
@@ -32,7 +31,7 @@ const embedder = {
             let image_data;
 
             if (url.endsWith(".png") || url.endsWith(".jpg") || url.endsWith(".jpeg")) {
-                image_buffer = await content.buffer();
+                image_buffer = await content.arrayBuffer();
                 image_data = await Jimp.read(image_buffer);
 
                 return {
@@ -84,7 +83,7 @@ const embedder = {
                 });
 
                 if (fetch2.ok) {
-                    image_buffer = await fetch2.buffer();
+                    image_buffer = await fetch2.arrayBuffer();
 
                     try {
                         image_data = await Jimp.read(image_buffer);
@@ -218,6 +217,13 @@ const embedder = {
             }
 
             if (!embed.title) {
+                let urlObj = new URL(url);
+
+                urlObj.search = '';
+                urlObj.hash = '';
+
+                url = urlObj.toString(); //im lazy ok
+
                 let result = await embedder.getEmbedInfo(url);
 
                 if (result == null) {

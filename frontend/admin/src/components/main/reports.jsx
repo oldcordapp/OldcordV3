@@ -1,17 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import Sidebar from './sidebar';
 import Avatar from './avatar';
-import Searchbar from './searchbar';
-import Server from './server';
 import Paginator from './paginator';
 import DefaultAvatar from '../../assets/default-avatar.png'
-import Relationship from './relationship';
-import NoResults from '../../assets/img_noresults.svg'
 import IcReports from '../../assets/ic_reports.svg?react';
 
-import User from './user';
 import Report from './report';
 import Button from '@oldcord/frontend-shared/components/button';
 import { useAuthUser } from '../..';
@@ -108,7 +103,7 @@ const Reports = () => {
                                 {data.length === 0 ? <>
                                     <>
                                         <div className='search-no-results'>
-                                            <IcReports style={{ color: "#4f5660", maxWidth: '125px', maxHeight: '125px' }} />
+                                            <IcReports style={{ fill: "#4f5660", width: '125px', height: "auto" }} />
                                             <p>No Reports Found! Good Work!</p>
                                         </div>
                                     </>
@@ -118,7 +113,7 @@ const Reports = () => {
                                             {selectedReport != null ? <>
                                                 <div className="mainPage-main-components-sidebar-guildAvatar">
                                                     <div className='avatar'>
-                                                        <IcReports style={{ color: "#4f5660", maxWidth: '125px', maxHeight: '125px' }} />
+                                                        <IcReports style={{ fill: "#4f5660", width: '125px', height: "auto" }} />
                                                     </div>
                                                 </div>
                                                 <div className='mainPage-main-components-sidebar-separator no-margin-override'></div>
@@ -166,7 +161,7 @@ const Reports = () => {
                                             </> : <>
                                                 <div className="mainPage-main-components-sidebar-guildAvatar">
                                                     <div className='avatar'>
-                                                        <IcReports style={{ color: "#4f5660", maxWidth: '125px', maxHeight: '125px' }} />
+                                                        <IcReports style={{ color: "#4f5660", width: '125px', height: "auto" }} />
                                                     </div>
                                                 </div>
                                                 <div className='mainPage-main-components-sidebar-text' style={{ fontSize: '20px' }}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import Ic_pageLeft from '../../assets/ic_pageLeft.svg?react'
 import Ic_pageRight from '../../assets/ic_pageRight.svg?react'

@@ -1,8 +1,7 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-const Member = ({ avatarHash, username, discriminator, id, actuallyServer = false }) => {
+const Member = ({ avatarHash, username, discriminator, id, actuallyServer = false, bot = false }) => {
     const navigate = useNavigate();
-    const targetPath = `/${actuallyServer ? 'servers' : 'users'}?searchInput=${id}`;
+    const targetPath = `/${actuallyServer ? 'servers' : (bot ? 'bots' : 'users')}?searchInput=${id}`;
 
     const handleRowClick = () => {
         navigate(targetPath);

@@ -2,9 +2,10 @@ import Modal from "@oldcord/frontend-shared/components/modal";
 import Button from "@oldcord/frontend-shared/components/button";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 
-export default function ({ onClose }) {
+export default function ({ isOpen, onClose }) {
   return (
     <Modal
+      isOpen={isOpen}
       onClose={onClose}
       title="Future feature!"
       showCloseButton={false}

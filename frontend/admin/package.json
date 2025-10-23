@@ -1,23 +1,20 @@
 {
   "scripts": {
-    "build": "vite build",
-    "dev": "vite"
+    "build": "node ../scripts/set-hash.js vite build",
+    "dev": "node ../scripts/set-hash.js vite"
   },
   "dependencies": {
-    "@oldcord/frontend-shared": "*",
+    "@oldcord/frontend-shared": "*"
+  },
+  "peerDependencies": {
     "@vitejs/plugin-react": "^5.0.3",
     "babel-plugin-react-compiler": "^19.1.0-rc.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.3",
     "vite": "npm:rolldown-vite@7.1.12",
-    "vite-plugin-svgr": "^4.5.0"
-  },
-  "devDependencies": {
+    "vite-plugin-svgr": "^4.5.0",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9"
-  },
-  "overrides": {
-    "vite": "npm:rolldown-vite@7.1.12"
   }
 }

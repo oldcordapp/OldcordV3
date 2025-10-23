@@ -1,7 +1,10 @@
 import NavigationList from "@oldcord/frontend-shared/components/navigationList";
 import ViewHandler from "../../../hooks/viewHandler";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
-import { useModal } from "@oldcord/frontend-shared/hooks/modalHandler";
+import { useState } from "react";
+import Changelog from "./modals/changelog";
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
+import getUserAgent from "../../../lib/getUserAgent";
 
 export const SETTINGS_VIEWS = {
   INFO: "info",
@@ -12,6 +15,7 @@ export const SETTINGS_VIEWS = {
   OPFS_SETTINGS: "opfs_settings",
   CHANGELOG: "changelog",
   REPORT_CONTENT: "report_content",
+  DEVELOPER_PORTAL: "developer_portal",
   ADVANCED_SETTINGS: "advanced_settings",
 };
 
@@ -23,7 +27,7 @@ const { Provider, useContextHook } = ViewHandler({
 export default function () {
   const { activeView, changeView } = useContextHook();
   const { hasUnsavedChanges, triggerNudge } = useUnsavedChanges();
-  const { addModal } = useModal();
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   const navItems = [
     { type: "header", label: "Oldplunger" },
@@ -52,11 +56,18 @@ export default function () {
       view: SETTINGS_VIEWS.OPFS_SETTINGS,
     },
     { type: "separator" },
-    { type: "header", label: "Instance Specific" },
+    { type: "header", label: "Instance" },
+    {
+      type: "openUrl",
+      label: "Developer Portal",
+      onClick: () => {
+        window.open("/developers");
+      },
+    },
     {
       type: "item",
       label: "Report Content",
-      view: SETTINGS_VIEWS.REPORT_CONTENT
+      view: SETTINGS_VIEWS.REPORT_CONTENT,
     },
     { type: "separator" },
     { type: "header", label: "Oldcord" },
@@ -65,14 +76,14 @@ export default function () {
       label: "Changelog",
       view: SETTINGS_VIEWS.CHANGELOG,
       onClick: () => {
-        addModal("changelog");
+        setIsChangelogOpen(true);
       },
     },
     {
       type: "item",
       label: "Advanced Settings",
       view: SETTINGS_VIEWS.ADVANCED_SETTINGS,
-    }
+    },
   ];
 
   function handleItemClick(view) {
@@ -84,11 +95,33 @@ export default function () {
   }
 
   return (
-    <NavigationList
-      navItems={navItems}
-      activeView={activeView}
-      onItemClick={handleItemClick}
-    />
+    <>
+      <NavigationList
+        navItems={navItems}
+        activeView={activeView}
+        onItemClick={handleItemClick}
+      />
+      <div style={{ padding: "8px 10px" }}>
+        <Text
+          variant="body"
+          style={{
+            fontSize: "12px",
+            fontWeight: "400",
+            lineHeight: "1.333",
+            color: "#72767d",
+            marginTop: "0",
+          }}
+        >
+          Oldcord {import.meta.env.VITE_APP_GIT_COMMIT_HASH}
+          <br />
+          {getUserAgent()}
+        </Text>
+      </div>
+      <Changelog
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
+      />
+    </>
   );
 }
 
