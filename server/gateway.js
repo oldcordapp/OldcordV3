@@ -64,7 +64,7 @@ const gateway = {
         let cookies = req.headers.cookie;
 
         if (!cookies) {
-            cookies = `release_date=thirdParty;default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
+            cookies = `release_date=thirdPartyOrMobile;default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
         }
 
         if (!cookies && isSameHost && !globalUtils.config.require_release_date_cookie) {
@@ -86,8 +86,8 @@ const gateway = {
         }
 
         if (!cookieStore['release_date']) {
-            cookies += `release_date=thirdParty;`;
-            cookieStore['release_date'] = "thirdParty";
+            cookies += `release_date=thirdPartyOrMobile;`;
+            cookieStore['release_date'] = "thirdPartyOrMobile";
         }
         
         if (!globalUtils.addClientCapabilities(cookieStore['release_date'], socket)) {

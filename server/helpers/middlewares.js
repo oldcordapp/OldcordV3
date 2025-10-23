@@ -34,8 +34,8 @@ async function clientMiddleware(req, res, next) {
         let cookies = req.cookies;
 
         if ((!cookies) || (!cookies['release_date'] && !isSameHost)) {
-            cookies['release_date'] = "thirdParty"
-            res.cookie('release_date', "thirdParty")
+            cookies['release_date'] = "thirdPartyOrMobile"
+            res.cookie('release_date', "thirdPartyOrMobile")
         }
 
         if (!cookies['release_date'] && isSameHost && !config.require_release_date_cookie) {

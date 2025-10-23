@@ -84,7 +84,7 @@ const globalUtils = {
         return code;
     },
     addClientCapabilities: (client_build, obj) => {
-        if (client_build === "thirdParty") {
+        if (client_build === "thirdPartyOrMobile") {
             const now = new Date();
             const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
             client_build = `${months[now.getMonth()]}_${now.getDate()}_${now.getFullYear()}`;
@@ -106,8 +106,8 @@ const globalUtils = {
             obj.client_build_date = date;
             obj.plural_recipients = (date.getFullYear() == 2016 && date.getMonth() >= 6) || date.getFullYear() >= 2017;
             obj.channel_types_are_ints = obj.plural_recipients;
-            if (client_build === "thirdParty") {
-                obj.isThirdParty = true;
+            if (client_build === "thirdPartyOrMobile") {
+                obj.isThirdPartyOrMobile = true;
             }
             return true;
         }
