@@ -8,40 +8,51 @@ export const oldcordChangelog = {
   sections: [
     {
       type: "default",
-      body: "Welcome to another changelog where we explain how awesome we are by releasing updates that are so cool you'll say @someone at any time!",
+      body: "Oldcord turns three years old! Thank you so much to see us grow! While we do not have a video to showcase how we have grown, here's <a href=\"https://arcadia.noia.site/posts/1759733688246\">noia's blog post about the WebRTC patch we've done and a small tidbit about how much we've grown</a>. <small>And yes we are late by one month but who cares.</small>",
     },
     {
       type: "added",
-      title: "Oldcord mods? Oldcord staff!",
+      title: "Special gifts for the birthday boy.",
       items: [
-        "Admin panel is now active! Instance owners can now appoint people to manage the instance. <small>But please go touch some grass.</small>",
-        "Reporting is now available in Selector. <small>Don't ask why in the selector and not in the client, you already know.</small>",
+        "Oldplunger is now in development! You can try it out in the <strong>Oldplunger Settings</strong> tab.",
+        "Currently we are focusing on porting the current patches into Oldplunger so that the bootloader can do other things. Like doing your-",
       ],
     },
     {
       type: "fixed",
-      title: "Ah! I hate bugs!",
+      title: "We bought Hurple a bug swatter!",
       items: [
-        "Clear logged out sessions from memory. It's like we throw a takeout of Insomia into the trash.",
-        "Critical bug fix with email existing check and guild vanity existing check. Spiderman meme x2?",
+        "We fixed an issue with image embeds related to the improved item below.",
+        "Discord Developer Portal should load the correct asset URL <small>on Oldplunger at least</small>.",
         "Other bug fixes are on the commit history because the person writing this changelog is lazy and does not want to finish it.",
       ],
     },
     {
       type: "improved",
-      title: "The things that are improved, are improved.",
+      title: "We gave steroids to Hurple.",
       items: [
-        "Selector got some design changes! It still looks familiar, at least.",
-        "Changelog modal can now display images just so it can catch your eye and stuff. I have now fallen and I need @someone!",
+        "We updated all the packages and now we don't have 90+ critical package vulnerabilities! We finally gave Hurple a vaccine! <small>That also lead to image embeds not working, but that's fixed now.</small>",
+        "Selector should look more closer to the service you love back in 2018.",
+      ],
+    },
+    {
+      type: "progress",
+      title: "In progress features coming soon to Oldcord",
+      items: [
+        "Like above, we are porting the current patches into Oldplunger. Here's the plugins we expected to add in Oldplunger in the future:",
+        "Server banners",
+        "Reply functionality",
+        "Themes!",
+        "And many more!",
       ],
     },
     {
       type: "default",
-      title: "Woo!",
+      title: "Thank you.",
       items: [
-        "Oldcord has come so far it's like watching a baby grow. Thank you for joining the Oldcord family.",
-        "If you want to help us create Oldplunger, or if you have any skills to improve Oldcord, please contribute!",
-      ],
+        "Once again, we are happy that you join us on the Oldcord journey, and we hope to see you all in the next disc.",
+        "Say happy birthday to Hurple by the way! He doesn't vacuum hard."
+      ]
     },
   ],
 };

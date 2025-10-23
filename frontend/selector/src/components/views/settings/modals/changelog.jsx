@@ -8,7 +8,7 @@ export default function ({ isOpen, onClose }) {
       isOpen={isOpen}
       onClose={onClose}
       title="Changelog"
-      subtitle="14 October 2025"
+      subtitle="23 October 2025"
       showCloseButton={true}
       size="medium"
       footerAlignment="left"
