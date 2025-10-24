@@ -36,7 +36,7 @@ router.get("/tenor/search", rateLimitMiddleware(global.config.ratelimit_config.t
                     type: "gif",
                     src: media?.url || null,
                     url: gif.itemurl,
-                    width: 100,
+                    width: gif.width,
                     height: 100
                 };
             })
