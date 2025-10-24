@@ -9,7 +9,7 @@ const database = require('./helpers/database');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const globalUtils = require('./helpers/globalutils');
-const { assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
+const { apiVersionMiddleware, assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
 const spacebarPing = require('./spacebar-compat/ping');
 const spacebarPolicies = require('./spacebar-compat/policies');
@@ -585,9 +585,7 @@ app.use("/api/policies", spacebarPolicies);
 
 app.use("/api/ping", spacebarPing);
 
-app.use(/\/api\/v\d+/, router);
-
-app.use("/api", router);
+app.use("/api", apiVersionMiddleware, router);
 
 app.get("/.well-known/spacebar",
 (req, res) => {

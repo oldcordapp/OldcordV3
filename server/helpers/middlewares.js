@@ -18,6 +18,24 @@ if (config.gcs_config && config.gcs_config.autoUploadBucket && config.gcs_config
     bucket = storage.bucket(config.gcs_config.autoUploadBucket);
 }
 
+function apiVersionMiddleware(req, _, next) {
+  const versionRegex = /^\/v(\d+)/;
+  const match = req.path.match(versionRegex);
+
+  if (match) {
+    req.apiVersion = parseInt(match[1], 10);
+
+    req.url = req.url.replace(versionRegex, '');
+    if (req.url === '') {
+      req.url = '/';
+    }
+  } else {
+    req.apiVersion = 3;
+  }
+
+  next();
+};
+
 async function clientMiddleware(req, res, next) {
     try {
         if (spacebarApis.includes(req.path)) return next();
@@ -665,6 +683,7 @@ function channelPermissionsMiddleware(permission) {
 }
 
 module.exports = {
+    apiVersionMiddleware,
     clientMiddleware,
     authMiddleware,
     assetsMiddleware,
