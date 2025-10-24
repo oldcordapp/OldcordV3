@@ -987,7 +987,7 @@ const database = {
                 return false;
             }
 
-            await database.runQuery(`UPDATE users SET email_token = $1, verified = $2 WHERE id = $3`, ['NULL', 1, id]);
+            await database.runQuery(`UPDATE users SET email_token = $1, verified = $2 WHERE id = $3`, [null, 1, id]);
 
             return true;
         } catch (error) {
@@ -1561,7 +1561,7 @@ const database = {
                 //Convert recipients to user snowflakes, discard other data
                 let recipientIDs = globalUtils.usersToIDs(recipients);
 
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [channel_id, type, 'NULL', 'NULL', '0', 'NULL', 'NULL', 0]);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [channel_id, type, null, null, '0', null, null, 0]);
 
                 //Convert recipient snowflakes to users
                 let recipientUsers = [];
@@ -1600,7 +1600,7 @@ const database = {
                     };
                 } else if (type === 3) {
                     //Group channel
-                    await database.runQuery(`INSERT INTO group_channels (id, icon, name, owner_id, recipients) VALUES ($1, $2, $3, $4, $5)`, [channel_id, 'NULL', '', owner_id, JSON.stringify(recipientIDs)]);
+                    await database.runQuery(`INSERT INTO group_channels (id, icon, name, owner_id, recipients) VALUES ($1, $2, $3, $4, $5)`, [channel_id, null, '', owner_id, JSON.stringify(recipientIDs)]);
 
                     return {
                         id: channel_id,
@@ -1615,7 +1615,7 @@ const database = {
                 }
             }
 
-            await database.runQuery(`INSERT INTO channels (id, type, parent_id, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [channel_id, type, parent_id == null ? 'NULL' : parent_id, guild_id, 'NULL', '0', 'NULL', name, 0])
+            await database.runQuery(`INSERT INTO channels (id, type, parent_id, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [channel_id, type, parent_id == null ? 'NULL' : parent_id, guild_id, null, '0', null, name, 0])
 
             return {
                 id: channel_id,
@@ -1694,7 +1694,7 @@ const database = {
                 } else if (process_icon === null) {
                     channel.icon = null;
 
-                    await database.runQuery(`UPDATE group_channels SET icon = $1 WHERE id = $2`, ['NULL', channel_id]);
+                    await database.runQuery(`UPDATE group_channels SET icon = $1 WHERE id = $2`, [null, channel_id]);
                 }
 
                 await database.runQuery(`UPDATE group_channels SET name = $1 WHERE id = $2`, [channel.name ?? '', channel_id]);
@@ -1910,7 +1910,7 @@ const database = {
 
             let token = globalUtils.generateToken(application.id, pwHash);
 
-            await database.runQuery(`INSERT INTO bots (id, application_id, username, discriminator, avatar, token) VALUES ($1, $2, $3, $4, $5, $6)`, [application.id, application.id, application.name, discriminator.toString(), 'NULL', token]);
+            await database.runQuery(`INSERT INTO bots (id, application_id, username, discriminator, avatar, token) VALUES ($1, $2, $3, $4, $5, $6)`, [application.id, application.id, application.name, discriminator.toString(), null, token]);
 
             return {
                 avatar: null,
@@ -2065,7 +2065,7 @@ const database = {
             let id = Snowflake.generate();
             let secret = globalUtils.generateString(20);
 
-            await database.runQuery(`INSERT INTO applications (id, owner_id, name, icon, secret, description) VALUES ($1, $2, $3, $4, $5, $6)`, [id, user.id, name, 'NULL', secret, '']);
+            await database.runQuery(`INSERT INTO applications (id, owner_id, name, icon, secret, description) VALUES ($1, $2, $3, $4, $5, $6)`, [id, user.id, name, null, secret, '']);
 
             return {
                 id: id,
@@ -3958,7 +3958,7 @@ const database = {
                 return false;
             }
 
-            await database.runQuery(`UPDATE members SET roles = $1 WHERE user_id = $2`, ['NULL', user_id]);
+            await database.runQuery(`UPDATE members SET roles = $1 WHERE user_id = $2`, [null, user_id]);
 
             return true;
         } catch (error) {
@@ -4071,7 +4071,7 @@ const database = {
 
             const date = new Date().toISOString();
 
-            await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [guild.id, user_id, 'NULL', '[]', date, 0, 0]);
+            await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [guild.id, user_id, null, '[]', date, 0, 0]);
 
             return true;
         } catch (error) {
@@ -4596,7 +4596,7 @@ const database = {
                 channel_id,
                 author_id,
                 content,
-                'NULL',
+                null,
                 mentions_data.mention_everyone == true ? 1 : 0,
                 nonce,
                 date,
@@ -5049,7 +5049,7 @@ const database = {
                 }
             }
 
-            await database.runQuery(`INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, name, (icon == null ? 'NULL' : icon), region, owner.id, 'NULL', 300, date, JSON.stringify(exclusions)])
+            await database.runQuery(`INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, name, (icon == null ? 'NULL' : icon), region, owner.id, null, 300, date, JSON.stringify(exclusions)])
 
             if ((client_date.getFullYear() === 2017 && client_date.getMonth() >= 9) || client_date.getFullYear() >= 2018) {
                 //do categories
@@ -5058,15 +5058,15 @@ const database = {
                 let general_text_id = Snowflake.generate();
                 let general_vc_id = Snowflake.generate();
 
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [text_channels_id, 4, id, 'NULL', '0', 'NULL', 'Text Channels', 0]);
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_text_id, 0, id, text_channels_id, 'NULL', '0', 'NULL', 'general', 0]);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [text_channels_id, 4, id, null, '0', null, 'Text Channels', 0]);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_text_id, 0, id, text_channels_id, null, '0', null, 'general', 0]);
 
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [voice_channels_id, 4, id, 'NULL', '0', 'NULL', 'Voice Channels', 1]);
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_vc_id, 2, id, voice_channels_id, 'NULL', '0', 'NULL', 'General', 0]);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [voice_channels_id, 4, id, null, '0', null, 'Voice Channels', 1]);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_vc_id, 2, id, voice_channels_id, null, '0', null, 'General', 0]);
 
                 await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]);
-                await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner.id, 'NULL', '[]', date, 0, 0]);
-                await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, 'NULL', 0]);
+                await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner.id, null, '[]', date, 0, 0]);
+                await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, null, 0]);
 
                 return {
                     afk_channel_id: null,
@@ -5149,10 +5149,10 @@ const database = {
                 }
             }
 
-            await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [id, 0, id, 'NULL', '0', 'NULL', 'general', 0]);
+            await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [id, 0, id, null, '0', null, 'general', 0]);
             await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]);
-            await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner.id, 'NULL', '[]', date, 0, 0]);
-            await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, 'NULL', 0]);
+            await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner.id, null, '[]', date, 0, 0]);
+            await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, null, 0]);
 
             return {
                 afk_channel_id: null,
@@ -5239,7 +5239,7 @@ const database = {
 
             let token = globalUtils.generateToken(id, pwHash);
 
-            await database.runQuery(`INSERT INTO users (id,username,discriminator,email,password,token,created_at,avatar,registration_ip,verified,email_token) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [id, username, discriminator.toString(), email, password ? pwHash : null, token, date, 'NULL', ip, config.email_config.enabled ? 0 : 1, email_token ?? 'NULL']);
+            await database.runQuery(`INSERT INTO users (id,username,discriminator,email,password,token,created_at,avatar,registration_ip,verified,email_token) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [id, username, discriminator.toString(), email, password ? pwHash : null, token, date, null, ip, config.email_config.enabled ? 0 : 1, email_token ?? null]);
 
             return {
                 token: token
@@ -5285,7 +5285,7 @@ const database = {
 
             let date = new Date().toISOString();
 
-            await database.runQuery(`UPDATE messages SET content = $1, edited_timestamp = $2, embeds = $3 WHERE message_id = $4`, [new_content, date, embeds.length > 0 ? JSON.stringify(embeds) : 'NULL', message_id]);
+            await database.runQuery(`UPDATE messages SET content = $1, edited_timestamp = $2, embeds = $3 WHERE message_id = $4`, [new_content, date, embeds.length > 0 ? JSON.stringify(embeds) : null, message_id]);
 
             return true;
         } catch (error) {
@@ -5322,7 +5322,7 @@ const database = {
 
                     await database.runQuery(`UPDATE users SET avatar = $1 WHERE id = $2`, [new_avatar, account.id]);
                 } else if (avatar != new_avatar) {
-                    await database.runQuery(`UPDATE users SET avatar = $1 WHERE id = $2`, ['NULL', account.id]);
+                    await database.runQuery(`UPDATE users SET avatar = $1 WHERE id = $2`, [null, account.id]);
                 }
 
                 return 3;
