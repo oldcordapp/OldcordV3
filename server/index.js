@@ -24,6 +24,7 @@ const udpServer = require('./udpserver');
 const rtcServer = require('./rtcserver');
 const os = require('os');
 const mrServer = require('./mrserver');
+const { Readable } = require("stream");
 
 app.set('trust proxy', 1);
 
@@ -250,7 +251,7 @@ app.get('/proxy/:url', async (req, res) => {
                 res.setHeader('Content-Length', contentLength);
             }
 
-            response.body.pipe(res);
+            Readable.fromWeb(response.body).pipe(res);
         }
     } catch (error) {
         logText(error, "error");
