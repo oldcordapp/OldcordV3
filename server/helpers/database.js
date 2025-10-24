@@ -5359,7 +5359,7 @@ const database = {
 
                 let existsAlready = await global.database.runQuery(`
                     SELECT EXISTS (
-                        SELECT 1 FROM users WHERE username = $1 AND discriminator = $2 AND user_id != $3
+                        SELECT 1 FROM users WHERE username = $1 AND discriminator = $2 AND id != $3
                     ) AS does_exist;
                 `, [new_username, discriminator, account.id]);
 
