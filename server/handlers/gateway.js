@@ -42,7 +42,7 @@ async function handleIdentify(socket, packet) {
         status: "offline",
         activities: [],
         user: globalUtils.miniUserObject(socket.user)
-    });
+    }, undefined, undefined, undefined, socket.apiVersion, packet.d.capabilities);
 
     socket.session = sesh;
 

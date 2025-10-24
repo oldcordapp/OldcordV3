@@ -397,7 +397,22 @@ router.get(/\/settings-proto\/.*/, async (req, res) => {
         });
     }
 
-    return res.status(200).json({settings: {...account.settings}});
+    return res.status(200).json({
+      "settings": {
+          "versions": {
+              "dataVersion": 0
+          },
+          "favoriteGifs": {},
+          "favoriteStickers": {},
+          "stickerFrecency": {},
+          "favoriteEmojis": {},
+          "emojiFrecency": {
+              "emojis": {}
+          },
+          "guildAndChannelFrecency": {},
+          "emojiReactionFrecency": {}
+      }
+    });
   } catch (error) {
     logText(error, "error");
 

@@ -9,7 +9,7 @@ const BUFFER_LIMIT = 500; //max dispatch event backlog before terminating?
 const SESSION_TIMEOUT = 10 * 1000; //10 seconds brooo
 
 class session {
-    constructor(id, socket, user, token, ready, presence, guild_id = 0, channel_id = 0, type = 'gateway') {
+    constructor(id, socket, user, token, ready, presence, guild_id = 0, channel_id = 0, type = 'gateway', apiVersion = 3, capabilities = 0) {
         this.id = id;
         this.socket = socket;
         this.token = token;
@@ -33,6 +33,8 @@ class session {
         this.relationships = [];
         this.subscriptions = [];
         this.guildCache = [];
+        this.apiVersion = apiVersion;
+        this.capabilities = capabilities; 
     }
     onClose(code) {
         this.dead = true;
@@ -457,6 +459,7 @@ class session {
             this.relationships = this.user.relationships;
 
             this.readyUp({
+                v: this.apiVersion,
                 guilds: this.guilds ?? [],
                 presences: this.presences ?? [],
                 private_channels: filteredDMs,

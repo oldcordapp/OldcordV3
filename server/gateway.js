@@ -92,13 +92,18 @@ const gateway = {
         
         if (!globalUtils.addClientCapabilities(cookieStore['release_date'], socket)) {
             socket.close(1000, 'The release_date cookie is in an invalid format.');
-
             return;
         }
 
         if (req.url.includes("compress=zlib-stream")) {
             socket.wantsZlib = true;
             socket.zlibHeader = true;
+        }
+
+        const match = req.url.match(/[?&]v=([^&]*)/);
+
+        if (match && match[1] !== undefined) {
+            socket.apiVersion = Number(match[1]);
         }
 
         socket.cookieStore = cookieStore;
