@@ -210,7 +210,7 @@ app.get('/proxy/:url', async (req, res) => {
             return res.status(400).send('Invalid URL.');
         }
 
-        let contentType = response.headers.get('content-type') || 'image/jpeg';
+        let contentType = response.headers.get('content-type').toLowerCase() || 'image/jpeg';
 
         if (!contentType.startsWith('image/')) {
             return res.status(400).send('Only images are supported via this route. Try harder.');
