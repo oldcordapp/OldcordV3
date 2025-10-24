@@ -175,9 +175,9 @@ const embedder = {
                 }
             };
         } catch (error) {
-            logText(error, "error");
+            logText(error, "error");    
 
-            return null;
+            return {}; //Return {} if ytdl core thinks you're a bot so it doesn't break messaging.
         }
     },
     generateMsgEmbeds: async (content, attachment, force) => {
