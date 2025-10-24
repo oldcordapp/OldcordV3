@@ -42,7 +42,7 @@ async function handleIdentify(socket, packet) {
         status: "offline",
         activities: [],
         user: globalUtils.miniUserObject(socket.user)
-    }, undefined, undefined, undefined, socket.apiVersion, packet.d.capabilities);
+    }, undefined, undefined, undefined, socket.apiVersion, packet.d.capabilities ?? socket.client_build_date);
 
     socket.session = sesh;
 
@@ -364,7 +364,7 @@ async function handleResume(socket, packet) {
             status: socket.user.settings.status,
             activities: [],
             user: globalUtils.miniUserObject(socket.user)
-        });
+        }, undefined, undefined, undefined, socket.apiVersion, packet.d.capabilities ?? socket.client_build_date);
 
         sesh.seq = packet.d.seq;
         sesh.eventsBuffer = [];

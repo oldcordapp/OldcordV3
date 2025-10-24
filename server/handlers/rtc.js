@@ -48,7 +48,7 @@ async function handleIdentify(socket, packet) {
         status: "online",
         activities: [],
         user: globalUtils.miniUserObject(socket.user)
-    }, gatewaySession.guild_id, gatewaySession.channel_id, 'voice');
+    }, gatewaySession.guild_id, gatewaySession.channel_id, 'voice', socket.apiVersion, packet.d.capabilities ?? socket.client_build_date);
 
     socket.session = sesh;
     socket.gatewaySession = gatewaySession;
@@ -524,7 +524,7 @@ async function handleResume(socket, packet) {
             status: 'online',
             activities: [],
             user: socket.user ? globalUtils.miniUserObject(socket.user) : null
-        }, server_id, 0, 'voice');
+        }, server_id, 0, 'voice', socket.apiVersion, packet.d.capabilities ?? socket.client_build_date);
 
         sesh.start();
 

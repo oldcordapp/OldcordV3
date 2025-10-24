@@ -9,7 +9,7 @@ const BUFFER_LIMIT = 500; //max dispatch event backlog before terminating?
 const SESSION_TIMEOUT = 10 * 1000; //10 seconds brooo
 
 class session {
-    constructor(id, socket, user, token, ready, presence, guild_id = 0, channel_id = 0, type = 'gateway', apiVersion = 3, capabilities = 0) {
+    constructor(id, socket, user, token, ready, presence, guild_id = 0, channel_id = 0, type = 'gateway', apiVersion = 3, capabilities) {
         this.id = id;
         this.socket = socket;
         this.token = token;
@@ -34,7 +34,7 @@ class session {
         this.subscriptions = [];
         this.guildCache = [];
         this.apiVersion = apiVersion;
-        this.capabilities = capabilities; 
+        this.capabilities = capabilities; // Either an integer (recent/third party) or a build date (specific build capabilities). We can use it to give builds/capability flag specific JSON object props.
     }
     onClose(code) {
         this.dead = true;
