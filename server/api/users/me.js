@@ -419,35 +419,10 @@ router.patch(/\/settings-proto\/.*/, async (req, res) => {
         });
     }
 
-    let new_settings = account.settings;
-    
-    if (new_settings == null) {
-      return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-      });
-    }
-
-    for (let key in req.body) {
-        if (new_settings.hasOwnProperty(key)) {
-          new_settings[key] = req.body[key];
-        }
-    }
-
-    const attempt = await global.database.updateSettings(account.id, new_settings);
-
-    if (attempt) {
-      const settings = new_settings;
-
-      await global.dispatcher.dispatchEventTo(account.id, "USER_SETTINGS_UPDATE", settings);
-
-      return res.status(204).send();
-    } else {
-      return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-      })
-    }
+    return res.status(403).json({
+      code: 403,
+      message: "This is a v9 endpoint, we will not implement the full set of v9. Do not make an issue about this."
+    });
   } catch (error) {
     logText(error, "error");
 
