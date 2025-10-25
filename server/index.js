@@ -13,7 +13,7 @@ const { apiVersionMiddleware, assetsMiddleware, clientMiddleware } = require('./
 const router = require('./api/index');
 const spacebarPing = require('./spacebar-compat/ping');
 const spacebarPolicies = require('./spacebar-compat/policies');
-const { Jimp } = require('jimp');
+const { Jimp, ResizeStrategy } = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
@@ -298,7 +298,7 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
 
         const image = await Jimp.read(imageBuffer);
 
-        image.resize({ w: parseInt(width), h: parseInt(height)});
+        image.resize({ w: parseInt(width), h: parseInt(height), mode: ResizeStrategy.BICUBIC});
 
         const resizedImage = await image.getBuffer(mime);
 
