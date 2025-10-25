@@ -277,14 +277,6 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
             return res.status(200).sendFile(baseFilePath);
         }
 
-        if (isNaN(parseInt(width)) || parseInt(width) > 800 || parseInt(width) < 0) {
-            width = '800';
-        }
-
-        if (isNaN(parseInt(height)) || parseInt(height) > 800 || parseInt(height) < 0) {
-            height = '800';
-        }
-
         const mime = req.params.filename.endsWith(".jpg") ? 'image/jpeg' : 'image/png';
 
         const resizedFileName = `${req.params.filename.split('.').slice(0, -1).join('.')}_${width}_${height}.${mime.split('/')[1]}`;
@@ -298,7 +290,23 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
 
         const image = await Jimp.read(imageBuffer);
 
-        image.resize({ w: parseInt(width), h: parseInt(height), mode: ResizeStrategy.BICUBIC});
+        if (isNaN(parseInt(width)) || parseInt(width) > 2560 || parseInt(width) < 0) {
+            willResize = true;
+            width = 800;
+            height = image.height * 800 / image.width
+        } else {
+            width = parseInt(width);
+        }
+        
+        if ((isNaN(parseInt(height)) || parseInt(height) > 1440 || parseInt(height) < 0) && !willResize) {
+            willResize = true;
+            height = 800;
+            width = image.width / image.height * 800
+        } else {
+            height = parseInt(height);
+        }
+
+        image.resize({ w: width, h: height, mode: ResizeStrategy.BICUBIC});
 
         const resizedImage = await image.getBuffer(mime);
 
