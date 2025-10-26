@@ -124,15 +124,6 @@ export default {
       ],
     },
     {
-      find: "window.DiscordNative",
-      replacement: [
-        {
-          match: "window.DiscordNative",
-          replace: "window._OldcordNative",
-        },
-      ],
-    },
-    {
       find: /\.default\.require\("path"\)/,
       replacement: [
         {
