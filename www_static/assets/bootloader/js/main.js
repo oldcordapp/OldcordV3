@@ -96,7 +96,11 @@ class Bootloader {
       document.title = window.oldcord.config.instance.name;
 
       // Load the mod immediately before loading Discord locally
-      this.oldplunger = await import(`${location.protocol}//${window.location.host}/assets/oldplunger/index.js`);
+      this.oldplunger =
+        document.cookie.includes("oldplunger_enabled=true") &&
+        (await import(
+          `${location.protocol}//${window.location.host}/assets/oldplunger/index.js`
+        ));
 
       const envCheck = await this.checkEnvironment();
       if (envCheck.status === "ready") {
@@ -262,7 +266,7 @@ class Bootloader {
 
     this.setupDOM(head, body, styles, scripts);
 
-    this.oldplunger.startPlugins("DOMContentLoaded")
+    this.oldplunger && this.oldplunger.startPlugins("DOMContentLoaded");
 
     this.setupResourceInterceptor();
 
