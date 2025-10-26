@@ -45,14 +45,14 @@ export default {
   compatibleBuilds: "all",
   incompatiblePlugins: [],
   debug: true,
+  bypassEvalTypeError: true,
 
   patches: [
     {
       find: "powerMonitor",
       replacement: [
         {
-          match:
-            /(?:this|[a-zA-Z]\.default)\.requireElectron\(\"powerMonitor\",!0\)/,
+          match: /(?:this|\w+\.default)\.requireElectron\("powerMonitor",!0\)/,
           replace: "window.DiscordNative.powerMonitor",
         },
       ],
@@ -61,7 +61,7 @@ export default {
       find: 'requireElectron("app"',
       replacement: [
         {
-          match: /([a-zA-Z])\.default\.requireElectron\("app",!0\)/,
+          match: /\w+\.default\.requireElectron\("app",!0\)/,
           replace: "window.OldcordNative.app",
         },
       ],
@@ -71,7 +71,7 @@ export default {
       replacement: [
         {
           match:
-            /var \w=\w\.default\._getCurrentWindow\(\)\.webContents;\w\.removeAllListeners\("devtools-opened"\),\w\.on\("devtools-opened",function\(\){return\(0,\w\.consoleWarning\)\(\w\.default\.Messages\)}\)/,
+            /var \w+=\w+\.default\._getCurrentWindow\(\)\.webContents;\w+\.removeAllListeners\("devtools-opened"\),\w+\.on\("devtools-opened",function\(\){return\(0,\w+\.consoleWarning\)\(\w+\.default\.Messages\)}\)/,
           replace: "",
         },
       ],
@@ -81,8 +81,36 @@ export default {
       replacement: [
         {
           match:
-            /var \w=this.requireElectron\("webFrame"\);\w.setZoomFactor&&\w.setZoomFactor\(\w\/100\)/,
+            /var (\w+)=this\.requireElectron\("webFrame"\);\1\.setZoomFactor&&\1\.setZoomFactor\(\w+\/100\)/,
           replace: "",
+        },
+      ],
+    },
+    {
+      find: /this\.send\("UPDATE_CRASH_REPORT",\w+\)/,
+      replacement: [
+        {
+          match:
+            /updateCrashReporter:function\([^)]*\)\{[\s\S]*?\},flushDNSCache/,
+          replace: "updateCrashReporter:function(){},flushDNSCache",
+        },
+      ],
+    },
+    {
+      find: /\w+\.send\("BADGE_IS_ENABLED"\)/,
+      replacement: [
+        {
+          match: /setBadge:function\([^)]*\)\{[\s\S]*?\},setSystemTrayIcon/,
+          replace: "setBadge:function(){},setSystemTrayIcon",
+        },
+      ],
+    },
+    {
+      find: /"discord:\/\/"/,
+      replacement: [
+        {
+          match: /"discord:\/\/"/,
+          replace: `"oldcord://"`,
         },
       ],
     },
@@ -133,6 +161,19 @@ export default {
           return window.DiscordNative.process;
         }
         case "electron": {
+          const createWindowShim = () => {
+            const originalWindow = window.DiscordNative.window;
+            return {
+              ...originalWindow,
+              isFocused: () => document.hasFocus(),
+              isMaximized: () => {
+                return false;
+              },
+              isFullScreen: () => document.fullscreenElement != null,
+              unmaximize: originalWindow.restore,
+            };
+          };
+
           const electronShim = {
             remote: {
               ...window.DiscordNative.remoteApp,
@@ -175,9 +216,7 @@ export default {
               require: (module) => {
                 return window.__require(module);
               },
-              getCurrentWindow: () => {
-                return window.DiscordNative.window;
-              },
+              getCurrentWindow: createWindowShim,
             },
             ipcRenderer: window.DiscordNative.ipc,
           };

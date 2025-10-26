@@ -51,6 +51,7 @@ export function initializePlugins() {
           plugin: {
             name: availablePlugin.name,
             debug: availablePlugin.debug,
+            bypassEvalTypeError: availablePlugin.bypassEvalTypeError
           },
         });
       }

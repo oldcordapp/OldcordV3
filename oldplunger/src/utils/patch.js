@@ -11,11 +11,31 @@ export const patches = [];
 
 // So we also took some code from Vencord here, I guess
 
+function addBypassEvalTypeError(moduleId, moduleString, patch) {
+  const bodyStartIndex = moduleString.indexOf("{") + 1;
+  const bodyEndIndex = moduleString.lastIndexOf("}");
+
+  if (bodyStartIndex > 0 && bodyEndIndex > bodyStartIndex) {
+    const functionHeader = moduleString.substring(0, bodyStartIndex);
+    const originalBody = moduleString.substring(bodyStartIndex, bodyEndIndex);
+    const functionFooter = moduleString.substring(bodyEndIndex);
+
+    const newBody = `try { ${originalBody} } catch (err) { console.error('[Patcher] Runtime error in patched module ${String(
+      moduleId
+    )} from plugin ${patch.plugin.name}:', err); }`;
+
+    moduleString = functionHeader + newBody + functionFooter;
+  }
+
+  return moduleString;
+}
+
 export function patchModule(module, id) {
   if (typeof module !== "function") return module;
 
   // 0, prefix to turn it into an expression: 0,function(){} would be invalid syntax without the 0,
   let moduleString = "0," + String(module);
+  let bypassApplied = false;
 
   for (const patch of patches) {
     if (
@@ -46,12 +66,25 @@ export function patchModule(module, id) {
       continue;
     }
 
+    if (moduleString.includes("[Patcher] Runtime error in patched module")) {
+      bypassApplied = true;
+    }
+
+    if (patch.plugin.bypassEvalTypeError && !bypassApplied) {
+      const newModuleString = addBypassEvalTypeError(id, moduleString, patch);
+
+      if (newModuleString !== moduleString) {
+        moduleString = newModuleString;
+        bypassApplied = true;
+      }
+    }
+
     try {
       module = (0, eval)(
         `${moduleString}${
           !patch.plugin.debug ||
           isDebugMode !== "true" ||
-          moduleString.match("//# sourceURL")
+          moduleString.includes("//# sourceURL")
             ? ""
             : `//# sourceURL=oldplunger:///WebpackModule${String(id)}`
         }`
@@ -63,6 +96,8 @@ export function patchModule(module, id) {
       module = originalModule;
       moduleString = originalModuleString;
     }
+
+    bypassApplied = false;
   }
 
   return module;
