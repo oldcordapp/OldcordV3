@@ -328,20 +328,23 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             }
 
             fs.writeFileSync(file_path, req.file.buffer);
-            
-            try {
-                const image = await Jimp.read(req.file.buffer);
-                
-                if (image) {
-                    file_details.width = image.width;
-                    file_details.height = image.height;
-                }
-            } catch (error) {
-                file_details.width = 500;
-                file_details.height = 500;
 
-                logText(error, "error");
+            if (!(file_path.endsWith(".mp4") || file_path.endsWith(".webm"))) {
+                try {
+                    const image = await Jimp.read(req.file.buffer);
+                    
+                    if (image) {
+                        file_details.width = image.width;
+                        file_details.height = image.height;
+                    }
+                } catch (error) {
+                    file_details.width = 500;
+                    file_details.height = 500;
+
+                    logText(error, "error");
+                }
             }
+        
         }
 
         //Write message
