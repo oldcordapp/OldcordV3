@@ -53,7 +53,7 @@ export default {
       replacement: [
         {
           match: /(?:this|\w+\.default)\.requireElectron\("powerMonitor",!0\)/,
-          replace: "window.DiscordNative.powerMonitor",
+          replace: "window._OldcordNative.powerMonitor",
         },
       ],
     },
@@ -62,7 +62,7 @@ export default {
       replacement: [
         {
           match: /\w+\.default\.requireElectron\("app",!0\)/,
-          replace: "window.OldcordNative.app",
+          replace: "window._OldcordNative.app",
         },
       ],
     },
@@ -114,55 +114,92 @@ export default {
         },
       ],
     },
+    {
+      find: "window.DiscordNative",
+      replacement: [
+        {
+          match: "window.DiscordNative",
+          replace: "window._OldcordNative",
+        },
+      ],
+    },
+    {
+      find: "window.DiscordNative",
+      replacement: [
+        {
+          match: "window.DiscordNative",
+          replace: "window._OldcordNative",
+        },
+      ],
+    },
+    {
+      find: /\.default\.require\("path"\)/,
+      replacement: [
+        {
+          match: /(\w+)\.getPath\("appData"\)/,
+          replace: "$1.getPathSync(\"appData\")"
+        }
+      ]
+    }
   ],
 
   async start() {
     window.module = {
       paths: [],
     };
-    window.OldcordNative = {};
+
+    const DiscordNative = window.DiscordNative;
+
+    const PatchedNative = {};
+
+    PatchedNative.globals = {
+      features: DiscordNative.features,
+    };
 
     let preloadedPaths = {};
-
     try {
-      logger.info("Pre-loading required synchronous paths...");
-      preloadedPaths.appData = await window.DiscordNative.app.getPath(
-        "appData"
-      );
-      logger.info(`'appData' path pre-loaded: ${preloadedPaths.appData}`);
+      preloadedPaths.appData = await DiscordNative.app.getPath("appData");
     } catch (err) {
-      logger.error("Fatal: Could not pre-load app paths for shimming.", err);
+      logger.error("Fatal: Could not pre-load appData for shimming.", err);
       preloadedPaths.appData = "";
     }
 
-    const appShim = {
-      getPath: (name) => {
-        if (preloadedPaths[name]) {
-          return preloadedPaths[name];
+    const appShim = Object.create(DiscordNative.app);
+    appShim.getPathSync = (name) => {
+      if (preloadedPaths[name]) {
+        return preloadedPaths[name];
+      }
+      logger.error(
+        `Synchronous getPath requested for '${name}', but it was not pre-loaded!`
+      );
+      return null;
+    };
+    PatchedNative.app = appShim;
+
+    const handler = {
+      get(target, prop, receiver) {
+        if (Reflect.has(target, prop)) {
+          return Reflect.get(target, prop, receiver);
         }
-        logger.error(
-          `Synchronous getPath requested for '${name}', but it was not pre-loaded!`
-        );
-        return null;
+        return Reflect.get(DiscordNative, prop, receiver);
       },
-
-      getVersion: () => window.DiscordNative.app.getVersion(),
-
-      getPathAsync: (name) => window.DiscordNative.app.getPath(name),
+      has(target, prop) {
+        return Reflect.has(target, prop) || Reflect.has(DiscordNative, prop);
+      },
     };
 
-    const originalApp = window.DiscordNative.app;
-    window.OldcordNative.app = { ...originalApp, ...appShim };
+    window._OldcordNative = new Proxy(PatchedNative, handler);
+    logger.info("Successfully created a Proxy to wrap window.DiscordNative.");
 
     window.__require = (module) => {
       logger.info(`Shimming module: ${module}`);
       switch (module) {
         case "process": {
-          return window.DiscordNative.process;
+          return window._OldcordNative.process;
         }
         case "electron": {
           const createWindowShim = () => {
-            const originalWindow = window.DiscordNative.window;
+            const originalWindow = window._OldcordNative.window;
             return {
               ...originalWindow,
               isFocused: () => document.hasFocus(),
@@ -176,20 +213,20 @@ export default {
 
           const electronShim = {
             remote: {
-              ...window.DiscordNative.remoteApp,
+              ...window._OldcordNative.remoteApp,
               getGlobal: (globalVar) => {
                 switch (globalVar) {
                   case "releaseChannel": {
-                    return window.DiscordNative.remoteApp.getReleaseChannel();
+                    return window._OldcordNative.remoteApp.getReleaseChannel();
                   }
                   case "features": {
-                    return window.DiscordNative.features;
+                    return window._OldcordNative.features;
                   }
                   case "mainAppDirname": {
                     try {
-                      const version = window.DiscordNative.app.getVersion();
-                      return window.DiscordNative.fileManager.join(
-                        window.DiscordNative.process.env.LOCALAPPDATA,
+                      const version = window._OldcordNative.app.getVersion();
+                      return window._OldcordNative.fileManager.join(
+                        window._OldcordNative.process.env.LOCALAPPDATA,
                         "Oldcord",
                         `app-${version}`,
                         "resources",
@@ -210,7 +247,7 @@ export default {
               },
               app: {
                 getVersion: () => {
-                  return window.DiscordNative.remoteApp.getVersion();
+                  return window._OldcordNative.remoteApp.getVersion();
                 },
               },
               require: (module) => {
@@ -218,16 +255,16 @@ export default {
               },
               getCurrentWindow: createWindowShim,
             },
-            ipcRenderer: window.DiscordNative.ipc,
+            ipcRenderer: window._OldcordNative.ipc,
           };
 
           return electronShim;
         }
         case "os": {
           const osShim = {
-            ...window.DiscordNative.os,
+            ...window._OldcordNative.os,
             release: () => {
-              return window.DiscordNative.os.release;
+              return window._OldcordNative.os.release;
             },
           };
 
@@ -245,7 +282,7 @@ export default {
 
               return getNodeModulePaths(
                 startPath,
-                window.DiscordNative.fileManager.join
+                window._OldcordNative.fileManager.join
               );
             },
             globalPaths: [],
@@ -256,7 +293,7 @@ export default {
         case "path": {
           const pathShim = {
             join: (...args) => {
-              return window.DiscordNative.fileManager.join(...args);
+              return window._OldcordNative.fileManager.join(...args);
             },
           };
           return pathShim;
@@ -293,7 +330,7 @@ export default {
           );
 
           const originalUtils =
-            window.DiscordNative.nativeModules.requireModule("discord_utils");
+            window._OldcordNative.nativeModules.requireModule("discord_utils");
 
           const discordUtilsShim = {
             ...originalUtils,
@@ -316,7 +353,7 @@ export default {
           return createDeepMock("querystring", logger);
         }
         default: {
-          return window.DiscordNative.nativeModules.requireModule(module);
+          return window._OldcordNative.nativeModules.requireModule(module);
         }
       }
     };
