@@ -118,7 +118,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
             emailToken = null;
         }
 
-        const registrationAttempt = await global.database.createAccount(req.body.username, req.body.email, req.body.password, req.ip ?? 'NULL', emailToken);
+        const registrationAttempt = await global.database.createAccount(req.body.username, req.body.email, req.body.password, req.ip ?? null, emailToken);
 
         if ('reason' in registrationAttempt) {
             return res.status(400).json({
@@ -233,7 +233,7 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
             });
         }
 
-        const loginAttempt = await global.database.checkAccount(req.body.email, req.body.password, req.ip ?? 'NULL');
+        const loginAttempt = await global.database.checkAccount(req.body.email, req.body.password, req.ip ?? null);
 
         if ('disabled_until' in loginAttempt) {
             return res.status(400).json({

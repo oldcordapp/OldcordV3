@@ -19,7 +19,7 @@ let cache = {};
 
 const database = {
     version: 0.2,
-    runQuery: async (queryString, values) => {
+    runQuery: async (queryString, values = []) => {
         //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
 
         const query = {
@@ -198,7 +198,7 @@ const database = {
                 banner TEXT DEFAULT NULL,
                 region TEXT DEFAULT NULL,
                 owner_id TEXT,
-                afk_channel_id TEXT,
+                afk_channel_id TEXT DEFAULT NULL,
                 afk_timeout INTEGER DEFAULT 300,
                 creation_date TEXT,
                 exclusions TEXT DEFAULT '[]',
@@ -365,6 +365,214 @@ const database = {
             } else {
                 await database.runQuery(`DELETE FROM instance_reports WHERE created_at < NOW() - INTERVAL '1 month';`); //Remove reports older than 1 month to free up db
             }
+
+            //#region Change 'NULL' to NULL defaults
+            await database.runQuery(`
+                UPDATE users
+                SET
+                    created_at = CASE WHEN created_at = 'NULL' THEN NULL ELSE created_at END,
+                    avatar = CASE WHEN avatar = 'NULL' THEN NULL ELSE avatar END,
+                    registration_ip = CASE WHEN registration_ip = 'NULL' THEN NULL ELSE registration_ip END,
+                    email_token = CASE WHEN email_token = 'NULL' THEN NULL ELSE email_token END,
+                    last_login_ip = CASE WHEN last_login_ip = 'NULL' THEN NULL ELSE last_login_ip END,
+                    disabled_until = CASE WHEN disabled_until = 'NULL' THEN NULL ELSE disabled_until END,
+                    disabled_reason = CASE WHEN disabled_reason = 'NULL' THEN NULL ELSE disabled_reason END
+                WHERE
+                    created_at = 'NULL' OR
+                    avatar = 'NULL' OR
+                    registration_ip = 'NULL' OR
+                    email_token = 'NULL' OR
+                    last_login_ip = 'NULL' OR
+                    disabled_until = 'NULL' OR
+                    disabled_reason = 'NULL';
+            `);
+
+            await database.runQuery(`
+                UPDATE user_notes SET note = CASE WHEN note = 'NULL' THEN NULL ELSE note END WHERE note = 'NULL';
+            `, []);
+
+            await database.runQuery(`
+                UPDATE group_channels 
+                SET
+                    icon = CASE WHEN icon = 'NULL' THEN NULL ELSE icon END,
+                    name = CASE WHEN name = 'NULL' THEN NULL ELSE name END,
+                    owner_id = CASE WHEN owner_id = 'NULL' THEN NULL ELSE owner_id END
+                WHERE icon = 'NULL' OR name = 'NULL' OR owner_id = 'NULL';
+            `, []);
+
+            await database.runQuery(`
+                UPDATE connected_accounts
+                SET
+                    connected_at = CASE WHEN connected_at = 'NULL' THEN NULL ELSE connected_at END,
+                    platform = CASE WHEN platform = 'NULL' THEN NULL ELSE platform END
+                WHERE connected_at = 'NULL' OR platform = 'NULL';
+            `, []);
+
+             await database.runQuery(`
+                UPDATE channels
+                SET
+                    parent_id = CASE WHEN parent_id = 'NULL' THEN NULL ELSE parent_id END,
+                    topic = CASE WHEN topic = 'NULL' THEN NULL ELSE topic END
+                WHERE parent_id = 'NULL' OR topic = 'NULL';    
+            `, []);
+
+            await database.runQuery(`UPDATE permissions SET overwrite = CASE WHEN overwrite = 'NULL' THEN NULL ELSE overwrite END WHERE overwrite = 'NULL';`, []);
+
+            await database.runQuery(`
+                UPDATE guilds
+                SET
+                    icon = CASE WHEN icon = 'NULL' THEN NULL ELSE icon END,
+                    splash = CASE WHEN splash = 'NULL' THEN NULL ELSE splash END,
+                    banner = CASE WHEN banner = 'NULL' THEN NULL ELSE banner END,
+                    region = CASE WHEN region = 'NULL' THEN NULL ELSE region END,
+                    vanity_url = CASE WHEN vanity_url = 'NULL' THEN NULL ELSE vanity_url END,
+                    afk_channel_id = CASE WHEN afk_channel_id = 'NULL' THEN NULL ELSE afk_channel_id END
+                WHERE icon = 'NULL' OR splash = 'NULL' OR banner = 'NULL' OR region = 'NULL' OR vanity_url = 'NULL' OR afk_channel_id = 'NULL';
+            `,[]);
+
+            await database.runQuery(`
+                UPDATE applications
+                SET
+                    icon = CASE WHEN icon = 'NULL' THEN NULL ELSE icon END,
+                    secret = CASE WHEN secret = 'NULL' THEN NULL ELSE secret END,
+                    description = CASE WHEN description = 'NULL' THEN NULL ELSE description END
+                WHERE icon = 'NULL' OR secret = 'NULL' OR description = 'NULL';
+            `, []);
+
+            await database.runQuery(`
+                UPDATE bots
+                SET
+                    avatar = CASE WHEN avatar = 'NULL' THEN NULL ELSE avatar END,
+                    token = CASE WHEN token = 'NULL' THEN NULL ELSE token END
+                WHERE avatar = 'NULL' OR token = 'NULL';
+            `, []);
+
+            await database.runQuery(`
+                UPDATE members
+                SET
+                    nick = CASE WHEN nick = 'NULL' THEN NULL ELSE nick END,
+                    joined_at = CASE WHEN joined_at = 'NULL' THEN NULL ELSE joined_at END
+                WHERE nick = 'NULL' OR joined_at = 'NULL';
+            `, []);
+
+            await database.runQuery(`
+                UPDATE messages
+                SET
+                    edited_timestamp = CASE WHEN edited_timestamp = 'NULL' THEN NULL ELSE edited_timestamp END,
+                    overrides = CASE WHEN overrides = 'NULL' THEN NULL ELSE overrides END
+                WHERE edited_timestamp = 'NULL' OR overrides = 'NULL';
+            `, []);
+
+            await database.runQuery(`UPDATE widgets SET channel_id = CASE WHEN channel_id = 'NULL' THEN NULL ELSE channel_id END WHERE channel_id = 'NULL';`, []);
+
+            await database.runQuery(`UPDATE webhooks SET avatar = CASE WHEN avatar = 'NULL' THEN NULL ELSE avatar END WHERE avatar = 'NULL';`, []);
+
+            await database.runQuery(`
+                UPDATE webhook_overrides
+                SET
+                    avatar_url = CASE WHEN avatar_url = 'NULL' THEN NULL ELSE avatar_url END,
+                    username = CASE WHEN username = 'NULL' THEN NULL ELSE username END
+                WHERE avatar_url = 'NULL' OR username = 'NULL';
+            `, []);
+
+            await database.runQuery(`UPDATE instance_reports SET email_address = CASE WHEN email_address = 'NULL' THEN NULL ELSE email_address END WHERE email_address = 'NULL';`, []);
+
+            await database.runQuery(`
+                ALTER TABLE users
+                ALTER COLUMN created_at SET DEFAULT NULL,
+                ALTER COLUMN avatar SET DEFAULT NULL,
+                ALTER COLUMN registration_ip SET DEFAULT NULL,
+                ALTER COLUMN email_token SET DEFAULT NULL,
+                ALTER COLUMN last_login_ip SET DEFAULT NULL,
+                ALTER COLUMN disabled_until SET DEFAULT NULL,
+                ALTER COLUMN disabled_reason SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE user_notes
+                ALTER COLUMN note SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE group_channels
+                ALTER COLUMN icon SET DEFAULT NULL,
+                ALTER COLUMN name SET DEFAULT NULL,
+                ALTER COLUMN owner_id SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE connected_accounts
+                ALTER COLUMN connected_at SET DEFAULT NULL,
+                ALTER COLUMN platform SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE channels
+                ALTER COLUMN parent_id SET DEFAULT NULL,
+                ALTER COLUMN topic SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE permissions
+                ALTER COLUMN overwrite SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE guilds
+                ALTER COLUMN icon SET DEFAULT NULL,
+                ALTER COLUMN splash SET DEFAULT NULL,
+                ALTER COLUMN banner SET DEFAULT NULL,
+                ALTER COLUMN region SET DEFAULT NULL,
+                ALTER COLUMN afk_channel_id SET DEFAULT NULL,
+                ALTER COLUMN vanity_url SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE applications
+                ALTER COLUMN icon SET DEFAULT NULL,
+                ALTER COLUMN secret SET DEFAULT NULL,
+                ALTER COLUMN description SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE bots
+                ALTER COLUMN avatar SET DEFAULT NULL,
+                ALTER COLUMN token SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE members
+                ALTER COLUMN nick SET DEFAULT NULL,
+                ALTER COLUMN joined_at SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE messages
+                ALTER COLUMN edited_timestamp SET DEFAULT NULL,
+                ALTER COLUMN overrides SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE widgets
+                ALTER COLUMN channel_id SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE webhooks
+                ALTER COLUMN avatar SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE webhook_overrides
+                ALTER COLUMN avatar_url SET DEFAULT NULL,
+                ALTER COLUMN username SET DEFAULT NULL;
+            `, []);
+
+            await database.runQuery(`
+                ALTER TABLE instance_reports
+                ALTER COLUMN email_address SET DEFAULT NULL;
+            `, []);
+            //#endregion
 
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
@@ -611,7 +819,7 @@ const database = {
 
             const member = {
                 id: row.user_id_real,
-                nick: row.nick == 'NULL' ? null : row.nick,
+                nick: row.nick,
                 deaf: row.deaf == 1,
                 mute: row.mute == 1,
                 roles: JSON.parse(row.roles) ?? [],
@@ -620,7 +828,7 @@ const database = {
                     username: row.username,
                     discriminator: row.discriminator,
                     id: row.user_id_real,
-                    avatar: row.avatar == 'NULL' ? null : row.avatar,
+                    avatar: row.avatar,
                     bot: row.bot == 1,
                     flags: row.flags,
                     premium: true
@@ -663,7 +871,7 @@ const database = {
                     username: row.username,
                     discriminator: row.discriminator,
                     id: row.user_id_real,
-                    avatar: row.avatar == 'NULL' ? null : row.avatar,
+                    avatar: row.avatar,
                     bot: row.bot == 1,
                     flags: row.flags,
                     premium: true
@@ -679,7 +887,7 @@ const database = {
 
                 const member = {
                     id: row.user_id_real,
-                    nick: row.nick == 'NULL' ? null : row.nick,
+                    nick: row.nick,
                     deaf: row.deaf == 1,
                     mute: row.mute == 1,
                     roles: member_roles,
@@ -888,7 +1096,7 @@ const database = {
                     return null;
 
                 return {
-                    avatar: rows[0].avatar == 'NULL' ? null : rows[0].avatar,
+                    avatar: rows[0].avatar,
                     bot: true,
                     discriminator: rows[0].discriminator,
                     id: rows[0].id,
@@ -928,7 +1136,7 @@ const database = {
     }, //rewrite asap
     checkEmailToken: async (token) => {
         try {
-            if (!token || token === "NULL") {
+            if (!token || token === null) {
                 return null;
             }
 
@@ -957,7 +1165,7 @@ const database = {
                 return null;
             }
 
-            return rows[0].email_token === 'NULL' ? null : rows[0].email_token
+            return rows[0].email_token;
         } catch (error) {
             logText(error, "error");
 
@@ -1018,7 +1226,7 @@ const database = {
             delete application.secret;
 
             return {
-                avatar: rows[0].avatar == 'NULL' ? null : rows[0].avatar,
+                avatar: rows[0].avatar,
                 discriminator: rows[0].discriminator,
                 username: rows[0].username,
                 id: rows[0].id,
@@ -1050,7 +1258,7 @@ const database = {
 
                 if (overrides !== null) {
                     return {
-                        username: overrides.username === 'NULL' ? webhook.name : overrides.username,
+                        username: overrides.username === null ? webhook.name : overrides.username,
                         discriminator: "0000",
                         avatar: overrides.avatar_url ?? null,
                         id: webhookId,
@@ -1085,7 +1293,7 @@ const database = {
 
             if (rows[0].require_code_grant != undefined) {
                 return {
-                    avatar: rows[0].avatar == 'NULL' ? null : rows[0].avatar,
+                    avatar: rows[0].avatar,
                     bot: true,
                     discriminator: rows[0].discriminator,
                     id: rows[0].id,
@@ -1192,7 +1400,7 @@ const database = {
     updateWebhook: async (webhook, channel, name, avatar) => {
         try {
             if (!avatar) {
-                avatar = 'NULL';
+                avatar = null;
             }
 
             let finalAvatarValue = avatar;
@@ -1217,7 +1425,7 @@ const database = {
             }
 
             webhook.name = name;
-            webhook.avatar = finalAvatarValue === 'NULL' ? null : finalAvatarValue;
+            webhook.avatar = finalAvatarValue;
 
             await database.runQuery(`UPDATE webhooks SET channel_id = $1, name = $2, avatar = $3 WHERE id = $4`, [channel.id, name, finalAvatarValue, webhook.id]);
 
@@ -1265,7 +1473,7 @@ const database = {
 
             let token = globalUtils.generateString(60);
 
-            await database.runQuery(`INSERT INTO webhooks (guild_id, channel_id, id, token, avatar, name, creator_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [guild.id, channel_id, webhook_id, token, avatarHash == null ? 'NULL' : avatarHash, name, user.id]);
+            await database.runQuery(`INSERT INTO webhooks (guild_id, channel_id, id, token, avatar, name, creator_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [guild.id, channel_id, webhook_id, token, avatarHash, name, user.id]);
 
             return {
                 application_id: null,
@@ -1298,13 +1506,13 @@ const database = {
                     channel_id: row.channel_id,
                     id: row.id,
                     token: row.token,
-                    avatar: row.avatar == 'NULL' ? null : row.avatar,
+                    avatar: row.avatar,
                     name: row.name,
                     user: {
                         username: row.username,
                         discriminator: row.discriminator,
                         id: row.user_id,
-                        avatar: row.user_avatar == 'NULL' ? null : row.user_avatar,
+                        avatar: row.user_avatar,
                         bot: false,
                         flags: row.flags,
                         premium: true
@@ -1615,7 +1823,7 @@ const database = {
                 }
             }
 
-            await database.runQuery(`INSERT INTO channels (id, type, parent_id, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [channel_id, type, parent_id == null ? 'NULL' : parent_id, guild_id, null, '0', null, name, 0])
+            await database.runQuery(`INSERT INTO channels (id, type, parent_id, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [channel_id, type, parent_id, guild_id, null, '0', null, name, 0])
 
             return {
                 id: channel_id,
@@ -1637,7 +1845,7 @@ const database = {
     }, //rewrite asap
     updateGuildMemberNick: async (guild_id, member_id, new_nick) => {
         try {
-            let nick = new_nick == null || new_nick.length > config.limits['nickname'].max ? 'NULL' : new_nick;
+            let nick = new_nick == null || new_nick.length > config.limits['nickname'].max ? null : new_nick;
 
             await database.runQuery(`UPDATE members SET nick = $1 WHERE guild_id = $2 AND user_id = $3`, [nick, guild_id, member_id]);
 
@@ -1652,7 +1860,7 @@ const database = {
         try {
             if (channel.type === 0 || channel.type === 2 || channel.type === 4) {
                 //text channel, voice channel, category
-                let overwrites = 'NULL';
+                let overwrites = null;
 
                 if (channel.permission_overwrites) {
                     let out = globalUtils.SerializeOverwritesToString(channel.permission_overwrites);
@@ -1662,7 +1870,7 @@ const database = {
                     }
                 }
 
-                await database.runQuery(`UPDATE channels SET last_message_id = $1, name = $2, topic = $3, nsfw = $4, parent_id = $5, permission_overwrites = $6, position = $7 WHERE id = $8`, [channel.last_message_id, channel.name, channel.topic, channel.nsfw ? 1 : 0, channel.parent_id == null ? 'NULL' : channel.parent_id, overwrites, channel.position, channel_id]);
+                await database.runQuery(`UPDATE channels SET last_message_id = $1, name = $2, topic = $3, nsfw = $4, parent_id = $5, permission_overwrites = $6, position = $7 WHERE id = $8`, [channel.last_message_id, channel.name, channel.topic, channel.nsfw ? 1 : 0, channel.parent_id, overwrites, channel.position, channel_id]);
 
                 return channel;
             } else if (channel.type === 3) {
@@ -1825,23 +2033,23 @@ const database = {
             }
 
             return {
-                guild_id: rows[0].guild_id == 'NULL' ? null : rows[0].guild_id,
+                guild_id: rows[0].guild_id,
                 id: rows[0].message_id,
                 content: rows[0].content,
                 channel_id: rows[0].channel_id,
                 author: globalUtils.miniUserObject(author),
                 attachments: messageAttachments,
-                embeds: rows[0].embeds == 'NULL' ? [] : JSON.parse(rows[0].embeds),
+                embeds: rows[0].embeds == null ? [] : JSON.parse(rows[0].embeds),
                 mentions: mentions,
                 mention_everyone: rows[0].mention_everyone === 1,
                 mention_roles: mentions_data.mention_roles, //to-do: find way to check perms on this without slowing down db much
                 nonce: rows[0].nonce,
-                edited_timestamp: rows[0].edited_timestamp == 'NULL' ? null : rows[0].edited_timestamp,
+                edited_timestamp: rows[0].edited_timestamp,
                 timestamp: rows[0].timestamp,
                 reactions: reactionRet,
                 tts: rows[0].tts == 1,
                 pinned: rows[0].pinned == 1,
-                overrides: (!rows[0].overrides ? null : rows[0].overrides == 'NULL' ? null : JSON.parse(rows[0].overrides))
+                overrides: (!rows[0].overrides ? [] : JSON.parse(rows[0].overrides))
             }
         } catch (error) {
             logText(error, "error");
@@ -1883,7 +2091,7 @@ const database = {
             }
 
             return {
-                avatar: rows[0].avatar === 'NULL' ? null : rows[0].avatar,
+                avatar: rows[0].avatar,
                 bot: true,
                 discriminator: rows[0].discriminator,
                 id: rows[0].id,
@@ -1963,7 +2171,7 @@ const database = {
 
             await database.runQuery(`UPDATE bots SET avatar = $1, username = $2 WHERE id = $3`, [send_icon, bot.username, bot.id]);
 
-            bot.avatar = send_icon === 'NULL' ? null : send_icon;
+            bot.avatar = send_icon;
 
             return bot;
         } catch (error) {
@@ -1974,7 +2182,7 @@ const database = {
     },
     updateBot: async (bot) => {
         try {
-            let send_icon = 'NULL';
+            let send_icon = null;
 
             if (bot.avatar != null) {
                 if (bot.avatar.includes("data:image")) {
@@ -2018,7 +2226,7 @@ const database = {
     },
     updateUserApplication: async (application) => {
         try {
-            let send_icon = 'NULL';
+            let send_icon = null;
 
             if (application.icon != null) {
                 if (application.icon.includes("data:image")) {
@@ -2051,7 +2259,7 @@ const database = {
 
             await database.runQuery(`UPDATE applications SET icon = $1, name = $2, description = $3 WHERE id = $4`, [send_icon, application.name, application.description, application.id]);
 
-            application.icon = send_icon === 'NULL' ? null : send_icon;
+            application.icon = send_icon;
 
             return application;
         } catch (error) {
@@ -2098,9 +2306,9 @@ const database = {
 
             return {
                 id: rows[0].id,
-                name: rows[0].name == 'NULL' ? 'My Application' : rows[0].name,
-                icon: rows[0].icon == 'NULL' ? null : rows[0].icon,
-                description: rows[0].description == 'NULL' ? '' : rows[0].description,
+                name: rows[0].name == null ? 'My Application' : rows[0].name,
+                icon: rows[0].icon,
+                description: rows[0].description == null ? '' : rows[0].description,
                 redirect_uris: [],
                 rpc_application_state: 0,
                 rpc_origins: [],
@@ -2137,9 +2345,9 @@ const database = {
             for (const row of rows) {
                 ret.push({
                     id: row.id,
-                    name: row.name == 'NULL' ? 'My Application' : row.name,
-                    icon: row.icon == 'NULL' ? null : row.icon,
-                    description: row.description == 'NULL' ? '' : row.description,
+                    name: row.name == null ? 'My Application' : row.name,
+                    icon: row.icon,
+                    description: row.description == null ? '' : row.description,
                     redirect_uris: [],
                     rpc_application_state: 0,
                     rpc_origins: [],
@@ -2167,7 +2375,7 @@ const database = {
 
             for (const row of rows) {
                 ret.push({
-                    avatar: row.bot_avatar == 'NULL' ? null : row.bot_avatar,
+                    avatar: row.bot_avatar,
                     discriminator: row.bot_discriminator,
                     username: row.bot_username,
                     id: row.bot_id,
@@ -2176,7 +2384,7 @@ const database = {
                     application: {
                         id: row.id,
                         name: row.name,
-                        icon: row.icon == 'NULL' ? null : row.icon,
+                        icon: row.icon,
                         description: row.description,
                         redirect_uris: [],
                         rpc_application_state: 0,
@@ -2185,7 +2393,7 @@ const database = {
                             username: row.owner_username,
                             discriminator: row.owner_discriminator,
                             id: row.owner_id,
-                            avatar: row.owner_avatar == 'NULL' ? null : row.owner_avatar,
+                            avatar: row.owner_avatar,
                             bot: false,
                             flags: row.owner_flags,
                             premium: true
@@ -2317,12 +2525,12 @@ const database = {
                     channel_id: row.channel_id,
                     author: globalUtils.miniUserObject(author),
                     attachments: messageAttachments,
-                    embeds: row.embeds === 'NULL' ? [] : JSON.parse(row.embeds),
+                    embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
                     mentions: mentions,
                     mention_everyone: row.mention_everyone === 1,
                     mention_roles: mentions_data.mention_roles,
                     nonce: row.nonce,
-                    edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
+                    edited_timestamp: row.edited_timestamp,
                     timestamp: row.timestamp,
                     reactions: [], //Not used here either
                     tts: row.tts === 1,
@@ -2403,11 +2611,9 @@ const database = {
                 accounts.forEach(acc => accountMap.set(acc.id, acc));
             }
 
-            
-
             const attachmentsRows = await database.runQuery(`
-            SELECT * FROM attachments WHERE message_id = ANY($1)
-        `, [messageIds]);
+                SELECT * FROM attachments WHERE message_id = ANY($1)
+            `, [messageIds]);
 
             const attachmentsMap = new Map();
 
@@ -2517,17 +2723,17 @@ const database = {
                     channel_id: row.channel_id,
                     author: author, //Already minified due to the nature of the get accounts by id bulk function :3
                     attachments: messageAttachments,
-                    embeds: row.embeds === 'NULL' ? [] : JSON.parse(row.embeds),
+                    embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
                     mentions: mentions,
                     mention_everyone: row.mention_everyone === 1,
                     mention_roles: mentions_data.mention_roles,
                     nonce: row.nonce,
-                    edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
+                    edited_timestamp: row.edited_timestamp,
                     timestamp: row.timestamp,
                     reactions: finalReactions,
                     tts: row.tts === 1,
                     pinned: row.pinned === 1,
-                    overrides: (!row.overrides || row.overrides === 'NULL' ? null : JSON.parse(row.overrides))
+                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides))
                 };
 
                 finalMessages.push(message);
@@ -2567,7 +2773,7 @@ const database = {
                         username: row.username,
                         discriminator: row.discriminator,
                         id: row.id,
-                        avatar: row.avatar === 'NULL' ? null : row.avatar,
+                        avatar: row.avatar,
                         bot: false,
                         flags: row.flags,
                         premium: true
@@ -2596,7 +2802,7 @@ const database = {
                         username: row.username,
                         discriminator: row.discriminator,
                         id: row.id,
-                        avatar: row.avatar === 'NULL' ? null : row.avatar,
+                        avatar: row.avatar,
                         bot: true,
                         flags: 0,
                         premium: true
@@ -2653,9 +2859,9 @@ const database = {
 
                     if (override) {
                         accounts.push({
-                            username: override.username === 'NULL' ? baseWebhook.name : override.username,
+                            username: override.username === null ? baseWebhook.name : override.username,
                             discriminator: "0000",
-                            avatar: override.avatar_url === 'NULL' ? null : override.avatar_url,
+                            avatar: override.avatar_url,
                             id: override.id,
                             bot: true,
                             webhook: true
@@ -2668,7 +2874,7 @@ const database = {
                             id: baseWebhook.id,
                             bot: true,
                             webhook: true,
-                            avatar: baseWebhook.avatar === 'NULL' ? null : baseWebhook.avatar,
+                            avatar: baseWebhook.avatar,
                         });
                     }
                 }
@@ -2833,17 +3039,17 @@ const database = {
                     channel_id: row.channel_id,
                     author: author, //is already minified
                     attachments: messageAttachments,
-                    embeds: row.embeds === 'NULL' ? [] : JSON.parse(row.embeds),
+                    embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
                     mentions: mentions,
                     mention_everyone: row.mention_everyone === 1,
                     mention_roles: mentions_data.mention_roles,
                     nonce: row.nonce,
-                    edited_timestamp: row.edited_timestamp === 'NULL' ? null : row.edited_timestamp,
+                    edited_timestamp: row.edited_timestamp,
                     timestamp: row.timestamp,
                     reactions: [], //We dont use reactions from here anyways
                     tts: row.tts === 1,
                     pinned: row.pinned === 1,
-                    overrides: (!row.overrides || row.overrides === 'NULL' ? null : JSON.parse(row.overrides))
+                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides))
                 });
             }
 
@@ -2869,7 +3075,7 @@ const database = {
 
             const row = rows[0];
 
-            if (row.guild_id === null || row.guild_id === "NULL") {
+            if (row.guild_id === null) {
                 //dm channel / group dm
 
                 let privChannel = {
@@ -2931,7 +3137,7 @@ const database = {
                         type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
                     });
                 }
-            } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
+            } else if (row.permission_overwrites && row.permission_overwrites != null) {
                 let overwrite = rows[0].permission_overwrites;
                 let role_id = overwrite.split('_')[0];
                 let allow_value = overwrite.split('_')[1];
@@ -2948,10 +3154,10 @@ const database = {
             return {
                 id: row.id,
                 name: row.name,
-                guild_id: row.guild_id == 'NULL' ? null : row.guild_id,
-                parent_id: row.parent_id == 'NULL' ? null : row.parent_id,
+                guild_id: row.guild_id,
+                parent_id: row.parent_id,
                 type: parseInt(row.type),
-                topic: row.topic == 'NULL' ? null : row.topic,
+                topic: row.topic,
                 last_message_id: row.last_message_id ?? "0",
                 permission_overwrites: overwrites,
                 nsfw: row.nsfw == 1 ?? false,
@@ -3051,7 +3257,7 @@ const database = {
 
                     membersByGuild.get(guildId).push({
                         id: user.id,
-                        nick: row.nick == 'NULL' ? null : row.nick,
+                        nick: row.nick,
                         deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
                         mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
                         roles: member_roles,
@@ -3077,7 +3283,7 @@ const database = {
                         channel_id: row.channel_id,
                         id: row.id,
                         token: row.token,
-                        avatar: row.avatar == 'NULL' ? null : row.avatar,
+                        avatar: row.avatar,
                         name: row.name,
                         user: globalUtils.miniUserObject(webhookAuthor),
                         type: 1,
@@ -3106,7 +3312,7 @@ const database = {
                                 type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
                             });
                         }
-                    } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
+                    } else if (row.permission_overwrites && row.permission_overwrites != null) {
                         let overwrite = row.permission_overwrites;
                         let role_id = overwrite.split('_')[0];
                         let allow_value = overwrite.split('_')[1];
@@ -3120,10 +3326,10 @@ const database = {
                     let channel_obj = {
                         id: row.id,
                         name: row.name,
-                        guild_id: guildId == 'NULL' ? null : guildId,
-                        parent_id: row.parent_id == 'NULL' ? null : row.parent_id,
+                        guild_id: guildId,
+                        parent_id: row.parent_id,
                         type: parseInt(row.type),
-                        topic: row.topic == 'NULL' ? null : row.topic,
+                        topic: row.topic,
                         nsfw: row.nsfw == 1 ?? false,
                         last_message_id: row.last_message_id,
                         permission_overwrites: overwrites,
@@ -3197,11 +3403,12 @@ const database = {
 
                 retGuilds.push({
                     id: guildId, name: guildRow.name,
-                    icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
-                    splash: guildRow.splash == 'NULL' ? null : guildRow.splash,
-                    banner: guildRow.banner == 'NULL' ? null : guildRow.banner,
-                    region: guildRow.region, owner_id: guildRow.owner_id,
-                    afk_channel_id: guildRow.afk_channel_id == 'NULL' ? null : guildRow.afk_channel_id,
+                    icon: guildRow.icon,
+                    splash: guildRow.splash,
+                    banner: guildRow.banner,
+                    region: guildRow.region, 
+                    owner_id: guildRow.owner_id,
+                    afk_channel_id: guildRow.afk_channel_id,
                     afk_timeout: guildRow.afk_timeout,
                     channels: channels,
                     exclusions: guildRow.exclusions ? JSON.parse(guildRow.exclusions) : [],
@@ -3213,7 +3420,7 @@ const database = {
                     webhooks: webhooks,
                     presences: presences,
                     voice_states: global.guild_voice_states.get(guildId) || [],
-                    vanity_url_code: guildRow.vanity_url == 'NULL' ? null : guildRow.vanity_url,
+                    vanity_url_code: guildRow.vanity_url,
                     creation_date: guildRow.creation_date,
                     features: guildRow.features ? JSON.parse(guildRow.features) : [],
                     default_message_notifications: guildRow.default_message_notifications ?? 0,
@@ -3301,7 +3508,7 @@ const database = {
 
                     members.push({
                         id: user.id,
-                        nick: row.nick == 'NULL' ? null : row.nick,
+                        nick: row.nick,
                         deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
                         mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
                         roles: member_roles,
@@ -3324,7 +3531,7 @@ const database = {
                         channel_id: row.channel_id,
                         id: row.id,
                         token: row.token,
-                        avatar: row.avatar == 'NULL' ? null : row.avatar,
+                        avatar: row.avatar,
                         name: row.name,
                         user: globalUtils.miniUserObject(webhookAuthor),
                         type: 1, application_id: null
@@ -3353,7 +3560,7 @@ const database = {
                                 type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
                             });
                         }
-                    } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
+                    } else if (row.permission_overwrites && row.permission_overwrites != null && row.permission_overwrites != "NULL") {
                         let overwrite = row.permission_overwrites;
                         let role_id = overwrite.split('_')[0];
                         let allow_value = overwrite.split('_')[1];
@@ -3370,10 +3577,10 @@ const database = {
                     let channel_obj = {
                         id: row.id,
                         name: row.name,
-                        guild_id: row.guild_id == 'NULL' ? null : row.guild_id,
-                        parent_id: row.parent_id == 'NULL' ? null : row.parent_id,
+                        guild_id: row.guild_id,
+                        parent_id: row.parent_id,
                         type: parseInt(row.type),
-                        topic: row.topic == 'NULL' ? null : row.topic,
+                        topic: row.topic,
                         nsfw: row.nsfw == 1 ?? false,
                         last_message_id: row.last_message_id,
                         permission_overwrites: overwrites,
@@ -3423,12 +3630,14 @@ const database = {
             }
 
             return {
-                id: guildRow.id, name: guildRow.name,
-                icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
-                splash: guildRow.splash == 'NULL' ? null : guildRow.splash,
-                banner: guildRow.banner == 'NULL' ? null : guildRow.banner,
-                region: guildRow.region, owner_id: guildRow.owner_id,
-                afk_channel_id: guildRow.afk_channel_id == 'NULL' ? null : guildRow.afk_channel_id,
+                id: guildRow.id, 
+                name: guildRow.name,
+                icon: guildRow.icon,
+                splash: guildRow.splash,
+                banner: guildRow.banner,
+                region: guildRow.region, 
+                owner_id: guildRow.owner_id,
+                afk_channel_id: guildRow.afk_channel_id,
                 afk_timeout: guildRow.afk_timeout,
                 channels: channels,
                 exclusions: guildRow.exclusions ? JSON.parse(guildRow.exclusions) : [],
@@ -3440,7 +3649,7 @@ const database = {
                 webhooks: webhooks,
                 presences: presences,
                 voice_states: global.guild_voice_states.get(guildRow.id) || [],
-                vanity_url_code: guildRow.vanity_url == 'NULL' ? null : guildRow.vanity_url,
+                vanity_url_code: guildRow.vanity_url,
                 creation_date: guildRow.creation_date,
                 features: guildRow.features ? JSON.parse(guildRow.features) : [],
                 default_message_notifications: guildRow.default_message_notifications ?? 0,
@@ -3539,7 +3748,7 @@ const database = {
 
                     membersByGuild.get(guildId).push({
                         id: user.id,
-                        nick: row.nick == 'NULL' ? null : row.nick,
+                        nick: row.nick,
                         deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
                         mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
                         roles: member_roles,
@@ -3565,7 +3774,7 @@ const database = {
                         channel_id: row.channel_id,
                         id: row.id,
                         token: row.token,
-                        avatar: row.avatar == 'NULL' ? null : row.avatar,
+                        avatar: row.avatar,
                         name: row.name,
                         user: globalUtils.miniUserObject(webhookAuthor),
                         type: 1,
@@ -3594,7 +3803,7 @@ const database = {
                                 type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
                             });
                         }
-                    } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
+                    } else if (row.permission_overwrites && row.permission_overwrites != null) {
                         let overwrite = row.permission_overwrites;
                         let role_id = overwrite.split('_')[0];
                         let allow_value = overwrite.split('_')[1];
@@ -3608,10 +3817,10 @@ const database = {
                     let channel_obj = {
                         id: row.id,
                         name: row.name,
-                        guild_id: guildId == 'NULL' ? null : guildId,
-                        parent_id: row.parent_id == 'NULL' ? null : row.parent_id,
+                        guild_id: guildId,
+                        parent_id: row.parent_id,
                         type: parseInt(row.type),
-                        topic: row.topic == 'NULL' ? null : row.topic,
+                        topic: row.topic,
                         nsfw: row.nsfw == 1 ?? false,
                         last_message_id: row.last_message_id,
                         permission_overwrites: overwrites,
@@ -3686,12 +3895,12 @@ const database = {
                 retGuilds.push({
                     id: guildId,
                     name: guildRow.name,
-                    icon: guildRow.icon == 'NULL' ? null : guildRow.icon,
-                    splash: guildRow.splash == 'NULL' ? null : guildRow.splash,
-                    banner: guildRow.banner == 'NULL' ? null : guildRow.banner,
+                    icon: guildRow.icon,
+                    splash: guildRow.splash,
+                    banner: guildRow.banner,
                     region: guildRow.region,
                     owner_id: guildRow.owner_id,
-                    afk_channel_id: guildRow.afk_channel_id == 'NULL' ? null : guildRow.afk_channel_id,
+                    afk_channel_id: guildRow.afk_channel_id,
                     afk_timeout: guildRow.afk_timeout,
                     channels: channels,
                     exclusions: guildRow.exclusions ? JSON.parse(guildRow.exclusions) : [],
@@ -3703,7 +3912,7 @@ const database = {
                     webhooks: webhooks,
                     presences: presences,
                     voice_states: global.guild_voice_states.get(guildId) || [],
-                    vanity_url_code: guildRow.vanity_url == 'NULL' ? null : guildRow.vanity_url,
+                    vanity_url_code: guildRow.vanity_url,
                     creation_date: guildRow.creation_date,
                     features: guildRow.features ? JSON.parse(guildRow.features) : [],
                     default_message_notifications: guildRow.default_message_notifications ?? 0,
@@ -3754,7 +3963,7 @@ const database = {
     updateGuildWidget: async (guild_id, channel_id, enabled) => {
         try {
             if (channel_id == null) {
-                channel_id = 'NULL'
+                channel_id = null
             }
 
             await database.runQuery(`UPDATE widgets SET channel_id = $1, enabled = $2 WHERE guild_id = $3`, [channel_id, enabled == true ? 1 : 0, guild_id]);
@@ -3775,7 +3984,7 @@ const database = {
             }
 
             return {
-                channel_id: rows[0].channel_id == 'NULL' ? null : rows[0].channel_id,
+                channel_id: rows[0].channel_id,
                 enabled: rows[0].enabled == 1,
             }
         } catch (error) {
@@ -4412,16 +4621,17 @@ const database = {
                 return null;
             }
 
-            let user1 = rows[0].user1 == 'NULL' ? null : rows[0].user1;
-            let user2 = rows[0].user2 == 'NULL' ? null : rows[0].user2;
+            if (rows[0].user1 && rows[0].user2) {
+                return {
+                    recipients: [rows[0].user1, rows[0].user2],
+                };
+            }
 
-            return {
-                recipients: [user1, user2],
-            };
+            return null;
         } catch (error) {
             logText(error, "error");
 
-            return false;
+            return null;
         }
     },
     getGroupDMInfo: async (channel_id) => {
@@ -4433,10 +4643,10 @@ const database = {
             }
 
             return {
-                icon: rows[0].icon == 'NULL' ? null : rows[0].icon,
-                name: rows[0].name == 'NULL' ? '' : rows[0].name,
-                owner_id: rows[0].owner_id == 'NULL' ? null : rows[0].owner_id,
-                recipients: rows[0].recipients == 'NULL' ? null : rows[0].recipients,
+                icon: rows[0].icon,
+                name: rows[0].name == null ? '' : rows[0].name,
+                owner_id: rows[0].owner_id,
+                recipients: rows[0].recipients,
             };
         } catch (error) {
             logText(error, "error");
@@ -4446,7 +4656,7 @@ const database = {
     },
     createWebhookOverride: async (webhook_id, override_id, username, avatar_url = null) => {
         try {
-            await database.runQuery(`INSERT INTO webhook_overrides (id, override_id, avatar_url, username) VALUES ($1, $2, $3, $4)`, [webhook_id, override_id, avatar_url == null ? 'NULL' : avatar_url, username == null ? 'NULL' : username]);
+            await database.runQuery(`INSERT INTO webhook_overrides (id, override_id, avatar_url, username) VALUES ($1, $2, $3, $4)`, [webhook_id, override_id, avatar_url, username]);
 
             return true;
         } catch (error) {
@@ -4481,7 +4691,7 @@ const database = {
                 return null;
             }
 
-            return rows[0].note === 'NULL' ? null : rows[0].note;
+            return rows[0].note;
         } catch (error) {
             logText(error, "error");
 
@@ -4514,12 +4724,12 @@ const database = {
             let notes = await database.getNoteForUserId(requester_id, user_id);
 
             if (!notes) {
-                await database.runQuery(`INSERT INTO user_notes (author_id, user_id, note) VALUES ($1, $2, $3)`, [requester_id, user_id, new_note === null ? 'NULL' : new_note]);
+                await database.runQuery(`INSERT INTO user_notes (author_id, user_id, note) VALUES ($1, $2, $3)`, [requester_id, user_id, new_note === null ? null : new_note]);
 
                 return true;
             }
 
-            await database.runQuery(`UPDATE user_notes SET note = $1 WHERE author_id = $2 AND user_id = $3`, [new_note === null ? 'NULL' : new_note, requester_id, user_id]);
+            await database.runQuery(`UPDATE user_notes SET note = $1 WHERE author_id = $2 AND user_id = $3`, [new_note, requester_id, user_id]);
 
             return true;
         } catch (error) {
@@ -4535,11 +4745,11 @@ const database = {
 
             let author = null;
 
-            if (nonce != null && nonce != 'NULL' && !Snowflake.isValid(nonce)) {
+            if (nonce != null && nonce != null && !Snowflake.isValid(nonce)) {
                 return null;
             }
 
-            if (!nonce || nonce === 'NULL') {
+            if (!nonce || nonce === null) {
                 nonce = Snowflake.generate();
             }
 
@@ -4591,7 +4801,7 @@ const database = {
             }
 
             await database.runQuery(`INSERT INTO messages (guild_id, message_id, channel_id, author_id, content, edited_timestamp, mention_everyone, nonce, timestamp, tts, embeds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [
-                guild_id == null ? 'NULL' : guild_id,
+                guild_id,
                 id,
                 channel_id,
                 author_id,
@@ -4688,7 +4898,7 @@ const database = {
                             type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
                         });
                     }
-                } else if (row.permission_overwrites && row.permission_overwrites != "NULL") {
+                } else if (row.permission_overwrites && row.permission_overwrites != null) {
                     let overwrite = row.permission_overwrites;
                     let role_id = overwrite.split('_')[0];
                     let allow_value = overwrite.split('_')[1];
@@ -4705,10 +4915,10 @@ const database = {
                 let channel_obj = {
                     id: row.id,
                     name: row.name,
-                    guild_id: row.guild_id == 'NULL' ? null : row.guild_id,
-                    parent_id: row.parent_id == 'NULL' ? null : row.parent_id,
+                    guild_id: row.guild_id,
+                    parent_id: row.parent_id,
                     type: parseInt(row.type),
-                    topic: row.topic == 'NULL' ? null : row.topic,
+                    topic: row.topic,
                     nsfw: row.nsfw == 1 ?? false,
                     last_message_id: row.last_message_id,
                     permission_overwrites: overwrites,
@@ -4775,7 +4985,7 @@ const database = {
 
                 members.push({
                     id: user.id,
-                    nick: row.nick == 'NULL' ? null : row.nick,
+                    nick: row.nick,
                     deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
                     mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
                     roles: member_roles,
@@ -4847,7 +5057,7 @@ const database = {
                         channel_id: row.channel_id,
                         id: row.id,
                         token: row.token,
-                        avatar: row.avatar == 'NULL' ? null : row.avatar,
+                        avatar: row.avatar,
                         name: row.name,
                         user: globalUtils.miniUserObject(webhookAuthor),
                         type: 1,
@@ -4861,12 +5071,12 @@ const database = {
             return {
                 id: rows[0].id,
                 name: rows[0].name,
-                icon: rows[0].icon == 'NULL' ? null : rows[0].icon,
-                splash: rows[0].splash == 'NULL' ? null : rows[0].splash,
-                banner: rows[0].banner == 'NULL' ? null : rows[0].banner,
+                icon: rows[0].icon,
+                splash: rows[0].splash,
+                banner: rows[0].banner,
                 region: rows[0].region,
                 owner_id: rows[0].owner_id,
-                afk_channel_id: rows[0].afk_channel_id == 'NULL' ? null : rows[0].afk_channel_id,
+                afk_channel_id: rows[0].afk_channel_id,
                 afk_timeout: rows[0].afk_timeout,
                 channels: channels,
                 exclusions: rows[0].exclusions ? JSON.parse(rows[0].exclusions) : [],
@@ -4878,7 +5088,7 @@ const database = {
                 webhooks: webhooks,
                 presences: presences,
                 voice_states: [],
-                vanity_url_code: rows[0].vanity_url == 'NULL' ? null : rows[0].vanity_url,
+                vanity_url_code: rows[0].vanity_url,
                 creation_date: rows[0].creation_date,
                 features: rows[0].features ? JSON.parse(rows[0].features) : [],
                 default_message_notifications: rows[0].default_message_notifications ?? 0,
@@ -4893,7 +5103,7 @@ const database = {
     }, //rewrite asap
     updateGuildVanity: async (guild_id, vanity_url) => {
         try {
-            let send_vanity = 'NULL';
+            let send_vanity = null;
 
             if (vanity_url != null) {
                 send_vanity = vanity_url;
@@ -4919,9 +5129,9 @@ const database = {
     },
     updateGuild: async (guild_id, afk_channel_id, afk_timeout, icon, splash, banner, name, default_message_notifications, verification_level) => {
         try {
-            let send_icon = 'NULL';
-            let send_splash = 'NULL';
-            let send_banner = 'NULL';
+            let send_icon = null;
+            let send_splash = null;
+            let send_banner = null;
 
             if (icon != null) {
                 if (icon.includes("data:image")) {
@@ -5010,7 +5220,7 @@ const database = {
                 }
             }
 
-            await database.runQuery(`UPDATE guilds SET name = $1, icon = $2, splash = $3, banner = $4, afk_channel_id = $5, afk_timeout = $6, default_message_notifications = $7, verification_level = $8 WHERE id = $9`, [name, send_icon, send_splash, send_banner, (afk_channel_id == null ? 'NULL' : afk_channel_id), afk_timeout, default_message_notifications, verification_level, guild_id]);
+            await database.runQuery(`UPDATE guilds SET name = $1, icon = $2, splash = $3, banner = $4, afk_channel_id = $5, afk_timeout = $6, default_message_notifications = $7, verification_level = $8 WHERE id = $9`, [name, send_icon, send_splash, send_banner, afk_channel_id, afk_timeout, default_message_notifications, verification_level, guild_id]);
 
             return true;
         } catch (error) {
@@ -5049,7 +5259,7 @@ const database = {
                 }
             }
 
-            await database.runQuery(`INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, name, (icon == null ? 'NULL' : icon), region, owner.id, null, 300, date, JSON.stringify(exclusions)])
+            await database.runQuery(`INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, name, icon, region, owner.id, null, 300, date, JSON.stringify(exclusions)])
 
             if ((client_date.getFullYear() === 2017 && client_date.getMonth() >= 9) || client_date.getFullYear() >= 2018) {
                 //do categories
@@ -5286,7 +5496,7 @@ const database = {
 
             for(var row of rows) {
                 ret.push({
-                    avatar: row.avatar === "NULL" ? null : row.avatar,
+                    avatar: row.avatar,
                     username: row.username,
                     id: row.id,
                     discriminator: row.discriminator,

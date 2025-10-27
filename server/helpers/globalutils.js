@@ -330,7 +330,7 @@ const globalUtils = {
             id: rows[0].id,
             username: rows[0].username,
             discriminator: rows[0].discriminator,
-            avatar: rows[0].avatar == 'NULL' ? null : rows[0].avatar,
+            avatar: rows[0].avatar,
             email: rows[0].email,
             password: rows[0].password,
             token: rows[0].token,
@@ -344,11 +344,11 @@ const globalUtils = {
             claimed: true
         };
 
-        if (rows[0].disabled_until != 'NULL') {
+        if (rows[0].disabled_until != null) {
             user.disabled_until = rows[0].disabled_until;
         }
 
-        if (rows[0].disabled_reason != 'NULL') {
+        if (rows[0].disabled_reason != null) {
             user.disabled_reason = rows[0].disabled_reason;
         }
 
@@ -600,7 +600,7 @@ const globalUtils = {
             username: user.username,
             discriminator: user.discriminator,
             id: user.id,
-            avatar: user.avatar === 'NULL' ? null : user.avatar, //just in case
+            avatar: user.avatar, //just in case
             bot: user.bot,
             flags: user.flags,
             premium: user.premium || true
