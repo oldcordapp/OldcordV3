@@ -351,7 +351,7 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
         let message;
 
         let normalizeParam = (param) => {
-            if (param === null || param === "undefined" || param === "") {
+            if (param === "null" || param === "undefined" || param === "") {
                 return null;
             }
             return param;
