@@ -53,8 +53,8 @@ export default {
       replacement: [
         {
           match:
-            /var \w+=\w+\.default\._getCurrentWindow\(\)\.webContents;\w+\.removeAllListeners\("devtools-opened"\),\w+\.on\("devtools-opened",function\(\){return\(0,\w+\.consoleWarning\)\(\w+\.default\.Messages\)}\)/,
-          replace: "",
+            /if\s*\((?:.|\s)*?\)\s*\{(?:.|\s)*?webContents(?:.|\s)*?removeAllListeners\("devtools-opened"\)(?:.|\s)*?\}\s*else\s*((?:.|\s)*?\.on\("changed",(?:.|\s)*?\))/,
+          replace: "$1",
         },
       ],
     },
@@ -349,8 +349,7 @@ export default {
           return discordUtilsShim;
         }
         case "erlpack": {
-          logger.info(`Erroring erlpack...`);
-          return undefined; // we will have our own erlpack implementation later
+          return window._OldcordNative.nativeModules.requireModule("discord_erlpack");
         }
         default: {
           try {
