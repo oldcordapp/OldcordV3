@@ -76,6 +76,15 @@ export default {
         },
       ],
     },
+    {
+      find: "electron.asar",
+      replacement: [
+        {
+          match: "electron.asar",
+          replace: "app.asar",
+        },
+      ],
+    },
   ],
 
   async start() {
@@ -84,6 +93,35 @@ export default {
     };
 
     const DiscordNative = window.DiscordNative;
+
+    let appName = "Oldcord";
+    try {
+      const moduleDataPath = await DiscordNative.fileManager.getModulePath();
+      const pathParts = moduleDataPath.replace(/\\/g, "/").split("/");
+      const lowercaseAppName = pathParts[pathParts.length - 2];
+
+      const nameMap = {
+        oldcord: "Oldcord",
+        discord: "Discord",
+        discordcanary: "DiscordCanary",
+        discordptb: "DiscordPTB",
+        discorddevelopment: "DiscordDevelopment",
+      };
+
+      if (nameMap[lowercaseAppName]) {
+        appName = nameMap[lowercaseAppName];
+        logger.info(`Detected app name: ${appName}`);
+      } else {
+        logger.warn(
+          `Could not map detected app name '${lowercaseAppName}'. Falling back to '${appName}'.`
+        );
+      }
+    } catch (err) {
+      logger.error(
+        `Failed to determine app name, falling back to '${appName}'.`,
+        err
+      );
+    }
 
     const PatchedNative = {};
 
@@ -204,7 +242,7 @@ export default {
                       const version = window._OldcordNative.app.getVersion();
                       return window._OldcordNative.fileManager.join(
                         window._OldcordNative.process.env.LOCALAPPDATA,
-                        "Oldcord",
+                        appName,
                         `app-${version}`,
                         "resources",
                         "app.asar"
@@ -349,7 +387,9 @@ export default {
           return discordUtilsShim;
         }
         case "erlpack": {
-          return window._OldcordNative.nativeModules.requireModule("discord_erlpack");
+          return window._OldcordNative.nativeModules.requireModule(
+            "discord_erlpack"
+          );
         }
         default: {
           try {
