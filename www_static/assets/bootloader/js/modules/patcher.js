@@ -692,9 +692,6 @@ const patcher = {
     // Remove VIDEO_PROVIDER_CHECK_UNIX_TIMESTAMP hack
     script = script.replace("1492472454139", "0");
 
-    script = script.replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host);
-    script = script.replaceAll(/discord.media/g, location.host);
-    script = script.replaceAll(/cdn.discordapp.com/g, location.host);
     script = script.replaceAll(
       `OAUTH2_AUTHORIZE:"/api/oauth2/authorize"`,
       `OAUTH2_AUTHORIZE:"/oauth2/authorize"`
