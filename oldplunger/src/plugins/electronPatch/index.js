@@ -219,8 +219,8 @@ export default {
               require: (module) => window.__require(module),
               powerMonitor: window._OldcordNative.powerMonitor,
               BrowserWindow: {
-                fromId: (id) => createWindowShim()
-              }
+                fromId: (id) => createWindowShim(),
+              },
             },
             {
               get(target, prop, receiver) {
@@ -338,12 +338,21 @@ export default {
 
           return discordUtilsShim;
         }
-        case "querystring": {
-          logger.info("Providing a deep mock for the 'querystring' module.");
-          return createDeepMock("querystring", logger);
+        case "erlpack": {
+          return undefined; // we will have our own erlpack implementation later
         }
         default: {
-          return window._OldcordNative.nativeModules.requireModule(module);
+          try {
+            const remoteModule =
+              window._OldcordNative.nativeModules.requireModule(module);
+
+            if (remoteModule) {
+              return remoteModule;
+            }
+          } catch (error) {
+            logger.info(`Providing a deep mock for the '${module}' module.`);
+            return createDeepMock(module, logger);
+          }
         }
       }
     };
