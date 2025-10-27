@@ -56,7 +56,7 @@ export class ResourceLoader {
           await this.preloadChunks(content);
         }
 
-        const blob = new Blob([type === "script" ? `${processed}\n//# sourceURL=discordapp://${normalizedPath}` : `${processed}\n/*# sourceURL=discordapp://${normalizedPath} */`], {
+        const blob = new Blob([type === "script" ? `${processed}\n//# sourceURL=${location.protocol}//${window.location.host}${normalizedPath}` : `${processed}\n/*# sourceURL=${location.protocol}//${window.location.host}${normalizedPath} */`], {
           type: type === "script" ? "application/javascript" : "text/css",
         });
         const blobUrl = URL.createObjectURL(blob);
@@ -267,7 +267,7 @@ export class ResourceLoader {
       const response = await fetch(fullUrl);
       const text = await response.text();
       const processed = patcher.js(text, "chunk", window.oldcord.config);
-      const blob = new Blob([`${processed}\n//# sourceURL=discordapp://${normalizedUrl}`], { type: "application/javascript" });
+      const blob = new Blob([`${processed}\n//# sourceURL=${location.protocol}//${window.location.host}${normalizedUrl}`], { type: "application/javascript" });
       const blobUrl = URL.createObjectURL(blob);
 
       this.patchedUrls.set(normalizedUrl, { url: fullUrl, blob: blobUrl });
