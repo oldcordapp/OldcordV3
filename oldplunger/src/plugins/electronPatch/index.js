@@ -59,35 +59,6 @@ export default {
       ],
     },
     {
-      find: 'requireElectron("webFrame"',
-      replacement: [
-        {
-          match:
-            /var (\w+)=this\.requireElectron\("webFrame"\);\1\.setZoomFactor&&\1\.setZoomFactor\(\w+\/100\)/,
-          replace: "",
-        },
-      ],
-    },
-    {
-      find: /this\.send\("UPDATE_CRASH_REPORT",\w+\)/,
-      replacement: [
-        {
-          match:
-            /updateCrashReporter:function\([^)]*\)\{[\s\S]*?\},flushDNSCache/,
-          replace: "updateCrashReporter:function(){},flushDNSCache",
-        },
-      ],
-    },
-    {
-      find: /\w+\.send\("BADGE_IS_ENABLED"\)/,
-      replacement: [
-        {
-          match: /setBadge:function\([^)]*\)\{[\s\S]*?\},setSystemTrayIcon/,
-          replace: "setBadge:function(){},setSystemTrayIcon",
-        },
-      ],
-    },
-    {
       find: /"discord:\/\/"/,
       replacement: [
         {
@@ -139,6 +110,40 @@ export default {
       return null;
     };
     PatchedNative.app = appShim;
+
+    // Since IPC events are different, we need to gracefully error it out so that Discord still loads
+
+    const fakeIpc = {
+      send: (...args) => {
+        try {
+          return Reflect.apply(DiscordNative.ipc.send, DiscordNative.ipc, args);
+        } catch (err) {
+          logger.error(`ipcRenderer.send failed:`, err);
+          return undefined;
+        }
+      },
+    };
+
+    const ipcRendererShim = new Proxy(fakeIpc, {
+      get(target, prop, receiver) {
+        if (Reflect.has(target, prop)) {
+          return Reflect.get(target, prop, receiver);
+        }
+
+        const originalProp = Reflect.get(DiscordNative.ipc, prop);
+
+        if (typeof originalProp === 'function') {
+          return originalProp.bind(DiscordNative.ipc);
+        }
+
+        return originalProp;
+      },
+      has(target, prop) {
+        return Reflect.has(target, prop) || Reflect.has(DiscordNative.ipc, prop);
+      },
+    });
+
+    PatchedNative.ipc = ipcRendererShim;
 
     const handler = {
       get(target, prop, receiver) {
@@ -206,6 +211,9 @@ export default {
                       logger.error("Failed to construct mainAppDirname:", err);
                       return undefined;
                     }
+                  }
+                  case "crashReporterMetadata": {
+                    return window._OldcordNative.crashReporter.getMetadata()
                   }
                   default: {
                     logger.warn(
