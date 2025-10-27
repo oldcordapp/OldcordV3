@@ -49,24 +49,6 @@ export default {
 
   patches: [
     {
-      find: "powerMonitor",
-      replacement: [
-        {
-          match: /(?:this|\w+\.default)\.requireElectron\("powerMonitor",!0\)/,
-          replace: "window._OldcordNative.powerMonitor",
-        },
-      ],
-    },
-    {
-      find: 'requireElectron("app"',
-      replacement: [
-        {
-          match: /\w+\.default\.requireElectron\("app",!0\)/,
-          replace: "window._OldcordNative.app",
-        },
-      ],
-    },
-    {
       find: '"devtools-opened"',
       replacement: [
         {
@@ -123,15 +105,6 @@ export default {
         },
       ],
     },
-    {
-      find: /\.default\.require\("path"\)/,
-      replacement: [
-        {
-          match: /(\w+)\.getPath\("appData"\)/,
-          replace: "$1.getPathSync(\"appData\")"
-        }
-      ]
-    }
   ],
 
   async start() {
@@ -202,9 +175,15 @@ export default {
             };
           };
 
-          const electronShim = {
-            remote: {
-              ...window._OldcordNative.remoteApp,
+          const remoteShim = new Proxy(
+            {
+              app: {
+                getVersion: () => window._OldcordNative.remoteApp.getVersion(),
+                dock: createDeepMock("electron.remote.app.dock", logger),
+                getPath: (...args) => {
+                  return window._OldcordNative.app.getPathSync(...args);
+                },
+              },
               getGlobal: (globalVar) => {
                 switch (globalVar) {
                   case "releaseChannel": {
@@ -236,18 +215,38 @@ export default {
                   }
                 }
               },
-              app: {
-                getVersion: () => {
-                  return window._OldcordNative.remoteApp.getVersion();
-                },
-              },
-              require: (module) => {
-                return window.__require(module);
-              },
               getCurrentWindow: createWindowShim,
+              require: (module) => window.__require(module),
+              powerMonitor: window._OldcordNative.powerMonitor,
+              BrowserWindow: {
+                fromId: (id) => createWindowShim()
+              }
             },
+            {
+              get(target, prop, receiver) {
+                if (Reflect.has(target, prop)) {
+                  return Reflect.get(target, prop, receiver);
+                }
+
+                return window.__require(prop);
+              },
+            }
+          );
+
+          const baseShim = {
+            remote: remoteShim,
             ipcRenderer: window._OldcordNative.ipc,
           };
+
+          const electronShim = new Proxy(baseShim, {
+            get(target, prop) {
+              if (prop in target) {
+                return target[prop];
+              }
+
+              return window.__require("electron").remote[prop];
+            },
+          });
 
           return electronShim;
         }
