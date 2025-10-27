@@ -153,6 +153,15 @@ export default {
 
     const fakeIpc = {
       send: (...args) => {
+        logger.info(
+          `IPC Args: ${args.map((arg) => {
+            if (typeof arg === "object") {
+              return JSON.stringify(arg);
+            } else {
+              return arg;
+            }
+          })}`
+        );
         try {
           return Reflect.apply(DiscordNative.ipc.send, DiscordNative.ipc, args);
         } catch (err) {
@@ -339,27 +348,9 @@ export default {
         case "./VoiceEngine":
         case "discord_voice": {
           logger.info(
-            "Providing a deep mock for the native 'discord_voice' module."
+            `Due to old Discord not being happy with modern discord_voice, it is simply mocked for now.`
           );
-
-          const mockVoiceEngineInstance = createDeepMock(
-            "discord_voice engine",
-            logger
-          );
-
-          const discordVoiceShim = {
-            default: {
-              getVoiceEngine: (...args) => {
-                logger.log(
-                  "[Voice Mock] 'getVoiceEngine' was called with args:",
-                  args
-                );
-                return mockVoiceEngineInstance;
-              },
-            },
-          };
-
-          return discordVoiceShim;
+          return createDeepMock("discord_voice", logger);
         }
         case "./Utils":
         case "discord_utils": {
