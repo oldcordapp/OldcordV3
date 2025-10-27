@@ -25,6 +25,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "cross-env": "^10.1.0",
+    "erlpack": "^0.1.4",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "jimp": "^1.6.0",

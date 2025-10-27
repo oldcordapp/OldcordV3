@@ -3,6 +3,7 @@ const globalUtils = require('./helpers/globalutils');
 const WebSocket = require('ws').WebSocket;
 const zlib = require('zlib');
 const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
+const erlpack = require('erlpack')
 
 const gateway = {
     server: null,
@@ -100,6 +101,10 @@ const gateway = {
             socket.zlibHeader = true;
         }
 
+        if (req.url.includes("encoding=etf")) {
+            socket.wantsEtf = true;
+        }
+
         const match = req.url.match(/[?&]v=([^&]*)/);
 
         if (match && match[1] !== undefined) {
@@ -163,11 +168,11 @@ const gateway = {
     },
     handleClientMessage: async function (socket, data) {
         try {
-            const msg = data.toString("utf-8");
-            const packet = JSON.parse(msg);
+            const msg = socket.wantsEtf ? data : data.toString("utf-8");
+            const packet = socket.wantsEtf ? erlpack.unpack(msg) : JSON.parse(msg);
 
             if (packet.op !== 1) {
-                this.debug(`Incoming -> ${msg}`);
+                this.debug(`Incoming -> ${socket.wantsEtf ? JSON.stringify(packet) : msg}`);
             } //ignore heartbeat stuff
 
             await gatewayHandlers[packet.op]?.(socket, packet);

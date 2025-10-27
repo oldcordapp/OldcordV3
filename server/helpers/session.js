@@ -2,6 +2,7 @@ const globalUtils = require('./globalutils');
 const { logText } = require("./logger");
 const zlib = require('zlib');
 const Snowflake = require('../helpers/snowflake');
+const erlpack = require("erlpack");
 
 //Adapted from Hummus' handling of sessions & whatnot
 
@@ -231,13 +232,17 @@ class session {
         if (this.dead) return;
         if (this.ratelimited) return;
 
+        if (this.socket.wantsEtf && this.type === 'gateway') {
+            payload = erlpack.pack(payload)
+        }
+
         if (this.socket.wantsZlib && this.type === 'gateway') {
             //Closely resembles Discord's zlib implementation from https://gist.github.com/devsnek/4e094812a4798d8f10428d04ee02cab7
-            let stringifiedpayload = JSON.stringify(payload);
+            payload = this.socket.wantsEtf ? payload : JSON.stringify(payload);
 
             let buffer;
 
-            buffer = zlib.deflateSync(stringifiedpayload, { chunkSize: 65535, flush: zlib.constants.Z_SYNC_FLUSH, finishFlush: zlib.constants.Z_SYNC_FLUSH, level: zlib.constants.Z_BEST_COMPRESSION })
+            buffer = zlib.deflateSync(payload, { chunkSize: 65535, flush: zlib.constants.Z_SYNC_FLUSH, finishFlush: zlib.constants.Z_SYNC_FLUSH, level: zlib.constants.Z_BEST_COMPRESSION })
 
             if (!this.socket.zlibHeader) {
                 buffer = buffer.subarray(2, buffer.length);
@@ -245,7 +250,7 @@ class session {
             else this.socket.zlibHeader = false;
 
             this.socket.send(buffer);
-        } else this.socket.send(JSON.stringify(payload));
+        } else this.socket.send(this.socket.wantsEtf ? payload : JSON.stringify(payload));
 
         this.lastMessage = Date.now();
     }
