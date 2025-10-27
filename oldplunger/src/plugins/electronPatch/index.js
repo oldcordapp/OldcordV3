@@ -132,14 +132,16 @@ export default {
 
         const originalProp = Reflect.get(DiscordNative.ipc, prop);
 
-        if (typeof originalProp === 'function') {
+        if (typeof originalProp === "function") {
           return originalProp.bind(DiscordNative.ipc);
         }
 
         return originalProp;
       },
       has(target, prop) {
-        return Reflect.has(target, prop) || Reflect.has(DiscordNative.ipc, prop);
+        return (
+          Reflect.has(target, prop) || Reflect.has(DiscordNative.ipc, prop)
+        );
       },
     });
 
@@ -213,7 +215,7 @@ export default {
                     }
                   }
                   case "crashReporterMetadata": {
-                    return window._OldcordNative.crashReporter.getMetadata()
+                    return window._OldcordNative.crashReporter.getMetadata();
                   }
                   default: {
                     logger.warn(
@@ -347,6 +349,7 @@ export default {
           return discordUtilsShim;
         }
         case "erlpack": {
+          logger.info(`Erroring erlpack...`);
           return undefined; // we will have our own erlpack implementation later
         }
         default: {
