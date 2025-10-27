@@ -56,6 +56,15 @@ export default {
           },
         ],
       },
+      {
+        find: /"discord:\/\/"/,
+        replacement: [
+          {
+            match: /"discord:\/\/"/,
+            replace: `"oldcord://"`,
+          },
+        ],
+      },
     ];
   },
 };

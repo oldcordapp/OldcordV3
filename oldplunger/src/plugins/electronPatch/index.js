@@ -59,15 +59,6 @@ export default {
       ],
     },
     {
-      find: /"discord:\/\/"/,
-      replacement: [
-        {
-          match: /"discord:\/\/"/,
-          replace: `"oldcord://"`,
-        },
-      ],
-    },
-    {
       find: "window.DiscordNative",
       replacement: [
         {
