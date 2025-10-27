@@ -209,8 +209,18 @@ export default {
     window._OldcordNative = new Proxy(PatchedNative, handler);
     logger.info("Successfully created a Proxy to wrap window.DiscordNative.");
 
+    const alreadyShimmed = [];
+
     window.__require = (module) => {
-      logger.info(`Shimming module: ${module}`);
+      if (!alreadyShimmed.includes(module)) {
+        logger.info(`Shimming module: ${module}`);
+        if (module === "discord_voice" || module === "./VoiceEngine") {
+          logger.info(
+            `Due to old Discord not being happy with modern discord_voice, it is simply mocked for now.`
+          );
+        }
+        alreadyShimmed.push(module);
+      }
       switch (module) {
         case "process": {
           return window._OldcordNative.process;
@@ -347,9 +357,6 @@ export default {
         }
         case "./VoiceEngine":
         case "discord_voice": {
-          logger.info(
-            `Due to old Discord not being happy with modern discord_voice, it is simply mocked for now.`
-          );
           return createDeepMock("discord_voice", logger);
         }
         case "./Utils":
