@@ -327,6 +327,21 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
     }
 });
 
+router.get("/staff", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        let staff = await global.database.getInstanceStaff();
+
+        return res.status(200).json(staff);
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
 router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
     try {
         let channelId = req.query.channelId;

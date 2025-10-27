@@ -2869,7 +2869,7 @@ const database = {
 
             const row = rows[0];
 
-            if (row.guild_id === 'NULL') {
+            if (row.guild_id === null || row.guild_id === "NULL") {
                 //dm channel / group dm
 
                 let privChannel = {
@@ -5277,6 +5277,32 @@ const database = {
             logText(error, "error");
 
             return false;
+        }
+    },
+    getInstanceStaff: async () => {
+        try {
+            let rows = await database.runQuery(`SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id`, []);
+            let ret = [];
+
+            for(var row of rows) {
+                ret.push({
+                    avatar: row.avatar === "NULL" ? null : row.avatar,
+                    username: row.username,
+                    id: row.id,
+                    discriminator: row.discriminator,
+                    staff_details: {
+                        privilege: row.privilege,
+                        audit_log: JSON.parse(row.audit_log) ?? []
+                    }
+                })
+            }
+
+            return ret;
+        }
+        catch (error) {
+            logText(error, "error");
+            
+            return [];
         }
     },
     updateMessage: async (message_id, new_content) => {

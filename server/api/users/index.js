@@ -88,7 +88,7 @@ router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_con
         }
 
         channel ??= await global.database.createChannel(null, null, type, 0, validRecipientIDs, account.id);
-        
+  
         let pChannel = globalUtils.personalizeChannelObject(req, channel);
         
         if (type == 3)
