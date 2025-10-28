@@ -30,31 +30,28 @@ function addBypassEvalTypeError(moduleId, moduleString, patch) {
   return moduleString;
 }
 
-function callbackReplacer(replacements, args) {
-  let fullMatch = args[0];
+function callbackReplacer(replacement, args) {
+  const fullMatch = args[0];
   const offset = args[args.length - 2];
   const originalString = args[args.length - 1];
-  for (const replacement of replacements) {
-    if (
-      replacement.exclusions.some(
-        (exclusion) =>
-          fullMatch.includes(exclusion) ||
-          originalString
-            .substring(Math.max(0, offset - 50), offset)
-            .trimEnd()
-            .includes(exclusion)
-      )
-    ) {
-      continue;
-    }
-    if (replacement.match.global || replacement.global) {
-      fullMatch = fullMatch.replaceAll(replacement.match, replacement.replace);
-    } else {
-      fullMatch = fullMatch.replace(replacement.match, replacement.replace);
-    }
+  if (
+    replacement.exclusions.some(
+      (exclusion) =>
+        fullMatch.includes(exclusion) ||
+        originalString
+          .substring(Math.max(0, offset - 50), offset)
+          .trimEnd()
+          .includes(exclusion)
+    )
+  ) {
+    return fullMatch;
   }
 
-  return fullMatch;
+  if (replacement.match.global || replacement.global) {
+    return fullMatch.replaceAll(replacement.match, replacement.replace);
+  } else {
+    return fullMatch.replace(replacement.match, replacement.replace);
+  }
 }
 
 export function patchModule(module, id) {
@@ -75,23 +72,27 @@ export function patchModule(module, id) {
     const originalModule = module;
     const originalModuleString = moduleString;
 
-    if (patch.useCallback) {
-      moduleString = moduleString.replace(patch.find, (...args) =>
-        callbackReplacer(patch.replacement, args)
-      );
-    } else {
-      for (const replacement of patch.replacement) {
-        if (replacement.match.global || replacement.global) {
-          moduleString = moduleString.replaceAll(
-            replacement.match,
-            replacement.replace
-          );
-        } else {
-          moduleString = moduleString.replace(
-            replacement.match,
-            replacement.replace
-          );
-        }
+    for (const replacement of patch.replacement) {
+      if (replacement.find) {
+        moduleString = moduleString.replace(
+          replacement.find,
+          function (...args) {
+            return callbackReplacer(replacement, args);
+          }
+        );
+        continue;
+      }
+
+      if (replacement.match.global || replacement.global) {
+        moduleString = moduleString.replaceAll(
+          replacement.match,
+          replacement.replace
+        );
+      } else {
+        moduleString = moduleString.replace(
+          replacement.match,
+          replacement.replace
+        );
       }
     }
 
