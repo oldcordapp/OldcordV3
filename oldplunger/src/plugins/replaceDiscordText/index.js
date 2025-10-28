@@ -13,11 +13,24 @@ export default {
 
   patches: [
     {
-      find: /(['"])(.*?)(\1)/,
+      useCallback: true,
+      find: /(['"])(?:\\.|(?!\1).)*\1/g,
       replacement: [
         {
-          match: /(\w*)Discord(\w*)/g,
-          replace: "$1Oldcord$2",
+          match: /Discord/g,
+          replace: "Oldcord",
+          exclusions: [
+            "BetterDiscord",
+            "DiscordTag",
+            "./Discord",
+            "logoDiscord",
+            "joinDiscord",
+            "browserDiscord",
+            "changelog",
+            "DISCORD",
+            "LOCALAPPDATA",
+            "displayName"
+          ]
         },
       ],
     }
