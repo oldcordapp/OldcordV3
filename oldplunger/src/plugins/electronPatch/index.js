@@ -54,12 +54,14 @@ export default {
       replacement: [
         {
           // Matches the new API one.
-          match: /if\s*\([^)]+?\)\s*\{[\s\S]+?webContents[\s\S]+?\}\s*else\s*([\s\S]+?\.on\("changed"[\s\S]+?\);)/,
+          match:
+            /if\s*\([^)]+?\)\s*\{[\s\S]+?webContents[\s\S]+?\}\s*else\s*([\s\S]+?\.on\("changed"[\s\S]+?\);)/,
           replace: "$1",
         },
         {
           // For window.require only builds
-          match: /if\s*\(.*?\.isDesktop\(\)\)\s*\{[\s\S]+?\}\s*else\s*(\{[\s\S]+?\})/,
+          match:
+            /if\s*\(.*?\.isDesktop\(\)\)\s*\{[\s\S]+?\}\s*else\s*(\{[\s\S]+?\})/,
           replace: "$1",
         },
       ],
@@ -148,23 +150,89 @@ export default {
 
     // Since IPC events are different, we need to gracefully error it out so that Discord still loads
 
+    const ipcListeners = {};
+
     const fakeIpc = {
-      send: (...args) => {
+      send: (channel, ...args) => {
+        if (channel === "MODULE_INSTALL") {
+          let moduleName = args[0];
+          logger.info(
+            `Intercepted IPC 'MODULE_INSTALL' for '${moduleName}'. Shimming with modern 'ensureModule'.`
+          );
+
+          if (moduleName == "discord_overlay") {
+            logger.info(
+              `discord_overlay tried to install, using the modern version discord_overlay2...`
+            );
+            moduleName = "discord_overlay2";
+          }
+
+          window._OldcordNative.nativeModules
+            .ensureModule(moduleName)
+            .then(() => {
+              logger.info(
+                `Successfully ensured module '${moduleName}'. Simulating 'MODULE_INSTALLED' IPC event.`
+              );
+              if (ipcListeners["MODULE_INSTALLED"]) {
+                ipcListeners["MODULE_INSTALLED"].forEach((listener) => {
+                  listener({}, moduleName, true);
+                });
+              }
+            })
+            .catch((err) => {
+              logger.error(
+                `Failed to ensure module '${moduleName}'. Simulating failed 'MODULE_INSTALLED' IPC event.`,
+                err
+              );
+              if (ipcListeners["MODULE_INSTALLED"]) {
+                ipcListeners["MODULE_INSTALLED"].forEach((listener) => {
+                  listener({}, moduleName, false);
+                });
+              }
+            });
+
+          return;
+        }
+
         logger.info(
-          `IPC Args: ${args.map((arg) => {
-            if (typeof arg === "object") {
+          `IPC Send: ${channel}`,
+          ...args.map((arg) => {
+            if (typeof arg === "object" && arg !== null) {
               return JSON.stringify(arg);
-            } else {
-              return arg;
             }
-          })}`
+            return arg;
+          })
         );
         try {
-          return Reflect.apply(DiscordNative.ipc.send, DiscordNative.ipc, args);
+          return Reflect.apply(DiscordNative.ipc.send, DiscordNative.ipc, [
+            channel,
+            ...args,
+          ]);
         } catch (err) {
           logger.error(`ipcRenderer.send failed:`, err);
           return undefined;
         }
+      },
+      on: (channel, listener) => {
+        if (channel === "MODULE_INSTALLED") {
+          logger.info(
+            `Intercepted IPC listener registration for '${channel}'.`
+          );
+          if (!ipcListeners[channel]) {
+            ipcListeners[channel] = [];
+          }
+          ipcListeners[channel].push(listener);
+        }
+        return DiscordNative.ipc.on(channel, listener);
+      },
+      removeListener: (channel, listener) => {
+        if (channel === "MODULE_INSTALLED" && ipcListeners[channel]) {
+          const index = ipcListeners[channel].indexOf(listener);
+          if (index > -1) {
+            ipcListeners[channel].splice(index, 1);
+          }
+        }
+        return DiscordNative.ipc.removeListener(channel, listener);
       },
     };
 
@@ -365,6 +433,152 @@ export default {
           requiredModule = pathShim;
           break;
         }
+        case "net": {
+          logger.info(
+            "Providing an augmented shim for the 'net' module via discord_rpc."
+          );
+          const rpcModule =
+            window._OldcordNative.nativeModules.requireModule("discord_rpc");
+
+          const originalNet = rpcModule.RPCIPC.net;
+
+          const netShim = {
+            ...originalNet,
+
+            createConnection: (pipeName) => {
+              logger.info(
+                `[net shim] Faking createConnection to pipe: ${pipeName}`
+              );
+
+              const fakeSocket = {
+                _events: {},
+                on: function (event, callback) {
+                  this._events[event] = callback;
+                  if (event === "error") {
+                    setTimeout(() => {
+                      this._events.error(new Error("ECONNREFUSED"));
+                    }, 0);
+                  }
+                  return this;
+                },
+                pause: () => {},
+                write: () => {},
+                end: () => {},
+                destroy: () => {},
+              };
+
+              return fakeSocket;
+            },
+          };
+
+          requiredModule = netShim;
+          break;
+        }
+        case "buffer": {
+          logger.info("Providing a shim for the 'buffer' module.");
+          const BufferShim = {
+            byteLength: (str) => new TextEncoder().encode(str).length,
+            alloc: (size) => {
+              const arrayBuffer = new ArrayBuffer(size);
+              const uint8Array = new Uint8Array(arrayBuffer);
+              const dataView = new DataView(arrayBuffer);
+
+              uint8Array.writeInt32LE = (value, offset) => {
+                dataView.setInt32(offset, value, true);
+              };
+
+              uint8Array.write = (str, offset, length) => {
+                const encoded = new TextEncoder().encode(str);
+                uint8Array.set(encoded.slice(0, length), offset);
+              };
+
+              return uint8Array;
+            },
+          };
+
+          requiredModule = {
+            Buffer: BufferShim,
+          };
+          break;
+        }
+        case "http": {
+          logger.info(
+            "Providing a shim for the 'http' module via discord_rpc."
+          );
+          const rpcModule =
+            window._OldcordNative.nativeModules.requireModule("discord_rpc");
+          requiredModule = rpcModule.RPCWebSocket.http;
+          break;
+        }
+        case "querystring": {
+          logger.info("Providing a basic shim for the 'querystring' module.");
+          requiredModule = {
+            parse: (str) => {
+              const params = {};
+              if (typeof str !== "string" || str.length === 0) {
+                return params;
+              }
+              for (const pair of str.split("&")) {
+                const parts = pair.split("=");
+                const key = decodeURIComponent(parts[0] || "");
+                const value = decodeURIComponent(parts[1] || "");
+                if (key) params[key] = value;
+              }
+              return params;
+            },
+          };
+          break;
+        }
+        case "discord_rpc": {
+          logger.info(
+            "Providing a compatibility shim for the 'discord_rpc' module."
+          );
+          const originalRpc =
+            window._OldcordNative.nativeModules.requireModule("discord_rpc");
+
+          const rpcShim = {
+            Server: originalRpc.RPCWebSocket.ws.Server,
+
+            Proxy: {
+              createProxyServer: () => {
+                logger.warn(
+                  "[RPC Shim] `Proxy.createProxyServer` was called. This feature is no longer supported and will be mocked to prevent crashes."
+                );
+                return {
+                  web: (...args) => {
+                    logger.warn(
+                      "[RPC Shim] `proxy.web` was called. Doing nothing."
+                    );
+                    const res = args[1];
+                    if (res && typeof res.writeHead === "function") {
+                      try {
+                        res.writeHead(501, {
+                          "Content-Type": "application/json",
+                        });
+                        res.end(
+                          JSON.stringify({
+                            message: "RPC Proxy Not Implemented",
+                          })
+                        );
+                      } catch (e) {
+                        logger.error(
+                          "Failed to write proxy error response:",
+                          e
+                        );
+                      }
+                    }
+                  },
+                };
+              },
+            },
+
+            RPCIPC: originalRpc.RPCIPC,
+            RPCWebSocket: originalRpc.RPCWebSocket,
+          };
+
+          requiredModule = rpcShim;
+          break;
+        }
         case "./VoiceEngine":
         case "discord_voice": {
           requiredModule = createDeepMock("discord_voice", logger);
@@ -397,9 +611,10 @@ export default {
           break;
         }
         case "erlpack": {
-          requiredModule = window._OldcordNative.nativeModules.requireModule(
-            "discord_erlpack"
-          );
+          requiredModule =
+            window._OldcordNative.nativeModules.requireModule(
+              "discord_erlpack"
+            );
           break;
         }
         default: {
