@@ -970,7 +970,7 @@ const database = {
     getLatestAcknowledgement: async (user_id, channel_id) => {
         try {
             const rows = await database.runQuery(`
-                SELECT * FROM acknowledgements WHERE user_id = $1 AND channel_id = $2 ORDER BY timestamp DESC LIMIT 1
+                SELECT * FROM acknowledgements WHERE user_id = $1 AND channel_id = $2 ORDER BY timestamp DESC, message_id DESC LIMIT 1
             `, [user_id, channel_id]);
 
             if (rows == null || rows.length == 0) {
@@ -2439,7 +2439,7 @@ const database = {
 
             query += `(${mentionConditions.join(' OR ')}) `;
 
-            query += `ORDER BY m.timestamp DESC LIMIT $${paramIndex}`;
+            query += `ORDER BY m.timestamp DESC, message_id DESC LIMIT $${paramIndex}`;
             params.push(limit);
 
             const messageRows = await database.runQuery(query, params);
