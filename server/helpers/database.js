@@ -2569,16 +2569,16 @@ const database = {
             let paramIndex = 2;
 
             if (before_id && after_id) {
-                query += `AND message_id < $${paramIndex++} AND message_id > $${paramIndex++} ORDER BY timestamp DESC LIMIT $${paramIndex}`;
+                query += `AND message_id < $${paramIndex++} AND message_id > $${paramIndex++} ORDER BY timestamp DESC, message_id DESC LIMIT $${paramIndex}`;
                 params.push(before_id, after_id, limit);
             } else if (before_id) {
-                query += `AND message_id < $${paramIndex++} ORDER BY timestamp DESC LIMIT $${paramIndex}`;
+                query += `AND message_id < $${paramIndex++} ORDER BY timestamp DESC, message_id DESC LIMIT $${paramIndex}`;
                 params.push(before_id, limit);
             } else if (after_id) {
-                query += `AND message_id > $${paramIndex++} ORDER BY timestamp DESC LIMIT $${paramIndex}`;
+                query += `AND message_id > $${paramIndex++} ORDER BY timestamp DESC, message_id DESC LIMIT $${paramIndex}`;
                 params.push(after_id, limit);
             } else {
-                query += `ORDER BY timestamp DESC LIMIT $${paramIndex}`;
+                query += `ORDER BY timestamp DESC, message_id DESC LIMIT $${paramIndex}`;
                 params.push(limit);
             }
 
