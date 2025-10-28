@@ -46,14 +46,20 @@ export default {
   incompatiblePlugins: [],
   debug: true,
   bypassEvalTypeError: true,
+  startAt: "Init",
 
   patches: [
     {
       find: '"devtools-opened"',
       replacement: [
         {
-          match:
-            /if\s*\((?:.|\s)*?\)\s*\{(?:.|\s)*?webContents(?:.|\s)*?removeAllListeners\("devtools-opened"\)(?:.|\s)*?\}\s*else\s*((?:.|\s)*?\.on\("changed",(?:.|\s)*?\))/,
+          // Matches the new API one.
+          match: /if\s*\([^)]+?\)\s*\{[\s\S]+?webContents[\s\S]+?\}\s*else\s*([\s\S]+?\.on\("changed"[\s\S]+?\);)/,
+          replace: "$1",
+        },
+        {
+          // For window.require only builds
+          match: /if\s*\(.*?\.isDesktop\(\)\)\s*\{[\s\S]+?\}\s*else\s*(\{[\s\S]+?\})/,
           replace: "$1",
         },
       ],
@@ -201,8 +207,13 @@ export default {
     logger.info("Successfully created a Proxy to wrap window.DiscordNative.");
 
     const alreadyShimmed = [];
+    const moduleCache = {};
 
-    window.__require = (module) => {
+    window.require = (module) => {
+      if (moduleCache.hasOwnProperty(module)) {
+        return moduleCache[module];
+      }
+
       if (!alreadyShimmed.includes(module)) {
         logger.info(`Shimming module: ${module}`);
         if (module === "discord_voice" || module === "./VoiceEngine") {
@@ -212,9 +223,13 @@ export default {
         }
         alreadyShimmed.push(module);
       }
+
+      let requiredModule;
+
       switch (module) {
         case "process": {
-          return window._OldcordNative.process;
+          requiredModule = window._OldcordNative.process;
+          break;
         }
         case "electron": {
           const createWindowShim = () => {
@@ -306,7 +321,8 @@ export default {
             },
           });
 
-          return electronShim;
+          requiredModule = electronShim;
+          break;
         }
         case "os": {
           const osShim = {
@@ -316,7 +332,8 @@ export default {
             },
           };
 
-          return osShim;
+          requiredModule = osShim;
+          break;
         }
         case "module": {
           const moduleShim = {
@@ -336,7 +353,8 @@ export default {
             globalPaths: [],
           };
 
-          return moduleShim;
+          requiredModule = moduleShim;
+          break;
         }
         case "path": {
           const pathShim = {
@@ -344,11 +362,13 @@ export default {
               return window._OldcordNative.fileManager.join(...args);
             },
           };
-          return pathShim;
+          requiredModule = pathShim;
+          break;
         }
         case "./VoiceEngine":
         case "discord_voice": {
-          return createDeepMock("discord_voice", logger);
+          requiredModule = createDeepMock("discord_voice", logger);
+          break;
         }
         case "./Utils":
         case "discord_utils": {
@@ -373,12 +393,14 @@ export default {
               }),
           };
 
-          return discordUtilsShim;
+          requiredModule = discordUtilsShim;
+          break;
         }
         case "erlpack": {
-          return window._OldcordNative.nativeModules.requireModule(
+          requiredModule = window._OldcordNative.nativeModules.requireModule(
             "discord_erlpack"
           );
+          break;
         }
         default: {
           try {
@@ -386,14 +408,18 @@ export default {
               window._OldcordNative.nativeModules.requireModule(module);
 
             if (remoteModule) {
-              return remoteModule;
+              requiredModule = remoteModule;
             }
           } catch (error) {
             logger.info(`Providing a deep mock for the '${module}' module.`);
-            return createDeepMock(module, logger);
+            requiredModule = createDeepMock(module, logger);
           }
+          break;
         }
       }
+
+      moduleCache[module] = requiredModule;
+      return requiredModule;
     };
   },
 };

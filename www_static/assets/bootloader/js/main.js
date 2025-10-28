@@ -300,89 +300,63 @@ class Bootloader {
     this.currentHead = head;
     this.currentBody = body;
 
-    // Create a document fragment for batch DOM updates
     const headFragment = document.createDocumentFragment();
     const bodyFragment = document.createDocumentFragment();
 
     const tempHead = document.createElement("div");
     tempHead.innerHTML = head;
 
-    const styleMap = new Map(styles.map((s) => [s.url, s.blob]));
-    const scriptMap = new Map(scripts.map((s) => [s.url, s.blob]));
-
-    // Cache existing elements' attributes for faster comparison
-    const existingElements = new Set();
-    document.head.querySelectorAll("link, script").forEach((elem) => {
-      existingElements.add(
-        Array.from(elem.attributes)
-          .map((a) => `${a.name}=${a.value}`)
-          .sort()
-          .join("|")
-      );
-    });
-
-    for (const elem of [...tempHead.children]) {
-      if (elem.tagName === "TITLE") continue;
-
-      // Skip if element with same attributes already exists in document.head
-      const elemAttrs = Array.from(elem.attributes)
-        .map((a) => `${a.name}=${a.value}`)
-        .sort()
-        .join("|");
-      const existingElem = [...document.head.children].some(
-        (child) =>
-          Array.from(child.attributes)
-            .map((a) => `${a.name}=${a.value}`)
-            .sort()
-            .join("|") === elemAttrs
-      );
-      if (existingElem) continue;
-
-      if (elem.tagName === "LINK" && elem.rel === "stylesheet") {
-        const href = elem.getAttribute("href");
-        const blob = Array.from(styleMap.keys()).find((url) =>
-          url.includes(href)
-        );
-        if (blob) {
-          elem.href = styleMap.get(blob);
-          headFragment.appendChild(elem);
-        }
-        continue;
-      }
-
-      if (elem.tagName === "SCRIPT" && elem.src) {
-        const src = elem.getAttribute("src");
-        const blob = Array.from(scriptMap.keys()).find((url) =>
-          url.includes(src)
-        );
-        if (blob) {
-          elem.src = scriptMap.get(blob);
-          headFragment.appendChild(elem);
-        }
-        continue;
-      }
-
-      headFragment.appendChild(elem);
-    }
-
     const tempBody = document.createElement("div");
     tempBody.innerHTML = body;
 
-    tempBody.querySelectorAll("script[src]").forEach((elem) => {
-      const src = elem.getAttribute("src");
-      const blob = Array.from(scriptMap.keys()).find((url) =>
-        url.includes(src)
-      );
-      if (blob) {
-        elem.src = scriptMap.get(blob);
+    const styleMap = new Map(styles.map((s) => [s.url, s.blob]));
+    const scriptMap = new Map(scripts.map((s) => [s.url, s.blob]));
+
+    const processNodes = (sourceElement, targetFragment) => {
+      for (const node of [...sourceElement.childNodes]) {
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+          targetFragment.appendChild(node.cloneNode(true));
+          continue;
+        }
+
+        const elem = node;
+
+        if (elem.tagName === 'SCRIPT' && !elem.hasAttribute('src')) {
+          const newScript = document.createElement('script');
+          
+          newScript.textContent = elem.textContent;
+
+          for (const attr of elem.attributes) {
+            newScript.setAttribute(attr.name, attr.value);
+          }
+          
+          targetFragment.appendChild(newScript);
+          continue;
+        }
+
+        if (elem.tagName === 'SCRIPT' && elem.hasAttribute('src')) {
+          const src = elem.getAttribute('src');
+          const blob = Array.from(scriptMap.keys()).find((url) => url.includes(src));
+          if (blob) {
+            elem.src = scriptMap.get(blob);
+          }
+        }
+
+        if (elem.tagName === 'LINK' && elem.rel === 'stylesheet') {
+          const href = elem.getAttribute('href');
+          const blob = Array.from(styleMap.keys()).find((url) => url.includes(href));
+          if (blob) {
+            elem.href = styleMap.get(blob);
+          }
+        }
+
+        targetFragment.appendChild(elem.cloneNode(true));
       }
-    });
+    };
 
-    while (tempBody.firstChild) {
-      bodyFragment.appendChild(tempBody.firstChild);
-    }
-
-    // Batch DOM updates
+    processNodes(tempHead, headFragment);
+    processNodes(tempBody, bodyFragment);
+    
     document.head.appendChild(headFragment);
     document.body.appendChild(bodyFragment);
   }
