@@ -13,34 +13,13 @@ export default {
 
   patches: [
     {
-      find: /"en-US":/,
+      find: /(['"])(.*?)(\1)/,
       replacement: [
         {
-          global: true,
-          match: "Discord",
-          replace: "Oldcord",
+          match: /(\w*)Discord(\w*)/g,
+          replace: "$1Oldcord$2",
         },
       ],
-    },
-    {
-      find: "createElement(",
-      replacement: [
-        {
-          global: true,
-          match: "Discord",
-          replace: "Oldcord",
-        },
-      ],
-    },
-    {
-      find: "otpauth",
-      replacement: [
-        {
-          global: true,
-          match: "Discord",
-          replace: "Oldcord",
-        },
-      ],
-    },
+    }
   ],
 };
