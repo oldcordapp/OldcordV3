@@ -6,8 +6,8 @@ const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
 
 let erlpack = null;
 
-if (globalUtils.config.require_erlpack) {
-    erlpack = require('erlpack')
+if (globalUtils.config.gateway_erlpack) {
+    erlpack = require('@spacebarchat/erlpack')
 }
 
 const gateway = {

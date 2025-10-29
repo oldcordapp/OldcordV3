@@ -97,7 +97,7 @@ There are some features we need help with, if you're up for the task, feel free 
   - `includePortInWsUrl`: If set to `false` will force the server gateway to use ports 443/80 instead of the instance port. Good for reverse proxies.
   - `tenor_api_key`: Needed if you want `/tenor` support. You can get an API key [here](https://tenor.com/developer/dashboard).
   - `auto_embed_urls`: Set to `true` if you want urls included in message content to automatically embed.
-  - `require_erlpack`: Set to `true` if you want the gateway to support client communications which specifically want etf, such as the desktop client. It's disabled by default because it's not universally as easy to build Discord's erlpack across all Windows systems. Although this will come as a cost of desktop clients not being able to connect.
+  - `gateway_erlpack`: Set to `true` if you want the gateway to support client communications which specifically want etf, such as the desktop client. It's disabled by default, although this will come as a cost of desktop clients not being able to connect.
 
  # FAQ
  **What is WebRTC P2P?**
@@ -110,9 +110,9 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
   - **discord.js**: Snowflake implementation.
   - **unkn0w**: Disposable email domain list.
   - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which Discord used before 2022), used in the bootloader, build selector and admin panel for the pre-2022 Discord feel.
-  - **s074 & the Spacebar team**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc).
+  - **Spacebar**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc) and [erlpack](https://github.com/spacebarchat/erlpack).
   - **Google**: [Material Design Icons](https://fonts.google.com/icons).
   - **SVGRepo**: [Businessman Wearing Tie With Exclamation Mark - Modified for Reports SVG](https://www.svgrepo.com/svg/109813/businessman-wearing-tie-with-exclamation-mark)
-  - **Discord**: Other SVGs, images, fonts, etc - for the base clients (before patches) & some parts of Selector/Admin panel. Discord Developer Portal also has documented API responses for this recreation, along with general reverse engineering. And also [erlpack](https://github.com/discord/erlpack).
+  - **Discord**: Other SVGs, images, fonts, etc - for the base clients (before patches) & some parts of Selector/Admin panel. Discord Developer Portal also has documented API responses for this recreation, along with general reverse engineering.
   - **Vencord**: Reference to build Oldplunger and it's logger class.
   - **Cordwood**: Filter/Search functions for Oldplunger.

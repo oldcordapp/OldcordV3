@@ -5,8 +5,8 @@ const Snowflake = require('../helpers/snowflake');
 
 let erlpack = null;
 
-if (globalUtils.config.require_erlpack) {
-    erlpack = require('erlpack')
+if (globalUtils.config.gateway_erlpack) {
+    erlpack = require('@spacebarchat/erlpack');
 }
 
 //Adapted from Hummus' handling of sessions & whatnot
