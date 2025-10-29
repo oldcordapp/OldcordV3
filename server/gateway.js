@@ -3,7 +3,12 @@ const globalUtils = require('./helpers/globalutils');
 const WebSocket = require('ws').WebSocket;
 const zlib = require('zlib');
 const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
-const erlpack = require('erlpack')
+
+let erlpack = null;
+
+if (globalUtils.config.require_erlpack) {
+    erlpack = require('erlpack')
+}
 
 const gateway = {
     server: null,
@@ -169,7 +174,7 @@ const gateway = {
     handleClientMessage: async function (socket, data) {
         try {
             const msg = socket.wantsEtf ? data : data.toString("utf-8");
-            const packet = socket.wantsEtf ? erlpack.unpack(msg) : JSON.parse(msg);
+            const packet = socket.wantsEtf && erlpack !== null ? erlpack.unpack(msg) : JSON.parse(msg);
 
             if (packet.op !== 1) {
                 this.debug(`Incoming -> ${socket.wantsEtf ? JSON.stringify(packet) : msg}`);

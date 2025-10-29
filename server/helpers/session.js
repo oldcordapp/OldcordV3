@@ -2,7 +2,12 @@ const globalUtils = require('./globalutils');
 const { logText } = require("./logger");
 const zlib = require('zlib');
 const Snowflake = require('../helpers/snowflake');
-const erlpack = require("erlpack");
+
+let erlpack = null;
+
+if (globalUtils.config.require_erlpack) {
+    erlpack = require('erlpack')
+}
 
 //Adapted from Hummus' handling of sessions & whatnot
 
@@ -232,8 +237,8 @@ class session {
         if (this.dead) return;
         if (this.ratelimited) return;
 
-        if (this.socket.wantsEtf && this.type === 'gateway') {
-            payload = erlpack.pack(payload)
+        if (this.socket.wantsEtf && this.type === 'gateway' && erlpack !== null) {
+            payload = erlpack.pack(payload);
         }
 
         if (this.socket.wantsZlib && this.type === 'gateway') {

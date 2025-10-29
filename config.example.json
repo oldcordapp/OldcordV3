@@ -11,6 +11,7 @@
     "ws_port": 1337,
     "includePortInUrl": true,
     "includePortInWsUrl": true,
+    "require_erlpack": false,
     "cache404s": false,
     "serve_selector": true,
     "require_release_date_cookie": true,
