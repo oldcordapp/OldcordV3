@@ -4,6 +4,7 @@ export default async () => {
   const DiscordNative = window.DiscordNative;
 
   const PatchedNative = {};
+  const ipcListeners = {};
 
   const nativeModulesShim = {
     requireModule: (moduleName) => {
@@ -91,10 +92,97 @@ export default async () => {
             return createDeepMock("discord_spellcheck", logger);
           }
         }
+        case "discord_utils": {
+          logger.info(
+            "Shimming 'discord_utils' module for 2018+ compatibility."
+          );
+          try {
+            const modernDiscordUtils =
+              DiscordNative.nativeModules.requireModule("discord_utils");
+
+            return {
+              ...modernDiscordUtils,
+              getIdleMilliseconds: (callback) => {
+                if (typeof callback === "function") {
+                  callback(0);
+                }
+              },
+            };
+          } catch (err) {
+            logger.error(
+              "Failed to create 'discord_utils' shim. Providing a deep mock to prevent crash.",
+              err
+            );
+            return createDeepMock("discord_utils", logger);
+          }
+        }
         default: {
-          return DiscordNative.nativeModules.requireModule(moduleName);
+          try {
+            const module =
+              DiscordNative.nativeModules.requireModule(moduleName);
+
+            if (module) {
+              return module;
+            }
+          } catch (err) {
+            logger.warn(
+              `Native module '${moduleName}' not found. Providing a deep mock to prevent crash.`,
+              err
+            );
+            return createDeepMock(moduleName, logger);
+          }
         }
       }
+    },
+    ensureModule: (originalModuleName) => {
+      logger.info(
+        `Shimming ensureModule for '${originalModuleName}' with modern implementation.`
+      );
+
+      const legacyModulesToFake = ["discord_contact_import"];
+
+      const simulateSuccess = () => {
+        if (ipcListeners["MODULE_INSTALLED"]) {
+          ipcListeners["MODULE_INSTALLED"].forEach((listener) => {
+            listener({}, originalModuleName, true);
+          });
+        }
+      };
+
+      if (legacyModulesToFake.includes(originalModuleName)) {
+        logger.warn(
+          `Faking successful installation of legacy module '${originalModuleName}' to prevent a crash.`
+        );
+        setTimeout(simulateSuccess, 0);
+        return Promise.resolve();
+      }
+
+      let moduleToInstall = originalModuleName;
+      if (moduleToInstall === "discord_overlay") {
+        logger.info(
+          `Remapping 'discord_overlay' to 'discord_overlay2' for modern client compatibility.`
+        );
+        moduleToInstall = "discord_overlay2";
+      }
+
+      const promise = DiscordNative.nativeModules.ensureModule(moduleToInstall);
+
+      promise
+        .then(() => {
+          logger.info(
+            `Successfully ensured '${moduleToInstall}'. Simulating 'MODULE_INSTALLED' for '${originalModuleName}'.`
+          );
+          simulateSuccess();
+        })
+        .catch((err) => {
+          logger.error(
+            `Ensuring '${moduleToInstall}' failed. Faking success for '${originalModuleName}' to prevent client crash.`,
+            err
+          );
+          simulateSuccess();
+        });
+
+      return promise.catch(() => {});
     },
   };
 
@@ -137,49 +225,14 @@ export default async () => {
   };
   PatchedNative.app = appShim;
 
-  // Since IPC events are different, we need to gracefully error it out so that Discord still loads
-
-  const ipcListeners = {};
-
   const fakeIpc = {
     send: (channel, ...args) => {
       if (channel === "MODULE_INSTALL") {
-        let moduleName = args[0];
+        const moduleName = args[0];
         logger.info(
-          `Intercepted IPC 'MODULE_INSTALL' for '${moduleName}'. Shimming with modern 'ensureModule'.`
+          `Intercepted IPC 'MODULE_INSTALL' for '${moduleName}'. Routing to shimed ensureModule.`
         );
-
-        if (moduleName == "discord_overlay") {
-          logger.info(
-            `discord_overlay tried to install, using the modern version discord_overlay2...`
-          );
-          moduleName = "discord_overlay2";
-        }
-
-        window._OldcordNative.nativeModules
-          .ensureModule(moduleName)
-          .then(() => {
-            logger.info(
-              `Successfully ensured module '${moduleName}'. Simulating 'MODULE_INSTALLED' IPC event.`
-            );
-            if (ipcListeners["MODULE_INSTALLED"]) {
-              ipcListeners["MODULE_INSTALLED"].forEach((listener) => {
-                listener({}, moduleName, true);
-              });
-            }
-          })
-          .catch((err) => {
-            logger.error(
-              `Failed to ensure module '${moduleName}'. Simulating failed 'MODULE_INSTALLED' IPC event.`,
-              err
-            );
-            if (ipcListeners["MODULE_INSTALLED"]) {
-              ipcListeners["MODULE_INSTALLED"].forEach((listener) => {
-                listener({}, moduleName, false);
-              });
-            }
-          });
-
+        window._OldcordNative.nativeModules.ensureModule(moduleName);
         return;
       }
 
@@ -228,13 +281,10 @@ export default async () => {
       if (Reflect.has(target, prop)) {
         return Reflect.get(target, prop, receiver);
       }
-
       const originalProp = Reflect.get(DiscordNative.ipc, prop);
-
       if (typeof originalProp === "function") {
         return originalProp.bind(DiscordNative.ipc);
       }
-
       return originalProp;
     },
     has(target, prop) {

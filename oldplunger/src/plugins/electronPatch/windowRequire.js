@@ -320,50 +320,14 @@ export default (moduleName) => {
       requiredModule = createDeepMock("discord_voice", logger);
       break;
     }
-    case "./Utils":
-    case "discord_utils": {
-      logger.info(
-        "Providing a wrapped shim for the native 'discord_utils' module."
-      );
-
-      const originalUtils =
-        window._OldcordNative.nativeModules.requireModule("discord_utils");
-
-      const discordUtilsShim = {
-        ...originalUtils,
-        getIdleMilliseconds:
-          originalUtils.getIdleMilliseconds ||
-          ((callback) => {
-            logger.warn(
-              "Shimmed discord_utils.getIdleMilliseconds: Function not found in modern module. Simulating 0ms idle time."
-            );
-            if (typeof callback === "function") {
-              callback(0);
-            }
-          }),
-      };
-
-      requiredModule = discordUtilsShim;
-      break;
-    }
     case "erlpack": {
       requiredModule =
         window._OldcordNative.nativeModules.requireModule("discord_erlpack");
       break;
     }
     default: {
-      try {
-        const remoteModule =
-          window._OldcordNative.nativeModules.requireModule(moduleName);
-
-        if (remoteModule) {
-          requiredModule = remoteModule;
-        }
-      } catch (error) {
-        logger.info(`Providing a deep mock for the '${moduleName}' module.`);
-        requiredModule = createDeepMock(moduleName, logger);
-      }
-      break;
+      requiredModule =
+        window._OldcordNative.nativeModules.requireModule(moduleName);
     }
   }
 
