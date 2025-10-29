@@ -4,7 +4,7 @@ import windowRequire from "./windowRequire.js";
 
 export const logger = new Logger("Electron Patches");
 
-function createDeepMock(moduleName, logger) {
+export function createDeepMock(moduleName, logger) {
   const handler = {
     get(target, prop, receiver) {
       return (...args) => {
@@ -19,6 +19,8 @@ function createDeepMock(moduleName, logger) {
   };
   return new Proxy({}, handler);
 }
+
+export let appName = "Oldcord";
 
 export default {
   target: "electron",
@@ -78,7 +80,6 @@ export default {
       paths: [],
     };
 
-    let appName = "Oldcord";
     try {
       const moduleDataPath =
         await window.DiscordNative.fileManager.getModulePath();
@@ -110,17 +111,8 @@ export default {
 
     await windowDiscordNative();
 
-    const alreadyShimmed = [];
-    const moduleCache = {};
-
     window.require = (moduleName) => {
-      return windowRequire(
-        appName,
-        alreadyShimmed,
-        moduleCache,
-        moduleName,
-        createDeepMock
-      );
+      return windowRequire(moduleName);
     };
   },
 };

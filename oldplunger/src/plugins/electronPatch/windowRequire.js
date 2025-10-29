@@ -1,4 +1,4 @@
-import { logger } from "./index.js";
+import { logger, createDeepMock, appName } from "./index.js";
 
 function getNodeModulePaths(startPath, joiner) {
   if (!startPath || !joiner) return [];
@@ -15,7 +15,10 @@ function getNodeModulePaths(startPath, joiner) {
   return paths;
 }
 
-export default (appName, alreadyShimmed, moduleCache, moduleName, createDeepMock) => {
+const alreadyShimmed = [];
+const moduleCache = {};
+
+export default (moduleName) => {
   if (moduleCache.hasOwnProperty(moduleName)) {
     return moduleCache[moduleName];
   }
