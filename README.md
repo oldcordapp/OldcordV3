@@ -5,7 +5,7 @@
 An open-source reimplementation of the old (2015-2018) Discord backend, including an on-demand client patcher. <br>
 Contributions are highly encouraged! We'd love your help to clean and refactor the codebase!
 
-# Important Notices
+# ⚠️ Important Notices
 **Database Migrations**:
    - The database schema can change between updates. When this happens, we will provide SQL migration scripts to upgrade existing databases, **some of these scripts may run automatically on start**.
 
@@ -51,6 +51,10 @@ There are some features we need help with, if you're up for the task, feel free 
     - **Android Discord React Native (2022+)**: ❎ No plans for support.
     - **iOS Discord React Native (2015+)**: ❎ No plans for support due to needing a Jailbroken device.
 
+**Desktop Client**:
+  - **Note**: We only support the latest Discord desktop clients (Stable, PTB, Canary, Development) or ones that repackaged from it. Older versions are not recommended.
+  - **Compatibility**: 🟠 Work in progress
+
 # Setup Guide
 **Prerequisites**:
   - A running PostgreSQL server.
@@ -93,7 +97,7 @@ There are some features we need help with, if you're up for the task, feel free 
   - `includePortInWsUrl`: If set to `false` will force the server gateway to use ports 443/80 instead of the instance port. Good for reverse proxies.
   - `tenor_api_key`: Needed if you want `/tenor` support. You can get an API key [here](https://tenor.com/developer/dashboard).
   - `auto_embed_urls`: Set to `true` if you want urls included in message content to automatically embed.
-  - `require_erlpack`: Set to `true` if you want the gateway to support client communications which specifically want etf. It's disabled by default because it's not universally as easy to build discord's erlpack across all Windows systems.
+  - `require_erlpack`: Set to `true` if you want the gateway to support client communications which specifically want etf, such as the desktop client. It's disabled by default because it's not universally as easy to build Discord's erlpack across all Windows systems. Although this will come as a cost of desktop clients not being able to connect.
 
  # FAQ
  **What is WebRTC P2P?**
