@@ -122,14 +122,16 @@ const gateway = {
 
         socket.on('close', (code) => this.handleClientClose(code));
 
-        let heartbeat_payload = JSON.stringify({
+        let heartbeat_payload = {
             op: OPCODES.HEARTBEAT_INFO,
             s: null,
             d: {
                 heartbeat_interval: 45 * 1000,
                 _trace: ["oldcord-v3"]
             }
-        });
+        }
+
+        heartbeat_payload = socket.wantsEtf ? erlpack.pack(heartbeat_payload) : JSON.stringify(heartbeat_payload)
 
         if (socket.wantsZlib) {
             let buffer;
