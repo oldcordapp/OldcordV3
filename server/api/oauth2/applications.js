@@ -26,7 +26,7 @@ router.param('applicationid', async (req, res, next, applicationid) => {
     next();
 });
 
-router.get("/", quickcache.cacheFor(60 * 10), async (req, res) => {
+router.get("/", async (req, res) => {
     try {
         let account = req.account;
 
@@ -105,7 +105,7 @@ router.post("/", async (req, res) => {
     }
 });
 
-router.get("/:applicationid", quickcache.cacheFor(60 * 10), async (req, res) => {
+router.get("/:applicationid", async (req, res) => {
     try {
         let account = req.account;
 
