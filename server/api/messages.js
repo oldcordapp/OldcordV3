@@ -197,10 +197,10 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
                 let ourFriends = account.relationships;
                 let theirFriends = recipient.relationships;
-                let ourRelationshipState = ourFriends.find(x => x.user.id == recipient.id);
-                let theirRelationshipState = theirFriends.find(x => x.user.id == account.id);
+                let ourRelationshipState = ourFriends?.find(x => x.user.id == recipient.id);
+                let theirRelationshipState = theirFriends?.find(x => x.user.id == account.id);
 
-                if (!ourRelationshipState) {
+                if (!account.bot && !ourRelationshipState) {
                     ourFriends.push({
                         id: recipient.id,
                         type: 0,
@@ -210,7 +210,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                     ourRelationshipState = ourFriends.find(x => x.user.id == recipient.id);
                 }
 
-                if (!theirRelationshipState) {
+                if (!recipient.bot && !theirRelationshipState) {
                     theirFriends.push({
                         id: account.id,
                         type: 0,
@@ -220,7 +220,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                     theirRelationshipState = theirFriends.find(x => x.user.id == account.id);
                 }
 
-                if (ourRelationshipState.type === 2) {
+                if (ourRelationshipState?.type === 2) {
                     //we blocked them
                     
                     return res.status(403).json({
@@ -229,7 +229,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                     })
                 }
 
-                if (theirRelationshipState.type === 2) {
+                if (theirRelationshipState?.type === 2) {
                     //they blocked us
                     
                     return res.status(403).json({
@@ -244,7 +244,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 let dmsOff = [];
         
                 for(var guild of guilds) {
-                    if (recipient.settings.restricted_guilds.includes(guild.id)) {
+                    if (!recipient.bot && recipient.settings.restricted_guilds.includes(guild.id)) {
                         dmsOff.push(guild.id);
                     }
                 }

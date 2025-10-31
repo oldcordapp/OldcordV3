@@ -357,9 +357,7 @@ router.patch("/settings", async (req, res) => {
     }
 
     for (let key in req.body) {
-        if (new_settings.hasOwnProperty(key)) {
-          new_settings[key] = req.body[key];
-        }
+      new_settings[key] = req.body[key];
     }
 
     const attempt = await global.database.updateSettings(account.id, new_settings);

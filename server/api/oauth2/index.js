@@ -50,7 +50,7 @@ router.get("/authorize", async (req, res) => {
             });
         }
 
-        if (scope === 'bot') {
+        if (scope.includes('bot')) {
             let bot = await global.database.getBotByApplicationId(application.id);
 
             if (!bot) {

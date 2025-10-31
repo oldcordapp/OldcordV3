@@ -624,7 +624,7 @@ function channelPermissionsMiddleware(permission) {
                         });
                     }
 
-                    let friends = globalUtils.areWeFriends(sender, other);
+                    let friends = !sender.bot && !other.bot && globalUtils.areWeFriends(sender, other);
 
                     const guilds = await global.database.getUsersGuilds(other.id);
 
@@ -644,7 +644,7 @@ function channelPermissionsMiddleware(permission) {
                     let counted = 0;
 
                     for(var guild of sharedGuilds) {
-                        if (other.settings.restricted_guilds.includes(guild.id)) {
+                        if (!other.bot && other.settings.restricted_guilds.includes(guild.id)) {
                             counted++;
                         }
                     }

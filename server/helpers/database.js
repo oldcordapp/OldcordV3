@@ -601,10 +601,10 @@ const database = {
             );
 
             await database.runQuery(
-                `INSERT INTO users (id, username, discriminator, email, password, token, created_at, avatar, bot)
-                SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
+                `INSERT INTO users (id, username, discriminator, email, password, token, created_at, avatar, bot, flags)
+                SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
                 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = $1)`,
-                ['1279218211430105089', 'Oldcord', '0000', 'system@oldcordapp.com', 'aLq6abXnklLRql3MEEpEHge4F9j3cE', null, new Date().toISOString(), null, 1]
+                ['1279218211430105089', 'Oldcord', '0000', 'system@oldcordapp.com', 'aLq6abXnklLRql3MEEpEHge4F9j3cE', null, new Date().toISOString(), null, 1, 4096]
             );
 
             await database.runQuery(`CREATE EXTENSION IF NOT EXISTS pg_trgm;`);
