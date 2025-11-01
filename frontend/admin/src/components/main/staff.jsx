@@ -16,6 +16,7 @@ import Dropdown from './dropdown';
 import InputMultiple from '../modals/inputmultiple';
 import Confirmation from '../modals/confirmation';
 import AuditLog from './auditlog';
+import { priviledgeFriendlyLabel } from './privilege';
 
 const Staff = () => {
     const location = useLocation();
@@ -153,6 +154,10 @@ const Staff = () => {
         } }) },
     ];
 
+    function getPrivilegeName(value) {
+        return Object.keys(priviledgeFriendlyLabel).find(key => priviledgeFriendlyLabel[key] === value);
+    }
+
     return (
         <>
             <div style={{ 'display': 'flex', 'flex': 1, 'minHeight': '100vh' }}>
@@ -179,7 +184,7 @@ const Staff = () => {
                                                         <span style={{
                                                             color: 'rgb(144, 153, 164)',
                                                             fontSize: '15px'
-                                                        }}>Privilege: {data.staff_details.privilege}</span>
+                                                        }}>Privilege: {getPrivilegeName(data.staff_details.privilege)}</span>
                                                         <div className='staff-buttons'>
                                                             <button className={`largeButton ${data.id === user.id ? "no-button" : "yes-button"}`} onClick={() => {
                                                                 if (data.id !== user.id) {
