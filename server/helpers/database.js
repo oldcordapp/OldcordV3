@@ -5502,6 +5502,40 @@ const database = {
             return false;
         }
     },
+    getStaffAuditLogs: async () => {
+        try {
+            let rows = await database.runQuery(`SELECT u.id, u.username, u.discriminator, s.audit_log, s.user_id FROM users AS u INNER JOIN staff AS s ON s.user_id = u.id`, []);
+
+            if (!rows || rows.length === 0) {
+                return [];
+            }
+
+            let ret = [];
+
+            for (let row of rows) {
+                let entries = JSON.parse(row.audit_log) ?? [];
+
+                if (entries.length > 0) {
+                    let completeEntries = entries.map(logEntry => ({
+                        ...logEntry,
+                        actioned_by: {
+                            username: row.username,
+                            id: row.id,
+                            discriminator: row.discriminator
+                        }
+                    }));
+
+                    ret.push(...completeEntries);
+                }
+            }
+
+            return ret;
+        } catch (error) {
+            logText(error, "error");
+
+            return [];
+        }
+    },
     getInstanceStaff: async () => {
         try {
             let rows = await database.runQuery(`SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id`, []);

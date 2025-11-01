@@ -32,6 +32,8 @@ const Staff = () => {
     const navigate = useNavigate();
     const { user } = useAuthUser();
     const avatarPath = (user && user.avatar) ? `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/${user.id}/${user.avatar}.png` : DefaultAvatar;
+    const query = new URLSearchParams(location.search);
+    const selectedId = query.get('selectedId'); 
 
     useEffect(() => {
         fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/staff`, {
@@ -53,6 +55,24 @@ const Staff = () => {
             setData([]);
         });
     }, []);
+
+    useEffect(() => {
+        if (selectedId && data && Array.isArray(data)) {
+            const targetId = String(selectedId);
+
+            const staff = data.find(
+                (staff) => String(staff.id) === targetId
+            );
+
+            if (staff) {
+                setSelectedStaff(staff);
+            } else {
+                setSelectedStaff(null);
+            }
+        } else if (!selectedId) {
+            setSelectedStaff(null);
+        }
+    }, [data, selectedId]);
 
     const checkAndAddStaffUser = (fieldValues) => {
         let user_id = fieldValues['User ID'];
@@ -189,7 +209,6 @@ const Staff = () => {
                                                             <button className={`largeButton yes-button ${data.id === user.id ? "disabled-btn" : ""}`} onClick={() => {
                                                                 if (data.id !== user.id) {
                                                                     setSelectedStaff(data);
-                                                                    console.log(data);
                                                                 }
                                                             }} 
                                                             disabled={data.id === user.id ? true : false} 

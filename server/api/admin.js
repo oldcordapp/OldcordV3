@@ -346,6 +346,21 @@ router.get("/staff", staffAccessMiddleware(4), async (req, res) => {
     }
 });
 
+router.get("/staff/audit-logs", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        let audit_logs = await global.database.getStaffAuditLogs();
+
+        return res.status(200).json(audit_logs);
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    } 
+});
+
 router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
     try {
         let user_id = req.body.user_id;

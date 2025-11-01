@@ -15,6 +15,7 @@ import Updates from './components/main/updates';
 import PRIVILEGE from "./components/main/privilege";
 import Bots from './components/main/bots';
 import Staff from './components/main/staff';
+import AuditLogs from './components/main/auditlogs';
 
 const root = ReactDOM.createRoot(document.getElementById('app-mount'));
 
@@ -36,6 +37,7 @@ root.render(
           <Route path="/bots" element={<AuthCheck appPage={Bots} enforced={true} minClearance={PRIVILEGE.ADMIN} />} />
           <Route path="/users" element={<AuthCheck appPage={Users} enforced={true} minClearance={PRIVILEGE.ADMIN} />} />
           <Route path="/staff" element={<AuthCheck appPage={Staff} enforced={true} minClearance={PRIVILEGE.INSTANCE_OWNER} />} />
+          <Route path="/audit-logs" element={<AuthCheck appPage={AuditLogs} enforced={true} minClearance={PRIVILEGE.INSTANCE_OWNER} />} />
           <Route path="/reports" element={<AuthCheck appPage={Reports} enforced={true} minClearance={PRIVILEGE.JANITOR} />} />
           <Route path="/messages" element={<AuthCheck appPage={Messages} enforced={true} minClearance={PRIVILEGE.MODERATOR} />} />
           <Route path="/updates" element={<AuthCheck appPage={Updates} enforced={true} minClearance={PRIVILEGE.JANITOR} />} />

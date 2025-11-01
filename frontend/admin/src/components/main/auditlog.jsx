@@ -1,4 +1,6 @@
-const AuditLog = ({ action, moderation_id, timestamp, reasoning, moderated_id, moderation_props }) => {
+import { Link } from "react-router-dom";
+
+const AuditLog = ({ action, moderation_id, timestamp, reasoning, moderated_id, moderation_props, actioned_by = null }) => {
     return (
         <>
             <tr className='mainPage-main-components-infoCard-table-tr' style={{
@@ -7,6 +9,11 @@ const AuditLog = ({ action, moderation_id, timestamp, reasoning, moderated_id, m
                 <td className='mainPage-main-components-infoCard-table-td'>
                     {action}
                 </td>
+                {actioned_by != null ? <>
+                    <td className='mainPage-main-components-infoCard-table-td'>
+                        <Link to={`/staff?selectedId=${actioned_by.id}`}>{actioned_by.username}#{actioned_by.discriminator}</Link>
+                    </td>
+                </> : <></>}
                 <td className='mainPage-main-components-infoCard-table-td'>
                     {moderation_id}
                 </td>
