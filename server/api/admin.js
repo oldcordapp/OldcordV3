@@ -390,7 +390,7 @@ router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
             })
         }
 
-        let tryAddStaff = await global.database.addInstanceStaff(user_id, privilege);
+        let tryAddStaff = await global.database.addInstanceStaff(req.user, privilege);
 
         if (!tryAddStaff) {
             return res.status(500).json({
@@ -430,7 +430,7 @@ router.delete("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
             });
         }
 
-        await global.database.removeFromStaff(user.id);
+        await global.database.removeFromStaff(user);
 
         return res.status(204).send();
     } catch (error) {

@@ -5489,19 +5489,11 @@ const database = {
             return false;
         }
     },
-    addInstanceStaff: async (user_id, privilege) => {
+    addInstanceStaff: async (user, privilege) => {
         try {
-            const user = await database.getAccountByUserId(user_id);
+            await database.runQuery(`INSERT INTO staff (user_id, privilege, audit_log) VALUES ($1, $2, $3)`, [user.id, privilege, '[]']);
 
-            if (user == null) {
-                logText(error, "User not found.");
-
-                return false;
-            }
-
-            await database.runQuery(`INSERT INTO staff (user_id, privilege, audit_log) VALUES ($1, $2, $3)`, [user_id, privilege, '[]']);
-
-            await database.runQuery(`UPDATE users SET flags = $1 WHERE id = $2`, [user.flags + 1, user_id]); // Maybe repurpose COLLABORATOR or RESTRICTED_COLLABORATOR for either Admin and Janitor/Moderator respectively
+            await database.runQuery(`UPDATE users SET flags = $1 WHERE id = $2`, [user.flags | 1, user.id]); // Maybe repurpose COLLABORATOR or RESTRICTED_COLLABORATOR for either Admin and Janitor/Moderator respectively
 
             return true;
         }  catch (error) {
@@ -5540,19 +5532,11 @@ const database = {
             return [];
         }
     },
-    removeFromStaff: async (user_id) => {
+    removeFromStaff: async (user) => {
         try {
-            const user = await database.getAccountByUserId(user_id);
+            await database.runQuery(`DELETE FROM staff WHERE user_id = $1`, [user.id]);
 
-            if (user == null) {
-                logText(error, "User not found.");
-
-                return false;
-            }
-
-            await database.runQuery(`DELETE FROM staff WHERE user_id = $1`, [user_id]);
-
-            await database.runQuery(`UPDATE users SET flags = $1 WHERE id = $2`, [user.flags - 1, user_id]); // Maybe repurpose COLLABORATOR or RESTRICTED_COLLABORATOR for either Admin and Janitor/Moderator respectively
+            await database.runQuery(`UPDATE users SET flags = $1 WHERE id = $2`, [user.flags &~ 1, user.id]); // Maybe repurpose COLLABORATOR or RESTRICTED_COLLABORATOR for either Admin and Janitor/Moderator respectively
 
             return true;
         } catch (error) {
