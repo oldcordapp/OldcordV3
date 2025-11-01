@@ -174,17 +174,21 @@ const Staff = () => {
                                         {
                                             <div className='staff-container'>
                                                 {data.map((data, i) => (
-                                                    <div className='staff-card'>
+                                                    <div className={`staff-card ${data.id === user.id ? "disabled" : ""}`}>
                                                         <h2>{data.username}<span>#{data.discriminator}</span></h2>
                                                         <span style={{
                                                             color: 'rgb(144, 153, 164)',
                                                             fontSize: '15px'
                                                         }}>Privilege: {data.staff_details.privilege}</span>
                                                         <div className='staff-buttons'>
-                                                            <button className='largeButton yes-button' onClick={() => {
-                                                                setSelectedStaff(data);
-                                                                console.log(data);
-                                                            }}>Manage</button>
+                                                            <button className={`largeButton ${data.id === user.id ? "no-button" : "yes-button"}`} onClick={() => {
+                                                                if (data.id !== user.id) {
+                                                                    setSelectedStaff(data);
+                                                                    console.log(data);
+                                                                }
+                                                            }} 
+                                                            disabled={data.id === user.id ? true : false} 
+                                                            title={data.id === user.id ? "You cannot change yourself! If you REALLY want to, you know what to do." : ""}>Manage</button>
                                                         </div>
                                                     </div>
                                                 ))}

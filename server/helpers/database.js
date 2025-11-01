@@ -5504,8 +5504,7 @@ const database = {
     },
     getInstanceStaff: async () => {
         try {
-            //dont return the instance owner
-            let rows = await database.runQuery(`SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id AND s.privilege != 4`, []);
+            let rows = await database.runQuery(`SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id`, []);
             let ret = [];
             
             if (!rows || rows.length === 0) {
