@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './sidebar';
 import Avatar from './avatar';
-import { useAuthUser } from '../..';
+import { useAuthUser } from '../context/AuthContext';
 import Update from './update';
 
 import DefaultAvatar from '../../assets/default-avatar.png';

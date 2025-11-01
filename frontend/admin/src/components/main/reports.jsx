@@ -9,7 +9,7 @@ import IcReports from '../../assets/ic_reports.svg?react';
 
 import Report from './report';
 import Button from '@oldcord/frontend-shared/components/button';
-import { useAuthUser } from '../..';
+import { useAuthUser } from '../context/AuthContext';
 
 const Reports = () => {
     const location = useLocation();

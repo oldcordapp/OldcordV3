@@ -8,7 +8,7 @@ import Searchbar from './searchbar';
 import DefaultAvatar from '../../assets/default-avatar.png'
 import NoResults from '../../assets/img_noresults.svg'
 import User from './user';
-import { useAuthUser } from '../..';
+import { useAuthUser } from '../context/AuthContext';
 import Bot from './bot';
 
 const Bots = () => {

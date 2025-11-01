@@ -9,7 +9,7 @@ import NoResults from '../../assets/img_noresults.svg'
 import Ic_dots from '../../assets/ic_dots.svg?react';
 import Ic_paperclip from '../../assets/ic_paperclip.svg?react';
 import Button from '@oldcord/frontend-shared/components/button';
-import { useAuthUser } from '../..';
+import { useAuthUser } from '../context/AuthContext';
 import ExpandableComponent from './expandablecomponent';
 import ResultsCard from './resultscard';
 import Dropdown from './dropdown';

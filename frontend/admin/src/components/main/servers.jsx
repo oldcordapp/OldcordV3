@@ -8,7 +8,7 @@ import Server from './server';
 
 import DefaultAvatar from '../../assets/default-avatar.png'
 import NoResults from '../../assets/img_noresults.svg'
-import { useAuthUser } from '../..';
+import { useAuthUser } from '../context/AuthContext';
 
 const Servers = () => {
     const location = useLocation();

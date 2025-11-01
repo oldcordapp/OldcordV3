@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import Sidebar from './main/sidebar';
 import Avatar from './main/avatar';
-import { useAuthUser } from '..';
+import { useAuthUser } from './context/AuthContext';
 import DefaultAvatar from '../assets/default-avatar.png'
 
 function AuthCheck({ appPage = null, enforced, minClearance }) {
