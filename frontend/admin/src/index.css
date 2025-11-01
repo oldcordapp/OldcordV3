@@ -26,6 +26,60 @@ body {
   width: 250px;
 }
 
+.add-staff {
+    display: flex;
+    justify-content: center;
+    background: #f9f9f9;
+    color: #bebebe;
+    align-items: center;
+    font-size: 32px;
+    height: 100px;
+    width: 100px;
+    border-radius: 50px;
+    border: 2px dotted #bbbbbb;
+    user-select: none;
+    transition: 0.3s filter;
+}
+
+.staff-container {
+  padding: 10px;
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-items: center;
+}
+
+.staff-card {
+    border: 1px solid #f6f6f7;
+    border-radius: 5px;
+    background: #f9f9f9;
+    padding: 10px;
+    transition: 0.3s;
+    text-align: center;
+    margin-right: 25px;
+}
+
+.staff-card > h2 {
+    font-size: 20px;
+    font-weight: 400; 
+    margin-bottom: 10px;
+    color: #4f5660;
+}
+
+.staff-card > h2 > span {
+      color:  rgb(144, 153, 164);
+}
+
+.staff-buttons {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.add-staff:hover {
+  cursor: pointer;
+}
+
 .loginPage-card-contents {
   background-color: #7289da;
   color: #fff;

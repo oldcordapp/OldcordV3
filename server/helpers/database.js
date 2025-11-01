@@ -5489,10 +5489,28 @@ const database = {
             return false;
         }
     },
+    addInstanceStaff: async (user_id, privilege) => {
+        try {
+            await database.runQuery(`INSERT INTO staff (user_id, privilege, audit_log) VALUES ($1, $2, $3)`, [user_id, privilege, '[]']);
+
+            await database.runQuery(`UPDATE users SET flags = 1 WHERE id = $1`, [user_id]); //todo calculate the flags and add onto existing
+
+            return true;
+        }  catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
     getInstanceStaff: async () => {
         try {
-            let rows = await database.runQuery(`SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id`, []);
+            //dont return the instance owner
+            let rows = await database.runQuery(`SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id AND s.privilege != 4`, []);
             let ret = [];
+            
+            if (!rows || rows.length === 0) {
+                return [];
+            }
 
             for(var row of rows) {
                 ret.push({
@@ -5513,6 +5531,30 @@ const database = {
             logText(error, "error");
             
             return [];
+        }
+    },
+    removeFromStaff: async (user_id) => {
+        try {
+            await database.runQuery(`DELETE FROM staff WHERE user_id = $1`, [user_id]);
+
+            await database.runQuery(`UPDATE users SET flags = 0 WHERE id = $1`, [user_id]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
+    clearStaffAuditLogs: async (user_id) => {
+        try {
+            await database.runQuery(`UPDATE staff SET audit_log = $1 WHERE user_id = $2`, ['[]', user_id]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+
+            return false;
         }
     },
     updateMessage: async (message_id, new_content) => {

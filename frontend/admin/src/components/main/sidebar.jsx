@@ -37,7 +37,7 @@ const Sidebar = ({ active }) => {
                     <SidebarMenuItem path="/reports" name="Reports" Icon={ic_reports} active={active} disabled={privilege < PRIVILEGE.JANITOR}></SidebarMenuItem>
                 </SidebarMenuList>
                 <SidebarMenuList name="Internal">
-                    <SidebarMenuItem path="/staff" name="Staff" Icon={ic_staff} active={active} disabled={true}></SidebarMenuItem>
+                    <SidebarMenuItem path="/staff" name="Staff" Icon={ic_staff} active={active} disabled={privilege < PRIVILEGE.INSTANCE_OWNER}></SidebarMenuItem>
                     <SidebarMenuItem path="/audit-logs" name="Audit Logs" Icon={ic_archived} active={active} disabled={true}></SidebarMenuItem>
                 </SidebarMenuList>
                 <SidebarMenuList name="Instance">

@@ -9,6 +9,10 @@ const globalUtils = require('../helpers/globalutils');
 
 router.param('userid', async (req, res, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
+    req.is_user_staff = req.user && (req.user.flags & 1 << 0) === 1 << 0;
+
+    if (req.user != null && req.is_user_staff)
+        req.user_staff_details = await global.database.getStaffDetails(req.user.id);
 
     next();
 });
@@ -273,7 +277,7 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
             });
         }
 
-        if (user.id === req.account.id) {
+        if (user.id === req.account.id || req.is_user_staff) { //Should we allow them to disable other staff members?
             return res.status(404).json({
                 code: 404,
                 message: `Unknown ${user.bot ? 'Bot' : 'User'}`
@@ -342,6 +346,134 @@ router.get("/staff", staffAccessMiddleware(4), async (req, res) => {
     }
 });
 
+router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        let user_id = req.body.user_id;
+        let privilege = req.body.privilege;
+
+        if (!user_id) {
+            return res.status(400).json({
+                code: 400,
+                user_id: "This field is required."
+            });
+        }
+
+        if (!privilege) {
+            return res.status(400).json({
+                code: 400,
+                privilege: "This field is required."
+            });
+        }
+
+        if (privilege > 3 || privilege <= 0) {
+            return res.status(400).json({
+                code: 400,
+                privilege: "Invalid Privilege"
+            });
+        }
+
+        req.user = await global.database.getAccountByUserId(user_id);
+
+        if (!req.user) {
+            return res.status(404).json({
+                "code": 404,
+                "message": "Unknown User"
+            })
+        }
+
+        req.is_user_staff = req.user && (req.user.flags & 1 << 0) === 1 << 0;
+
+        if (req.is_user_staff) {
+            return res.status(400).json({
+                "code": 400,
+                "message": "This user is already staff."
+            })
+        }
+
+        let tryAddStaff = await global.database.addInstanceStaff(user_id, privilege);
+
+        if (!tryAddStaff) {
+            return res.status(500).json({
+                code: 500,
+                message: "Internal Server Error"
+            });
+        }
+
+        let new_staff = await global.database.getInstanceStaff();
+
+        return res.status(200).json(new_staff);
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.delete("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        let user = req.user;
+
+        if (!user) {
+            return res.status(404).json({
+                code: 404,
+                message: `Unknown User`
+            });
+        }
+
+        if (user.id === req.account.id || !req.is_user_staff) {
+            return res.status(404).json({
+                code: 404,
+                message: `Unknown User`
+            });
+        }
+
+        await global.database.removeFromStaff(user.id);
+
+        return res.status(204).send();
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.delete("/staff/:userid/audit-logs", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        let user = req.user;
+
+        if (!user) {
+            return res.status(404).json({
+                code: 404,
+                message: `Unknown User`
+            });
+        }
+
+        if (user.id === req.account.id || !req.is_user_staff) {
+            return res.status(404).json({
+                code: 404,
+                message: `Unknown User`
+            });
+        }
+
+        await global.database.clearStaffAuditLogs(user.id);
+
+        return res.status(204).send();
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
 router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
     try {
         let channelId = req.query.channelId;
@@ -370,17 +502,17 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
         }
 
         if (cdnLink) {
-             message = await global.database.getMessageByCdnLink(cdnLink);
+            message = await global.database.getMessageByCdnLink(cdnLink);
 
-             if (message == null) {
-                 return res.status(404).json({
-                     code: 404,
-                     message: "No Message found with that CDN Link"
-                 });
-             }
+            if (message == null) {
+                return res.status(404).json({
+                    code: 404,
+                    message: "No Message found with that CDN Link"
+                });
+            }
 
-             messageId = message.id;
-             channelId = message.channel_id;
+            messageId = message.id;
+            channelId = message.channel_id;
         }
 
         if (messageId) {
@@ -510,7 +642,7 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
             });
         }
 
-        if (user.id === req.account.id) {
+        if (user.id === req.account.id || req.is_user_staff) {
             return res.status(404).json({
                 code: 404,
                 message: `Unknown ${user.bot ? 'Bot' : 'User'}`
