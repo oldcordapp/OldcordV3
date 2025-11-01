@@ -1318,3 +1318,7 @@ th {
 .disabled {
   opacity: .4;
 }
+
+.disabled * {
+  user-select: none;
+}
