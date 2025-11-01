@@ -186,7 +186,7 @@ const Staff = () => {
                                                             fontSize: '15px'
                                                         }}>Privilege: {getPrivilegeName(data.staff_details.privilege)}</span>
                                                         <div className='staff-buttons'>
-                                                            <button className={`largeButton ${data.id === user.id ? "no-button" : "yes-button"}`} onClick={() => {
+                                                            <button className={`largeButton yes-button ${data.id === user.id ? "disabled-btn" : ""}`} onClick={() => {
                                                                 if (data.id !== user.id) {
                                                                     setSelectedStaff(data);
                                                                     console.log(data);
