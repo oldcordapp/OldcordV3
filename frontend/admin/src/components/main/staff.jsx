@@ -343,7 +343,7 @@ const Staff = () => {
                                                     </div>
                                                     <div className='mainPage-main-components-sidebar-infoLine'>
                                                         <div className='mainPage-main-components-sidebar-label'>Privilege</div>
-                                                        {selectedStaff.staff_details.privilege}
+                                                        {getPrivilegeName(selectedStaff.staff_details.privilege)}
                                                     </div>
                                                     <div className='mainPage-main-components-sidebar-infoLine'>
                                                         <div className='mainPage-main-components-sidebar-label'>Audit Log Entries</div>
