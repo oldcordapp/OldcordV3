@@ -950,6 +950,27 @@ const database = {
             return [];
         }
     },
+    getBotPrivateChannels: async (bot_id) => {
+        try {
+            let channels = [];
+
+            const rows = await database.runQuery(`
+                SELECT id FROM dm_channels WHERE $1 IN (user1, user2);
+            `, [bot_id]);
+
+            if (rows == null || rows.length == 0) {
+                return channels;
+            }
+
+            channels = rows.map(row => row.id)
+
+            return channels;
+        } catch (error) {
+            logText(error, "error");
+
+            return [];
+        }
+    },
     findPrivateChannel: async (user1_id, user2_id) => {
         try {
             const rows = await database.runQuery(`

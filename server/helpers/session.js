@@ -445,7 +445,7 @@ class session {
                 ]
             }
 
-            let chans = await database.getPrivateChannels(this.user.id);
+            let chans = this.user.bot ? await database.getBotPrivateChannels(this.user.id) : await database.getPrivateChannels(this.user.id);
             let filteredDMs = [];
 
             for (var chan_id of chans) {
