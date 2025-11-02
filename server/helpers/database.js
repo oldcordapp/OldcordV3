@@ -955,7 +955,7 @@ const database = {
             let channels = [];
 
             const rows = await database.runQuery(`
-                SELECT id FROM dm_channels WHERE $1 IN (user1, user2)
+                SELECT id FROM dm_channels WHERE user1 = $1 OR user2 = $1
             `, [bot_id]);
 
             if (rows == null || rows.length == 0) {
