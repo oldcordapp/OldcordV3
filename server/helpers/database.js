@@ -962,7 +962,7 @@ const database = {
                 return channels;
             }
 
-            channels = rows.map(row => row.id)
+            channels = rows.map(row => row.id);
 
             return channels;
         } catch (error) {
