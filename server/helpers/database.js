@@ -5502,6 +5502,17 @@ const database = {
             return false;
         }
     },
+    updateInstanceStaff: async (user, privilege) => {
+        try {
+            await database.runQuery(`UPDATE staff SET privilege = $1 WHERE user_id = $2`, [privilege, user.id]);
+
+            return true;
+        }  catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
     getStaffAuditLogs: async () => {
         try {
             let rows = await database.runQuery(`SELECT u.id, u.username, u.discriminator, s.audit_log, s.user_id FROM users AS u INNER JOIN staff AS s ON s.user_id = u.id`, []);

@@ -427,6 +427,48 @@ router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
     }
 });
 
+router.post("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        let user = req.user;
+        let privilege = req.body.privilege;
+
+        if (!user) {
+            return res.status(404).json({
+                code: 404,
+                message: `Unknown User`
+            });
+        }
+
+        if (user.id === req.account.id || !req.is_user_staff) {
+            return res.status(404).json({
+                code: 404,
+                message: `Unknown User`
+            });
+        }
+
+        let tryUpdateStaff = await global.database.updateInstanceStaff(user, privilege);
+
+        if (!tryUpdateStaff) {
+            return res.status(500).json({
+                code: 500,
+                message: "Internal Server Error"
+            });
+        }
+
+        let new_staff = await global.database.getInstanceStaff();
+
+        return res.status(200).json(new_staff);
+
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
 router.delete("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
     try {
         let user = req.user;

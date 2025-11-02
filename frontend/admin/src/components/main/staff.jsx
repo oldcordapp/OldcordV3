@@ -114,6 +114,45 @@ const Staff = () => {
         closeInputPopup();
     }
 
+    const updateStaffUser = (fieldValues) => {
+        let privilege = fieldValues['Privilege'];
+
+        if (privilege === '') {
+            return;
+        }
+
+        privilege = parseInt(privilege);
+
+        if (isNaN(privilege)) {
+            return;
+        }
+
+        fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/staff/${selectedStaff.id}`, {
+            headers: {
+                'Authorization': localStorage.getItem("token").replace(/"/g, ''),
+                'Cookie': 'release_date=october_5_2017;',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                privilege: privilege
+            }),
+            method: "POST"
+        }).then((response) => {
+            return response.json();
+        }).then((data) => {
+            if (data.code >= 400) {
+                setError(data.message);
+            } else {
+                setData(data);
+            }
+        }).catch((error) => {
+            setError(error.message);
+        });
+
+        closeInputPopup();
+        window.location.reload();
+    }
+
     const clearAuditLog = () => {
         fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/staff/${selectedStaff.id}/audit-logs`, {
             headers: {
@@ -165,7 +204,25 @@ const Staff = () => {
     }
 
     const menuActions = [
-        { name: "Update Privilege", not_implemented_yet: true, action: () => { } },
+        { name: "Update Privilege", not_implemented_yet: false, action: () => { 
+                setInputPopup({
+                    summary: `Promote or demote? It's yours my friend!`,
+                    fields: [{
+                        type: 'number',
+                        name: 'Privilege',
+                        placeholder: "Enter a value between 1-3",
+                        minValue: "1",
+                        maxValue: "3"
+                    }],
+                    showFieldSpan: true,
+                    cancelName: `Cancel`,
+                    onComplete: (fieldValues) => {
+                        updateStaffUser(fieldValues);
+                    },
+                    completeName: `Submit`
+                })
+            }
+        },
         { name: "Clear Audit Log", not_implemented_yet: selectedStaff && selectedStaff.staff_details.audit_log.length === 0, action: () => setConfirmation({ summary: `Are you sure you want to clear "${selectedStaff.username}"'s audit log?`, onYes: clearAuditLog }) },
         { name: "Remove From Staff", not_implemented_yet: false, action: () => setConfirmation({ summary: `Are you sure you want to remove "${selectedStaff.username}" from staff?`, onYes: () => {
             removeFromStaff();
