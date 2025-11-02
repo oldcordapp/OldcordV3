@@ -198,24 +198,25 @@ const Staff = () => {
                                     <ResultsCard header="Staff">
                                         {
                                             <div className='staff-container'>
-                                                {data.map((data, i) => (
-                                                    <div className={`staff-card ${data.id === user.id ? "disabled" : ""}`}>
-                                                        <h2>{data.username}<span>#{data.discriminator}</span></h2>
-                                                        <span style={{
-                                                            color: 'rgb(144, 153, 164)',
-                                                            fontSize: '15px'
-                                                        }}>Privilege: {getPrivilegeName(data.staff_details.privilege)}</span>
-                                                        <div className='staff-buttons'>
-                                                            <button className={`largeButton yes-button ${data.id === user.id ? "disabled-btn" : ""}`} onClick={() => {
-                                                                if (data.id !== user.id) {
-                                                                    setSelectedStaff(data);
-                                                                }
-                                                            }} 
-                                                            disabled={data.id === user.id ? true : false} 
-                                                            title={data.id === user.id ? "You cannot change yourself! If you REALLY want to, you know what to do." : ""}>Manage</button>
+                                                {data.map((data, i) => {
+                                                    {data.id != user.id && 
+                                                        <div className={`staff-card`}>
+                                                            <h2>{data.username}<span>#{data.discriminator}</span></h2>
+                                                            <span style={{
+                                                                color: 'rgb(144, 153, 164)',
+                                                                fontSize: '15px'
+                                                            }}>Privilege: {getPrivilegeName(data.staff_details.privilege)}</span>
+                                                            <div className='staff-buttons'>
+                                                                <button className={`largeButton yes-button`} onClick={() => {
+                                                                    if (data.id !== user.id) {
+                                                                        setSelectedStaff(data);
+                                                                    }
+                                                                }} 
+                                                                >Manage</button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    }
+                                                })}
                                                 <div className="add-staff" onClick={() => {
                                                     setInputPopup({
                                                         summary: `Oh you're hiring, huh?`,

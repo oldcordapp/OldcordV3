@@ -1314,11 +1314,3 @@ th {
   font-family: 'Courier New', Courier, monospace;
   margin: 0 5px 0 5px;
 }
-
-.disabled {
-  opacity: .4;
-}
-
-.disabled * {
-  user-select: none;
-}
