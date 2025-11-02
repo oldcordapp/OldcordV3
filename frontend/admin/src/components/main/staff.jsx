@@ -199,8 +199,10 @@ const Staff = () => {
                                         {
                                             <div className='staff-container'>
                                                 {data.map((data, i) => {
-                                                    {data.id != user.id && 
-                                                        <div className={`staff-card`}>
+                                                    if (data.id == user.id) {
+                                                        return null;
+                                                    }
+                                                    return (<div className={`staff-card`}>
                                                             <h2>{data.username}<span>#{data.discriminator}</span></h2>
                                                             <span style={{
                                                                 color: 'rgb(144, 153, 164)',
@@ -214,9 +216,9 @@ const Staff = () => {
                                                                 }} 
                                                                 >Manage</button>
                                                             </div>
-                                                        </div>
+                                                        </div>)
                                                     }
-                                                })}
+                                                )}
                                                 <div className="add-staff" onClick={() => {
                                                     setInputPopup({
                                                         summary: `Oh you're hiring, huh?`,
