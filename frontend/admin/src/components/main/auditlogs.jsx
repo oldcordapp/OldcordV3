@@ -60,7 +60,7 @@ const AuditLogs = () => {
                                     <img src={NoResults} alt="No data yet, as staff members act upon other users, servers & messages, it will appear here." style={{
                                         width: 'auto',
                                     }}></img>
-                                    <p>No data yet, as staff members act upon other users, servers & messages, it will appear here.</p>
+                                    <p>No data yet. When staff members act upon other users, servers & messages, it will appear here.</p>
                                 </div>
                             </ResultsCard>}
                         </div>
