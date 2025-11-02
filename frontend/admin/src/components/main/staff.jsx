@@ -203,6 +203,9 @@ const Staff = () => {
                                                         return null;
                                                     }
                                                     return (<div className={`staff-card`}>
+                                                            <div className="mainPage-main-components-sidebar-guildAvatar">
+                                                                <div className='guildAvatar avatar' style={{ 'backgroundImage': `url('${data.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + data.id + '/' + data.avatar + ".png"}` }}></div>
+                                                            </div>
                                                             <h2>{data.username}<span>#{data.discriminator}</span></h2>
                                                             <span style={{
                                                                 color: 'rgb(144, 153, 164)',
