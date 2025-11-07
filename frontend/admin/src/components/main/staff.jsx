@@ -5,12 +5,8 @@ import Sidebar from './sidebar';
 import Avatar from './avatar';
 import Paginator from './paginator';
 import DefaultAvatar from '../../assets/default-avatar.png'
-import NoResults from '../../assets/img_noresults.svg'
 import Ic_dots from '../../assets/ic_dots.svg?react';
-import Ic_paperclip from '../../assets/ic_paperclip.svg?react';
-import Button from '@oldcord/frontend-shared/components/button';
 import { useAuthUser } from '../context/AuthContext';
-import ExpandableComponent from './expandablecomponent';
 import ResultsCard from './resultscard';
 import Dropdown from './dropdown';
 import InputMultiple from '../modals/inputmultiple';
@@ -29,7 +25,6 @@ const Staff = () => {
     const [inputPopup, setInputPopup] = useState(null);
     const closeConfirmation = () => setConfirmation(null);
     const closeInputPopup = () => setInputPopup(null);
-    const navigate = useNavigate();
     const { user } = useAuthUser();
     const avatarPath = (user && user.avatar) ? `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/${user.id}/${user.avatar}.png` : DefaultAvatar;
     const query = new URLSearchParams(location.search);
@@ -255,7 +250,7 @@ const Staff = () => {
                                     <ResultsCard header="Staff">
                                         {
                                             <div className='staff-container'>
-                                                {data.map((data, i) => {
+                                                {data.map((data) => {
                                                     if (data.id == user.id) {
                                                         return null;
                                                     }
