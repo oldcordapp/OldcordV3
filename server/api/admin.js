@@ -4,6 +4,8 @@ const { staffAccessMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const globalUtils = require('../helpers/globalutils');
+const fs = require("node:fs");
+const path = require("node:path")
 
 //PRIVILEGE: 1 - (JANITOR) [Can only flag things for review], 2 - (MODERATOR) [Can only delete messages, mute users, and flag things for review], 3 - (ADMIN) [Free reign, can review flags, disable users, delete servers, etc], 4 - (INSTANCE OWNER) - [Can add new admins, manage staff, etc]
 
@@ -743,5 +745,49 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
         });
     }
 });
+
+router.get("/settings", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        const configFile = fs.readFileSync(path.join(process.cwd(), "config.json"), {encoding: "utf-8"});
+
+        const configJson = JSON.parse(configFile);
+
+        return res.status(200).json(configJson);
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+})
+
+router.post("/settings", staffAccessMiddleware(4), async (req, res) => {
+    try {
+        const settingsToChange = req.body;
+
+        const configFile = path.join(process.cwd(), "config.json");
+
+        let configJson = JSON.parse(fs.readFileSync(configFile, {encoding: "utf-8"}));
+
+        for (const key in settingsToChange) {
+            if (settingsToChange.hasOwnProperty(key)) {
+                configJson[key] = settingsToChange[key];
+            }
+        }
+
+        fs.writeFileSync(configFile, JSON.stringify(configJson, null, 2), {encoding: "utf-8", flag: "w"});
+
+        return res.status(204).send();
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+})
 
 module.exports = router;

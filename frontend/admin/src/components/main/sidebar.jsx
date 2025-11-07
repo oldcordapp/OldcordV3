@@ -42,7 +42,7 @@ const Sidebar = ({ active }) => {
                 </SidebarMenuList>
                 <SidebarMenuList name="Instance">
                     <SidebarMenuItem path="/updates" name="Updates" Icon={ic_updates} active={active}></SidebarMenuItem>
-                    <SidebarMenuItem path="/settings" name="Settings" Icon={ic_settings} active={active} disabled={true}></SidebarMenuItem>
+                    <SidebarMenuItem path="/settings" name="Settings" Icon={ic_settings} active={active} disabled={privilege < PRIVILEGE.INSTANCE_OWNER}></SidebarMenuItem>
                 </SidebarMenuList>
             </div>
         </div>
