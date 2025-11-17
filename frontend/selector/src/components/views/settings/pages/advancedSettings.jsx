@@ -1,6 +1,6 @@
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import Button from "@oldcord/frontend-shared/components/button";
-import ToggleSetting from "@oldcord/frontend-shared/components/toggleSetting";
+import ToggleSetting from "../../../../components/shared/toggleSetting";
 import cookieManager from "../../../../lib/cookieManager";
 import { useState } from "react";
 import RemoveChunkCache from "../modals/removeChunkCache";

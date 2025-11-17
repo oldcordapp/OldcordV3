@@ -1,7 +1,7 @@
 import Modal from "@oldcord/frontend-shared/components/modal";
 import localStorageManager from "../../../../lib/localStorageManager";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
-import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
+import InfoCard from "@oldcord/frontend-shared/components/infoCard";
 import Button from "@oldcord/frontend-shared/components/button";
 
 const failedCacheKey = "oldcord_failed_urls";
@@ -44,10 +44,10 @@ export default function ({ isOpen, onClose }) {
       }
     >
       <div style={{ paddingBottom: "20px" }}>
-        <PageInfo title={"Deprecated option"} style={{ marginBottom: "20px" }}>
+        <InfoCard title={"Deprecated option"} style={{ marginBottom: "20px" }}>
           This option will be removed once OPFS has been implemented to Oldcord,
           which will simplify the process with a on-demand download button.
-        </PageInfo>
+        </InfoCard>
         <Text variant="body">
           This will clear the list of all previously failed chunk downloads,
           allowing the bootloader to retry downloading missing chunks from the
@@ -64,12 +64,12 @@ export default function ({ isOpen, onClose }) {
             </Text>
           </li>
         </ul>
-        <PageInfo style={{ marginBottom: "0px" }}>
+        <InfoCard style={{ marginBottom: "0px" }}>
           ⚠️ Warning: This will reset the failed chunk cache for ALL builds. The
           bootloader will attempt to redownload chunks that were previously
           marked as missing, which may slow down loading times if the chunks are
           still unavailable.
-        </PageInfo>
+        </InfoCard>
       </div>
     </Modal>
   );

@@ -1,9 +1,9 @@
-import { Text } from "../../../../../../shared/components/textComponent";
-import Button from "../../../../../../shared/components/button";
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
+import Button from "@oldcord/frontend-shared/components/button";
 import { useState } from "react";
-import PageInfo from "../../../../../../shared/components/pageInfo";
-import DropdownList from "../../../../../../shared/components/dropdownList";
-import InputField from "../../../../../../shared/components/inputField";
+import InfoCard from "@oldcord/frontend-shared/components/infoCard";
+import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
+import InputField from "@oldcord/frontend-shared/components/inputField";
 import SubmitReport from "../modals/submitReport";
 
 export default function () {
@@ -48,7 +48,7 @@ export default function () {
   return (
     <>
       <Text variant="h2">Report Content</Text>
-      <PageInfo title="Report Content">
+      <InfoCard title="Report Content">
         <>
           Use the form below to report any content that violates this instance's
           rules.
@@ -65,7 +65,7 @@ export default function () {
           to report it through <b>legal channels</b> to ensure the safety of all
           users.
         </>
-      </PageInfo>
+      </InfoCard>
       <DropdownList
         label={"What's the problem?"}
         options={problems}

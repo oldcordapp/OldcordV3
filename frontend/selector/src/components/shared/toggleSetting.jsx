@@ -1,6 +1,6 @@
 import { useId } from "react";
 import "./toggleSetting.css";
-import ToggleSwitch from "./toggleSwitch";
+import ToggleSwitch from "@oldcord/frontend-shared/components/toggleSwitch";
 
 export default function ({ title, description, isChecked, onChange }) {
   const uniqueId = useId();

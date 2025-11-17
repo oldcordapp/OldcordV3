@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
-import ToggleSetting from "@oldcord/frontend-shared/components/toggleSetting";
+import { useState } from "react";
+import InfoCard from "@oldcord/frontend-shared/components/infoCard";
+import ToggleSetting from "../../../../components/shared/toggleSetting";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 
 import cookieManager from "../../../../lib/cookieManager";
@@ -19,13 +19,13 @@ export default function () {
   return (
     <>
       <Text variant="h2">Oldplunger Settings</Text>
-      <PageInfo title="Oldplunger Development Notice">
+      <InfoCard title="Oldplunger Development Notice">
         Oldplunger is in development!
         <br />
         All settings below will either be removed or changed upon release.
         <br />
         Please help us test Oldplunger!
-      </PageInfo>
+      </InfoCard>
       <ToggleSetting
         title={"Enable Oldplunger"}
         description={"Enable the next generation of Oldcord modding. ! In development !"}

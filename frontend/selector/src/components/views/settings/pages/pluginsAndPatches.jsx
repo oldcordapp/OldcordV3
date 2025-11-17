@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Text } from "@oldcord/frontend-shared/components/textComponent";
 import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
 import { builds } from "../../../../constants/builds";
-import PageInfo from "@oldcord/frontend-shared/components/pageInfo";
+import InfoCard from "@oldcord/frontend-shared/components/infoCard";
 import { PATCHES } from "../../../../constants/patches";
-import OptionsCard from "../compoments/optionsCard";
+import OptionsCard from "../../../../components/shared/optionsCard";
 import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
 import { useOldplugerPlugins } from "../../../../hooks/oldplungerPluginsHandler";
 import localStorageManager from "../../../../lib/localStorageManager";
@@ -235,7 +235,7 @@ export default function () {
   return (
     <>
       <Text variant="h2">Plugins & Patches</Text>
-      <PageInfo title="Plugin & Patches Management">
+      <InfoCard title="Plugin & Patches Management">
         {!hasIncompatibleItems && (
           <>
             Press the cog wheel or info icon to get more info on a plugin or a
@@ -283,7 +283,7 @@ export default function () {
             </ul>
           </>
         )}
-      </PageInfo>
+      </InfoCard>
       <DropdownList
         label={"Client Build"}
         options={friendlyBuildIds}
