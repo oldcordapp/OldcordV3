@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
-    "@google-cloud/storage": "^7.17.2",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@google-cloud/storage": "^7.17.3",
+    "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-react-compiler": "^19.1.0-rc.3",
     "base64url": "^3.0.1",
     "bcrypt": "^6.0.0",
@@ -26,29 +26,29 @@
     "cors": "^2.8.5",
     "cross-env": "^10.1.0",
     "express": "^5.1.0",
-    "express-rate-limit": "^8.1.0",
+    "express-rate-limit": "^8.2.1",
     "jimp": "^1.6.0",
     "libsodium-wrappers": "^0.7.15",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",
-    "mediasoup": "^3.19.4",
+    "mediasoup": "^3.19.11",
     "multer": "^2.0.2",
     "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.4",
+    "react-router-dom": "^7.9.6",
     "react-transition-group": "^4.4.5",
     "semantic-sdp": "^3.31.1",
-    "vite": "npm:rolldown-vite@7.1.17",
+    "vite": "npm:rolldown-vite@7.2.5",
     "vite-plugin-svgr": "^4.5.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2"
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3"
   },
   "overrides": {
-    "vite": "npm:rolldown-vite@7.1.17"
+    "vite": "npm:rolldown-vite@7.2.5"
   },
   "optionalDependencies": {
     "@spacebarchat/erlpack": "^1.0.1"
