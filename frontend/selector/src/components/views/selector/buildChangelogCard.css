@@ -19,9 +19,7 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 20px;
-  transform: scaleY(
-    1.04
-  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .changelog-header .date {

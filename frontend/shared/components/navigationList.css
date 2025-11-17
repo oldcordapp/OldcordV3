@@ -17,9 +17,7 @@
   color: #72767d;
   flex-shrink: 0;
   white-space: nowrap;
-  transform: scaleY(
-    1.04
-  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .nav-list .nav-header:first-child {

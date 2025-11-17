@@ -10,9 +10,7 @@
   text-transform: uppercase;
   margin-bottom: 8px;
   color: #b9bbbe;
-  transform: scaleY(
-    1.04
-  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .input-field {
@@ -34,10 +32,10 @@
 }
 
 .required-text {
-    color: #ff4444; 
-    text-align: left; 
-    display: inline; 
-    margin-left: 4px;
+  color: #ff4444;
+  text-align: left;
+  display: inline;
+  margin-left: 4px;
 }
 
 .input-field:hover {

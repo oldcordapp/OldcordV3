@@ -1,6 +1,6 @@
 .changelog-container {
   background-color: #36393f;
-  color: #b9bbbe;
+  color: #b9bbbe !important;
   padding: 0 0 20px 0;
 }
 
@@ -110,14 +110,6 @@
   border-radius: 50%;
   background-color: currentColor;
   opacity: 0.5;
-}
-
-.changelog-container strong {
-  font-weight: 600;
-  color: #ffffff;
-  transform: scaleY(
-    1.04
-  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .changelog-container a {

@@ -130,9 +130,7 @@
   color: #f6f6f7;
   margin: 0;
   text-transform: uppercase;
-  transform: scaleY(
-    1.04
-  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 .modal-subtitle {
   font-size: 12px;
