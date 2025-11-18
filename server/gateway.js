@@ -166,7 +166,7 @@ const gateway = {
                 }, (45 * 1000) + 20 * 1000);
             },
             acknowledge: (d) => {
-                socket.session.send({
+                socket.session?.send({
                     op: OPCODES.HEARTBEAT_ACK,
                     d: d
                 });
