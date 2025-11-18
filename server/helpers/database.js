@@ -3919,6 +3919,7 @@ const database = {
                     icon: guildRow.icon,
                     splash: guildRow.splash,
                     banner: guildRow.banner,
+                    description: "", // we should also add descriptions to guild like we would do to banners
                     region: guildRow.region,
                     owner_id: guildRow.owner_id,
                     afk_channel_id: guildRow.afk_channel_id,
@@ -3939,7 +3940,11 @@ const database = {
                     default_message_notifications: guildRow.default_message_notifications ?? 0,
                     joined_at: new Date().toISOString(),
                     verification_level: guildRow.verification_level ?? 0,
-                    audit_logs: audit_logs
+                    audit_logs: audit_logs,
+                    // v9 responses
+                    premium_tier: 3,
+                    stickers: [],
+                    threads: []
                 });
             }
 

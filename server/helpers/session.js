@@ -485,11 +485,12 @@ class session {
                     verified: this.user.verified,
                     bot: this.user.bot,
                     premium: this.user.premium || true,
-                    claimed: this.user.claimed || true
+                    claimed: this.user.claimed || true,
+                    // v9 responses
+                    premium_type: 2,
                 },
                 user_settings: this.user.settings,
                 session_id: this.id,
-                sessions: [ {session_id: this.id} ], // spacebar compat
                 friend_suggestion_count: 0,
                 notes: notes,
                 analytics_token: globalUtils.generateString(20),
@@ -498,6 +499,9 @@ class session {
                 guild_experiments: [],
                 user_guild_settings: guildSettings ?? [],
                 heartbeat_interval: 45 * 1000,
+                // v9 responses
+                resume_gateway_url: globalUtils.generateGatewayURL({headers: {host: null}}), // we sould have a better way for this
+                sessions: [ {session_id: this.id} ],
                 _trace: ["oldcord-v3"]
             });
 

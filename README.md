@@ -44,6 +44,7 @@ There are some features we need help with, if you're up for the task, feel free 
   - **Quick note**: Using alternative clients on Oldcord can only do basic features relating to messaging and voice chatting. Creating/editing servers and editing profile options are not allowed due to complexity.
   - **Compatibility**:
     - **Fermi**: 🟠 Work in progress
+    - **Endcord**: 🟠 Work in progress
 
 **Mobile Clients**:
   - **Compatibility**:

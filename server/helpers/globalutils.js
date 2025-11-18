@@ -135,16 +135,28 @@ const globalUtils = {
     getRegions: () => {
         return [{
             id: "2016",
-            name: "2015-2016"
+            name: "2015-2016",
+            optimal: false,
+            deprecated: true,
+            custom: true
         }, {
             id: "2017",
-            name: "2015-2017"
+            name: "2015-2017",
+            optimal: false,
+            deprecated: true,
+            custom: true
         }, {
             id: "2018",
-            name: "2015-2018"
+            name: "2015-2018",
+            optimal: false,
+            deprecated: true,
+            custom: true
         }, {
             id: "everything",
-            name: "Everything"
+            name: "Everything",
+            optimal: false,
+            deprecated: true,
+            custom: true
         }];
     },
     serverRegionToYear: (region) => {

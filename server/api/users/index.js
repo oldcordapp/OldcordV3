@@ -164,6 +164,19 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
         ret.connected_accounts = connectedAccounts;
         ret.premium_since = new Date();
 
+         // v9 responses
+        ret.premium_type = 2;
+        ret.user_profile = {
+            accent_color: 0,
+            banner: "",
+            bio: "",
+            emoji: null,
+            popout_animation_particle_type: null,
+            profile_effect: null,
+            pronouns: "",
+            theme_colors: []
+        }
+
         return res.status(200).json(ret);
     }
     catch(error) {
