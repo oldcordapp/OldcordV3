@@ -11,8 +11,6 @@ const path = require('path');
 const globalUtils = require('./helpers/globalutils');
 const { apiVersionMiddleware, assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
-const spacebarPing = require('./spacebar-compat/ping');
-const spacebarPolicies = require('./spacebar-compat/policies');
 const { Jimp, ResizeStrategy } = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
@@ -589,10 +587,6 @@ app.get("/api/users/:userid/avatars/:file", async (req, res) => {
         });
     }
 });
-
-app.use("/api/policies", spacebarPolicies);
-
-app.use("/api/ping", spacebarPing);
 
 app.use("/api", apiVersionMiddleware, router);
 

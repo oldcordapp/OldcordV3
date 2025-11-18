@@ -512,7 +512,10 @@ class session {
                     // v9 responses
                     premium_type: 2,
                 },
-                user_settings: this.user.settings,
+                user_settings: {
+                    ...this.user.settings,
+                    guild_folders: []
+                },
                 session_id: this.id,
                 friend_suggestion_count: 0,
                 notes: notes,

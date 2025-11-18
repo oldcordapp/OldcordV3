@@ -43,7 +43,7 @@ There are some features we need help with, if you're up for the task, feel free 
 **Alternative Clients**:
   - **Quick note**: Creating/editing servers, editing profile options and other things might cause issues due to our focus on supporting multiple different API versions.
   - **Compatibility**:
-    - **Fermi**: 🟠 Work in progress
+    - **Fermi**: 🟠 Loads, but things are not working still. Work in progress
     - **Endcord**: 🟠 Work in progress
 
 **Mobile Clients**:

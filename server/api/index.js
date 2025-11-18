@@ -19,6 +19,8 @@ const entitlements = require('./entitlements');
 const activities = require('./activities');
 const integrations = require('./integrations');
 const reports = require('./reports');
+const spacebarPing = require('./spacebar-compat/ping');
+const spacebarPolicies = require('./spacebar-compat/policies');
 
 global.config = globalUtils.config;
 //just in case
@@ -45,6 +47,10 @@ app.get("/scheduled-maintenances/active.json", (req, res) => {
         incidents: []
     });
 });
+
+app.use("/policies", spacebarPolicies);
+
+app.use("/ping", spacebarPing);
 
 app.get("/experiments", (req, res) => {
     return res.status(200).json({assignments:[]});

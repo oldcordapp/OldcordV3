@@ -1,5 +1,5 @@
 const express = require('express');
-const globalUtils = require('../helpers/globalutils');
+const globalUtils = require('../../helpers/globalutils');
 const config = globalUtils.config;
 
 const router = express.Router();

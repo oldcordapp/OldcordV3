@@ -715,4 +715,11 @@ router.patch("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware
     }
 });
 
+router.get("/:guildid/application-command-index", guildMiddleware, async (req, res) => {
+    return res.status(403).json({
+      code: 403,
+      message: "This is a v9 endpoint, we will not implement the full set of v9. Do not make an issue about this."
+    });
+})
+
 module.exports = router;
