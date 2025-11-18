@@ -127,7 +127,9 @@ const gateway = {
             s: null,
             d: {
                 heartbeat_interval: 45 * 1000,
-                _trace: ["oldcord-v3"]
+                _trace: [
+                    JSON.stringify(["oldcord-v3", {micros: 0, calls:["oldcord-v3"]}])
+                ]
             }
         }
 

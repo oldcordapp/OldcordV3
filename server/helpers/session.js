@@ -299,7 +299,9 @@ class session {
             }
 
             this.dispatch("RESUMED", {
-                _trace: ["oldcord-v3"]
+                _trace: [
+                    JSON.stringify(["oldcord-v3", {micros: 0, calls:["oldcord-v3"]}])
+                ]
             });
 
             this.updatePresence("online", null, false);
@@ -309,6 +311,8 @@ class session {
         if (this.type !== 'gateway') {
             return;
         }
+
+        let merged_members = [];
 
         try {
             let month = this.socket.client_build_date.getMonth();
@@ -398,6 +402,25 @@ class session {
                     //]
                     //} //uh someone do this better?
 
+                    // Stolen from Spacebar I am not doing shit
+                    merged_members.push(guild.members.map((x) => {
+                        return (
+                            {
+                                ...x,
+                                // filter out @everyone role
+                                roles: x.roles
+                                    .filter((r) => r.id !== guild.id)
+                                    .map((x) => x.id),
+
+                                guild: {
+                                    id: guild.id,
+                                },
+                                guild_id: guild.id,
+                                settings: undefined,
+                            }
+                        )
+                    }));
+
                     for (var channel of guild.channels) {
                         if ((year === 2017 && month < 9) || year < 2017) {
                             if (channel.type === 4) {
@@ -474,7 +497,7 @@ class session {
                 presences: this.presences ?? [],
                 private_channels: filteredDMs,
                 relationships: this.relationships ?? [],
-                read_state: this.read_states ?? [],
+                read_state: typeof this.capabilities == 'number' ? {entries: this.read_states ?? [], partial: false, version: 1} : this.read_states ?? [],
                 tutorial: tutorial,
                 user: {
                     id: this.user.id,
@@ -497,12 +520,15 @@ class session {
                 experiments: (month == 3 && year == 2018) ? ["2018-4_april-fools"] : [], //for 2018 clients
                 connected_accounts: connectedAccounts ?? [],
                 guild_experiments: [],
-                user_guild_settings: guildSettings ?? [],
+                user_guild_settings: typeof this.capabilities == 'number' ? {entries: guildSettings ?? [], partial: false, version: 1} : guildSettings ?? [],
                 heartbeat_interval: 45 * 1000,
                 // v9 responses
                 resume_gateway_url: globalUtils.generateGatewayURL({headers: {host: null}}), // we sould have a better way for this
                 sessions: [ {session_id: this.id} ],
-                _trace: ["oldcord-v3"]
+                merged_members: merged_members,
+                _trace: [
+                    JSON.stringify(["oldcord-v3", {micros: 0, calls:["oldcord-v3"]}])
+                ]
             });
 
             for (var guild of this.unavailable_guilds) {
