@@ -41,7 +41,7 @@ There are some features we need help with, if you're up for the task, feel free 
   - **Moderation Features**: 🔴Server mute and deafen are planned and actively being worked on.
 
 **Alternative Clients**:
-  - **Quick note**: Creating/editing servers, editing profile options and other things might cause issues due to our focus on supporting multiple different API versions.
+  - **Quick note**: Creating/editing servers, editing profile options and other things might cause issues due to our focus on v2-v6 and supporting multiple different API versions.
   - **Compatibility**:
     - **Fermi**: 🟠 Loads, but things are not working still. Work in progress
     - **Endcord**: 🟠 Work in progress
