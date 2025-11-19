@@ -497,7 +497,7 @@ class session {
                 presences: this.presences ?? [],
                 private_channels: filteredDMs,
                 relationships: this.relationships ?? [],
-                read_state: typeof this.capabilities == 'number' ? {entries: this.read_states ?? [], partial: false, version: 1} : this.read_states ?? [],
+                read_state: this.apiVersion >= 9 ? {entries: this.read_states ?? [], partial: false, version: 1} : this.read_states ?? [],
                 tutorial: tutorial,
                 user: {
                     id: this.user.id,
@@ -523,7 +523,7 @@ class session {
                 experiments: (month == 3 && year == 2018) ? ["2018-4_april-fools"] : [], //for 2018 clients
                 connected_accounts: connectedAccounts ?? [],
                 guild_experiments: [],
-                user_guild_settings: typeof this.capabilities == 'number' ? {entries: guildSettings ?? [], partial: false, version: 1} : guildSettings ?? [],
+                user_guild_settings: this.apiVersion >= 9 ? {entries: guildSettings ?? [], partial: false, version: 1} : guildSettings ?? [],
                 heartbeat_interval: 45 * 1000,
                 // v9 responses
                 resume_gateway_url: globalUtils.generateGatewayURL({headers: {host: null}}), // we sould have a better way for this
