@@ -58,7 +58,7 @@
      },
     "db_config" : {
         "host": "localhost",
-        "port": 5433,
+        "port": 5432,
         "database": "oldcord_v3",
         "user": "postgres",
         "password": "postgres_password"
