@@ -105,6 +105,19 @@ async function guildDeleteRequest(req, res) {
         const guild = req.guild;
 
         if (guild.owner_id == user.id) {
+            let code = req.body.code;
+
+            if (code) {
+                let valid = await global.database.validateTotpCode(req.account.id, code);
+
+                if (!valid) {
+                    return res.status(400).json({
+                        code: 400,
+                        message: "Invalid TOTP Code"
+                    });
+                }
+            }
+            
             await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
                 id: req.params.guildid
             });

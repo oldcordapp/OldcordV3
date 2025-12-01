@@ -162,6 +162,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
          token: retAccount.token,
          username: retAccount.username,
          verified: retAccount.verified,
+         mfa_enabled: retAccount.mfa_enabled,
          claimed: true
        });
 
@@ -176,6 +177,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
           token: retAccount.token,
           username: retAccount.username,
           verified: retAccount.verified,
+          mfa_enabled: retAccount.mfa_enabled,
           claimed: true
        });
     }
@@ -306,6 +308,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
       token: account.token,
       username: account.username,
       verified: account.verified,
+      mfa_enabled: account.mfa_enabled,
       claimed: true
     });
 
@@ -318,6 +321,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
           token: account.token,
           username: account.username,
           verified: account.verified,
+          mfa_enabled: account.mfa_enabled,
           claimed: true
     });
   } catch (error) {
@@ -853,6 +857,127 @@ router.get("/affinities/guilds", (req, res) => {
     return res.status(200).json({
         guild_affinities: [],
     });
+});
+
+router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+  try {
+    let code = req.body.code;
+    let secret = req.body.secret;
+
+    if (!code || !secret) {
+       return res.status(400).json({
+         code: 400,
+         message: "Code and secret is required to enable TOTP"
+       })
+    }
+
+    let user_mfa = await global.database.getUserMfa(req.account.id);
+
+    if (user_mfa.mfa_enabled) {
+       return res.status(400).json({
+         code: 400,
+         message: "This account is already protected by MFA"
+       })
+    }
+
+    let valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
+
+    if (!valid) {
+      return res.status(400).json({
+         code: 400,
+         message: "Invalid TOTP code"
+       }); //to-do find the actual error msgs
+    }
+
+    await global.database.updateUserMfa(req.account.id, 1, secret);
+
+    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", {
+      avatar: req.account.avatar,
+      discriminator: req.account.discriminator,
+      email: req.account.email,
+      flags: req.account.flags,
+      id: req.account.id,
+      token: req.account.token,
+      username: req.account.username,
+      verified: req.account.verified,
+      mfa_enabled: true,
+      claimed: true
+    });
+
+    await global.dispatcher.dispatchLogoutTo(req.account.id);
+
+    return res.status(200).json({
+      code: 200,
+      message: "MFA Enabled"
+    })
+  } catch (error) {
+    logText(error, "error");
+
+    return res.status(500).json({
+        code: 500,
+        message: "Internal Server Error"
+    })
+  }
+});
+
+router.post("/mfa/totp/disable", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+  try {
+    let code = req.body.code;
+
+    if (!code) {
+       return res.status(400).json({
+         code: 400,
+         message: "Code is required to disable TOTP"
+       })
+    }
+
+    let user_mfa = await global.database.getUserMfa(req.account.id);
+
+    if (!user_mfa.mfa_enabled) {
+       return res.status(400).json({
+         code: 400,
+         message: "This account does not have MFA enabled"
+       })
+    }
+
+    let valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
+
+    if (!valid) {
+      return res.status(400).json({
+         code: 400,
+         message: "Invalid TOTP code"
+       }); //to-do find the actual error msgs
+    }
+
+    await global.database.updateUserMfa(req.account.id, 0, null);
+
+    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", {
+      avatar: req.account.avatar,
+      discriminator: req.account.discriminator,
+      email: req.account.email,
+      flags: req.account.flags,
+      id: req.account.id,
+      token: req.account.token,
+      username: req.account.username,
+      verified: req.account.verified,
+      mfa_enabled: false,
+      claimed: true
+    });
+
+    await global.dispatcher.dispatchLogoutTo(req.account.id);
+
+    return res.status(200).json({
+      code: 200,
+      message: "MFA Disabled"
+    })
+  } catch (error) {
+    logText(error, "error");
+
+    return res.status(500).json({
+        code: 500,
+        message: "Internal Server Error"
+    })
+  }
 });
 
 module.exports = router;

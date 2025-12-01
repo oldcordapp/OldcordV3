@@ -509,6 +509,7 @@ class session {
                     bot: this.user.bot,
                     premium: this.user.premium || true,
                     claimed: this.user.claimed || true,
+                    mfa_enabled: this.user.mfa_enabled || false,
                     // v9 responses
                     premium_type: 2,
                 },

@@ -274,10 +274,90 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
             req.staff_details = tryGetStaffDetails;
         }
 
+        let mfa_status = await global.database.getUserMfaByToken(loginAttempt.token);
+
+        if (mfa_status.mfa_enabled) {
+            let tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
+
+            if (!tryGetAcc) {
+                return res.status(500).json({
+                    code: 500,
+                    message: "Internal Server Error"
+                });
+            } //fuck? how do we make this work better?
+
+            let ticket = await global.database.generateMfaTicket(tryGetAcc.id);
+
+            if (!ticket) {
+                return res.status(500).json({
+                    code: 500,
+                    message: "Internal Server Error"
+                });
+            }
+
+            return res.status(200).json({
+                mfa: true,
+                ticket: ticket,
+                sms: false
+            });
+        }
+
         return res.status(200).json({
             token: loginAttempt.token,
             settings: {}
         });
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+router.post("/mfa/totp", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+    try {
+        let ticket = req.body.ticket;
+        let code = req.body.code;
+
+        if (!code || !ticket) {
+            return res.status(400).json({
+                code: 400,
+                message: "Invalid TOTP code",
+            });
+        }
+
+        let user_mfa = await global.database.getUserMfaByTicket(ticket);
+
+        if (!user_mfa.mfa_secret || !user_mfa.mfa_enabled) {
+            return res.status(400).json({
+                code: 400,
+                message: "Invalid TOTP code",
+            });
+        }
+
+        if (!valid) {
+            return res.status(400).json({
+                code: 400,
+                message: "Invalid TOTP code"
+            }); //to-do find the actual error msgs
+        }
+
+        let token = await global.database.getLoginTokenByMfaTicket(ticket);
+
+        if (!token) {
+            return res.status(500).json({
+                code: 500,
+                message: "Internal Server Error"
+            });
+        } //???
+
+        await global.database.invalidateMfaTicket(ticket);
+
+        return res.status(200).json({
+            token: token
+        })
     } catch (error) {
         logText(error, "error");
 

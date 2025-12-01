@@ -9,6 +9,7 @@ const path = require('path');
 const embedder = require('./embedder');
 const fsPromises = require('fs').promises;
 const migrate = require('../migrate.js');
+const speakeasy = require("speakeasy");
 
 let db_config = globalUtils.config.db_config;
 let config = globalUtils.config;
@@ -82,6 +83,11 @@ const database = {
             client.release();
         }
     },
+    doescolumnExist: async (column, table) => {
+        let check = await database.runQuery(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2) AS column_exists;`, [table, column]);
+
+        return check[0].column_exists;
+    },
     setupDatabase: async () => {
         try {
             await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
@@ -104,6 +110,8 @@ const database = {
                 token TEXT,
                 verified INTEGER DEFAULT 0,
                 claimed INTEGER DEFAULT 1,
+                mfa_enabled INTEGER DEFAULT 0,
+                mfa_secret TEXT DEFAULT NULL,
                 premium INTEGER DEFAULT 1,
                 created_at TEXT DEFAULT NULL,
                 avatar TEXT DEFAULT NULL,
@@ -352,18 +360,25 @@ const database = {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );`, []);
 
-            let alterCheck = await database.runQuery(`SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_name = 'instance_reports'
-                AND column_name = 'action'
-            ) AS column_exists;`);
+            await database.runQuery(`CREATE TABLE IF NOT EXISTS mfa_login_tickets (
+                user_id TEXT PRIMARY KEY,
+                mfa_ticket TEXT DEFAULT NULL
+            );`, []);
 
-            if (!alterCheck[0].column_exists) {
+            let instance_reports_exists = await database.doescolumnExist("action", "instance_reports");
+
+            if (!instance_reports_exists) {
                 await database.runQuery(`ALTER TABLE instance_reports ADD COLUMN action TEXT DEFAULT 'PENDING';`);
                 await database.runQuery(`ALTER TABLE instance_reports ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
             } else {
                 await database.runQuery(`DELETE FROM instance_reports WHERE created_at < NOW() - INTERVAL '1 month';`); //Remove reports older than 1 month to free up db
+            }
+
+            let mfa_exists = await database.doescolumnExist("mfa_secret", "users");
+
+            if (!mfa_exists) {
+                await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_secret TEXT DEFAULT NULL`);
+                await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_enabled INTEGER DEFAULT 0`);
             }
 
             //#region Change 'NULL' to NULL defaults
@@ -574,6 +589,7 @@ const database = {
             `, []);
             //#endregion
 
+            let user
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -1126,7 +1142,8 @@ const database = {
                 }
             }
 
-            let relationships = await global.database.getRelationshipsByUserId(rows[0].id)
+            let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
+            
             return await globalUtils.prepareAccountObject(rows, relationships); //to-do fix
         } catch (error) {
             logText(error, "error");
@@ -1579,6 +1596,149 @@ const database = {
             logText(error, "error");
 
             return [];
+        }
+    },
+    validateTotpCode: async (user_id, code) => {
+        try {
+            let mfa_status = await database.getUserMfa(user_id);
+
+            if (!mfa_status.mfa_enabled || !mfa_status.mfa_secret) {
+                return false;
+            }
+
+            let valid = speakeasy.totp.verify({
+                secret: mfa_status.mfa_secret,
+                encoding: 'base32',
+                token: code
+            });
+
+            return valid;
+        }
+        catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
+    generateMfaTicket: async (user_id) => {
+        try {
+            let ticket = globalUtils.generateString(40);
+            
+            await database.runQuery(`INSERT INTO mfa_login_tickets (user_id, mfa_ticket) VALUES ($1, $2)`, [user_id, ticket]);
+
+            return ticket;
+        } catch (error) {
+            logText(error, "error");
+
+            return null;
+        }
+    },
+    invalidateMfaTicket: async (ticket) => {
+        try {
+            await database.runQuery(`DELETE FROM mfa_login_tickets WHERE mfa_ticket = $1`, [ticket]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
+    getLoginTokenByMfaTicket: async (ticket) => {
+        try {
+            const rows = await database.runQuery(`SELECT u.token FROM users AS u INNER JOIN mfa_login_tickets AS m ON m.user_id = u.id WHERE m.mfa_ticket = $1`, [ticket]);
+
+            if (!rows || rows.length === 0) {
+                return null;
+            }
+
+            return rows[0].token;
+        } catch (error) {
+            logText(error, "error");
+
+            return null;
+        }
+    },
+    getUserMfaByTicket: async (ticket) => {
+        try {
+            const rows = await database.runQuery(`SELECT u.mfa_enabled, u.mfa_secret FROM mfa_login_tickets AS m INNER JOIN users AS u ON m.user_id = u.id WHERE m.mfa_ticket = $1`, [ticket]);
+
+            if (!rows || rows.length === 0) {
+                return {
+                    mfa_enabled: false,
+                    mfa_secret: null
+                }
+            }
+
+            return {
+                mfa_enabled: rows[0].mfa_enabled === 1,
+                mfa_secret: rows[0].mfa_secret
+            };
+        } catch (error) {
+            logText(error, "error");
+
+            return {
+                mfa_enabled: false,
+                mfa_secret: null
+            }
+        }
+    },
+    getUserMfa: async (user_id) => {
+        try {
+            const rows = await database.runQuery(`SELECT mfa_enabled, mfa_secret FROM users WHERE id = $1`, [user_id]);
+
+            if (!rows || rows.length === 0) {
+                return {
+                    mfa_enabled: false,
+                    mfa_secret: null
+                }
+            }
+
+            return {
+                mfa_enabled: rows[0].mfa_enabled === 1,
+                mfa_secret: rows[0].mfa_secret
+            };
+        } catch (error) {
+            logText(error, "error");
+
+            return {
+                mfa_enabled: false,
+                mfa_secret: null
+            }
+        }
+    },
+    getUserMfaByToken: async (token) => {
+        try {
+            const rows = await database.runQuery(`SELECT mfa_enabled, mfa_secret FROM users WHERE token = $1`, [token]);
+
+            if (!rows || rows.length === 0) {
+                return {
+                    mfa_enabled: false,
+                    mfa_secret: null
+                }
+            }
+
+            return {
+                mfa_enabled: rows[0].mfa_enabled === 1,
+                mfa_secret: rows[0].mfa_secret
+            };
+        } catch (error) {
+            logText(error, "error");
+
+            return {
+                mfa_enabled: false,
+                mfa_secret: null
+            }
+        }
+    },
+    updateUserMfa: async (user_id, mfa_enabled, mfa_secret) => {
+        try {
+            await database.runQuery(`UPDATE users SET mfa_enabled = $1, mfa_secret = $2 WHERE id = $3`, [mfa_enabled, mfa_secret, user_id]);
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+            return false;
         }
     },
     getConnectionById: async (account_id) => {

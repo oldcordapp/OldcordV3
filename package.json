@@ -39,6 +39,7 @@
     "react-router-dom": "^7.9.6",
     "react-transition-group": "^4.4.5",
     "semantic-sdp": "^3.31.1",
+    "speakeasy": "^2.0.0",
     "vite": "npm:rolldown-vite@7.2.5",
     "vite-plugin-svgr": "^4.5.0",
     "ws": "^8.18.3"
