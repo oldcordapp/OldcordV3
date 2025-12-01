@@ -589,7 +589,6 @@ const database = {
             `, []);
             //#endregion
 
-            let user
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
