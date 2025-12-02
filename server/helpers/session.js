@@ -447,7 +447,12 @@ class session {
                         }
                     }
                     
-                    guild.properties = structuredClone(guild)
+                    guild.properties = structuredClone(guild);
+
+
+                    // v9 things
+                    guild.guild_scheduled_events = [{}];
+                    guild.stage_instances = [{}];
 
                 }
             }
@@ -471,6 +476,8 @@ class session {
             let chans = this.user.bot ? await database.getBotPrivateChannels(this.user.id) : await database.getPrivateChannels(this.user.id);
             let filteredDMs = [];
 
+            const users = new Set();
+
             for (var chan_id of chans) {
                 let chan = await database.getChannelById(chan_id);
 
@@ -481,6 +488,13 @@ class session {
 
                 if (!chan)
                     continue;
+
+
+                // thanks spacebar
+
+                const channelUsers = chan.recipients;
+
+                if (channelUsers && channelUsers.length > 0) channelUsers.forEach((user) => users.add(user));
 
                 filteredDMs.push(chan);
             }
@@ -530,6 +544,9 @@ class session {
                 resume_gateway_url: globalUtils.generateGatewayURL({headers: {host: null}}), // we sould have a better way for this
                 sessions: [ {session_id: this.id} ],
                 merged_members: merged_members,
+                users: Array.from(users),
+                notification_settings: {flags: null},
+                game_relationships: [{}],
                 _trace: [
                     JSON.stringify(["oldcord-v3", {micros: 0, calls:["oldcord-v3"]}])
                 ]

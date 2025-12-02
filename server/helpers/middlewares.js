@@ -42,12 +42,23 @@ async function clientMiddleware(req, res, next) {
 
         if (req.url.includes("/selector") || req.url.includes("/launch") || req.url.includes("/webhooks") || req.url.includes("/instance")) return next();
 
-        const reqHost = req.headers.origin ?? req.headers.host;
+        const reqHost = (req.headers.origin || req.headers.host || '').replace(/^(https?:\/\/)?/, '');
 
         const isInstanceLocal = global.full_url.includes('localhost') || global.full_url.includes('127.0.0.1');
         const isReqLocal = reqHost.includes('localhost') || reqHost.includes('127.0.0.1');
 
-        const isSameHost = (isInstanceLocal && isReqLocal) || (global.full_url === reqHost);
+        let isSameHost = false;
+
+        if (global.full_url === reqHost) {
+            isSameHost = true;
+        } else if (isInstanceLocal && isReqLocal) {            
+            const normalizedInstance = global.full_url.replace('localhost', '127.0.0.1');
+            const normalizedReq = reqHost.replace('localhost', '127.0.0.1');
+
+            isSameHost = normalizedInstance === normalizedReq;
+        } else {
+            isSameHost = false;
+        }
 
         let cookies = req.cookies;
 
