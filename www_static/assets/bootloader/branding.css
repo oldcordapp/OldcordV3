@@ -16,8 +16,16 @@
 	display: none !important;
 }
 
-a[class^="logo-"] {
+a[class^="logo"] {
 	background: url(/assets/logo.svg) !important;
 	width: 152px !important;
 	height: 30px !important;
 }
+
+form[class^="authBox"] div[class^="subTitle"]::after {
+	content: "\AThis is not official Discord. Do not login with your Discord account.";
+	white-space: pre-wrap;
+	font-weight: bold;
+	font-size: 12px;
+}
+
