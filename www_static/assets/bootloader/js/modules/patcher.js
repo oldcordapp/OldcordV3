@@ -214,6 +214,20 @@ const patcher = {
           const getDirection = (block) =>
             (block.match(/a=(sendrecv|sendonly|recvonly|inactive)/) || [])[0];
 
+          const parseExtmaps = (mediaBlock) => {
+            const extmaps = new Map();
+            const lines = mediaBlock.split(/\r?\n/);
+            for (const line of lines) {
+              const match = line.match(/^a=extmap:(\d+)\s+(.*)$/);
+              if (match) {
+                const id = parseInt(match[1], 10);
+                const uri = match[2].trim();
+                extmaps.set(uri, id);
+              }
+            }
+            return extmaps;
+          };
+
           RTCPeerConnection.prototype.setLocalDescription = function (
             description
           ) {
@@ -314,8 +328,41 @@ const patcher = {
               }
             }
 
+            const fixedMBlocks = currentMBlocks.map((answerBlock, index) => {
+              const offerBlock =
+                previousMBlocks.find(
+                  (b) => getMediaType(b) === getMediaType(answerBlock)
+                ) || previousMBlocks[index];
+
+              if (!offerBlock) return answerBlock;
+
+              const offerExtmaps = parseExtmaps(offerBlock);
+              if (offerExtmaps.size === 0) return answerBlock;
+
+              const answerLines = answerBlock.split(/\r?\n/);
+              const newAnswerLines = [];
+
+              for (const line of answerLines) {
+                if (line.startsWith("a=extmap:")) {
+                  const match = line.match(/^a=extmap:(\d+)\s+(.*)$/);
+                  if (match) {
+                    const answerUri = match[2].trim();
+                    if (offerExtmaps.has(answerUri)) {
+                      const correctId = offerExtmaps.get(answerUri);
+                      newAnswerLines.push(`a=extmap:${correctId} ${answerUri}`);
+                    } else {
+                      console.warn(`[SDP Patcher] Discarding unsupported extmap from answer: ${line}`);
+                    }
+                  }
+                } else {
+                  newAnswerLines.push(line);
+                }
+              }
+              return newAnswerLines.join("\r\n");
+            });
+
             const sdpHeader = getHeader(description.sdp);
-            let finalSdp = sdpHeader + "\r\n" + currentMBlocks.join("\r\n");
+            let finalSdp = sdpHeader + "\r\n" + fixedMBlocks.join("\r\n");
 
             let midIndex = 0;
             finalSdp = finalSdp.replace(
