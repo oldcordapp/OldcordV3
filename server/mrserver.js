@@ -97,11 +97,11 @@ const mrServer = {
             socket.close(4000, 'Invalid payload');
         }
     },
-    start(port, debug_logs) {
+    start(server, port, debug_logs) {
         this.port = port;
         this.debug_logs = debug_logs;
         this.signalingServer = new WebSocket.Server({
-            port: port
+            server: server
         });
 
         this.signalingServer.on('listening', async () => {

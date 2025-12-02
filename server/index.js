@@ -145,12 +145,27 @@ function getIPAddress() {
         ip_address = await try_get_ip.text();
     }
 
+    let rtcHttpServer;
+    let mrHttpServer;
+
+    if (certificates) {
+        rtcHttpServer = https.createServer(certificates);
+        mrHttpServer = https.createServer(certificates);
+    }
+    else {
+        rtcHttpServer = createServer();
+        mrHttpServer = createServer();
+    }
+
+    rtcHttpServer.listen(config.signaling_server_port);
+    mrHttpServer.listen(config.mr_server.port);
+
     global.udpServer.start(config.udp_server_port, config.debug_logs['udp'] ?? true);
-    global.rtcServer.start(config.signaling_server_port, config.debug_logs['rtc'] ?? true);
+    global.rtcServer.start(rtcHttpServer, config.signaling_server_port, config.debug_logs['rtc'] ?? true);
     
     if (global.using_media_relay) {
         global.mrServer = mrServer;
-        global.mrServer.start(config.mr_server.port, config.debug_logs['mr'] ?? true);
+        global.mrServer.start(mrHttpServer, config.mr_server.port, config.debug_logs['mr'] ?? true);
     }
 
     if (!global.using_media_relay) {
