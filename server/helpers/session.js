@@ -542,7 +542,7 @@ class session {
                 heartbeat_interval: 45 * 1000,
                 // v9 responses
                 resume_gateway_url: globalUtils.generateGatewayURL({headers: {host: null}}), // we sould have a better way for this
-                sessions: [ {session_id: this.id} ],
+                sessions: [ {session_id: this.id, client_info: {client: "unknown", os: "unknown", version: null}} ],
                 merged_members: merged_members,
                 users: Array.from(users),
                 notification_settings: {flags: null},
