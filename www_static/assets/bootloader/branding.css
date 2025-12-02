@@ -16,7 +16,7 @@
 	display: none !important;
 }
 
-a[class^="logo"] {
+a[class^="logo"], form[class^="authBox"]::before {
 	background: url(/assets/logo.svg) !important;
 	width: 152px !important;
 	height: 30px !important;
