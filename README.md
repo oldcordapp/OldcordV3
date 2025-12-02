@@ -28,7 +28,7 @@ There are some features we need help with, if you're up for the task, feel free 
   
 # Project Status & Features
 
-**Client Year Support**:
+**Support Status for Features from Client Year**:
   - 🟢 **2015 - 2016**: Full support.
   - 🟠 **2017 - 2018**: In development, mostly supported. (To-dos like giphy support, etc)
   - ❎ **2019+**: No plans for support. Too much commercial crap in these versions, we're focused on preserving the classic Discord experience, completely free from telemetry and bloat.
