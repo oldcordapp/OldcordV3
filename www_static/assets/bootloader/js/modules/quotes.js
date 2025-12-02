@@ -1,20 +1,4 @@
 export const LOADING_QUOTES = [
-  // Adapted from the main page of the Oldcord website (Rewritten by Claude)
-  { text: "Time traveling to {year}..." },
-  { text: "Imagining a simpler place..." },
-  { text: "Where's @someone when you need them?" },
-  { text: "Ditching the bloat..." },
-  { text: "Bringing back the good times..." },
-  { text: "Finding that pure messaging goodness..." },
-  { text: "Time to vacuum away the new stuff..." },
-  { text: "Making old new again..." },
-  { text: "Checking that spell checker..." },
-  { text: "Back when things were familiar..." },
-  { text: "Super easy, super fast..." },
-  { text: "CTRL-K your way to victory..." },
-  { text: "Remember when things were simpler?" },
-  { text: "Doing some chemical reactions..." },
-  // Our own quotes
   { text: "FOR REAL?!" },
   { text: "Did you know? STFU! Where are my quotes?" },
   { text: "What in the heck is a Discord Orb?" },
