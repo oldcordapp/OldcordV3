@@ -255,6 +255,17 @@ function staffAccessMiddleware(privilege_needed) {
                 });
             }
 
+            if (!account.mfa_enabled && global.config.mfa_required_for_admin) {
+                if (req.method === "GET" && req.url.endsWith("/@me")) {
+                    return next();
+                } //Exclude from the admin info get request
+
+                return res.status(401).json({
+                    code: 401,
+                    message: "Unauthorized"
+                });
+            }
+
             next();
         } catch(err) {
             logText(err, "error");
@@ -551,6 +562,13 @@ function guildPermissionsMiddleware(permission) {
         }
 
         if (guild.owner_id == sender.id || (req.is_staff && req.staff_details.privilege >= 3)) {
+            if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
+                return res.status(403).json({
+                    code: 403,
+                    message: "Your account needs MFA to be enabled in order to perform this action."
+                });
+            }
+
             return next();
         }
 
@@ -589,6 +607,13 @@ function channelPermissionsMiddleware(permission) {
             }
 
             if (req.is_staff && req.staff_details.privilege >= 3) {
+                if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
+                    return res.status(403).json({
+                        code: 403,
+                        message: "Your account needs MFA to be enabled in order to perform this action."
+                    });
+                }
+
                 return next();
             }
 
@@ -607,6 +632,13 @@ function channelPermissionsMiddleware(permission) {
         }
 
         if (req.is_staff && req.staff_details.privilege >= 3) {
+            if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
+                return res.status(403).json({
+                    code: 403,
+                    message: "Your account needs MFA to be enabled in order to perform this action."
+                });
+            }
+
             return next();
         }
 

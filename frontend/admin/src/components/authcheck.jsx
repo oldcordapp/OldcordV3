@@ -22,6 +22,10 @@ function AuthCheck({ appPage = null, enforced, minClearance }) {
         return <Navigate to="/login"/>;
     }
 
+    if (!user_data.mfa_enabled && user_data.needs_mfa) {
+        return <Navigate to="/mfa-notice"/>;
+    }
+
     if (user_data.staff_details && user_data.staff_details.privilege < minClearance) {
         return <Navigate to="/"/>;
     }

@@ -41,6 +41,18 @@ body {
     transition: 0.3s filter;
 }
 
+.no-mfa::before {
+  content: "NO MFA";
+  color: #fd1b1b1a;
+  /*-webkit-text-stroke: 0.5px red;*/
+  font-size: 100px;
+  top: -15px;
+  z-index: 20;
+  font-family: sans-serif;
+  position: relative;
+  left: -4.5em;
+}
+
 .staff-container {
   padding: 10px;
   display: flex;

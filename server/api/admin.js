@@ -151,6 +151,7 @@ router.get("/@me", staffAccessMiddleware(1), async (req, res) => {
         let ret = req.account;
 
         ret.staff_details = req.staff_details;
+        ret.needs_mfa = global.config.mfa_required_for_admin;
 
         return res.status(200).json(globalUtils.sanitizeObject(ret, ['settings', 'token', 'password', 'relationships', 'disabled_until', 'disabled_reason']));
 
