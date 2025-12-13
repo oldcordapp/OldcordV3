@@ -561,8 +561,8 @@ function guildPermissionsMiddleware(permission) {
             });
         }
 
-        if (guild.owner_id == sender.id || (req.is_staff && req.staff_details.privilege >= 3)) {
-            if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
+        if ((guild.owner_id == sender.id || (req.is_staff && req.staff_details.privilege >= 3))) {
+            if (!sender.mfa_enabled && global.config.mfa_required_for_admin && req.is_staff) {
                 return res.status(403).json({
                     code: 403,
                     message: "Your account needs MFA to be enabled in order to perform this action."
