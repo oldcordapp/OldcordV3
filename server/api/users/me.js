@@ -5,6 +5,7 @@ const { logText } = require('../../helpers/logger');
 const router = express.Router();
 const relationships = require('./relationships');
 const quickcache = require('../../helpers/quickcache');
+const Watchdog = require('../../helpers/watchdog');
 
 router.use("/relationships", relationships);
 
@@ -35,7 +36,7 @@ router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   }
 });
 
-router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.maxPerTimeFrame, global.config.ratelimit_config.updateMe.timeFrame), async (req, res) => {
+router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.maxPerTimeFrame, global.config.ratelimit_config.updateMe.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateMe.maxPerTimeFrame, global.config.ratelimit_config.updateMe.timeFrame, 0.5), async (req, res) => {
   try {
     let account = req.account;
     let originalAcc = account;
@@ -641,7 +642,7 @@ router.patch("/connections/:platform/:connectionid", async (req, res) => {
 });
 
 //Leaving guilds in late 2016
-router.delete("/guilds/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.leaveGuild.maxPerTimeFrame, global.config.ratelimit_config.leaveGuild.timeFrame), async (req, res) => {
+router.delete("/guilds/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.leaveGuild.maxPerTimeFrame, global.config.ratelimit_config.leaveGuild.timeFrame), Watchdog.middleware(global.config.ratelimit_config.leaveGuild.maxPerTimeFrame, global.config.ratelimit_config.leaveGuild.timeFrame, 0.5), async (req, res) => {
     try {
         try {
             const user = req.account;
@@ -703,7 +704,7 @@ router.delete("/guilds/:guildid", guildMiddleware, rateLimitMiddleware(global.co
     }
 });
 
-router.patch("/guilds/:guildid/settings", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateUsersGuildSettings.maxPerTimeFrame, global.config.ratelimit_config.updateUsersGuildSettings.timeFrame), async (req, res) => {
+router.patch("/guilds/:guildid/settings", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateUsersGuildSettings.maxPerTimeFrame, global.config.ratelimit_config.updateUsersGuildSettings.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateUsersGuildSettings.maxPerTimeFrame, global.config.ratelimit_config.updateUsersGuildSettings.timeFrame, 0.5), async (req, res) => {
     try {
         const user = req.account;
         const guild = req.guild;
@@ -859,7 +860,7 @@ router.get("/affinities/guilds", (req, res) => {
     });
 });
 
-router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 1), async (req, res) => {
   try {
     let code = req.body.code;
     let secret = req.body.secret;
@@ -920,7 +921,7 @@ router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_conf
   }
 });
 
-router.post("/mfa/totp/disable", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/mfa/totp/disable", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 1), async (req, res) => {
   try {
     let code = req.body.code;
 

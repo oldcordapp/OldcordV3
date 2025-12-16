@@ -333,6 +333,48 @@ const globalUtils = {
             return true;
         }
     },
+    validSuperPropertiesObject: (superprops, userAgent) => {
+        try {
+            if (!superprops || !userAgent || typeof superprops !== 'string' || typeof userAgent !== 'string' || superprops === "{}" || superprops.length < 30 || userAgent.length < 10 || superprops.length > 4500) {
+                return false;
+            }
+
+            let decodedProperties = Buffer.from(superprops, "base64").toString("utf-8");
+
+            if (!decodedProperties || decodedProperties.length < 5) {
+                return false;
+            }
+
+            let obj = JSON.parse(decodedProperties);
+
+            /*
+            let valid_os = [
+                "windows",
+                "linux",
+                "android",
+                "ios",
+                "macintosh",
+            ];
+
+            let valid_browsers = [
+                "firefox",
+                "chrome",
+                ""
+            ]
+            */  // || !valid_os.includes(obj.os.toLowerCase()) // || !valid_browsers.includes(obj.browser.toLowerCase()) - commented out for the time being as this seems very restricted. these quick property checks should be enough for now until we can figure out a better system.
+
+            if (!obj || !obj.os || !obj.browser || !obj.browser_user_agent || obj.browser_user_agent !== userAgent) {
+                return false;
+            }
+
+            return true;
+        }
+        catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
     prepareAccountObject: (rows, relationships) => {
         if (rows === null || rows.length === 0) {
             return null;

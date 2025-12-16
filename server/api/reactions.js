@@ -4,6 +4,7 @@ const { logText } = require('../helpers/logger');
 const { channelPermissionsMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: false });
 const quickcache = require('../helpers/quickcache');
+const Watchdog = require('../helpers/watchdog');
 
 router.param('userid', async (req, res, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
@@ -11,7 +12,7 @@ router.param('userid', async (req, res, next, userid) => {
     next();
 });
 
-router.delete("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), async (req, res) => {
+router.delete("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), Watchdog.middleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame, 0.5), async (req, res) => {
     try {
         let account = req.account;
         let channel = req.channel;
@@ -93,7 +94,7 @@ router.delete("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"),
     }
 });
 
-router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), async (req, res) => {
+router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), Watchdog.middleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame, 0.5), async (req, res) => {
     try {
         let user = req.user;
 
@@ -183,7 +184,7 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
     }
 });
 
-router.put("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame), async (req, res) => {
+router.put("/:urlencoded/@me", channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame), Watchdog.middleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame, 0.5), async (req, res) => {
     try {
         let account = req.account;
         let channel = req.channel;

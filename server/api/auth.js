@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const globalUtils = require('../helpers/globalutils');
+const Watchdog = require('../helpers/watchdog');
 const instanceMiddleware = require('../helpers/middlewares').instanceMiddleware;
 const rateLimitMiddleware = require("../helpers/middlewares").rateLimitMiddleware;
 const { logText } = require('../helpers/logger');
@@ -9,7 +10,7 @@ const recaptcha = require('../helpers/recaptcha');
 
 global.config = globalUtils.config;
 
-router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 2),  async (req, res) => {
     try {
         let release_date = req.client_build;
 
@@ -213,7 +214,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
     }
 });
 
-router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 0.75), async (req, res) => {
     try {
         if (req.body.login) {
             req.body.email = req.body.login
@@ -316,7 +317,7 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
     }
 });
 
-router.post("/mfa/totp", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/mfa/totp", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 0.2), async (req, res) => {
     try {
         let ticket = req.body.ticket;
         let code = req.body.code;
@@ -368,11 +369,11 @@ router.post("/mfa/totp", rateLimitMiddleware(global.config.ratelimit_config.regi
     }
 });
 
-router.post("/logout", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/logout", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 0.4), async (req, res) => {
     return res.status(204).send();
 });
 
-router.post("/forgot", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/forgot", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 0.4), async (req, res) => {
     try {
         let email = req.body.email;
 
@@ -422,7 +423,7 @@ router.post("/fingerprint", (_, res) => {
     })
 });
 
-router.post("/verify", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/verify", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 0.5), async (req, res) => {
     try {
         let auth_token = req.headers['authorization'];
 
@@ -489,7 +490,7 @@ router.post("/verify", rateLimitMiddleware(global.config.ratelimit_config.regist
     }
 });
 
-router.post("/verify/resend", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), async (req, res) => {
+router.post("/verify/resend", rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame), Watchdog.middleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.registration.timeFrame, 1), async (req, res) => {
     try {
         let auth_token = req.headers['authorization'];
 

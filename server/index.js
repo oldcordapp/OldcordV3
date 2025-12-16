@@ -209,7 +209,7 @@ app.get('/proxy/:url', async (req, res) => {
     }
     
     if (!requestUrl) {
-        requestUrl = "https://i-love.nekos.zip/ztn1pSsdos.png";
+        requestUrl = "https://i.imgur.com/ezXZJ0h.png"; //to-do: get this from the cdn
     }
 
     if (!requestUrl.startsWith('http://') && !requestUrl.startsWith('https://')) {

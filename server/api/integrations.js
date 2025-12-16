@@ -3,8 +3,9 @@ const { rateLimitMiddleware } = require('../helpers/middlewares');
 const { logText } = require('../helpers/logger');
 const quickcache = require('../helpers/quickcache');
 const router = express.Router({ mergeParams: true });
+const Watchdog = require('../helpers/watchdog');
 
-router.get("/tenor/search", rateLimitMiddleware(global.config.ratelimit_config.tenorSearch.maxPerTimeFrame, global.config.ratelimit_config.tenorSearch.timeFrame), quickcache.cacheFor(60 * 30, true), async (req, res) => {
+router.get("/tenor/search", rateLimitMiddleware(global.config.ratelimit_config.tenorSearch.maxPerTimeFrame, global.config.ratelimit_config.tenorSearch.timeFrame), Watchdog.middleware(global.config.ratelimit_config.tenorSearch.maxPerTimeFrame, global.config.ratelimit_config.tenorSearch.timeFrame, 0.1), quickcache.cacheFor(60 * 30, true), async (req, res) => {
     try {
         const query = req.query.q;
 

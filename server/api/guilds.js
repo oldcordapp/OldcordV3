@@ -6,6 +6,7 @@ const members = require('./members');
 const bans = require('./bans');
 const emojis = require('./emojis');
 const quickcache = require('../helpers/quickcache');
+const Watchdog = require('../helpers/watchdog');
 
 const { instanceMiddleware, rateLimitMiddleware, guildMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 
@@ -21,7 +22,7 @@ router.get("/:guildid", guildMiddleware, quickcache.cacheFor(60 * 10, true), asy
     return res.status(200).json(req.guild);
 });
 
-router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(global.config.ratelimit_config.createGuild.maxPerTimeFrame, global.config.ratelimit_config.createGuild.timeFrame), async (req, res) => {
+router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(global.config.ratelimit_config.createGuild.maxPerTimeFrame, global.config.ratelimit_config.createGuild.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createGuild.maxPerTimeFrame, global.config.ratelimit_config.createGuild.timeFrame, 1), async (req, res) => {
     try {
         if (!req.body.name || req.body.name == "") {
             return res.status(400).json({
@@ -166,13 +167,13 @@ async function guildDeleteRequest(req, res) {
 }
 
 //later 2016 guild deletion support - why the fuck do they do it like this?
-router.post("/:guildid/delete", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.leaveGuild.maxPerTimeFrame, global.config.ratelimit_config.leaveGuild.maxPerTimeFrame), guildDeleteRequest);
+router.post("/:guildid/delete", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.leaveGuild.maxPerTimeFrame, global.config.ratelimit_config.leaveGuild.maxPerTimeFrame), Watchdog.middleware(global.config.ratelimit_config.leaveGuild.maxPerTimeFrame, global.config.ratelimit_config.leaveGuild.timeFrame, 1), guildDeleteRequest);
 
-router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.deleteGuild.maxPerTimeFrame, global.config.ratelimit_config.deleteGuild.timeFrame), guildDeleteRequest);
+router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.deleteGuild.maxPerTimeFrame, global.config.ratelimit_config.deleteGuild.timeFrame), Watchdog.middleware(global.config.ratelimit_config.deleteGuild.maxPerTimeFrame, global.config.ratelimit_config.deleteGuild.timeFrame, 0.5), guildDeleteRequest);
 
 // UNFORTUNAAAATELY to keep the data fresh it is best advised that we dont cache the response at all.
 
-router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddleware("READ_MESSAGE_HISTORY"), rateLimitMiddleware(global.config.ratelimit_config.messageSearching.maxPerTimeFrame, global.config.ratelimit_config.messageSearching.timeFrame), async (req, res) => {
+router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddleware("READ_MESSAGE_HISTORY"), rateLimitMiddleware(global.config.ratelimit_config.messageSearching.maxPerTimeFrame, global.config.ratelimit_config.messageSearching.timeFrame), Watchdog.middleware(global.config.ratelimit_config.messageSearching.maxPerTimeFrame, global.config.ratelimit_config.messageSearching.timeFrame, 1), async (req, res) => {
     try {
         const account = req.account;
         
@@ -257,7 +258,7 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
     }
 });
 
-router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), rateLimitMiddleware(global.config.ratelimit_config.updateGuild.maxPerTimeFrame, global.config.ratelimit_config.updateGuild.timeFrame), async (req, res) => {
+router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), rateLimitMiddleware(global.config.ratelimit_config.updateGuild.maxPerTimeFrame, global.config.ratelimit_config.updateGuild.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateGuild.maxPerTimeFrame, global.config.ratelimit_config.updateGuild.timeFrame, 1), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -505,7 +506,7 @@ router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MAN
     }
 });
 
-router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame), async (req, res) => {
+router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame, 0.5), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -593,7 +594,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
     }
 });
 
-router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame), async (req, res) => {
+router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame, 0.5), async (req, res) => {
     try {
         let ret = [];
 

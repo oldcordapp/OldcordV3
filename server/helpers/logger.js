@@ -17,7 +17,8 @@ const logText = (text, type) => {
             udp: true,
             rest: true,
             dispatcher: true,
-            errors: true
+            errors: true,
+            watchdog: true
         } //compatibility
     }
 
@@ -26,6 +27,10 @@ const logText = (text, type) => {
     }
 
     if (!global.config.debug_logs['dispatcher'] && type === 'dispatcher') {
+        return;
+    }
+
+    if (!global.config.debug_logs['watchdog'] && type === 'watchdog') {
         return;
     }
 

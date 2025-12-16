@@ -328,15 +328,9 @@ async function authMiddleware(req, res, next) {
             let userAgent = req.headers['User-Agent'];
             
             try {
-                let decodedProperties = Buffer.from(xSuperProperties, "base64").toString("utf-8");
+                let validSuperProps = globalUtils.validSuperPropertiesObject(xSuperProperties, userAgent);
 
-                if (!xSuperProperties || !userAgent || userAgent.length < 5 || xSuperProperties === "{}" || !decodedProperties || decodedProperties.length < 5) {
-                    req.cannot_pass = true;
-                }
-
-                if (!/^\{"os":"[^"]+","browser":"[^"]+","device":"[^"]*","referrer":"https?:\/\/[^"]+","referring_domain":"[^"]+"\}$/.test(decodedProperties)) {
-                    req.cannot_pass = true;
-                }
+                req.cannot_pass = xSuperProperties && userAgent && !validSuperProps;
             } catch { }
         }
 

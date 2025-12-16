@@ -35,7 +35,8 @@
         "dispatcher" : true,
         "mr" : true,
         "rest" : true,
-        "errors": true
+        "errors": true,
+        "watchdog" : false
     },
     "instance": {
         "name": "Staging",
@@ -131,6 +132,7 @@
     "integration_config" : [],
     "ratelimit_config" : {
         "enabled" : false,
+        "deep_mode" : false,
         "registration" : {
             "maxPerTimeFrame" : 50,
             "timeFrame" : 3600000,
@@ -287,6 +289,11 @@
             "breakdown" : "1000 * 60 * 60"
         },
         "updateMe" : {
+            "maxPerTimeFrame" : 100,
+            "timeFrame" : 3600000,
+            "breakdown" : "1000 * 60 * 60"
+        },
+        "pins" : {
             "maxPerTimeFrame" : 100,
             "timeFrame" : 3600000,
             "breakdown" : "1000 * 60 * 60"

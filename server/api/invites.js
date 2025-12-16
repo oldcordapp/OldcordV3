@@ -3,6 +3,7 @@ const globalUtils = require('../helpers/globalutils');
 const { logText } = require('../helpers/logger');
 const { instanceMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
 const quickcache = require('../helpers/quickcache');
+const Watchdog = require('../helpers/watchdog');
 
 const router = express.Router({ mergeParams: true });
 
@@ -39,7 +40,7 @@ router.get("/:code", quickcache.cacheFor(60 * 30), async (req, res) => {
     }
 });
 
-router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.deleteInvite.maxPerTimeFrame, global.config.ratelimit_config.deleteInvite.timeFrame), async (req, res) => {
+router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.deleteInvite.maxPerTimeFrame, global.config.ratelimit_config.deleteInvite.timeFrame), Watchdog.middleware(global.config.ratelimit_config.deleteInvite.maxPerTimeFrame, global.config.ratelimit_config.deleteInvite.timeFrame, 0.5), async (req, res) => {
     try {
         const sender = req.account;
         const invite = req.invite;
@@ -98,7 +99,7 @@ router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.delet
     }
 });
 
-router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(global.config.ratelimit_config.useInvite.maxPerTimeFrame, global.config.ratelimit_config.useInvite.timeFrame), async (req, res) => {
+router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(global.config.ratelimit_config.useInvite.maxPerTimeFrame, global.config.ratelimit_config.useInvite.timeFrame), Watchdog.middleware(global.config.ratelimit_config.useInvite.maxPerTimeFrame, global.config.ratelimit_config.useInvite.timeFrame, 0.5), async (req, res) => {
     try {
         const sender = req.account;
 

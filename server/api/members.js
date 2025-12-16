@@ -3,6 +3,7 @@ const globalUtils = require('../helpers/globalutils');
 const { logText } = require('../helpers/logger');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const quickcache = require('../helpers/quickcache');
+const Watchdog = require('../helpers/watchdog');
 
 const router = express.Router({ mergeParams: true });
 
@@ -16,7 +17,7 @@ router.get("/:memberid", quickcache.cacheFor(60 * 30), async (req, res) => {
     return res.status(200).json(req.member);
 });
 
-router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimitMiddleware(global.config.ratelimit_config.kickMember.maxPerTimeFrame, global.config.ratelimit_config.kickMember.timeFrame), async (req, res) => {
+router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimitMiddleware(global.config.ratelimit_config.kickMember.maxPerTimeFrame, global.config.ratelimit_config.kickMember.timeFrame), Watchdog.middleware(global.config.ratelimit_config.kickMember.maxPerTimeFrame, global.config.ratelimit_config.kickMember.timeFrame, 0.5), async (req, res) => {
     try {
         const sender = req.account;
         const member = req.member;
@@ -144,7 +145,7 @@ async function updateMember(member, guild, roles, nick) {
     return newMember;
 }
 
-router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPermissionsMiddleware("MANAGE_NICKNAMES"), rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), async (req, res) => {
+router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPermissionsMiddleware("MANAGE_NICKNAMES"), rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame, 0.5), async (req, res) => {
     try {
         if (req.member == null) {
             return res.status(404).json({
@@ -178,7 +179,7 @@ router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPerm
     }
 });
 
-router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLimitMiddleware(global.config.ratelimit_config.updateNickname.maxPerTimeFrame, global.config.ratelimit_config.updateNickname.timeFrame), async (req, res) => {
+router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLimitMiddleware(global.config.ratelimit_config.updateNickname.maxPerTimeFrame, global.config.ratelimit_config.updateNickname.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateNickname.maxPerTimeFrame, global.config.ratelimit_config.updateNickname.timeFrame, 0.5), async (req, res) => {
     try {
         let account = req.account;
         let member = req.guild.members.find(y => y.id == account.id);

@@ -4,6 +4,7 @@ const globalUtils = require('../helpers/globalutils');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
+const Watchdog = require('../helpers/watchdog');
 
 router.param('memberid', async (req, res, next, memberid) => {
     req.member = req.guild.members.find(x => x.id === memberid);
@@ -26,7 +27,7 @@ router.get("/", guildPermissionsMiddleware("BAN_MEMBERS"), quickcache.cacheFor(6
     }
 });
 
-router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMiddleware(global.config.ratelimit_config.registration.maxPerTimeFrame, global.config.ratelimit_config.bans.timeFrame), async (req, res) => {
+router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMiddleware(global.config.ratelimit_config.bans.maxPerTimeFrame, global.config.ratelimit_config.bans.timeFrame), Watchdog.middleware(global.config.ratelimit_config.bans.maxPerTimeFrame, global.config.ratelimit_config.bans.timeFrame, 0.75), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -131,7 +132,7 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
     }
 });
 
-router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMiddleware(global.config.ratelimit_config.bans.maxPerTimeFrame, global.config.ratelimit_config.bans.timeFrame), async (req, res) => {
+router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMiddleware(global.config.ratelimit_config.bans.maxPerTimeFrame, global.config.ratelimit_config.bans.timeFrame), Watchdog.middleware(global.config.ratelimit_config.bans.maxPerTimeFrame, global.config.ratelimit_config.bans.timeFrame, 0.75), async (req, res) => {
     try {
         const sender = req.account;
 

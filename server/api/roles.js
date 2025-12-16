@@ -4,6 +4,7 @@ const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/
 const globalUtils = require('../helpers/globalutils');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
+const Watchdog = require('../helpers/watchdog');
 
 router.param('roleid', async (req, res, next, roleid) => {
     req.role = req.guild.roles.find(x => x.id === roleid);
@@ -15,7 +16,7 @@ router.get("/:roleid", quickcache.cacheFor(60 * 15, true), async (req, res) => {
     return res.status(200).json(req.role);
 });
 
-router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.updateRole.maxPerTimeFrame, global.config.ratelimit_config.updateRole.timeFrame), async (req, res) => {
+router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.updateRole.maxPerTimeFrame, global.config.ratelimit_config.updateRole.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateRole.maxPerTimeFrame, global.config.ratelimit_config.updateRole.timeFrame, 0.5), async (req, res) => {
     try {
         let guild = req.guild;
 
@@ -94,7 +95,7 @@ router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMi
     }
 });
 
-router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.deleteRole.maxPerTimeFrame, global.config.ratelimit_config.deleteRole.timeFrame), async (req, res) => {
+router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.deleteRole.maxPerTimeFrame, global.config.ratelimit_config.deleteRole.timeFrame), Watchdog.middleware(global.config.ratelimit_config.deleteRole.maxPerTimeFrame, global.config.ratelimit_config.deleteRole.timeFrame, 0.5), async (req, res) => {
     try {
         let guild = req.guild;
 
@@ -156,7 +157,7 @@ router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitM
     }
 });
 
-router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.updateRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame), async (req, res) => {
+router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.updateRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame, 0.5), async (req, res) => {
     try {
         let guild = req.guild;
 
@@ -226,7 +227,7 @@ router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddlewar
     }
 });
 
-router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.createRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame), async (req, res) => {
+router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware(global.config.ratelimit_config.createRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createRole.maxPerTimeFrame, global.config.ratelimit_config.createRole.timeFrame, 0.5), async (req, res) => {
     try {
         let guild = req.guild;
 

@@ -8,6 +8,7 @@ const globalUtils = require('../helpers/globalutils');
 const router = express.Router({ mergeParams: true });
 const config = globalUtils.config;
 const quickcache = require('../helpers/quickcache');
+const Watchdog = require('../helpers/watchdog');
 
 router.param('channelid', async (req, res, next, channelid) => {
     const guild = req.guild;
@@ -53,7 +54,7 @@ router.get("/:channelid", channelMiddleware, channelPermissionsMiddleware("READ_
     return res.status(200).json(req.channel);
 });
 
-router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("SEND_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.typing.maxPerTimeFrame, global.config.ratelimit_config.typing.timeFrame), async (req, res) => {
+router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("SEND_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.typing.maxPerTimeFrame, global.config.ratelimit_config.typing.timeFrame), Watchdog.middleware(global.config.ratelimit_config.typing.maxPerTimeFrame, global.config.ratelimit_config.typing.timeFrame, 0.4), async (req, res) => {
     try {
         const typer = req.account;
 
@@ -106,7 +107,7 @@ router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
     }
 });
 
-router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame), async (req, res) => {
+router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateChannel.maxPerTimeFrame, global.config.ratelimit_config.updateChannel.timeFrame, 0.5), async (req, res) => {
     try {
         let channel = req.channel;
 
@@ -475,7 +476,7 @@ router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_
 });
 
 //TODO: should have its own rate limit
-router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), async (req, res) => {
+router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame, 0.75), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -543,7 +544,7 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
     }
 });
 
-router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), async (req, res) => {
+router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame, 0.75), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -594,7 +595,7 @@ router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIE
     }
 });
 
-router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.deleteChannel.maxPerTimeFrame, global.config.ratelimit_config.deleteChannel.timeFrame), async (req, res) => {
+router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.deleteChannel.maxPerTimeFrame, global.config.ratelimit_config.deleteChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.deleteChannel.maxPerTimeFrame, global.config.ratelimit_config.deleteChannel.timeFrame, 0.5), async (req, res) => {
     try {
         const sender = req.account;
 
@@ -705,6 +706,6 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
     }
 });
 
-router.use("/:channelid/pins", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), pins);
+router.use("/:channelid/pins", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateLimitMiddleware(global.config.ratelimit_config.pins.maxPerTimeFrame, global.config.ratelimit_config.pins.timeFrame), pins, Watchdog.middleware(global.config.ratelimit_config.pins.maxPerTimeFrame, global.config.ratelimit_config.pins.timeFrame, 0.2));
 
 module.exports = router;

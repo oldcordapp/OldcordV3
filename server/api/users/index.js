@@ -4,6 +4,7 @@ const me = require('./me');
 const globalUtils = require('../../helpers/globalutils');
 const { rateLimitMiddleware, userMiddleware } = require('../../helpers/middlewares');
 const quickcache = require('../../helpers/quickcache');
+const Watchdog = require('../../helpers/watchdog');
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get("/:userid", userMiddleware, quickcache.cacheFor(60 * 5), async (req, 
 });
 
 //new dm system / group dm system
-router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame, global.config.ratelimit_config.createPrivateChannel.timeFrame), async (req, res) => {
+router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame, global.config.ratelimit_config.createPrivateChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame, global.config.ratelimit_config.createPrivateChannel.timeFrame, 0.5), async (req, res) => {
     try {
         let recipients = req.body.recipients;
         let account = req.account;
