@@ -3,7 +3,7 @@ const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 
 const Watchdog = {
-    numHeadersThreshold: 1,
+    numHeadersThreshold: 10,
     susScoreDecayTime: 24 * 60 * 60 * 1000, //to-do: add this to the config somewhere
     susScoreDecayStore: new Map(),
     rateLimitStore: new Map(),
