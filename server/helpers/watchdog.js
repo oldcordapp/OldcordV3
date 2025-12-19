@@ -94,8 +94,6 @@ const Watchdog = {
                 let fingerprint_outcome = await Watchdog.getFingerprint(req.originalUrl, req.baseUrl, req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
                 let fingerprint = fingerprint_outcome.fingerprint;
 
-                console.log(fingerprint_outcome)
-
                 if (fingerprint === null) {
                     logText(`Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - auto blocking them for security of the instance.`, "watchdog");
 
