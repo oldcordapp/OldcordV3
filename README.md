@@ -48,7 +48,7 @@ There are some features we need help with, if you're up for the task, feel free 
 
 **Mobile Clients**:
   - **Compatibility**:
-    - **Android Discord Kotlin (2015-2022)**: 🔵 Not decided, if we do, last Kotlin with Aliucord is recommended.
+    - **Android Discord Kotlin (2015-2022)**: 🟠 Work in progress.
     - **Android Discord React Native (2022+)**: ❎ No plans for support.
     - **iOS Discord React Native (2015+)**: ❎ No plans for support due to needing a Jailbroken device.
 
