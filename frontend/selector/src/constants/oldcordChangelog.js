@@ -8,51 +8,45 @@ export const oldcordChangelog = {
   sections: [
     {
       type: "default",
-      body: "Oldcord turns three years old! Thank you so much to see us grow! While we do not have a video to showcase how we have grown, here's <a href=\"https://arcadia.noia.site/posts/1759733688246\">noia's blog post about the WebRTC patch we've done and a small tidbit about how much we've grown</a>. <small>And yes we are late by one month but who cares.</small>",
+      body: "Oldcord's back! Yes that's right! As a Christmas gift, the Oldcord Staging instance is back up online! Sorry for the one year wait. I guess we took an extended break, huh.",
+    },
+    {
+      type: "progress",
+      title: "LEGAL SECTION — OLDCORD INSTANCE ONLY",
+      items: [
+        "We have updated the ToS, Privacy Policy, and Instance Guidelines. Please make sure to check them.",
+        "Other instances are not affected.",
+      ],
     },
     {
       type: "added",
-      title: "Special gifts for the birthday boy.",
+      title: "Security 9000",
       items: [
-        "Oldplunger is now in development! You can try it out in the <strong>Oldplunger Settings</strong> tab.",
-        "Currently we are focusing on porting the current patches into Oldplunger so that the bootloader can do other things. Like doing your-",
+        "We added a new security system that would block rogue bots from attacking the API by fingerprinting requests. It's over 9000!",
+        "Two factor authentication has been added to Oldcord! Use your beaten up phone, scan a QR code, and your account is secured in no time!"
       ],
     },
     {
       type: "fixed",
-      title: "We bought Hurple a bug swatter!",
+      title: "Elf's bug fixes!",
       items: [
-        "We fixed an issue with image embeds related to the improved item below.",
-        "Discord Developer Portal should load the correct asset URL <small>on Oldplunger at least</small>.",
-        "Other bug fixes are on the commit history because the person writing this changelog is lazy and does not want to finish it.",
+        "We fixed the WebRTC patch, it should be working again. Keep on spamming soundboards!",
+        "Server Era selection is selectable again. Turns out deprecating them makes them unselectable. Who would have thought?"
       ],
     },
     {
       type: "improved",
-      title: "We gave steroids to Hurple.",
+      title: "Some little things that matter.",
       items: [
-        "We updated all the packages and now we don't have 90+ critical package vulnerabilities! We finally gave Hurple a vaccine! <small>That also lead to image embeds not working, but that's fixed now.</small>",
-        "Selector should look more closer to the service you love back in 2018.",
-      ],
-    },
-    {
-      type: "progress",
-      title: "In progress features coming soon to Oldcord",
-      items: [
-        "Like above, we are porting the current patches into Oldplunger. Here's the plugins we expected to add in Oldplunger in the future:",
-        "Server banners",
-        "Reply functionality",
-        "Themes!",
-        "And many more!",
+        "2018 login page has done a little overhaul, check it out!"
       ],
     },
     {
       type: "default",
-      title: "Thank you.",
+      title: "Merry Christmas!",
       items: [
-        "Once again, we are happy that you join us on the Oldcord journey, and we hope to see you all in the next disc.",
-        "Say happy birthday to Hurple by the way! He doesn't vacuum hard."
-      ]
+        "I think this changelog would be the final changelog of the year so Merry Christmas everyone! See you next year!",
+      ],
     },
   ],
 };
