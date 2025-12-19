@@ -47,6 +47,7 @@ async function clientMiddleware(req, res, next) {
         const isInstanceLocal = global.full_url.includes('localhost') || global.full_url.includes('127.0.0.1');
         const isReqLocal = reqHost.includes('localhost') || reqHost.includes('127.0.0.1');
 
+        const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(req.headers['user-agent']);
         let isSameHost = false;
 
         if (global.full_url === reqHost) {
@@ -62,18 +63,18 @@ async function clientMiddleware(req, res, next) {
 
         let cookies = req.cookies;
 
-        if ((!cookies) || (!cookies['release_date'] && !isSameHost)) {
+        if (!cookies || (!cookies['release_date'] && !isSameHost) || !isBrowser) {
             cookies['release_date'] = "thirdPartyOrMobile"
             res.cookie('release_date', "thirdPartyOrMobile")
         }
 
-        if (!cookies['release_date'] && isSameHost && !config.require_release_date_cookie) {
+        if (!cookies['release_date'] && isSameHost && isBrowser && !config.require_release_date_cookie) {
             res.cookie('release_date', config.default_client_build || "october_5_2017", {
                 maxAge: 100 * 365 * 24 * 60 * 60 * 1000
             });
         }
 
-        if ((!cookies['default_client_build'] || cookies['default_client_build'] !== (config.default_client_build || "october_5_2017")) && isSameHost) {
+        if ((!cookies['default_client_build'] || cookies['default_client_build'] !== (config.default_client_build || "october_5_2017")) && isSameHost && isBrowser) {
             res.cookie('default_client_build', config.default_client_build || "october_5_2017", {
                 maxAge: 100 * 365 * 24 * 60 * 60 * 1000
             });

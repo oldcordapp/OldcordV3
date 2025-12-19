@@ -65,15 +65,27 @@ const gateway = {
         const isInstanceLocal = global.full_url.includes('localhost') || global.full_url.includes('127.0.0.1');
         const isReqLocal = reqHost.includes('localhost') || reqHost.includes('127.0.0.1');
 
-        const isSameHost = (isInstanceLocal && isReqLocal) || (global.full_url === reqHost);
+        const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(req.headers['user-agent']);
+        let isSameHost = false;
+
+        if (global.full_url === reqHost) {
+            isSameHost = true;
+        } else if (isInstanceLocal && isReqLocal) {            
+            const normalizedInstance = global.full_url.replace('localhost', '127.0.0.1');
+            const normalizedReq = reqHost.replace('localhost', '127.0.0.1');
+
+            isSameHost = normalizedInstance === normalizedReq;
+        } else {
+            isSameHost = false;
+        }
 
         let cookies = req.headers.cookie;
 
-        if (!cookies) {
+        if (!cookies && isBrowser) {
             cookies = `release_date=thirdPartyOrMobile;default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
         }
 
-        if (!cookies && isSameHost && !globalUtils.config.require_release_date_cookie) {
+        if (!cookies && isSameHost && isBrowser && !globalUtils.config.require_release_date_cookie) {
             cookies = `release_date=${globalUtils.config.default_client_build || "october_5_2017"};default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
         }
 
@@ -87,7 +99,7 @@ const gateway = {
             cookieStore = {}
         }
 
-        if (!cookies && isSameHost && !cookies?.includes('release_date') && !globalUtils.config.require_release_date_cookie) {
+        if (!cookies && isSameHost && isBrowser && !cookies?.includes('release_date') && !globalUtils.config.require_release_date_cookie) {
             cookieStore['release_date'] = globalUtils.config.default_client_build || "october_5_2017";
         }
 
