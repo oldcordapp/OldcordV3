@@ -526,6 +526,7 @@ class session {
                     mfa_enabled: this.user.mfa_enabled || false,
                     // v9 responses
                     premium_type: 2,
+                    nsfw_allowed: true,
                 },
                 user_settings: {
                     ...this.user.settings,

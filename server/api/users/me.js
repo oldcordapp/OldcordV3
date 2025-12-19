@@ -851,6 +851,7 @@ router.get("/billing/payment-sources", (req, res) => {
 router.get("/affinities/users", (req, res) => {
     return res.status(200).json({
         user_affinities: [],
+        inverse_user_affinities: []
     });
 });
 
