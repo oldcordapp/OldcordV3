@@ -336,7 +336,7 @@ const globalUtils = {
     validSuperPropertiesObject: (superprops, url, baseUrl, userAgent) => {
         try {
             //Maybe do something with url going forward?
-            
+
             if (baseUrl === "/api/auth") {
                 return true;
             } //This one usually gives an X Super props which returns nothing useful or usually hinders everything - so may aswell skip it {"os":"Linux","browser":"Firefox","device":"","referrer":"","referring_domain":""}
@@ -353,27 +353,29 @@ const globalUtils = {
 
             let obj = JSON.parse(decodedProperties);
 
-            /*
-            let valid_os = [
-                "windows",
-                "linux",
-                "android",
-                "ios",
-                "macintosh",
+            let points = 0;
+            let to_check = [
+                "os",
+                "browser",
+                "device",
+                "referrer",
+                "referring_domain",
+                "browser_user_agent"
             ];
 
-            let valid_browsers = [
-                "firefox",
-                "chrome",
-                ""
-            ]
-            */  // || !valid_os.includes(obj.os.toLowerCase()) // || !valid_browsers.includes(obj.browser.toLowerCase()) - commented out for the time being as this seems very restricted. these quick property checks should be enough for now until we can figure out a better system.
+            for(var check of to_check) {
+                let val = obj[check];
 
-            if (!obj || !obj.os || !obj.browser || !obj.browser_user_agent || obj.browser_user_agent !== userAgent) {
-                return false;
-            }
+                if (obj && val) {
+                    points++;
 
-            return true;
+                    if (check === "browser_user_agent" && val !== userAgent) {
+                        points++;
+                    }
+                }
+            } //to-do make this much, much better please.
+
+            return points >= 2;
         }
         catch (error) {
             logText(error, "error");
