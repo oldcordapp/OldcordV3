@@ -328,7 +328,7 @@ async function authMiddleware(req, res, next) {
             let userAgent = req.headers['User-Agent'];
             
             try {
-                let validSuperProps = globalUtils.validSuperPropertiesObject(xSuperProperties, userAgent);
+                let validSuperProps = globalUtils.validSuperPropertiesObject(xSuperProperties, req.originalUrl, req.baseUrl, userAgent);
 
                 req.cannot_pass = xSuperProperties && userAgent && !validSuperProps;
             } catch { }

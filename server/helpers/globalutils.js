@@ -333,8 +333,14 @@ const globalUtils = {
             return true;
         }
     },
-    validSuperPropertiesObject: (superprops, userAgent) => {
+    validSuperPropertiesObject: (superprops, url, baseUrl, userAgent) => {
         try {
+            //Maybe do something with url going forward?
+            
+            if (baseUrl === "/api/auth") {
+                return true;
+            } //This one usually gives an X Super props which returns nothing useful or usually hinders everything - so may aswell skip it {"os":"Linux","browser":"Firefox","device":"","referrer":"","referring_domain":""}
+
             if (!superprops || !userAgent || typeof superprops !== 'string' || typeof userAgent !== 'string' || superprops === "{}" || superprops.length < 30 || userAgent.length < 10 || superprops.length > 4500) {
                 return false;
             }

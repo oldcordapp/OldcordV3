@@ -10,7 +10,7 @@ const Watchdog = {
     normalizeHeader: (name) => {
         return name.toLowerCase().trim();
     },
-    getFingerprint: async (protocol, headers, account = null, ja3hash = null) => {
+    getFingerprint: async (url, baseUrl, protocol, headers, account = null, ja3hash = null) => {
         if (typeof headers !== 'object' || headers === null || Object.entries(headers).length < Watchdog.numHeadersThreshold) {
             return {
                 fingerprint: null,
@@ -29,7 +29,7 @@ const Watchdog = {
         }
 
         if (xSuperProps) {
-            let outcome = globalUtils.validSuperPropertiesObject(xSuperProps, userAgent);
+            let outcome = globalUtils.validSuperPropertiesObject(xSuperProps, url, baseUrl, userAgent);
 
             if (!outcome) {
                 return {
@@ -91,8 +91,10 @@ const Watchdog = {
             }
 
             if (!req.fingerprint) {
-                let fingerprint_outcome = await Watchdog.getFingerprint(req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
+                let fingerprint_outcome = await Watchdog.getFingerprint(req.originalUrl, req.baseUrl, req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
                 let fingerprint = fingerprint_outcome.fingerprint;
+
+                console.log(fingerprint_outcome)
 
                 if (fingerprint === null) {
                     logText(`Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - auto blocking them for security of the instance.`, "watchdog");
