@@ -233,10 +233,7 @@ async function assetsMiddleware(req, res) {
     catch(error) {
         logText(error, "error");
         
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(404).send("File not found");
     }
 }
 
