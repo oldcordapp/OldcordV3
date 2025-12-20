@@ -230,6 +230,32 @@ router.patch("/:applicationid", async (req, res) => {
     }
 });
 
+//I don't know if this is even necessary, yolo
+router.delete("/:applicationid", async (req, res) => {
+    try {
+        let account = req.account;
+        let application = req.application;
+
+        if (!application || application.owner.id != account.id) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Application"
+            });
+        }
+
+        await global.database.deleteBotById(application.id); //I understand this is called deleteBotById - but if you look inside the function, it's the same thing as deleting the application & the bot, so a two for one special.
+
+        return res.status(204).send(); //going to assume this is just a 204 for now
+    }  catch (error) {
+        logText(error, "error");
+    
+        return res.status(500).json({
+          code: 500,
+          message: "Internal Server Error"
+        });
+    }
+});
+
 router.post("/:applicationid/bot", async (req, res) => {
     try {
         let account = req.account;
@@ -260,6 +286,31 @@ router.post("/:applicationid/bot", async (req, res) => {
 
         return res.status(200).json(tryCreateBot);
     } catch (error) {
+        logText(error, "error");
+    
+        return res.status(500).json({
+          code: 500,
+          message: "Internal Server Error"
+        });
+    }
+});
+
+router.post("/:applicationid/delete", async (req, res) => {
+    try {
+        let account = req.account;
+        let application = req.application;
+
+        if (!application || application.owner.id != account.id) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Application"
+            });
+        }
+
+        await global.database.deleteBotById(application.id); //I understand this is called deleteBotById - but if you look inside the function, it's the same thing as deleting the application & the bot, so a two for one special.
+
+        return res.status(204).send(); //going to assume this is just a 204 for now
+    }  catch (error) {
         logText(error, "error");
     
         return res.status(500).json({

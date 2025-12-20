@@ -130,104 +130,114 @@ function rateLimitMiddleware(max, windowMs, ignore_trusted = true) {
 }
 
 async function assetsMiddleware(req, res) {
-    globalUtils.addClientCapabilities(req.cookies['release_date'], req);
-    
-    if (config.cache404s && cached404s[req.params.asset] == 1) {
-        return res.status(404).send("File not found");
-    }
+    try {
+        globalUtils.addClientCapabilities(req.cookies['release_date'], req);
 
-    if (req.params.asset.includes(".map")) {
-        cached404s[req.params.asset] = 1;
+        if (config.cache404s && cached404s[req.params.asset] == 1) {
+            return res.status(404).send("File not found");
+        }
 
-        return res.status(404).send("File not found");
-    }
+        if (req.params.asset.includes(".map")) {
+            cached404s[req.params.asset] = 1;
 
-    const filePath = `./www_dynamic/assets/${req.params.asset}`;
+            return res.status(404).send("File not found");
+        }
 
-    if (fs.existsSync(filePath)) {
-        return res.sendFile(filePath);
-    }
+        const filePath = `./www_dynamic/assets/${req.params.asset}`;
 
-    let doWayback = true;
-    let isOldBucket = false;
+        if (fs.existsSync(filePath)) {
+            return res.sendFile(filePath);
+        }
 
-    if (req.client_build_date.getFullYear() === 2018 && req.client_build_date.getMonth() >= 6 || req.client_build_date.getFullYear() >= 2019) {
-        doWayback = false;
-    } //check if older than june 2018 to request from cdn
+        let doWayback = true;
+        let isOldBucket = false;
 
-    async function handleRequest(doWayback) {
-        let timestamp = null;
-        let snapshot_url = `https://cdn.oldcordapp.com/assets/${req.params.asset}`; //try download from oldcord cdn first
+        if (req.client_build_date.getFullYear() === 2018 && req.client_build_date.getMonth() >= 6 || req.client_build_date.getFullYear() >= 2019) {
+            doWayback = false;
+        } //check if older than june 2018 to request from cdn
 
-        if (doWayback) {
-            let timestamps = await wayback.getTimestamps(`https://discordapp.com/assets/${req.params.asset}`);
+        async function handleRequest(doWayback) {
+            let timestamp = null;
+            let snapshot_url = `https://cdn.oldcordapp.com/assets/${req.params.asset}`; //try download from oldcord cdn first
 
-            if (timestamps == null || timestamps.first_ts.includes("1999") || timestamps.first_ts.includes("2000")) {
-                timestamps = await wayback.getTimestamps(`https://d3dsisomax34re.cloudfront.net/assets/${req.params.asset}`);
-    
+            if (doWayback) {
+                let timestamps = await wayback.getTimestamps(`https://discordapp.com/assets/${req.params.asset}`);
+
                 if (timestamps == null || timestamps.first_ts.includes("1999") || timestamps.first_ts.includes("2000")) {
-                    cached404s[req.params.asset] = 1;
-                    
-                    return res.status(404).send("File not found");
+                    timestamps = await wayback.getTimestamps(`https://d3dsisomax34re.cloudfront.net/assets/${req.params.asset}`);
+
+                    if (timestamps == null || timestamps.first_ts.includes("1999") || timestamps.first_ts.includes("2000")) {
+                        cached404s[req.params.asset] = 1;
+
+                        return res.status(404).send("File not found");
+                    }
+
+                    isOldBucket = true;
                 }
-    
-                isOldBucket = true;
+
+                timestamp = timestamps.first_ts;
+
+                if (isOldBucket) {
+                    snapshot_url = `https://web.archive.org/web/${timestamp}id_/https://d3dsisomax34re.cloudfront.net/assets/${req.params.asset}`;
+                } else {
+                    snapshot_url = `https://web.archive.org/web/${timestamp}id_/https://discordapp.com/assets/${req.params.asset}`;
+                }
             }
 
-            timestamp = timestamps.first_ts;
+            logText(`[LOG] Saving ${req.params.asset} from ${snapshot_url}...`, 'debug');
 
-            if (isOldBucket) {
-                snapshot_url = `https://web.archive.org/web/${timestamp}id_/https://d3dsisomax34re.cloudfront.net/assets/${req.params.asset}`;
-            } else {
-                snapshot_url = `https://web.archive.org/web/${timestamp}id_/https://discordapp.com/assets/${req.params.asset}`;
+            let r = await fetch(snapshot_url);
+
+            if (!r.ok) {
+                cached404s[req.params.asset] = 1;
+
+                return res.status(404).send("File not found");
             }
+
+            if (r.status === 404 && !doWayback) {
+                doWayback = true;
+
+                return await handleRequest(doWayback);
+            }
+
+            if (r.status >= 400) {
+                logText(`!! Error saving asset: ${snapshot_url} - reports ${r.status} !!`, 'debug');
+
+                cached404s[req.params.asset] = 1;
+
+                return res.status(404).send("File not found");
+            }
+
+            let bodyText = await r.text();
+
+            if (bucket !== null) {
+                let path = `${config.gcs_config.gcStorageFolder}/${req.params.asset}`;
+
+                const cloudFile = bucket.file(path);
+
+                await cloudFile.save(bodyText, { contentType: r.headers.get("content-type") });
+
+                logText(`[LOG] Uploaded ${req.params.asset} to Google Cloud Storage successfully.`, 'debug');
+            }
+
+            fs.writeFileSync(filePath, bodyText);
+
+            logText(`[LOG] Saved ${req.params.asset} from ${snapshot_url} successfully.`, 'debug');
+
+            res.writeHead(r.status, { "Content-Type": r.headers.get("content-type") });
+            res.status(r.status).end(bodyText);
         }
 
-        logText(`[LOG] Saving ${req.params.asset} from ${snapshot_url}...`, 'debug');
-
-        let r = await fetch(snapshot_url);
-
-        if (!r.ok) {
-            cached404s[req.params.asset] = 1;
-
-            return res.status(404).send("File not found");
-        }
-
-        if (r.status === 404 && !doWayback) {
-            doWayback = true;
-
-            return await handleRequest(doWayback);
-        }
-
-        if (r.status >= 400) {
-            logText(`!! Error saving asset: ${snapshot_url} - reports ${r.status} !!`, 'debug');
-            
-            cached404s[req.params.asset] = 1;
-            
-            return res.status(404).send("File not found");
-        }
-        
-        let bodyText = await r.text();
-
-        if (bucket !== null) {
-            let path = `${config.gcs_config.gcStorageFolder}/${req.params.asset}`;
-
-            const cloudFile = bucket.file(path);
-
-            await cloudFile.save(bodyText, { contentType: r.headers.get("content-type") });
-
-            logText(`[LOG] Uploaded ${req.params.asset} to Google Cloud Storage successfully.`, 'debug');
-        }
-
-        fs.writeFileSync(filePath, bodyText);
-
-        logText(`[LOG] Saved ${req.params.asset} from ${snapshot_url} successfully.`, 'debug');
-
-        res.writeHead(r.status, { "Content-Type": r.headers.get("content-type") });
-        res.status(r.status).end(bodyText);
+        await handleRequest(doWayback);
     }
-
-    await handleRequest(doWayback);
+    catch(error) {
+        logText(error, "error");
+        
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        });
+    }
 }
 
 function staffAccessMiddleware(privilege_needed) {
