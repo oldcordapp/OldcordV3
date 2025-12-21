@@ -135,7 +135,7 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
             });
         }
 
-        ret.mutual_guilds = mutualGuilds; 
+        ret.mutual_guilds = req.query.with_mutual_guilds === "false" ? undefined : mutualGuilds; 
 
         let sharedFriends = [];
 

@@ -404,11 +404,6 @@ class session {
                         return (
                             {
                                 ...x,
-                                // filter out @everyone role
-                                roles: x.roles
-                                    .filter((r) => r.id !== guild.id)
-                                    .map((x) => x.id),
-
                                 guild: {
                                     id: guild.id,
                                 },
