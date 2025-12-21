@@ -167,6 +167,12 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                         user: globalUtils.miniUserObject(account),
                         guild_id: invite.guild.id
                     });
+
+                    if (guild.system_channel_id != null) {
+                        let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [account]);
+
+                        await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
+                    }
                 }
             }
         }
