@@ -66,6 +66,10 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
                 channel_id: channel.id,
                 last_pin_timestamp: new Date().toISOString()
             });
+
+            let pin_msg = await global.database.createSystemMessage(null, channel.id, 6, [req.account]);
+
+            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", pin_msg);
         }
         else
         {
@@ -74,6 +78,10 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
                 channel_id: channel.id,
                 last_pin_timestamp: new Date().toISOString()
             });
+
+            let pin_msg = await global.database.createSystemMessage(req.guild.id, channel.id, 6, [req.account]);
+
+            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_CREATE", pin_msg);
         }
 
         return res.status(204).send();

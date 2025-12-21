@@ -203,6 +203,52 @@ router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
     }
 });
 
+router.get("/:channelid/call", channelMiddleware, quickcache.cacheFor(60 * 5, false), async (req, res) => {
+    try {
+        if (!req.channel.recipients) {
+            return res.status(403).json({
+                message: "Missing Permissions",
+                code: 403 //50013
+            })
+        }
+
+        return res.status(200).json({
+            ringable: true
+        })
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+          code: 500,
+          message: "Internal Server Error"
+        });
+    }
+}); //to-do figure out why this never gets to /ring
+
+router.post("/:channelid/call/ring", channelMiddleware, quickcache.cacheFor(60 * 5, false), async (req, res) => {
+    try {
+        if (!req.channel.recipients) {
+            return res.status(403).json({
+                message: "Missing Permissions",
+                code: 403 //50013
+            })
+        }
+
+        let call_msg = await global.database.createSystemMessage(null, req.channel.id, 3, [req.account]);
+
+        await global.dispatcher.dispatchEventInPrivateChannel(req.channel, "MESSAGE_CREATE", call_msg);
+
+        return res.status(204).send();
+    } catch (error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+          code: 500,
+          message: "Internal Server Error"
+        });
+    }
+});
+
 router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("CREATE_INSTANT_INVITE"), async (req, res) => {
     try {
         const sender = req.account;
@@ -532,6 +578,10 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
         
         //Notify new recipient
         await globalUtils.pingPrivateChannelUser(channel, recipient.id);
+
+        let add_msg = await global.database.createSystemMessage(null, channel.id, 1, [sender, recipient]);
+
+        await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", add_msg);
         
         return res.status(204).send();
     } catch(error) {
@@ -583,6 +633,10 @@ router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIE
         await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", async function() {
             return globalUtils.personalizeChannelObject(this.socket, channel);
         });
+
+        let remove_msg = await global.database.createSystemMessage(null, channel.id, 2, [recipient]);
+
+        await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", remove_msg);
 
         return res.status(204).send();
     } catch(error) {

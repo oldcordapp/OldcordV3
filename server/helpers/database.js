@@ -281,6 +281,7 @@ const database = {
            );`, []);
 
             await database.runQuery(`CREATE TABLE IF NOT EXISTS messages (
+                type INTEGER DEFAULT 0,
                 guild_id TEXT,
                 message_id TEXT,
                 channel_id TEXT,
@@ -382,6 +383,12 @@ const database = {
                 await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_secret TEXT DEFAULT NULL`);
                 await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_enabled INTEGER DEFAULT 0`);
             }
+
+            let msg_type_exists = await database.doescolumnExist("type", "messages");
+
+            if (!msg_type_exists) {
+                await database.runQuery(`ALTER TABLE messages ADD COLUMN type INTEGER DEFAULT 0`);
+            } //Can you really believe we've had no type property for over 4 years?
 
             let system_channel_id_exists = await database.doescolumnExist("system_channel_id", "guilds");
 
@@ -2222,7 +2229,8 @@ const database = {
             }
 
             return {
-                guild_id: rows[0].guild_id,
+                type: rows[0].type,
+                guild_id: rows[0].guild_id, //Is this necessary here?
                 id: rows[0].message_id,
                 content: rows[0].content,
                 channel_id: rows[0].channel_id,
@@ -2709,6 +2717,7 @@ const database = {
                 const messageAttachments = attachmentsMap.get(row.message_id) || [];
 
                 let message = {
+                    type: row.type,
                     id: row.message_id,
                     content: row.content,
                     channel_id: row.channel_id,
@@ -2907,6 +2916,7 @@ const database = {
 
                 let message = {
                     //Surprisingly enough discord doesn't return a guild_id property for each message
+                    type: row.type,
                     id: row.message_id,
                     content: row.content,
                     channel_id: row.channel_id,
@@ -3223,6 +3233,7 @@ const database = {
                 const messageAttachments = attachmentsMap.get(row.message_id) || [];
 
                 messages.push({
+                    type: row.type,
                     id: row.message_id,
                     content: row.content,
                     channel_id: row.channel_id,
@@ -4308,8 +4319,8 @@ const database = {
             const member = guild.members.find(x => x.id === user_id);
 
             if (member != null) {
-                return true;
-            }
+                return false;
+            } //So for now the API will return invalid invite if theyre already in the server - but figure out the proper response, otherwise they can, and probably will at some point spam join messages.
 
             if (invite.max_uses && invite.max_uses != 0 && invite.uses >= invite.max_uses) {
                 await database.deleteInvite(invite.code);
@@ -4923,6 +4934,60 @@ const database = {
             return false;
         }
     }, //rewrite asap
+    createSystemMessage: async (guild_id, channel_id, type, props = []) => {
+        //type 1 needs a different body for it to work, look into that later
+
+        /*
+        Msg type 
+            0 - default
+            1 - recipient add to group (GROUP DM RELATED)
+            2 - recipient removed from group (GROUP DM RELATED)
+            3 - call (DM / GROUP DM RELATED)
+            4 - channel name change (GROUP DM RELATED)
+            5 - channel icon change (GROUP DM RELATED)
+            6 - pins add (SERVER)
+            7 - guild member join (SERVER)
+        */
+        try {
+            const id = Snowflake.generate();
+            const nonce = Snowflake.generate();
+            const author_id = props[0].id || Snowflake.generate();
+            const mention_id = props[1].id || Snowflake.generate();
+            const date = new Date().toISOString();
+
+            await database.runQuery(`INSERT INTO messages (type, guild_id, message_id, channel_id, author_id, content, edited_timestamp, mention_everyone, nonce, timestamp, tts, embeds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`, [
+                type,
+                guild_id,
+                id,
+                channel_id,
+                author_id,
+                type === 1 ? `<@${mention_id}>` : '',
+                null,
+                0,
+                nonce,
+                date,
+                0,
+                "[]"
+            ]);
+
+            await database.runQuery(`UPDATE channels SET last_message_id = $1 WHERE id = $2`, [id, channel_id]);
+
+            let msg = await database.getMessageById(id);
+
+            if (type === 1) {
+                msg.mentions = [
+                    globalUtils.miniUserObject(props[1])
+                ];
+            }
+
+            return msg;
+        }
+        catch(error) {
+            logText(error, "error");
+
+            return null;
+        }
+    },
     createMessage: async (guild_id, channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhookOverride = null, webhook_embeds = null) => {
         try {
             const id = Snowflake.generate();

@@ -164,6 +164,12 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
             guild_id: invite.guild.id
         })
 
+        if (guild.system_channel_id != null) {
+            let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [sender]);
+
+            await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
+        }
+
         return res.status(200).send(invite);
     } catch (error) {
         logText(error, "error");
