@@ -126,6 +126,23 @@ async function handleVoiceState(socket, packet) {
         socket.current_guild = await global.database.getGuildById(guild_id);
     }
 
+    if (socket.session.channel_id != 0 && socket.current_guild) {
+        let channel = socket.current_guild.channels.find(x => x.id === channel_id);
+
+        if (!channel || channel.type != 2) {
+            return;
+        }
+
+        if (channel && channel.type === 2 && channel.user_limit > 0) {
+            let testRoom = global.rooms.filter(x => x.room_id === `${guild_id}:${channel_id}`);
+            let permissionCheck = await global.permissions.hasChannelPermissionTo(channel, socket.current_guild, socket.user.id, "MOVE_MEMBERS");
+
+            if (testRoom && testRoom.length >= channel.user_limit && !permissionCheck) {
+                return;
+            } //to-do: work on moving members into the channel
+        }
+    }
+
     let room = global.rooms.find(x => x.room_id === `${guild_id}:${channel_id}`);
 
     if (!room) {

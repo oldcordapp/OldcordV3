@@ -188,6 +188,9 @@ const database = {
                 permission_overwrites TEXT,
                 name TEXT,
                 nsfw INTEGER DEFAULT 0,
+                rate_limit_per_user INTEGER DEFAULT 0,
+                user_limit INTEGER DEFAULT 0,
+                bitrate INTEGER DEFAULT 64000,
                 position INTEGER DEFAULT 0
            );`, []); //type 0, aka "text", 1 for "dm", 2 for "voice" - and so on and so forth
 
@@ -395,6 +398,14 @@ const database = {
             if (!system_channel_id_exists) {
                 await database.runQuery(`ALTER TABLE guilds ADD COLUMN system_channel_id TEXT DEFAULT NULL`);
                 await database.runQuery(`ALTER TABLE guilds ADD COLUMN explicit_content_filter INTEGER DEFAULT 0`);
+            }
+
+            let rate_limit_exists_and_user_limit = await database.doescolumnExist("rate_limit_per_user", "channels");
+
+            if (!rate_limit_exists_and_user_limit) {
+                await database.runQuery(`ALTER TABLE channels ADD COLUMN rate_limit_per_user INTEGER DEFAULT 0`);
+                await database.runQuery(`ALTER TABLE channels ADD COLUMN user_limit INTEGER DEFAULT 0`);
+                await database.runQuery(`ALTER TABLE channels ADD COLUMN bitrate INTEGER DEFAULT 64000`);
             }
 
             //#region Change 'NULL' to NULL defaults
@@ -2027,9 +2038,16 @@ const database = {
                 guild_id: guild_id,
                 parent_id: parent_id,
                 type: type,
-                topic: null,
-                nsfw: false,
-                last_message_id: "0",
+                ...(parseInt(type) === 0 && {
+                    topic: null,
+                    rate_limit_per_user: 0,
+                    nsfw: false,
+                    last_message_id: "0",
+                }),
+                ...(parseInt(type) === 2 && {
+                    bitrate: 64000,
+                    user_limit: 0
+                }),
                 permission_overwrites: [],
                 position: position
             };
@@ -2054,66 +2072,78 @@ const database = {
     },
     updateChannel: async (channel_id, channel, groupOwnerPassOver = false) => {
         try {
-            if (channel.type === 0 || channel.type === 2 || channel.type === 4) {
-                //text channel, voice channel, category
-                let overwrites = null;
+            let type = parseInt(channel.type);
 
-                if (channel.permission_overwrites) {
-                    let out = globalUtils.SerializeOverwritesToString(channel.permission_overwrites);
+            //text, voice, category
+            if ([0, 2, 4].includes(type)) {
+                let queryFields = ["name = $1", "parent_id = $2", "position = $3", "permission_overwrites = $4"];
+                let params = [
+                    channel.name,
+                    channel.parent_id,
+                    channel.position,
+                    channel.permission_overwrites ? globalUtils.SerializeOverwritesToString(channel.permission_overwrites) : null
+                ];
 
-                    if (out != null) {
-                        overwrites = out;
-                    }
+                if (type === 0) { // text
+                    queryFields.push("topic = $5", "nsfw = $6", "last_message_id = $7", "rate_limit_per_user = $8");
+                    params.push(channel.topic, channel.nsfw ? 1 : 0, channel.last_message_id, channel.rate_limit_per_user);
+                }
+                else if (type === 2) { // voice
+                    queryFields.push("bitrate = $5", "user_limit = $6");
+                    params.push(channel.bitrate, channel.user_limit);
                 }
 
-                await database.runQuery(`UPDATE channels SET last_message_id = $1, name = $2, topic = $3, nsfw = $4, parent_id = $5, permission_overwrites = $6, position = $7 WHERE id = $8`, [channel.last_message_id, channel.name, channel.topic, channel.nsfw ? 1 : 0, channel.parent_id, overwrites, channel.position, channel_id]);
+                let query = `UPDATE channels SET ${queryFields.join(", ")} WHERE id = $${params.length + 1}`;
 
-                return channel;
-            } else if (channel.type === 3) {
-                //group channel
+                params.push(channel_id);
 
-                let process_icon = channel.icon;
-
-                if (process_icon != null && process_icon.includes("data:image/")) {
-                    var extension = process_icon.split('/')[1].split(';')[0];
-                    var imgData = process_icon.replace(`data:image/${extension};base64,`, "");
-                    var name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
-                    var name_hash = md5(name);
-
-                    let icon = name_hash;
-
-                    if (extension == "jpeg") {
-                        extension = "jpg";
-                    }
-
-                    if (!fs.existsSync(`./www_dynamic/group_icons/${channel_id}`)) {
-                        fs.mkdirSync(`./www_dynamic/group_icons/${channel_id}`, { recursive: true });
-                    }
-
-                    fs.writeFileSync(`./www_dynamic/group_icons/${channel_id}/${name_hash}.${extension}`, imgData, "base64");
-
-                    channel.icon = icon;
-
-                    await database.runQuery(`UPDATE group_channels SET icon = $1 WHERE id = $2`, [icon, channel_id]);
-                } else if (process_icon === null) {
-                    channel.icon = null;
-
-                    await database.runQuery(`UPDATE group_channels SET icon = $1 WHERE id = $2`, [null, channel_id]);
-                }
-
-                await database.runQuery(`UPDATE group_channels SET name = $1 WHERE id = $2`, [channel.name ?? '', channel_id]);
-
-                if (groupOwnerPassOver) {
-                    await database.runQuery(`UPDATE group_channels SET owner_id = $1 WHERE id = $2`, [channel.owner_id, channel_id]);
-                }
+                await database.runQuery(query, params);
 
                 return channel;
             }
 
-            return null; //unknown channel type?
+            //group dms
+            if (type === 3) {
+                if (channel.icon && channel.icon.includes("data:image/")) {
+                    const extension = channel.icon.split('/')[1].split(';')[0].replace('jpeg', 'jpg');
+                    const imgData = channel.icon.replace(/^data:image\/\w+;base64,/, "");
+                    const iconHash = md5(Math.random().toString());
+
+                    const dir = `./www_dynamic/group_icons/${channel_id}`;
+
+                    if (!fs.existsSync(dir)) {
+                        fs.mkdirSync(dir, { recursive: true });
+                    }
+                    
+                    fs.writeFileSync(`${dir}/${iconHash}.${extension}`, imgData, "base64");
+
+                    channel.icon = iconHash;
+
+                    await database.runQuery(`UPDATE group_channels SET icon = $1 WHERE id = $2`, [iconHash, channel_id]);
+                } else if (channel.icon === null) {
+                    await database.runQuery(`UPDATE group_channels SET icon = $1 WHERE id = $2`, [null, channel_id]);
+                }
+
+                let groupFields = ["name = $1"];
+                let groupParams = [channel.name ?? ''];
+
+                if (groupOwnerPassOver) {
+                    groupFields.push("owner_id = $2");
+                    groupParams.push(channel.owner_id);
+                }
+
+                let query = `UPDATE group_channels SET ${groupFields.join(", ")} WHERE id = $${groupParams.length + 1}`;
+
+                groupParams.push(channel_id);
+
+                await database.runQuery(query, groupParams);
+
+                return channel;
+            }
+
+            return null;
         } catch (error) {
             logText(error, "error");
-
             return null;
         }
     },
@@ -3357,10 +3387,17 @@ const database = {
                 guild_id: row.guild_id,
                 parent_id: row.parent_id,
                 type: parseInt(row.type),
-                topic: row.topic,
-                last_message_id: row.last_message_id ?? "0",
+                ...(parseInt(row.type) === 0 && {
+                    topic: row.topic,
+                    rate_limit_per_user: row.rate_limit_per_user,
+                    nsfw: row.nsfw == 1 ?? false,
+                    last_message_id: row.last_message_id,
+                }),
+                ...(parseInt(row.type) === 2 && {
+                    bitrate: row.bitrate,
+                    user_limit: row.user_limit
+                }),
                 permission_overwrites: overwrites,
-                nsfw: row.nsfw == 1 ?? false,
                 position: row.position
             }
         } catch (error) {
@@ -3529,9 +3566,16 @@ const database = {
                         guild_id: guildId,
                         parent_id: row.parent_id,
                         type: parseInt(row.type),
-                        topic: row.topic,
-                        nsfw: row.nsfw == 1 ?? false,
-                        last_message_id: row.last_message_id,
+                        ...(parseInt(row.type) === 0 && {
+                            topic: row.topic,
+                            rate_limit_per_user: row.rate_limit_per_user,
+                            nsfw: row.nsfw == 1 ?? false,
+                            last_message_id: row.last_message_id,
+                        }),
+                        ...(parseInt(row.type) === 2 && {
+                            bitrate: row.bitrate,
+                            user_limit: row.user_limit
+                        }),
                         permission_overwrites: overwrites,
                         position: row.position
                     }
@@ -3782,9 +3826,16 @@ const database = {
                         guild_id: row.guild_id,
                         parent_id: row.parent_id,
                         type: parseInt(row.type),
-                        topic: row.topic,
-                        nsfw: row.nsfw == 1 ?? false,
-                        last_message_id: row.last_message_id,
+                        ...(parseInt(row.type) === 0 && {
+                            topic: row.topic,
+                            rate_limit_per_user: row.rate_limit_per_user,
+                            nsfw: row.nsfw == 1 ?? false,
+                            last_message_id: row.last_message_id,
+                        }),
+                        ...(parseInt(row.type) === 2 && {
+                            bitrate: row.bitrate,
+                            user_limit: row.user_limit
+                        }),
                         permission_overwrites: overwrites,
                         position: row.position
                     }
@@ -4024,9 +4075,16 @@ const database = {
                         guild_id: guildId,
                         parent_id: row.parent_id,
                         type: parseInt(row.type),
-                        topic: row.topic,
-                        nsfw: row.nsfw == 1 ?? false,
-                        last_message_id: row.last_message_id,
+                        ...(parseInt(row.type) === 0 && {
+                            topic: row.topic,
+                            rate_limit_per_user: row.rate_limit_per_user,
+                            nsfw: row.nsfw == 1 ?? false,
+                            last_message_id: row.last_message_id,
+                        }),
+                        ...(parseInt(row.type) === 2 && {
+                            bitrate: row.bitrate,
+                            user_limit: row.user_limit
+                        }),
                         permission_overwrites: overwrites,
                         position: row.position
                     }
@@ -5291,14 +5349,11 @@ const database = {
                     afk_timeout: 300,
                     channels: [{
                         type: 4,
-                        topic: null,
-                        nsfw: false,
                         position: 0,
                         permission_overwrites: [],
                         name: 'Text Channels',
-                        last_message_id: '0',
                         id: text_channels_id,
-                        guild_id: id
+                        guild_id: id,
                     }, {
                         type: 0,
                         topic: null,
@@ -5309,28 +5364,25 @@ const database = {
                         last_message_id: '0',
                         id: general_text_id,
                         guild_id: id,
-                        parent_id: text_channels_id
+                        parent_id: text_channels_id,
+                        rate_limit_per_user: 0
                     }, {
                         type: 4,
-                        topic: null,
-                        nsfw: false,
                         position: 1,
                         permission_overwrites: [],
                         name: 'Voice Channels',
-                        last_message_id: '0',
                         id: text_channels_id,
-                        guild_id: id
+                        guild_id: id,
                     }, {
                         type: 2,
-                        topic: null,
-                        nsfw: false,
                         position: 0,
                         permission_overwrites: [],
                         name: 'General',
-                        last_message_id: '0',
                         id: general_vc_id,
                         guild_id: id,
-                        parent_id: voice_channels_id
+                        parent_id: voice_channels_id,
+                        user_limit: 0,
+                        bitrate: 64000,
                     }],
                     member_count: 1,
                     members: [{
@@ -5384,7 +5436,8 @@ const database = {
                     name: 'general',
                     last_message_id: '0',
                     id: id,
-                    guild_id: id
+                    guild_id: id,
+                    rate_limit_per_user: 0
                 }],
                 members: [{
                     deaf: false,

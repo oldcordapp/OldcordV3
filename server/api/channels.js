@@ -141,8 +141,23 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
 
         if (channel.type !== 3 && channel.type !== 1) {
             channel.position = req.body.position ?? channel.position;
-            channel.topic = req.body.topic ?? channel.topic;
-            channel.nsfw = req.body.nsfw ?? channel.nsfw;
+
+            if (channel.type === 0) {
+                channel.topic = req.body.topic ?? channel.topic;
+                channel.nsfw = req.body.nsfw ?? channel.nsfw;
+                
+                let rateLimit = req.body.rate_limit_per_user ?? channel.rate_limit_per_user;
+
+                channel.rate_limit_per_user = Math.min(Math.max(rateLimit, 0), 120);
+            }
+
+            if (channel.type === 2) {
+                let userLimit = req.body.user_limit ?? channel.user_limit;
+                channel.user_limit = Math.min(Math.max(userLimit, 0), 99);
+
+                let bitrate = req.body.bitrate ?? channel.bitrate;
+                channel.bitrate = Math.min(Math.max(bitrate, 8000), 96000);
+            }
         } //do this for only guild channels
 
         const outcome = await global.database.updateChannel(channel.id, channel);

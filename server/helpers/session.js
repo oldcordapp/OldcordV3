@@ -353,7 +353,9 @@ class session {
                             id: `12792182114301050${Math.round(Math.random() * 100).toString()}`,
                             parent_id: null,
                             guild_id: guild.id,
-                            permission_overwrites: []
+                            permission_overwrites: [],
+                            nsfw: false,
+                            rate_limit_per_user: 0
                         }];
 
                         guild.roles = [{
