@@ -276,31 +276,24 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
             });
         }
 
-        if (req.body.default_message_notifications && req.body.default_message_notifications < 0) {
-            return res.status(400).json({
-                code: 400,
-                message: "Default Message Notifications must be less or equal than 3 but greater than 0."
-            }); 
-        }
-        
-        if (req.body.default_message_notifications && req.body.default_message_notifications > 3) {
+        if (req.body.default_message_notifications && (req.body.default_message_notifications < 0 || req.body.default_message_notifications > 3)) {
             return res.status(400).json({
                 code: 400,
                 message: "Default Message Notifications must be less or equal than 3 but greater than 0."
             }); 
         }
 
-        if (req.body.verification_level && req.body.verification_level < 0) {
+        if (req.body.verification_level && (req.body.verification_level < 0 || req.body.verification_level > 4)) {
             return res.status(400).json({
                 code: 400,
-                message: "Verification level must be less or equal than 3 but greater than 0."
+                message: "Verification level must be less or equal to 4 but greater than 0."
             }); 
         }
-        
-        if (req.body.verification_level && req.body.verification_level > 3) {
+
+        if (req.body.explicit_content_filter && (req.body.explicit_content_filter < 0 || req.body.explicit_content_filter > 2)) {
             return res.status(400).json({
                 code: 400,
-                message: "Verification level must be less or equal than 3 but greater than 0."
+                message: "Explicit content filter must be less or equal to 2 but greater than 0."
             }); 
         }
 
@@ -344,7 +337,7 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
             return res.status(200).json(what);
         }
 
-        const update = await global.database.updateGuild(req.params.guildid, req.body.afk_channel_id, req.body.afk_timeout, req.body.icon, req.body.splash, req.body.banner, req.body.name, req.body.default_message_notifications, req.body.verification_level);
+        const update = await global.database.updateGuild(req.params.guildid, req.body.afk_channel_id, req.body.afk_timeout, req.body.icon, req.body.splash, req.body.banner, req.body.name, req.body.default_message_notifications, req.body.verification_level, req.body.explicit_content_filter, req.body.system_channel_id);
 
         if (!update) {
             return res.status(500).json({
@@ -676,6 +669,10 @@ router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5, tr
 router.get("/:guildid/regions", guildMiddleware, quickcache.cacheFor(60 * 60 * 5, true), (_, res) => {
     return res.status(200).json(globalUtils.getRegions());
 });
+
+router.get("/:guildid/integrations", guildMiddleware, guildPermissionsMiddleware("MANAGE_GUILD"), async (_, res) => {
+    return res.status(200).json([]);
+}); //Stubbed for now
 
 router.get("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware("ADMINISTRATOR"), quickcache.cacheFor(60 * 10), async (req, res) => {
     try {
