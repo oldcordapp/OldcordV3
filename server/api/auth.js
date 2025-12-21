@@ -179,7 +179,6 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
             let guild = await global.database.getGuildById(guildId);
 
             if (guild != null) {
-
                 await global.database.joinGuild(account.id, guild);
 
                 await global.dispatcher.dispatchEventTo(account.id, "GUILD_CREATE", guild);
@@ -199,7 +198,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                 });
 
                 if (guild.system_channel_id != null) {
-                    let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [sender]);
+                    let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [account]);
 
                     await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
                 }
