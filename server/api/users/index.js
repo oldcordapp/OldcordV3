@@ -130,7 +130,8 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
 
             mutualGuilds.push({
                 id: id,
-                nick: nick
+                nick: nick,
+                roles: member.roles
             });
         }
 

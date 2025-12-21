@@ -298,6 +298,7 @@ router.post("/authorize", async (req, res) => {
                 game_id: null,
                 status: "online",
                 activities: [],
+                roles: [],
                 user: globalUtils.miniBotObject(application.bot),
                 guild_id: guild.id
             });

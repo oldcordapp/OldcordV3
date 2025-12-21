@@ -164,6 +164,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                         game_id: null,
                         status: "online",
                         activities: [],
+                        roles: [],
                         user: globalUtils.miniUserObject(account),
                         guild_id: invite.guild.id
                     });
@@ -199,6 +200,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                     game_id: null,
                     status: "online",
                     activities: [],
+                    roles: [],
                     user: globalUtils.miniUserObject(account),
                     guild_id: guildId
                 });

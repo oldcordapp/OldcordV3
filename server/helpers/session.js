@@ -166,23 +166,20 @@ class session {
         this.guilds = current_guilds;
 
         if (current_guilds.length == 0) {
-            this.presence.guild_id = null;
-
             return await this.dispatch("PRESENCE_UPDATE", this.presence);
         }
 
         for (let i = 0; i < current_guilds.length; i++) {
             let guild = current_guilds[i];
+            let me = guild.members.find(x => x.id === this.user.id);
 
-            this.presence.guild_id = guild.id;
+            const guildSpecificPresence = {
+                ...this.presence,
+                guild_id: guild.id,
+                roles: me ? me.roles : []
+            };
 
-            let personalizedPresenceObj = this.presence;
-
-            if (this.socket) {
-                personalizedPresenceObj = globalUtils.personalizePresenceObject(this.socket, this.presence);
-            } //basically the socket has died from termination - bled out, whatever, so we cant customize their shit
-
-            await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", personalizedPresenceObj);
+            await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", guildSpecificPresence);
         }
     }
     async dispatchSelfUpdate() {
@@ -448,7 +445,6 @@ class session {
                     }
                     
                     guild.properties = structuredClone(guild);
-
 
                     // v9 things
                     guild.guild_scheduled_events = [{}];
