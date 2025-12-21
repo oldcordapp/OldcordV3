@@ -4952,7 +4952,13 @@ const database = {
             const id = Snowflake.generate();
             const nonce = Snowflake.generate();
             const author_id = props[0].id || Snowflake.generate();
-            const mention_id = props[1].id || Snowflake.generate();
+            
+            let mention_id = Snowflake.generate();
+
+            if (type === 1) {
+                mention_id = props[1].id;
+            }
+
             const date = new Date().toISOString();
 
             await database.runQuery(`INSERT INTO messages (type, guild_id, message_id, channel_id, author_id, content, edited_timestamp, mention_everyone, nonce, timestamp, tts, embeds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`, [
