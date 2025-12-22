@@ -397,16 +397,12 @@ app.get("/store-directory-assets/applications/:applicationId/:file", async(req, 
     try {
         const directoryPath = path.join(process.cwd(), 'www_dynamic', 'app_assets');
 
-        console.log(directoryPath);
-        
         if (!fs.existsSync(directoryPath)) {
             return res.status(404).send("File not found");
         }
 
         let files = fs.readdirSync(directoryPath);
         let matchedFile = null;
-
-        console.log(files);
 
         if (req.params.file.includes(".mp4")) {
             matchedFile = files[1];
