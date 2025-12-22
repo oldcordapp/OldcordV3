@@ -12,19 +12,47 @@ router.param('id', async (req, _, next, id) => {
 
 router.get("/directory/:id", (req, res) => {
     let id = req.params.id;
-    
+    let SKU_ID = Snowflake.generate();
+    let APP_ID = Snowflake.generate();
+
     return res.status(200).json({
-        sku_id: id,
-        type: 1,
+        id: id,
         data: {
-            hero: [],
-            premium_carousel: [],
-            featured: [],
-            premium: [],
-            storeListings: [],
-            sku_ids: [],
+            hero: [{ type: 1, sku_id: SKU_ID }],
+            premium_carousel: [
+                {
+                    sku_id: SKU_ID,
+                    tagline: "Included with Oldcord Nitro"
+                }
+            ],
+            featured: [{ type: 1, sku_id: SKU_ID }],
+            premium: [{ type: 1, sku_id: SKU_ID }],
+            sku_ids: [SKU_ID]
         },
-        store_listings: [],
+        store_listings: [
+            {
+                id: "1001",
+                sku: {
+                    id: SKU_ID,
+                    type: 1,
+                    name: "Jason Citron Simulator 2024",
+                    release_date: "2000-01-01",
+                    slug: "jason-citron-simulator-2024",
+                    flags: 0,
+                    application: {
+                        id: APP_ID,
+                        name: "Jason Citron Simulator 2024",
+                        icon: "b542aea677d84898766fb46f3c510664",
+                        description: "In this game work your way to the top of your own games company! Release a mobile chat application then sell your data to tencent! Sell the platform and then months later have them be fined for privacy violations! Afterwards, start a quirky company for gamers and take the world by storm! Rolling out promising features and stability at first just to have it all unravel into a corporate shell with microtransactions and bloatware. Do you have what it takes to become the CEO of Discord?",
+                        primary_sku_id: SKU_ID
+                    }
+                },
+                price: {
+                    amount: 1,
+                    currency: "usd"
+                }
+            }
+        ]
     });
 });
 
