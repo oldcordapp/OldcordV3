@@ -100,6 +100,12 @@ const dispatcher = {
         let channel = guild.channels.find(x => x.id === channelId);
 
         function getListId(channel, everyoneRole) {
+            if (!channel) {
+                session.subscriptions[guild.id] = {};
+
+                return murmur.murmur3("", 0).toString();
+            }
+
             let READ_MESSAGES = global.permissions.toObject().READ_MESSAGES;
             let everyoneOverwrite = channel.permission_overwrites.find(ov => ov.id === everyoneRole.id);
 
