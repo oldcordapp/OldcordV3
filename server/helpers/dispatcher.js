@@ -1,5 +1,6 @@
 const { logText } = require("./logger");
 const globalUtils = require('./globalutils');
+const murmur = require("murmurhash-js");
 
 const dispatcher = {
     dispatchEventTo: async (user_id, type, payload) => {
@@ -96,7 +97,42 @@ const dispatcher = {
             return;
         }
 
-        let list_id = "everyone"; 
+        let channel = guild.channels.find(x => x.id === channelId);
+
+        function getListId(channel, everyoneRole) {
+            let READ_MESSAGES = global.permissions.toObject().READ_MESSAGES;
+            let everyoneOverwrite = channel.permission_overwrites.find(ov => ov.id === everyoneRole.id);
+
+            let everyoneCanView = (everyoneRole.permissions & READ_MESSAGES);
+
+            if (everyoneOverwrite && (everyoneOverwrite.deny & READ_MESSAGES)) {
+                everyoneCanView = false;
+            }
+
+            let otherDenyRules = channel.permission_overwrites.some(ov => ov.id !== everyoneRole.id && (ov.deny & READ_MESSAGES));
+
+            if (everyoneCanView && !otherDenyRules) {
+                return "everyone";
+            }
+        
+            let perms = [];
+            channel.permission_overwrites.forEach((overwrite) => {
+                if (overwrite.allow & READ_MESSAGES) {
+                    perms.push(`allow:${overwrite.id}`);
+                } else if (overwrite.deny & READ_MESSAGES) {
+                    perms.push(`deny:${overwrite.id}`);
+                }
+            });
+
+            if (perms.length === 0) {
+                return murmur.murmur3("", 0).toString();
+            }
+
+            return murmur.murmur3(perms.sort().join(","), 0).toString();
+        }
+
+        let list_id = getListId(channel, guild.roles.find(x => x.id === guild.id));
+
         let { 
             ops, 
             groups 

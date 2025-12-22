@@ -1,6 +1,5 @@
 const globalUtils = require("../helpers/globalutils");
 const session = require("../helpers/session");
-const murmur = require("murmurhash-js");
 
 const OPCODES = {
     HEARTBEAT: 1,
@@ -243,8 +242,8 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
 
     let { 
         guild_id, 
-        typing,  //to-do
-        activities, //to-do
+        typing,  //to-do - ASSUMPTION: typing field means the client wants to be subscribed to the ranges the currently-typing members are on.
+        activities, //to-do - ASSUMPTION: activities field means the client wants to be subscribed to the ranges the currently active members are on.
         members: memberIds, 
         channels 
     } = packet.d;
@@ -287,28 +286,7 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
         });
     }
 
-        /*
-    if (channel.permission_overwrites) {
-        let perms = [];
-
-        channel.permission_overwrites.forEach((overwrite) => {
-            let { 
-                id, 
-                allow, 
-                deny
-            } = overwrite;
-
-            if (allow & global.permissions.toObject().READ_MESSAGES) perms.push(`allow:${id}`);
-            else if (deny & global.permissions.toObject().READ_MESSAGES) perms.push(`deny:${id}`);
-            
-        });
-
-        if (perms.length > 0) {
-            console.log(perms.sort().join(","));
-
-            list_id = murmur(perms.sort().join(",")).toString();
-        }
-    } */ //kinda doesnt do shit so comemnted out for now
+    //{"op":14,"d":{"guild_id":"1452084502238138368","typing":true,"activities":true,"channels":{"1452084502242332675":[[0,99]]}}}
 
     await global.dispatcher.dispatchMemberListUpdate(socket.session, guild, channelId, ranges);
 }
