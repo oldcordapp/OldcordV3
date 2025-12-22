@@ -374,7 +374,7 @@ class session {
                     //guild.members = [
                     //guild.members.find(x => x.id === this.user.id)
                     //]
-                    //} //uh someone do this better?
+                    //} //someone really do this better
 
                     // Stolen from Spacebar I am not doing shit
                     merged_members.push(guild.members.map((x) => {
