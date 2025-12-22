@@ -40,6 +40,121 @@ const globalUtils = {
     
         return result;
     },
+    computeMemberList: (guild, ranges) => {
+        function arrayPartition(array, callback) {
+            return array.reduce(([pass, fail], elem) => {
+                return callback(elem) ? [[...pass, elem], fail] : [pass, [...fail, elem]];
+            }, [[], []]);
+        }
+        
+        function formatMemberItem(member, guild, forcedStatus = null) {
+            let p = guild.presences.find(pres => pres.user.id === member.id);
+
+            return {
+                member: {
+                    ...member,
+                    presence: {
+                        status: forcedStatus || p?.status || "online",
+                        user: globalUtils.miniUserObject(member),
+                        activities: p?.activities || []
+                    }
+                }
+            };
+        }
+
+        let hoistedRoles = (guild.roles || []).filter(r => r.hoist).sort((a, b) => b.position - a.position);
+        let ops = ranges.map(range => {
+            let [startIndex, endIndex] = range;
+
+            let sortedMembers = [...guild.members].sort((a, b) => {
+                let pA = guild.presences.find(p => p.user.id === a.id);
+                let pB = guild.presences.find(p => p.user.id === b.id);
+                let statusA = (pA?.status && pA.status !== 'offline') ? 1 : 0;
+                let statusB = (pB?.status && pB.status !== 'offline') ? 1 : 0;
+
+                if (statusA !== statusB) {
+                    return statusB - statusA;
+                }
+
+                return a.user.username.localeCompare(b.user.username);
+            });
+
+            let pagedMembers = sortedMembers.slice(startIndex, endIndex + 1);
+            let items = [];
+            let groups = [];
+            let remainingMembers = [...pagedMembers];
+
+            hoistedRoles.forEach(role => {
+                let [roleMembers, others] = arrayPartition(remainingMembers, m => {
+                    let p = guild.presences.find(pres => pres.user.id === m.id);
+                    let isOnline = p && p.status !== 'offline' && p.status !== 'invisible';
+
+                    return isOnline && m.roles.includes(role.id);
+                });
+
+                if (roleMembers.length > 0) {
+                    let group = { 
+                        id: role.id, 
+                        count: roleMembers.length 
+                    };
+
+                    groups.push(group);
+                    items.push({ 
+                        group 
+                    });
+
+                    roleMembers.forEach(m => items.push(formatMemberItem(m, guild)));
+                }
+
+                remainingMembers = others;
+            });
+
+            let [onlineLeft, offlineFinal] = arrayPartition(remainingMembers, m => {
+                let p = guild.presences.find(pres => pres.user.id === m.id);
+
+                return p && p.status !== 'offline' && p.status !== 'invisible';
+            });
+
+            if (onlineLeft.length > 0) {
+                let group = { 
+                    id: "online", 
+                    count: onlineLeft.length 
+                };
+
+                groups.push(group);
+                items.push({ 
+                    group 
+                });
+
+                onlineLeft.forEach(m => items.push(formatMemberItem(m, guild)));
+            }
+
+            if (offlineFinal.length > 0) {
+                let group = { 
+                    id: "offline", 
+                    count: offlineFinal.length 
+                };
+
+                groups.push(group);
+                items.push({ 
+                    group 
+                });
+
+                offlineFinal.forEach(m => items.push(formatMemberItem(m, guild, "offline")));
+            }
+
+            return { 
+                items, 
+                groups, 
+                range 
+            };
+        });
+
+        return {
+            ops: ops.map(o => ({ op: "SYNC", range: o.range, items: o.items })),
+            groups: ops[0]?.groups || []
+        };
+    },
     generateMemorableInviteCode: () => {
         let code = "";
 

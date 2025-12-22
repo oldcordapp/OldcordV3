@@ -1,5 +1,6 @@
 const globalUtils = require("../helpers/globalutils");
 const session = require("../helpers/session");
+const murmur = require("murmurhash-js");
 
 const OPCODES = {
     HEARTBEAT: 1,
@@ -233,127 +234,83 @@ async function handleOp12GetGuildMembersAndPresences(socket, packet) {
 }
 
 async function handleOp14GetGuildMemberChunks(socket, packet) {
-    //UGHHHHHHHHHHHHHHHHHHHHHHHHHHH
-    if (!socket.session) return;
+    //This new rewritten code was mainly inspired by spacebar if you couldn't tell since their OP 14 is more stable than ours at the moment.
+    //TO-DO: add support for shit like INSERT and whatnot (hell)
 
-    let guild_id = packet.d.guild_id;
-
-    if (!guild_id); // need to be more strict on this
-
-    let usersGuilds = socket.session.guilds;
-
-    let guild = usersGuilds.find(x => x.id === guild_id);
-
-    if (!guild) return;
-
-    let typing = packet.d.typing; //Subscribe to typing events?
-
-    if (!typing) {
-        packet.d.typing = false;
+    if (!socket.session) {
+        return;
     }
 
-    let activities = packet.d.activities; //subscribe to game updates, etc
+    let { 
+        guild_id, 
+        typing,  //to-do
+        activities, //to-do
+        members: memberIds, 
+        channels 
+    } = packet.d;
 
-    if (!activities) {
-        packet.d.activities = [];
+    if (!guild_id || !channels) {
+        return;
     }
 
-    let members = packet.d.members; //members array to subscribe to ??
+    let guild = socket.session.guilds.find(x => x.id === guild_id);
 
-    let channels = packet.d.channels;
+    if (!guild) {
+        return;
+    }
 
-    if (!channels) return;
-
-    let channelId = Object.keys(packet.d.channels)[0];
-
-    if (!channelId) return;
-
-    let range = packet.d.channels[channelId][0];
-
-    if (!range) return;
-
-    let [startIndex, endIndex] = range;
-
+    let channelId = Object.keys(channels)[0];
     let channel = guild.channels.find(x => x.id === channelId);
 
-    if (!channel) return;
-
-    //to-do subscribe to events for specific members
-
-    //check for perms to view channel in the payload and do some bullshit math for the list_id
-
-    let selected_members = guild.members.slice(startIndex, endIndex + 1);
-
-    let related_presences = [];
-
-    for (var presence of guild.presences) {
-        let member = selected_members.find(x => x.id === presence.user.id);
-
-        if (member) {
-            related_presences.push({
-                presence: presence,
-                member: member
-            });
-        }
+    if (!channel) {
+        return;
     }
 
-    const online = related_presences
-        .filter(p => p.presence.status !== 'offline' && p.presence.status !== 'invisible')
-        .map(p => ({
-            member: {
-                ...p.member,
-                presence: {
-                    status: p.presence.status,
-                    user: {
-                        id: p.member.user.id,
-                    },
-                    game: null,
-                    activities: [],
-                    client_status: null
-                }
+    let ranges = channels[channelId];
+
+    if (!Array.isArray(ranges)) {
+        return;
+    }
+
+    socket.session.subscriptions[guild_id] = {
+        channel_id: channelId,
+        ranges: ranges
+    };
+
+    if (memberIds && Array.isArray(memberIds)) {
+        memberIds.forEach(id => {
+            let presence = guild.presences.find(p => p.user.id === id);
+
+            if (presence) {
+                socket.session.dispatch("PRESENCE_UPDATE", presence);
             }
-        }));
+        });
+    }
 
-    const offline = related_presences
-        .filter(p => p.presence.status === 'offline' || p.presence.status === 'invisible')
-        .map(p => ({
-            member: {
-                ...p.member,
-                presence: {
-                    status: p.presence.status,
-                    user: {
-                        id: p.member.user.id,
-                    },
-                    game: null,
-                    activities: [],
-                    client_status: null
-                }
-            }
-        }));
+        /*
+    if (channel.permission_overwrites) {
+        let perms = [];
 
-    const items = [
-        { group: { id: 'online', count: online.length } },
-        ...online,
-        { group: { id: 'offline', count: offline.length } },
-        ...offline
-    ];
+        channel.permission_overwrites.forEach((overwrite) => {
+            let { 
+                id, 
+                allow, 
+                deny
+            } = overwrite;
 
-    socket.session.dispatch("GUILD_MEMBER_LIST_UPDATE", {
-        guild_id: guild.id,
-        id: 'everyone',
-        ops: [{
-            op: "SYNC",
-            range: range,
-            items: items
-        }],
-        groups: [{
-            count: online.length,
-            id: 'online'
-        }, {
-            count: offline.length,
-            id: 'offline'
-        }],
-    });
+            if (allow & global.permissions.toObject().READ_MESSAGES) perms.push(`allow:${id}`);
+            else if (deny & global.permissions.toObject().READ_MESSAGES) perms.push(`deny:${id}`);
+            
+        });
+
+        if (perms.length > 0) {
+            console.log(perms.sort().join(","));
+
+            list_id = murmur(perms.sort().join(",")).toString();
+        }
+    } */ //kinda doesnt do shit so comemnted out for now
+
+    await global.dispatcher.dispatchMemberListUpdate(socket.session, guild, channelId, ranges);
 }
 
 async function handleResume(socket, packet) {

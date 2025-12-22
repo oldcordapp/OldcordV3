@@ -48,33 +48,6 @@ class session {
 
         setTimeout(this.terminate.bind(this), SESSION_TIMEOUT);
     }
-    subscribe(subscriptionType, parameters) {
-        if (this.type !== 'gateway') {
-            return;
-        }
-
-        let valid_subs = [
-            "GUILD_MEMBER_LIST_UPDATE"
-        ]
-
-        if (!valid_subs.includes(subscriptionType)) {
-            return false; //invalid event subscription type
-        }
-
-        if (subscriptionType === "GUILD_MEMBER_LIST_UPDATE") {
-            if (this.subscriptions.find(x => x.type === "GUILD_MEMBER_LIST_UPDATE" && x.channel === parameters.channel && x.range === parameters.range)) {
-                return false; //already subbed to member update events for this range in the channel
-            }
-
-            this.subscriptions.push({
-                type: "GUILD_MEMBER_LIST_UPDATE",
-                channel: parameters.channel,
-                range: parameters.range
-            })
-        }
-
-        return true;
-    }
     async updatePresence(status, game_id = null, save_presence = true) {
         if (this.type !== 'gateway') {
             return;
@@ -180,6 +153,7 @@ class session {
             };
 
             await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", guildSpecificPresence);
+            await global.dispatcher.dispatchEventInGuildToThoseSubscribedTo(guild, "PRESENCE_UPDATE", guildSpecificPresence);
         }
     }
     async dispatchSelfUpdate() {

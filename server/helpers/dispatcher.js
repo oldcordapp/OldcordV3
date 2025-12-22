@@ -1,4 +1,5 @@
 const { logText } = require("./logger");
+const globalUtils = require('./globalutils');
 
 const dispatcher = {
     dispatchEventTo: async (user_id, type, payload) => {
@@ -87,6 +88,65 @@ const dispatcher = {
         }
 
         logText(`(Event to all perms) -> ${type}`, 'dispatcher');
+
+        return true;
+    },
+    dispatchMemberListUpdate: async (session, guild, channelId, ranges) => {
+        if (!session || !guild || !channelId) {
+            return;
+        }
+
+        let list_id = "everyone"; 
+        let { 
+            ops, 
+            groups 
+        } = globalUtils.computeMemberList(guild, ranges);
+
+        session.dispatch("GUILD_MEMBER_LIST_UPDATE", {
+            guild_id: guild.id,
+            id: list_id,
+            ops,
+            groups,
+            member_count: guild.members.length,
+            online_count: guild.presences.filter(p => p.status !== 'offline').length
+        });
+    },
+    //this system is so weird but hey it works - definitely due for a rewrite
+    dispatchEventInGuildToThoseSubscribedTo: async (guild, type, payload, ignorePayload = false) => {
+        if (!guild?.id) return;
+
+        let activeSessions = Array.from(global.userSessions.values()).flat();
+        let updatePromises = activeSessions.map(async (session) => {
+            let guildInSession = session.guilds?.find(g => g.id === guild.id);
+
+            if (!guildInSession) {
+                return;
+            }
+
+            let socket = session.socket;
+            let finalPayload = payload;
+
+            if (type === "PRESENCE_UPDATE" && socket?.client_build?.endsWith("2015")) {
+                finalPayload = { 
+                    ...payload, 
+                    status: ["idle", "offline", "invisible", "dnd"].includes(payload.status) ? "offline" : "online" 
+                };
+            }
+
+            let sub = session.subscriptions?.[guild.id];
+
+            if (sub) {
+                await global.dispatcher.dispatchMemberListUpdate(session, guild, sub.channel_id, sub.ranges);
+            }
+            
+            if (!ignorePayload) {
+                session.dispatch(type, finalPayload);
+            }
+        });
+
+        await Promise.all(updatePromises);
+        
+        logText(`(Subscription event in ${guild.id}) -> ${type}`, 'dispatcher');
 
         return true;
     },

@@ -66,83 +66,56 @@ async function updateMember(member, guild, roles, nick) {
     let nickChanged = false;
     let guild_id = guild.id;
 
-    if (!roles) {
-        roles = member.roles;
-    } else {
-        let newRoles = [];
+    if (roles) {
+        let newRoles = roles.map(r => (typeof r === "object" ? r.id : r));
 
-        for (let role of roles) {
-            if (typeof role === "object" && role.hasOwnProperty("id")) {
-                newRoles.push(role.id);
-            } else {
-                newRoles.push(role);
-            }
-        }
+        let currentRoles = [...member.roles].sort();
+        let incomingRoles = [...newRoles].sort();
         
-        if (member.roles.length !== newRoles.length) {
+        if (JSON.stringify(currentRoles) !== JSON.stringify(incomingRoles)) {
             rolesChanged = true;
-        } else {
-            for (let i = 0; i < member.roles.length; i++) {
-                if (member.roles[i] !== newRoles[i]) {
-                    rolesChanged = true;
-                    break;
-                }
-            }
-        }
 
-        if (rolesChanged) {
-            roles = newRoles;
-            
-            if (!await global.database.setRoles(guild, roles, member.id)) {
-                return {
-                    code: 500,
-                    message: "Internal Server Error"
-                };
+            if (!await global.database.setRoles(guild, newRoles, member.id)) {
+                return { code: 500, message: "Internal Server Error" };
             }
+
+            member.roles = newRoles; 
         }
     }
 
-    if (nick == null || nick === undefined) {
-        nick = member.nick;
-    } else {
-        if (nick === "" || nick === member.user.username) {
-            nick = null;
-        } else {
-            if (nick.length < global.config.limits['nickname'].min || nick.length >= global.config.limits['nickname'].max) {
-                return {
-                    code: 400,
-                    nick: `Must be between ${global.config.limits['nickname'].min} and ${global.config.limits['nickname'].max} characters.`
-                };
-            }
+    if (nick !== undefined && nick !== member.nick) {
+        if (nick === "" || nick === member.user.username) nick = null;
+        if (nick && (nick.length < global.config.limits['nickname'].min || nick.length >= global.config.limits['nickname'].max)) {
+            return { code: 400, message: "Invalid nickname length" };
         }
 
-        if (nick !== member.nick) {
-            nickChanged = true;
+        nickChanged = true;
 
-            if (!await global.database.updateGuildMemberNick(guild_id, member.user.id, nick)) {
-                return {
-                    code: 500,
-                    message: "Internal Server Error"
-                };
-            }
+        if (!await global.database.updateGuildMemberNick(guild_id, member.user.id, nick)) {
+            return { code: 500, message: "Internal Server Error" };
         }
+
+        member.nick = nick;
     }
-
-    let newMember = {
-        roles: roles,
-        user: globalUtils.miniUserObject(member.user),
-        guild_id: guild_id,
-        nick: nick
-    };
 
     if (rolesChanged || nickChanged) {
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_UPDATE", newMember);
+        let updatePayload = {
+            roles: member.roles,
+            user: globalUtils.miniUserObject(member.user),
+            guild_id: guild_id,
+            nick: member.nick
+        };
+
+        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_UPDATE", updatePayload);
+        await global.dispatcher.dispatchEventInGuildToThoseSubscribedTo(guild, "LIST_RELOAD", null, true);
     }
 
-    member.roles = roles;
-    member.nick = nick;
-
-    return newMember;
+    return {
+        roles: member.roles,
+        user: globalUtils.miniUserObject(member.user),
+        guild_id: guild_id,
+        nick: member.nick
+    };
 }
 
 router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPermissionsMiddleware("MANAGE_NICKNAMES"), rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame, 0.5), async (req, res) => {
@@ -196,13 +169,6 @@ router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLim
         if (newMember.code) {
             return res.status(newMember.code).json(newMember);
         }
-
-        await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_UPDATE", {
-            roles: newMember.roles,
-            user: globalUtils.miniUserObject(newMember.user),
-            guild_id: req.guild.id,
-            nick: newMember.nick
-        });
 
         return res.status(204).send();
     } catch (error) {

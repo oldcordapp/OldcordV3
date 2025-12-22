@@ -4430,64 +4430,6 @@ const database = {
             return false;
         }
     },
-    addRole: async (guild, role_id, user_id) => {
-        try {
-            const role = guild.roles.find(x => x.id === role_id);
-
-            if (role == null) {
-                return false;
-            }
-
-            if (role_id == guild_id) {
-                return true; //everyone has the everyone role silly
-            }
-
-            const user = await database.getAccountByUserId(user_id);
-
-            if (user == null) {
-                return false;
-            }
-
-            const member = guild.members.find(x => x.id === user_id);
-
-            if (member == null) {
-                return false;
-            }
-
-            let roleStr = '';
-
-            let stringRoles = member.roles;
-
-            if (stringRoles.includes(role_id)) {
-                return true;
-            }
-
-            if (member.roles.length > 1) {
-                for (var role2 of member.roles) {
-                    roleStr = roleStr + ':' + role2;
-                }
-            } else {
-                roleStr = role_id;
-            }
-
-            if (roleStr.includes(":")) {
-                roleStr = roleStr + ":" + role_id
-            } else {
-                roleStr = role_id;
-            }
-
-            roleStr = roleStr.replace(guild.id + ":", "")
-            roleStr = roleStr.replace(guild.id, "")
-
-            await database.runQuery(`UPDATE members SET roles = $1 WHERE user_id = $2`, [roleStr, user_id]);
-
-            return true;
-        } catch (error) {
-            logText(error, "error");
-
-            return false;
-        }
-    },
     setRoles: async (guild, role_ids, user_id) => {
         try {
             if (!user_id || !guild.id)
