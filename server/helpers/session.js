@@ -400,7 +400,7 @@ class session {
                             channel.type = channel.type == 2 ? "voice" : "text";
                         }
 
-                        let can_see = await global.permissions.hasChannelPermissionTo(channel, guild, this.user.id, "READ_MESSAGE_HISTORY");
+                        let can_see = global.permissions.hasChannelPermissionTo(channel, guild, this.user.id, "READ_MESSAGES");
 
                         if (!can_see) {
                             guild.channels = guild.channels.filter(x => x.id !== channel.id);

@@ -518,7 +518,7 @@ async function channelMiddleware(req, res, next) {
         });
     }
 
-    let gCheck = await global.permissions.hasGuildPermissionTo(req.guild, member.id, "READ_MESSAGES", req.client_build);
+    let gCheck = global.permissions.hasGuildPermissionTo(req.guild, member.id, "READ_MESSAGES", req.client_build);
 
     if (!gCheck) {
         return res.status(403).json({
@@ -527,7 +527,7 @@ async function channelMiddleware(req, res, next) {
         });
     }
 
-    let pCheck = await global.permissions.hasChannelPermissionTo(req.channel, req.guild, member.id, "READ_MESSAGES");
+    let pCheck = global.permissions.hasChannelPermissionTo(req.channel, req.guild, member.id, "READ_MESSAGES");
 
     if (!pCheck) {
         return res.status(403).json({
@@ -714,7 +714,7 @@ function channelPermissionsMiddleware(permission) {
             return next();
         }
 
-        let check = await global.permissions.hasChannelPermissionTo(channel, req.guild, sender.id, permission);
+        let check = global.permissions.hasChannelPermissionTo(channel, req.guild, sender.id, permission);
 
         if (!check) {
             return res.status(403).json({

@@ -190,7 +190,7 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
             channel.type = channel.type == 2 ? "voice" : "text";
         }
 
-        await global.dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGE_HISTORY", "CHANNEL_UPDATE", channel);
+        await global.dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGES", "CHANNEL_UPDATE", channel);
 
         return res.status(200).json(channel);
       } catch (error) {

@@ -228,7 +228,7 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
                 continue;
             }
 
-            let canReadChannel = await global.permissions.hasChannelPermissionTo(channel, guild, account.id, "READ_MESSAGES");
+            let canReadChannel = global.permissions.hasChannelPermissionTo(channel, guild, account.id, "READ_MESSAGES");
 
             if (canReadChannel) {
                 delete result.reactions;
@@ -629,7 +629,7 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
 
             ret.push(channel);
 
-            await global.dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGE_HISTORY", "CHANNEL_UPDATE", channel);
+            await global.dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGES", "CHANNEL_UPDATE", channel);
         }
 
         return res.status(200).json(ret);

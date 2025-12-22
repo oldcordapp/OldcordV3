@@ -40,12 +40,16 @@ const globalUtils = {
     
         return result;
     },
-    computeMemberList: (guild, ranges) => {
+    computeMemberList: (guild, channel, ranges) => {
         function arrayPartition(array, callback) {
             return array.reduce(([pass, fail], elem) => {
                 return callback(elem) ? [[...pass, elem], fail] : [pass, [...fail, elem]];
             }, [[], []]);
         }
+
+        let visibleMembers = guild.members.filter(m => {
+            return global.permissions.hasChannelPermissionTo(channel, guild, m.id, "READ_MESSAGES");
+        });
         
         function formatMemberItem(member, guild, forcedStatus = null) {
             let p = guild.presences.find(pres => pres.user.id === member.id);
@@ -63,12 +67,14 @@ const globalUtils = {
         }
 
         let hoistedRoles = (guild.roles || []).filter(r => r.hoist).sort((a, b) => b.position - a.position);
+
         let ops = ranges.map(range => {
             let [startIndex, endIndex] = range;
 
-            let sortedMembers = [...guild.members].sort((a, b) => {
+            let sortedMembers = [...visibleMembers].sort((a, b) => {
                 let pA = guild.presences.find(p => p.user.id === a.id);
                 let pB = guild.presences.find(p => p.user.id === b.id);
+                
                 let statusA = (pA?.status && pA.status !== 'offline') ? 1 : 0;
                 let statusB = (pB?.status && pB.status !== 'offline') ? 1 : 0;
 
@@ -152,7 +158,8 @@ const globalUtils = {
 
         return {
             ops: ops.map(o => ({ op: "SYNC", range: o.range, items: o.items })),
-            groups: ops[0]?.groups || []
+            groups: ops[0]?.groups || [],
+            count: visibleMembers.length
         };
     },
     generateMemorableInviteCode: () => {

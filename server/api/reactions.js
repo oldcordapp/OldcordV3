@@ -12,7 +12,7 @@ router.param('userid', async (req, res, next, userid) => {
     next();
 });
 
-router.delete(["/:urlencoded/@me", "/:urlencoded/%40me"], channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), Watchdog.middleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame, 0.5), async (req, res) => {
+router.delete(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame), Watchdog.middleware(global.config.ratelimit_config.removeReaction.maxPerTimeFrame, global.config.ratelimit_config.removeReaction.timeFrame, 0.5), async (req, res) => {
     try {
         let account = req.account;
         let channel = req.channel;
@@ -184,7 +184,7 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
     }
 });
 
-router.put(["/:urlencoded/@me", "/:urlencoded/%40me"], channelPermissionsMiddleware("ADD_REACTIONS"), rateLimitMiddleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame), Watchdog.middleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame, 0.5), async (req, res) => {
+router.put(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame), Watchdog.middleware(global.config.ratelimit_config.addReaction.maxPerTimeFrame, global.config.ratelimit_config.addReaction.timeFrame, 0.5), async (req, res) => {
     try {
         let account = req.account;
         let channel = req.channel;
@@ -238,6 +238,19 @@ router.put(["/:urlencoded/@me", "/:urlencoded/%40me"], channelPermissionsMiddlew
 
         if (message.reactions.some(x => x.user_id === account.id && JSON.stringify(x.emoji) === reactionKey)) {
             return res.status(204).send(); //dont dispatch more than once
+        }
+
+        let reactionExists = message.reactions.some(x => JSON.stringify(x.emoji) === reactionKey);
+
+        if (!reactionExists) {
+            let canAdd = global.permissions.hasChannelPermissionTo(req.channel, req.guild, req.account.id, "ADD_REACTIONS");
+        
+            if (!canAdd) {
+                return res.status(403).json({
+                    code: 403,
+                    message: "Missing Permissions"
+                });
+            }
         }
 
         let tryReact = await global.database.addMessageReaction(message, account.id, id, encoded);

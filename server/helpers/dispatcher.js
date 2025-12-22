@@ -69,13 +69,13 @@ const dispatcher = {
                 let uSession = uSessions[z];
                 
                 if (guild.owner_id != member.id && uSession && uSession.socket) { //Skip checks if owner
-                    let guildPermCheck = await global.permissions.hasGuildPermissionTo(guild, member.id, permission_check, uSession.socket.client_build);
+                    let guildPermCheck = global.permissions.hasGuildPermissionTo(guild, member.id, permission_check, uSession.socket.client_build);
 
                     if (!guildPermCheck)
                         break; //No access to guild
 
                     if (channel) {
-                        const channelPermCheck = await global.permissions.hasChannelPermissionTo(channel, guild, member.id, permission_check);
+                        const channelPermCheck = global.permissions.hasChannelPermissionTo(channel, guild, member.id, permission_check);
 
                         if (!channelPermCheck) {
                             break; //No access to channel
@@ -141,15 +141,16 @@ const dispatcher = {
 
         let { 
             ops, 
-            groups 
-        } = globalUtils.computeMemberList(guild, ranges);
+            groups,
+            count
+        } = globalUtils.computeMemberList(guild, channel, ranges);
 
         session.dispatch("GUILD_MEMBER_LIST_UPDATE", {
             guild_id: guild.id,
             id: list_id,
             ops,
             groups,
-            member_count: guild.members.length,
+            member_count: count,
             online_count: guild.presences.filter(p => p.status !== 'offline').length
         });
     },
@@ -263,7 +264,7 @@ const dispatcher = {
 
             if (!member) continue;
 
-            let permissions = await global.permissions.hasChannelPermissionTo(channel, guild, member.id, "READ_MESSAGES");
+            let permissions = global.permissions.hasChannelPermissionTo(channel, guild, member.id, "READ_MESSAGES");
 
             if (!permissions) continue;
 

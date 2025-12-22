@@ -135,7 +135,7 @@ async function handleVoiceState(socket, packet) {
 
         if (channel && channel.type === 2 && channel.user_limit > 0) {
             let testRoom = global.rooms.filter(x => x.room_id === `${guild_id}:${channel_id}`);
-            let permissionCheck = await global.permissions.hasChannelPermissionTo(channel, socket.current_guild, socket.user.id, "MOVE_MEMBERS");
+            let permissionCheck = global.permissions.hasChannelPermissionTo(channel, socket.current_guild, socket.user.id, "MOVE_MEMBERS");
 
             if (testRoom && testRoom.length >= channel.user_limit && !permissionCheck) {
                 return;

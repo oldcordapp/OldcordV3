@@ -70,7 +70,7 @@ router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.delet
             });
         }
 
-        const hasPermission = await global.permissions.hasChannelPermissionTo(channel, guild, sender.id, "MANAGE_CHANNELS");
+        const hasPermission = global.permissions.hasChannelPermissionTo(channel, guild, sender.id, "MANAGE_CHANNELS");
 
         if (!hasPermission) {
             return res.status(403).json({

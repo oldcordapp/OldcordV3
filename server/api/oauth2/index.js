@@ -108,15 +108,19 @@ router.get("/authorize", async (req, res) => {
                 if (guild.members.find(x => x.id === application.bot.id)) continue; //fuc kyou
 
                 let roles = member.roles;
-                
                 let permissions_number = 0;
+                let everyoneRole = guild.roles.find(x => x.id === guild.id);
 
-                for(var role of roles) {
-                    let guildRole = guild.roles.find(x => x.id === role);
+                if (everyoneRole) {
+                    permissions_number = everyoneRole.permissions;
+                }
+
+                for (var roleID of roles) {
+                    let guildRole = guild.roles.find(x => x.id === roleID);
 
                     if (!guildRole) continue;
 
-                    permissions_number |= role.permissions;
+                    permissions_number |= guildRole.permissions;
                 }
 
                 if (global.permissions.has(permissions_number, "ADMINISTRATOR") || global.permissions.has(permissions_number, "MANAGE_GUILD") || guild.owner_id === account.id) {
@@ -257,12 +261,18 @@ router.post("/authorize", async (req, res) => {
 
         let permissions_number = 0;
 
-        for(var role of roles) {
-            let guildRole = guild.roles.find(x => x.id === role);
+        let everyoneRole = guild.roles.find(x => x.id === guild.id);
+
+        if (everyoneRole) {
+            permissions_number = everyoneRole.permissions;
+        }
+
+        for (var roleID of roles) {
+            let guildRole = guild.roles.find(x => x.id === roleID);
 
             if (!guildRole) continue;
 
-            permissions_number |= role.permissions;
+            permissions_number |= guildRole.permissions;
         }
 
         if (global.permissions.has(permissions_number, "ADMINISTRATOR") || global.permissions.has(permissions_number, "MANAGE_GUILD") || guild.owner_id === account.id) {

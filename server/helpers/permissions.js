@@ -30,130 +30,115 @@ const permissions = {
     USE_VAD: 1 << 25,
 	has(compare, key) {
         try {
-            return !!(BigInt(compare) & BigInt(permissions[key]));
+            let bitmask = this[key]; 
+
+            if (!bitmask) return false;
+            
+            return (BigInt(compare) & BigInt(bitmask)) === BigInt(bitmask);
         }
-        catch { return false; }
+        catch (e) { 
+            return false; 
+        }
     },
-    async hasGuildPermissionTo(guild, user_id, key, for_build) {
+    hasGuildPermissionTo(guild, user_id, key, for_build) {
         try {
-            const member = guild.members.find(y => y.id == user_id);
+            if (!guild) return false;
+            
+            let member = guild.members.find(y => y.id == user_id);
 
-            if (guild == null) return false;
-    
-            if (member == null) return false;
-    
-            if (guild.owner_id == member.id) return true;
-    
-            if (member.roles.length === 0) {
-                let everyoneRole = guild.roles.find(x => x.id === guild.id);
+            if (!member) return false;
 
-                return permissions.has(everyoneRole.permissions, key); //@everyone role default perms
-            }
+            if (guild.owner_id == member.user.id) return true;
 
-            const gatheredRoles = []
-            const roles = member.roles;
+            let everyoneRole = guild.roles.find(x => x.id === guild.id);
+            let totalPermissions = BigInt(everyoneRole ? everyoneRole.permissions : 0);
 
-            for(var role2 of roles) {
-                var role = guild.roles.find(x => x.id === role2)
-    
-                if (role != null) {
-                    gatheredRoles.push(role);
+            for (let roleId of member.roles) {
+                let role = guild.roles.find(x => x.id === roleId);
+
+                if (role) {
+                    totalPermissions |= BigInt(role.permissions);
                 }
             }
 
-            let highestRole = gatheredRoles[0];
-    
-            if (for_build.endsWith("2015")) {
-                highestRole = gatheredRoles[gatheredRoles.length - 1];
+            let ADMINISTRATOR = BigInt(8);
+
+            if ((totalPermissions & ADMINISTRATOR) === ADMINISTRATOR) {
+                return true;
             }
 
-            const ADMINISTRATOR = 8;
+            let permissionBit = BigInt(this.toObject()[key]);
 
-            if ((highestRole.permissions & ADMINISTRATOR) === ADMINISTRATOR) {
-                return true;
-            } //admin override
-    
-            return permissions.has(highestRole.permissions, key);
-        }
-        catch (error) {
+            return (totalPermissions & permissionBit) === permissionBit;
+        } catch (error) {
             logText(error, "error");
-
             return false;
         }
     },
-    async hasChannelPermissionTo(channel, guild, user_id, key) {
+    hasChannelPermissionTo(channel, guild, user_id, key) {
         try {
-            if (channel == null || !channel.guild_id) return false;
-
-            if (guild == null) return false;
-
+            if (!channel || !guild) return false;
             if (guild.owner_id == user_id) return true;
     
-            const member = guild.members.find(y => y.id == user_id);
-    
-            if (member == null) return false;     
-    
-            let calc = 0;
+            let member = guild.members.find(y => y.id == user_id);
 
-            if (member.roles.length === 0) {
-                let everyoneRole = guild.roles.find(x => x.id === guild.id);
-
-                calc |= everyoneRole.permissions;
-            }
+            if (!member) return false;   
     
+            let everyoneRole = guild.roles.find(r => r.id === guild.id);
+            let permissions = BigInt(everyoneRole ? everyoneRole.permissions : 0);
+
             let memberRoles = [];
 
-            for(var role2 of member.roles) {
-                var role = guild.roles.find(x => x.id === role2)
-    
-                if (role != null) {
+            for (let roleId of member.roles) {
+                let role = guild.roles.find(r => r.id === roleId);
+
+                if (role) {
                     memberRoles.push(role);
-    
-                    calc |= role.permissions;
+                    permissions |= BigInt(role.permissions);
                 }
             }
 
-            if (channel.permission_overwrites && channel.permission_overwrites.length > 0 && !(calc & 8)) {
-                let basePerms = Number(calc);
+            let ADMIN_BIT = BigInt(8);
+
+            if ((permissions & ADMIN_BIT) === ADMIN_BIT) return true;
+
+            if (channel.permission_overwrites && channel.permission_overwrites.length > 0) {
                 let overwrites = channel.permission_overwrites;
-                
-                let everyone = overwrites.find(x => x.type == 'role' && x.id == guild.id);
-    
-                if (everyone) {
-                    basePerms &= ~everyone.deny;
-                    basePerms |= everyone.allow;
+                let everyoneOverwrite = overwrites.find(o => o.id === guild.id);
+
+                if (everyoneOverwrite) {
+                    permissions &= ~BigInt(everyoneOverwrite.deny);
+                    permissions |= BigInt(everyoneOverwrite.allow);
                 }
-    
-                let allow = 0;
-                let deny = 0;
-    
-                for(let memberRole of memberRoles) {
-                    let overwrite = overwrites.find(x => x.type =='role' && x.id == memberRole.id);
-    
+
+                let roleAllow = BigInt(0);
+                let roleDeny = BigInt(0);
+
+                for (let role of memberRoles) {
+                    let overwrite = overwrites.find(o => o.id === role.id);
+
                     if (overwrite) {
-                        allow |= overwrite.allow;
-                        deny |= overwrite.deny;
+                        roleAllow |= BigInt(overwrite.allow);
+                        roleDeny |= BigInt(overwrite.deny);
                     }
                 }
-    
-                basePerms &= ~deny;
-                basePerms |= allow;
-    
-                let memberOverwrites = overwrites.find(x => x.type == 'member' && x.id == member.id);
-    
-                if (memberOverwrites) {
-                    basePerms &= ~memberOverwrites.deny;
-                    basePerms |= memberOverwrites.allow;
+                
+                permissions &= ~roleDeny;
+                permissions |= roleAllow;
+
+                let memberOverwrite = overwrites.find(o => o.id === member.id);
+
+                if (memberOverwrite) {
+                    permissions &= ~BigInt(memberOverwrite.deny);
+                    permissions |= BigInt(memberOverwrite.allow);
                 }
-    
-                calc = basePerms;
             }
-    
-            if (!!(calc & 8)) {
-                return true;
-            } //ADMINISTRATOR - It's finally time to use this!
-    
-            return permissions.has(calc, key);
+
+            if ((permissions & ADMIN_BIT) === ADMIN_BIT) return true;
+
+            let bitmask = BigInt(this.toObject()[key]);
+            
+            return (permissions & bitmask) === bitmask;
         }
         catch (error) { 
             logText(error, "error");

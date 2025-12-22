@@ -30,7 +30,7 @@ function handleJsonAndMultipart(req, res, next) {
     }
 }
 
-router.get("/", channelPermissionsMiddleware("READ_MESSAGE_HISTORY"), quickcache.cacheFor(15, false), async (req, res) => {
+router.get("/", channelPermissionsMiddleware("READ_MESSAGES"), quickcache.cacheFor(15, false), async (req, res) => {
     try {
         const creator = req.account;
         const channel = req.channel;
@@ -143,7 +143,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
         const mentions_data = globalUtils.parseMentions(req.body.content);
 
-        if ((mentions_data.mention_everyone || mentions_data.mention_here) && !await global.permissions.hasChannelPermissionTo(req.channel, req.guild, author.id, "MENTION_EVERYONE")) {
+        if ((mentions_data.mention_everyone || mentions_data.mention_here) && !global.permissions.hasChannelPermissionTo(req.channel, req.guild, author.id, "MENTION_EVERYONE")) {
             mentions_data.mention_everyone = false;
             mentions_data.mention_here = false;
         }
@@ -288,7 +288,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 });
             }
 
-            if (req.body.tts && !await global.permissions.hasChannelPermissionTo(req.channel, req.guild, author.id, "SEND_TTS_MESSAGES")) {
+            if (req.body.tts && !global.permissions.hasChannelPermissionTo(req.channel, req.guild, author.id, "SEND_TTS_MESSAGES")) {
                 //Not allowed
                 req.body.tts = false;
             }
@@ -478,7 +478,7 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
         //TODO:
         //FIXME: this needs to use globalUtils.parseMentions
         if (req.body.content && req.body.content.includes("@everyone")) {
-            let pCheck = await global.permissions.hasChannelPermissionTo(req.channel, req.guild, message.author.id, "MENTION_EVERYONE");
+            let pCheck = global.permissions.hasChannelPermissionTo(req.channel, req.guild, message.author.id, "MENTION_EVERYONE");
 
             if (!pCheck) {
                 req.body.content = req.body.content.replace(/@everyone/g, "");
