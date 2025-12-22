@@ -82,6 +82,21 @@ app.get("/gateway", (req, res) => {
     });
 });
 
+
+app.get("/gateway/bot", (req, res) => {
+    return res.status(200).json({
+        url: globalUtils.generateGatewayURL(req),
+        shards: 0,
+        session_start_limit: {
+            total: 1,
+            remaining: 1,
+            reset_after: 14400000,
+            max_concurrency: 1
+        }
+    });
+});
+
+
 app.get("/voice/ice", (req, res) => {
     return res.status(200).json({
         servers: [{
