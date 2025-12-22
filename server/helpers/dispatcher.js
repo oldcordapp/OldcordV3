@@ -126,11 +126,20 @@ const dispatcher = {
             let socket = session.socket;
             let finalPayload = payload;
 
-            if (type === "PRESENCE_UPDATE" && socket?.client_build?.endsWith("2015")) {
-                finalPayload = { 
-                    ...payload, 
-                    status: ["idle", "offline", "invisible", "dnd"].includes(payload.status) ? "offline" : "online" 
-                };
+            if (type === "PRESENCE_UPDATE") {
+                let member = guild.members.find(m => m.id === payload.user.id);
+
+                if (member) {
+                    payload.nick = member.nick; 
+                    payload.roles = member.roles;
+                }
+
+                if (socket?.client_build?.endsWith("2015")) {
+                    finalPayload = { 
+                        ...payload, 
+                        status: ["idle", "offline", "invisible", "dnd"].includes(payload.status) ? "offline" : "online" 
+                    };
+                }
             }
 
             let sub = session.subscriptions?.[guild.id];
