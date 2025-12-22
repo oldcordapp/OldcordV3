@@ -41,6 +41,7 @@ class session {
         this.guildCache = [];
         this.apiVersion = apiVersion;
         this.capabilities = capabilities; // Either an integer (recent/third party) or a build date (specific build capabilities). We can use it to give builds/capability flag specific JSON object props.
+        this.application = null;
     }
     onClose(code) {
         this.dead = true;
@@ -472,6 +473,8 @@ class session {
 
             this.relationships = this.user.relationships;
 
+            this.application = await global.database.getApplicationById(this.user.id);
+
             this.readyUp({
                 v: this.apiVersion,
                 guilds: this.guilds ?? [],
@@ -515,6 +518,7 @@ class session {
                 users: Array.from(users),
                 notification_settings: {flags: null},
                 game_relationships: [{}],
+                application: this.application,
                 _trace: [
                     JSON.stringify(["oldcord-v3", {micros: 0, calls:["oldcord-v3"]}])
                 ]

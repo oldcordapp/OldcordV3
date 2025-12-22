@@ -1153,7 +1153,7 @@ const database = {
             if (!rows || rows.length == 0) {
                 rows = await database.runQuery(`
                     SELECT * FROM bots WHERE token = $1
-                `, [token.split('Bot ')[1]]);
+                `, [token.split('Bot ')[1] ?? token]);
 
                 if (!rows || rows.length == 0)
                     return null;
@@ -1170,7 +1170,7 @@ const database = {
 
             let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
             
-            return await globalUtils.prepareAccountObject(rows, relationships); //to-do fix
+            return globalUtils.prepareAccountObject(rows, relationships); //to-do fix
         } catch (error) {
             logText(error, "error");
 

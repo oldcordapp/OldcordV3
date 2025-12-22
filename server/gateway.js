@@ -81,7 +81,7 @@ const gateway = {
 
         let cookies = req.headers.cookie;
 
-        if (!cookies && isBrowser) {
+        if (!cookies || !isBrowser) {
             cookies = `release_date=thirdPartyOrMobile;default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
         }
 
