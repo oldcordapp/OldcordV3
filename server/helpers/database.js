@@ -108,14 +108,14 @@ const database = {
                 email TEXT,
                 password TEXT,
                 token TEXT,
-                verified INTEGER DEFAULT 0,
-                claimed INTEGER DEFAULT 1,
-                mfa_enabled INTEGER DEFAULT 0,
+                verified BOOLEAN DEFAULT FALSE,
+                claimed BOOLEAN DEFAULT TRUE,
+                mfa_enabled BOOLEAN DEFAULT FALSE,
                 mfa_secret TEXT DEFAULT NULL,
-                premium INTEGER DEFAULT 1,
+                premium BOOLEAN DEFAULT TRUE,
                 created_at TEXT DEFAULT NULL,
                 avatar TEXT DEFAULT NULL,
-                bot INTEGER DEFAULT 0,
+                bot BOOLEAN DEFAULT FALSE,
                 flags INTEGER DEFAULT 0,
                 registration_ip TEXT DEFAULT NULL,
                 email_token TEXT DEFAULT NULL,
@@ -169,10 +169,10 @@ const database = {
                 user_id TEXT,
                 account_id TEXT,
                 username TEXT,
-                visibility INTEGER DEFAULT 0,
-                friendSync INTEGER DEFAULT 1,
+                visibility BOOLEAN DEFAULT FALSE,
+                friendSync BOOLEAN DEFAULT TRUE,
                 integrations TEXT DEFAULT '[]',
-                revoked INTEGER DEFAULT 0,
+                revoked BOOLEAN DEFAULT FALSE,
                 connected_at TEXT DEFAULT NULL,
                 platform TEXT DEFAULT NULL
            );`, []);
@@ -187,7 +187,7 @@ const database = {
                 last_message_id TEXT DEFAULT '0',
                 permission_overwrites TEXT,
                 name TEXT,
-                nsfw INTEGER DEFAULT 0,
+                nsfw BOOLEAN DEFAULT FALSE,
                 rate_limit_per_user INTEGER DEFAULT 0,
                 user_limit INTEGER DEFAULT 0,
                 bitrate INTEGER DEFAULT 64000,
@@ -240,8 +240,8 @@ const database = {
               username TEXT,
               discriminator TEXT,
               avatar TEXT DEFAULT NULL,
-              public INTEGER DEFAULT 1,
-              require_code_grant INTEGER DEFAULT 0,
+              public BOOLEAN DEFAULT TRUE,
+              require_code_grant BOOLEAN DEFAULT FALSE,
               token TEXT DEFAULT NULL
          );`, []);
 
@@ -250,9 +250,9 @@ const database = {
                 guild_id TEXT,
                 role_id TEXT,
                 name TEXT,
-                hoist INTEGER DEFAULT 0,
+                hoist BOOLEAN DEFAULT FALSE,
                 color INTEGER DEFAULT 0,
-                mentionable INTEGER DEFAULT 0,
+                mentionable BOOLEAN DEFAULT FALSE,
                 permissions INTEGER DEFAULT 104193089,
                 position INTEGER DEFAULT 0
            );`, []);
@@ -264,8 +264,8 @@ const database = {
                 nick TEXT DEFAULT NULL,
                 roles TEXT DEFAULT '[]',
                 joined_at TEXT DEFAULT NULL,
-                deaf INTEGER DEFAULT 0,
-                mute INTEGER DEFAULT 0
+                deaf BOOLEAN DEFAULT FALSE,
+                mute BOOLEAN DEFAULT FALSE
            );`, []);
 
             await database.runQuery(`
@@ -273,8 +273,8 @@ const database = {
                 guild_id TEXT,
                 channel_id TEXT,
                 code TEXT,
-                temporary INTEGER DEFAULT 0,
-                revoked INTEGER DEFAULT 0,
+                temporary BOOLEAN DEFAULT FALSE,
+                revoked BOOLEAN DEFAULT FALSE,
                 inviter_id TEXT,
                 uses INTEGER DEFAULT 0,
                 maxUses INTEGER DEFAULT 0,
@@ -291,13 +291,13 @@ const database = {
                 author_id TEXT,
                 content TEXT,
                 edited_timestamp TEXT DEFAULT NULL,
-                mention_everyone INTEGER DEFAULT 0,
+                mention_everyone BOOLEAN DEFAULT FALSE,
                 nonce TEXT,
                 timestamp TEXT,
-                tts INTEGER DEFAULT 0,
+                tts BOOLEAN DEFAULT FALSE,
                 embeds TEXT DEFAULT '[]',
                 reactions TEXT DEFAULT '[]',
-                pinned INTEGER DEFAULT 0,
+                pinned BOOLEAN DEFAULT FALSE,
                 overrides TEXT DEFAULT NULL
            );`, []);
 
@@ -322,7 +322,7 @@ const database = {
             await database.runQuery(`CREATE TABLE IF NOT EXISTS widgets (
                 guild_id TEXT,
                 channel_id TEXT DEFAULT NULL,
-                enabled INTEGER DEFAULT 0
+                enabled BOOLEAN DEFAULT FALSE
            );`, []);
 
             await database.runQuery(`CREATE TABLE IF NOT EXISTS bans (
@@ -384,7 +384,7 @@ const database = {
 
             if (!mfa_exists) {
                 await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_secret TEXT DEFAULT NULL`);
-                await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_enabled INTEGER DEFAULT 0`);
+                await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN DEFAULT FALSE`);
             }
 
             let msg_type_exists = await database.doescolumnExist("type", "messages");
