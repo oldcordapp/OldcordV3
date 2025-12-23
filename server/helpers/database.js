@@ -1353,35 +1353,11 @@ const database = {
                 return null;
 
             if (id.startsWith("WEBHOOK_")) {
-                let webhookId = id.split('_')[1];
-                let overrideId = id.split('_')[2];
+                let webhook_overrides = await database.getWebhookOverrides(id.split('_')[1], id.split('_')[2]);
+                let out = await database.resolveAuthor(id, webhook_overrides);
 
-                let webhook = await database.getWebhookById(webhookId);
-
-                if (!webhook) return null;
-
-                let overrides = await database.getWebhookOverrides(webhookId, overrideId);
-
-                if (overrides !== null) {
-                    return {
-                        username: overrides.username === null ? webhook.name : overrides.username,
-                        discriminator: "0000",
-                        avatar: overrides.avatar_url ?? null,
-                        id: webhookId,
-                        bot: true,
-                        webhook: true
-                    }
-                } else {
-                    return {
-                        username: webhook.name,
-                        discriminator: "0000",
-                        id: webhookId,
-                        bot: true,
-                        webhook: true,
-                        avatar: null
-                    }
-                }
-            }
+                return out;
+            } //yes i know theres weird double checking logic here
 
             let rows = await database.runQuery(`
                 SELECT * FROM users WHERE id = $1
@@ -2307,27 +2283,7 @@ const database = {
                 });
             }
 
-            return {
-                type: rows[0].type,
-                guild_id: rows[0].guild_id, //Is this necessary here?
-                id: rows[0].message_id,
-                content: rows[0].content,
-                channel_id: rows[0].channel_id,
-                author: globalUtils.miniUserObject(author),
-                attachments: messageAttachments,
-                embeds: rows[0].embeds == null ? [] : JSON.parse(rows[0].embeds),
-                mentions: mentions,
-                mention_everyone: rows[0].mention_everyone,
-                mention_roles: mentions_data.mention_roles, //to-do: find way to check perms on this without slowing down db much
-                nonce: rows[0].nonce,
-                edited_timestamp: rows[0].edited_timestamp,
-                timestamp: rows[0].timestamp,
-                reactions: reactionRet,
-                tts: rows[0].tts,
-                pinned: rows[0].pinned,
-                overrides: (!rows[0].overrides ? [] : JSON.parse(rows[0].overrides)),
-                ...(isWebhook && { webhook_id: rows[0].author_id })
-            }
+            return globalUtils.formatMessage(rows[0], author, messageAttachments, mentions, mentions_data.mention_roles, reactionRet, isWebhook);
         } catch (error) {
             logText(error, "error");
 
@@ -2820,27 +2776,7 @@ const database = {
 
                 const messageAttachments = attachmentsMap.get(row.message_id) || [];
 
-                let message = {
-                    type: row.type,
-                    id: row.message_id,
-                    content: row.content,
-                    channel_id: row.channel_id,
-                    author: globalUtils.miniUserObject(author),
-                    attachments: messageAttachments,
-                    embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
-                    mentions: mentions,
-                    mention_everyone: row.mention_everyone,
-                    mention_roles: mentions_data.mention_roles,
-                    nonce: row.nonce,
-                    edited_timestamp: row.edited_timestamp,
-                    timestamp: row.timestamp,
-                    reactions: [], //Not used here either
-                    tts: row.tts,
-                    pinned: row.pinned,
-                    ...(isWebhook && { webhook_id: row.author_id })
-                };
-
-                finalMessages.push(message);
+                finalMessages.push(globalUtils.formatMessage(row, author, messageAttachments, mentions, mentions_data.mention_roles, [], isWebhook));
             }
 
             return finalMessages;
@@ -3031,29 +2967,7 @@ const database = {
                     finalReactions = Object.values(reactionMap);
                 }
 
-                let message = {
-                    //Surprisingly enough discord doesn't return a guild_id property for each message
-                    type: row.type,
-                    id: row.message_id,
-                    content: row.content,
-                    channel_id: row.channel_id,
-                    author: author, //Already minified due to the nature of the get accounts by id bulk function :3
-                    attachments: messageAttachments,
-                    embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
-                    mentions: mentions,
-                    mention_everyone: row.mention_everyone,
-                    mention_roles: mentions_data.mention_roles,
-                    nonce: row.nonce,
-                    edited_timestamp: row.edited_timestamp,
-                    timestamp: row.timestamp,
-                    reactions: finalReactions,
-                    tts: row.tts,
-                    pinned: row.pinned,
-                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides)),
-                    ...(isWebhook && { webhook_id: row.author_id })
-                };
-
-                finalMessages.push(message);
+                finalMessages.push(globalUtils.formatMessage(row, author, messageAttachments, mentions, mentions_data.mention_roles, finalReactions, isWebhook));
             }
 
             return finalMessages;
@@ -3363,26 +3277,7 @@ const database = {
 
                 const messageAttachments = attachmentsMap.get(row.message_id) || [];
 
-                messages.push({
-                    type: row.type,
-                    id: row.message_id,
-                    content: row.content,
-                    channel_id: row.channel_id,
-                    author: author, //is already minified
-                    attachments: messageAttachments,
-                    embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
-                    mentions: mentions,
-                    mention_everyone: row.mention_everyone,
-                    mention_roles: mentions_data.mention_roles,
-                    nonce: row.nonce,
-                    edited_timestamp: row.edited_timestamp,
-                    timestamp: row.timestamp,
-                    reactions: [], //We dont use reactions from here anyways
-                    tts: row.tts,
-                    pinned: row.pinned,
-                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides)),
-                    ...(isWebhook && { webhook_id: row.author_id })
-                });
+                messages.push(globalUtils.formatMessage(row, author, messageAttachments, mentions, mentions_data.mention_roles, [], isWebhook));
             }
 
             return { messages, totalCount };
@@ -5077,12 +4972,58 @@ const database = {
             return null;
         }
     },
+    resolveAuthor: async (authorId, webhookOverride = null) => {
+        if (authorId.startsWith("WEBHOOK_")) {
+            const parts = authorId.split('_');
+            const webhookId = parts[1];
+            const webhook = await database.getWebhookById(webhookId);
+
+            if (webhook) {
+                return {
+                    id: webhookId,
+                    username: webhookOverride?.username || webhook.name,
+                    avatar: webhookOverride?.avatar_url || webhook.avatar,
+                    bot: true,
+                    premium: false,
+                    flags: 0,
+                    webhook_id: webhookId,
+                    discriminator: "0000"
+                };
+            }
+
+            return {
+                id: webhookId,
+                username: "Deleted Webhook",
+                avatar: null,
+                bot: true,
+                premium: false,
+                flags: 0,
+                webhook_id: webhookId,
+                discriminator: "0000"
+            };
+        }
+
+        let user = await database.getAccountByUserId(authorId);
+
+        if (user) {
+            return globalUtils.miniUserObject(user);
+        }
+
+        return {
+            id: "1279218211430105088",
+            username: "Deleted User",
+            discriminator: "0000",
+            avatar: null,
+            bot: false,
+            premium: false,
+            flags: 0,
+            webhook_id: null
+        };
+    },
     createMessage: async (guild_id, channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhookOverride = null, webhook_embeds = null) => {
         try {
             const id = Snowflake.generate();
             const date = new Date().toISOString();
-
-            let author = null;
 
             if (nonce != null && nonce != null && !Snowflake.isValid(nonce)) {
                 return null;
@@ -5094,44 +5035,8 @@ const database = {
 
             //validate snowflakes
 
-            let isWebhook = false;
-
-            if (author_id.startsWith("WEBHOOK_")) {
-                let webhookId = author_id.split('_')[1];
-                let webhook = await database.getWebhookById(webhookId);
-
-                if (!webhook) {
-                    return null;
-                }
-
-                author = {
-                    username: webhook.name,
-                    discriminator: "0000",
-                    id: webhookId,
-                    bot: true,
-                    webhook: true,
-                    avatar: null
-                }
-
-                if (webhookOverride !== null) {
-                    author.username = webhookOverride.username ?? webhook.name;
-                    author.avatar = webhookOverride.avatar_url ?? null;
-                }
-
-                isWebhook = true;
-            } else author = await database.getAccountByUserId(author_id);
-
-            if (author == null) {
-                author = {
-                    id: "1279218211430105088",
-                    username: "Deleted User",
-                    discriminator: "0000",
-                    avatar: null,
-                    premium: false,
-                    bot: false,
-                    flags: 0
-                }
-            }
+            let author = await database.resolveAuthor(author_id);
+            let isWebhook = author.webhook_id != null;
 
             if (content == undefined) {
                 content = "";

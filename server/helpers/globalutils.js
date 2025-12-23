@@ -717,6 +717,29 @@ const globalUtils = {
             });
         }
     },
+    formatMessage: (row, author, attachments, mentions, mention_roles, reactions, isWebhook) => {
+        return {
+            type: row.type,
+            guild_id: row.guild_id, //Is this necessary here?
+            id: row.message_id,
+            content: row.content,
+            channel_id: row.channel_id,
+            author: globalUtils.miniUserObject(author),
+            attachments: attachments,
+            embeds: row.embeds == null ? [] : JSON.parse(row.embeds),
+            mentions: mentions,
+            mention_everyone: row.mention_everyone,
+            mention_roles: mention_roles,
+            nonce: row.nonce,
+            edited_timestamp: row.edited_timestamp,
+            timestamp: row.timestamp,
+            reactions: reactions,
+            tts: row.tts,
+            pinned: row.pinned,
+            overrides: (!row.overrides ? [] : JSON.parse(row.overrides)),
+            ...(isWebhook && { webhook_id: row.author_id })
+        };
+    },
     channelTypeToString: (type) => {
         switch (type) {
             case 0: return "text";
