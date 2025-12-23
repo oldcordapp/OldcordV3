@@ -19,7 +19,7 @@ class session {
         this.id = id;
         this.socket = socket;
         this.token = token;
-        this.user = user;
+        this.user = (({ password, token, ...rest }) => rest)(user); //We definitely do not need the password / token fields here
         this.seq = 0;
         this.time = Date.now();
         this.ready = ready;

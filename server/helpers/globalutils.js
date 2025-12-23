@@ -736,8 +736,8 @@ const globalUtils = {
             reactions: reactions,
             tts: row.tts,
             pinned: row.pinned,
-            overrides: (!row.overrides ? [] : JSON.parse(row.overrides)),
-            ...(isWebhook && { webhook_id: row.author_id })
+            //overrides: (!row.overrides ? [] : JSON.parse(row.overrides)), - what is this even for?
+            ...(isWebhook && { webhook_id: row.author_id.split('_')[1] })
         };
     },
     channelTypeToString: (type) => {

@@ -1,6 +1,6 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
-const { guildPermissionsMiddleware, guildMiddleware, channelMiddleware, channelPermissionsMiddleware } = require('../helpers/middlewares');
+const { guildPermissionsMiddleware, guildMiddleware, channelMiddleware, channelPermissionsMiddleware, authMiddleware } = require('../helpers/middlewares');
 const globalUtils = require('../helpers/globalutils');
 const Snowflake = require('../helpers/snowflake');
 const fs = require('fs');
@@ -14,11 +14,8 @@ router.param('webhookid', async (req, res, next, webhookid) => {
     next();
 });
 
-//use middlewares??
-router.patch("/:webhookid", async (req, res) => {
+router.patch("/:webhookid", authMiddleware, guildPermissionsMiddleware("MANAGE_WEBHOOKS"), async (req, res) => {
     try {
-        let account = req.account;
-
         if (!req.body.channel_id) {
             return res.status(404).json({
                 code: 404,
@@ -50,15 +47,6 @@ router.patch("/:webhookid", async (req, res) => {
             return res.status(404).json({
                 code: 404,
                 message: "Unknown Guild"
-            }); 
-        }
-
-        const hasPermission = await global.permissions.hasGuildPermissionTo(guild, account.id, "MANAGE_WEBHOOKS", req.client_build);
-
-        if (!hasPermission) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
             }); 
         }
 
@@ -104,9 +92,8 @@ router.patch("/:webhookid", async (req, res) => {
     }
 });
 
-router.delete("/:webhookid", async (req, res) => {
+router.delete("/:webhookid", authMiddleware, guildPermissionsMiddleware("MANAGE_WEBHOOKS"), async (req, res) => {
     try {
-        let account = req.account;
         let webhook = req.webhook;
 
         if (!webhook) {
@@ -122,15 +109,6 @@ router.delete("/:webhookid", async (req, res) => {
             return res.status(404).json({
                 code: 404,
                 message: "Unknown Guild"
-            }); 
-        }
-
-        const hasPermission = await global.permissions.hasGuildPermissionTo(guild, account.id, "MANAGE_WEBHOOKS", req.client_build);
-
-        if (!hasPermission) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
             }); 
         }
 
@@ -229,7 +207,6 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
 
         let override_id = Snowflake.generate();
 
-        let createMessage = null;
         let embeds = [];
 
         if (req.body.embeds) {
@@ -264,9 +241,7 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
             }
         }
 
-        if (create_override) {
-            createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id + "_" + override_id, req.body.content, req.body.nonce, null, req.body.tts, false, override, embeds);
-        } else createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id, req.body.content, req.body.nonce, null, req.body.tts, false, null, embeds);
+        let createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id, req.body.content, req.body.nonce, null, req.body.tts, false, null, embeds, webhook);
 
         if (!createMessage) {
             return res.status(500).json({
@@ -381,7 +356,7 @@ router.post("/:webhookid/:webhooktoken/github", async (req, res) => {
             }]
         }
 
-        const createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id, req.body.content, req.body.nonce, null, req.body.tts, false, override, embeds);
+        const createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id, req.body.content, req.body.nonce, null, req.body.tts, false, embeds);
 
         if (!createMessage) {
             return res.status(500).json({

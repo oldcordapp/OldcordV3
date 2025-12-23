@@ -1353,11 +1353,35 @@ const database = {
                 return null;
 
             if (id.startsWith("WEBHOOK_")) {
-                let webhook_overrides = await database.getWebhookOverrides(id.split('_')[1], id.split('_')[2]);
-                let out = await database.resolveAuthor(id, webhook_overrides);
+                const parts = id.split('_');
+                const webhookId = parts[1];
+                const webhook = await database.getWebhookById(webhookId);
+                const webhookOverride = await database.getWebhookOverrides(id.split('_')[1], id.split('_')[2]);
 
-                return out;
-            } //yes i know theres weird double checking logic here
+                if (webhook) {
+                    return {
+                        id: webhookId,
+                        username: webhookOverride?.username || webhook.name,
+                        avatar: webhookOverride?.avatar_url || webhook.avatar,
+                        bot: true,
+                        webhook: true,
+                        premium: false,
+                        flags: 0,
+                        discriminator: "0000"
+                    };
+                }
+
+                return {
+                    id: webhookId,
+                    username: "Deleted Webhook",
+                    avatar: null,
+                    bot: true,
+                    webhook: true,
+                    premium: false,
+                    flags: 0,
+                    discriminator: "0000"
+                };
+            }
 
             let rows = await database.runQuery(`
                 SELECT * FROM users WHERE id = $1
@@ -2218,25 +2242,44 @@ const database = {
                 return null;
             }
 
-            let isWebhook = false;
+            let isWebhook = rows[0].author_id.includes("WEBHOOK_");
+            let author = null;
 
-            if (rows[0].author_id.includes("WEBHOOK_")) {
-                rows[0].author_id = rows[0].author_id.split('_')[1];
-                isWebhook = true;
-            }
+            if (isWebhook) {
+                const parts = rows[0].author_id.split('_');
+                const webhookId = parts[1];
+                const overrideId = parts[2];
+                const webhook = await database.getWebhookById(webhookId);
 
-            let author = await database.getAccountByUserId(rows[0].author_id);
+                if (!webhook) {
+                    author = { 
+                        id: webhookId, 
+                        username: "Deleted Webhook", 
+                        discriminator: "0000", 
+                        avatar: null, 
+                        bot: true, 
+                        webhook: true 
+                    };
+                } else {
+                    const override = await database.getWebhookOverrides(webhookId, overrideId);
 
-            if (author == null) {
-                author = {
+                    author = {
+                        username: override?.username || webhook.name,
+                        avatar: override?.avatar_url || webhook.avatar,
+                        discriminator: "0000",
+                        id: override?.id || webhookId,
+                        bot: true,
+                        webhook: true
+                    };
+                }
+            } else {
+                author = await database.getAccountByUserId(row.author_id) || {
                     id: "1279218211430105088",
                     username: "Deleted User",
                     discriminator: "0000",
                     avatar: null,
-                    premium: false,
                     bot: false,
-                    flags: 0
-                }
+                };
             }
 
             const mentions_data = globalUtils.parseMentions(rows[0].content);
@@ -2724,41 +2767,44 @@ const database = {
             const finalMessages = [];
 
             for (const row of messageRows) {
-                let webhookRawId = null;
-                let isWebhook = false;
+                let author = null;
+                let isWebhook = row.author_id.includes("WEBHOOK_");
 
-                if (row.author_id.includes("WEBHOOK_")) {
-                    webhookRawId = row.author_id;
-                    row.author_id = row.author_id.split('_')[1];
-                    isWebhook = true;
-                }
+                if (isWebhook) {
+                    const parts = row.author_id.split('_');
+                    const webhookId = parts[1];
+                    const overrideId = parts[2];
+                    const webhook = await database.getWebhookById(webhookId);
+                    const webhookOverride = await database.getWebhookOverrides(webhookId, overrideId);
 
-                let author = accountMap.get(row.author_id);
-
-                if (!author) {
-                    if (isWebhook) {
+                    if (webhook) {
                         author = {
-                            id: row.author_id,
-                            username: "Deleted Webhook",
-                            discriminator: "0000",
-                            avatar: null,
+                            id: webhookId,
+                            username: webhookOverride?.username || webhook.name,
+                            avatar: webhookOverride?.avatar_url || webhook.avatar,
                             bot: true,
-                            webhook: true
+                            webhook: true,
+                            flags: 0,
+                            discriminator: "0000"
                         };
                     } else {
-                        author = {
-                            id: "1279218211430105088",
-                            username: "Deleted User",
-                            discriminator: "0000",
-                            avatar: null,
-                            premium: false,
-                            bot: false,
-                            flags: 0
-                        }
+                        author = { 
+                            id: webhookId, 
+                            username: "Deleted Webhook", 
+                            discriminator: "0000", 
+                            avatar: null, 
+                            bot: true, 
+                            webhook: true 
+                        };
                     }
-                    
-                } else if (author && author.webhook && webhookRawId) {
-                    author.id = webhookRawId.split('_')[2] || author.id;
+                } else {
+                    author = accountMap.get(row.author_id) || {
+                        id: "1279218211430105088",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        avatar: null,
+                        bot: false
+                    };
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -2877,40 +2923,44 @@ const database = {
             const finalMessages = [];
 
             for (const row of messageRows) {
-                let webhookRawId = null;
-                let isWebhook = false;
+                const isWebhook = row.author_id.includes("WEBHOOK_");
+                let author = null;
 
-                if (row.author_id.includes("WEBHOOK_")) {
-                    webhookRawId = row.author_id;
-                    row.author_id = row.author_id.split('_')[1];
-                    isWebhook = true;
-                }
+                if (isWebhook) {
+                    const webhookId = row.author_id.split('_')[1];
+                    const overrideId = row.author_id.split('_')[2];
+                    const webhook = await database.getWebhookById(webhookId);
+                    const webhookOverride = await database.getWebhookOverrides(webhookId, overrideId);
 
-                let author = accountMap.get(row.author_id);
-
-                if (!author) {
-                    if (isWebhook) {
+                    if (webhook) {
                         author = {
-                            id: row.author_id,
-                            username: "Deleted Webhook",
-                            discriminator: "0000",
-                            avatar: null,
+                            id: webhookId,
+                            username: webhookOverride?.username || webhook.name,
+                            avatar: webhookOverride?.avatar_url || webhook.avatar,
                             bot: true,
-                            webhook: true
+                            webhook: true,
+                            flags: 0,
+                            discriminator: "0000"
                         };
                     } else {
-                        author = {
-                            id: "1279218211430105088",
-                            username: "Deleted User",
-                            discriminator: "0000",
-                            avatar: null,
-                            premium: false,
-                            bot: false,
-                            flags: 0
-                        }
+                        author = { 
+                            id: webhookId, 
+                            username: "Deleted Webhook", 
+                            discriminator: "0000", 
+                            avatar: null, 
+                            bot: true, 
+                            webhook: true 
+                        };
                     }
-                } else if (author && author.webhook && webhookRawId) {
-                    author.id = webhookRawId.split('_')[2] || author.id;
+
+                    console.log(author);
+                } else {
+                    author = accountMap.get(row.author_id) || { 
+                        id: "1279218211430105088", 
+                        username: "Deleted User", 
+                        discriminator: "0000", 
+                        bot: false 
+                    };
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -4972,55 +5022,7 @@ const database = {
             return null;
         }
     },
-    resolveAuthor: async (authorId, webhookOverride = null) => {
-        if (authorId.startsWith("WEBHOOK_")) {
-            const parts = authorId.split('_');
-            const webhookId = parts[1];
-            const webhook = await database.getWebhookById(webhookId);
-
-            if (webhook) {
-                return {
-                    id: webhookId,
-                    username: webhookOverride?.username || webhook.name,
-                    avatar: webhookOverride?.avatar_url || webhook.avatar,
-                    bot: true,
-                    premium: false,
-                    flags: 0,
-                    webhook_id: webhookId,
-                    discriminator: "0000"
-                };
-            }
-
-            return {
-                id: webhookId,
-                username: "Deleted Webhook",
-                avatar: null,
-                bot: true,
-                premium: false,
-                flags: 0,
-                webhook_id: webhookId,
-                discriminator: "0000"
-            };
-        }
-
-        let user = await database.getAccountByUserId(authorId);
-
-        if (user) {
-            return globalUtils.miniUserObject(user);
-        }
-
-        return {
-            id: "1279218211430105088",
-            username: "Deleted User",
-            discriminator: "0000",
-            avatar: null,
-            bot: false,
-            premium: false,
-            flags: 0,
-            webhook_id: null
-        };
-    },
-    createMessage: async (guild_id, channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhookOverride = null, webhook_embeds = null) => {
+    createMessage: async (guild_id, channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhook_embeds = null) => {
         try {
             const id = Snowflake.generate();
             const date = new Date().toISOString();
@@ -5035,8 +5037,7 @@ const database = {
 
             //validate snowflakes
 
-            let author = await database.resolveAuthor(author_id);
-            let isWebhook = author.webhook_id != null;
+            let isWebhook = author_id.includes("WEBHOOK_");
 
             if (content == undefined) {
                 content = "";
