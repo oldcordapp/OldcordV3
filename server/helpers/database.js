@@ -2766,33 +2766,43 @@ const database = {
             }
 
             const finalMessages = [];
+
             for (const row of messageRows) {
                 let webhookRawId = null;
                 let isWebhook = false;
 
                 if (row.author_id.includes("WEBHOOK_")) {
                     webhookRawId = row.author_id;
-
                     row.author_id = row.author_id.split('_')[1];
-
                     isWebhook = true;
                 }
 
                 let author = accountMap.get(row.author_id);
 
                 if (!author) {
-                    author = {
-                        id: "1279218211430105088",
-                        username: "Deleted User",
-                        discriminator: "0000",
-                        avatar: null,
-                        premium: false,
-                        bot: false,
-                        flags: 0
+                    if (isWebhook) {
+                        author = {
+                            id: row.author_id,
+                            username: "Deleted Webhook",
+                            discriminator: "0000",
+                            avatar: null,
+                            bot: true,
+                            webhook: true
+                        };
+                    } else {
+                        author = {
+                            id: "1279218211430105088",
+                            username: "Deleted User",
+                            discriminator: "0000",
+                            avatar: null,
+                            premium: false,
+                            bot: false,
+                            flags: 0
+                        }
                     }
+                    
                 } else if (author && author.webhook && webhookRawId) {
-                    author.id = webhookRawId.split('_')[2];
-                    webhookRawId = null;
+                    author.id = webhookRawId.split('_')[2] || author.id;
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -2929,13 +2939,13 @@ const database = {
             }
 
             const finalMessages = [];
+
             for (const row of messageRows) {
                 let webhookRawId = null;
                 let isWebhook = false;
 
                 if (row.author_id.includes("WEBHOOK_")) {
                     webhookRawId = row.author_id;
-
                     row.author_id = row.author_id.split('_')[1];
                     isWebhook = true;
                 }
@@ -2943,18 +2953,28 @@ const database = {
                 let author = accountMap.get(row.author_id);
 
                 if (!author) {
-                    author = {
-                        id: "1279218211430105088",
-                        username: "Deleted User",
-                        discriminator: "0000",
-                        avatar: null,
-                        premium: false,
-                        bot: false,
-                        flags: 0
+                    if (isWebhook) {
+                        author = {
+                            id: row.author_id,
+                            username: "Deleted Webhook",
+                            discriminator: "0000",
+                            avatar: null,
+                            bot: true,
+                            webhook: true
+                        };
+                    } else {
+                        author = {
+                            id: "1279218211430105088",
+                            username: "Deleted User",
+                            discriminator: "0000",
+                            avatar: null,
+                            premium: false,
+                            bot: false,
+                            flags: 0
+                        }
                     }
                 } else if (author && author.webhook && webhookRawId) {
-                    author.id = webhookRawId.split('_')[2];
-                    webhookRawId = null;
+                    author.id = webhookRawId.split('_')[2] || author.id;
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
