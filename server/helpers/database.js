@@ -2242,6 +2242,13 @@ const database = {
                 return null;
             }
 
+            let isWebhook = false;
+
+            if (rows[0].author_id.includes("WEBHOOK_")) {
+                rows[0].author_id = rows[0].author_id.split('_')[1];
+                isWebhook = true;
+            }
+
             let author = await database.getAccountByUserId(rows[0].author_id);
 
             if (author == null) {
@@ -2318,7 +2325,8 @@ const database = {
                 reactions: reactionRet,
                 tts: rows[0].tts,
                 pinned: rows[0].pinned,
-                overrides: (!rows[0].overrides ? [] : JSON.parse(rows[0].overrides))
+                overrides: (!rows[0].overrides ? [] : JSON.parse(rows[0].overrides)),
+                ...(isWebhook && { webhook_id: rows[0].author_id })
             }
         } catch (error) {
             logText(error, "error");
@@ -2759,6 +2767,17 @@ const database = {
 
             const finalMessages = [];
             for (const row of messageRows) {
+                let webhookRawId = null;
+                let isWebhook = false;
+
+                if (row.author_id.includes("WEBHOOK_")) {
+                    webhookRawId = row.author_id;
+
+                    row.author_id = row.author_id.split('_')[1];
+
+                    isWebhook = true;
+                }
+
                 let author = accountMap.get(row.author_id);
 
                 if (!author) {
@@ -2771,6 +2790,9 @@ const database = {
                         bot: false,
                         flags: 0
                     }
+                } else if (author && author.webhook && webhookRawId) {
+                    author.id = webhookRawId.split('_')[2];
+                    webhookRawId = null;
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -2805,6 +2827,7 @@ const database = {
                     reactions: [], //Not used here either
                     tts: row.tts,
                     pinned: row.pinned,
+                    ...(isWebhook && { webhook_id: row.author_id })
                 };
 
                 finalMessages.push(message);
@@ -2908,11 +2931,13 @@ const database = {
             const finalMessages = [];
             for (const row of messageRows) {
                 let webhookRawId = null;
+                let isWebhook = false;
 
                 if (row.author_id.includes("WEBHOOK_")) {
                     webhookRawId = row.author_id;
 
                     row.author_id = row.author_id.split('_')[1];
+                    isWebhook = true;
                 }
 
                 let author = accountMap.get(row.author_id);
@@ -3004,7 +3029,8 @@ const database = {
                     reactions: finalReactions,
                     tts: row.tts,
                     pinned: row.pinned,
-                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides))
+                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides)),
+                    ...(isWebhook && { webhook_id: row.author_id })
                 };
 
                 finalMessages.push(message);
@@ -3275,6 +3301,16 @@ const database = {
             const messages = [];
 
             for (const row of messageRows) {
+                let webhookRawId = null;
+                let isWebhook = false;
+
+                if (row.author_id.includes("WEBHOOK_")) {
+                    webhookRawId = row.author_id;
+
+                    row.author_id = row.author_id.split('_')[1];
+                    isWebhook = true;
+                }
+
                 let author = accountMap.get(row.author_id);
 
                 if (!author) {
@@ -3287,6 +3323,9 @@ const database = {
                         bot: false,
                         flags: 0
                     }
+                } else if (author && author.webhook && webhookRawId) {
+                    author.id = webhookRawId.split('_')[2];
+                    webhookRawId = null;
                 }
 
                 const mentions_data = globalUtils.parseMentions(row.content);
@@ -3321,7 +3360,8 @@ const database = {
                     reactions: [], //We dont use reactions from here anyways
                     tts: row.tts,
                     pinned: row.pinned,
-                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides))
+                    overrides: (!row.overrides ? [] : JSON.parse(row.overrides)),
+                    ...(isWebhook && { webhook_id: row.author_id })
                 });
             }
 
@@ -5034,6 +5074,8 @@ const database = {
 
             //validate snowflakes
 
+            let isWebhook = false;
+
             if (author_id.startsWith("WEBHOOK_")) {
                 let webhookId = author_id.split('_')[1];
                 let webhook = await database.getWebhookById(webhookId);
@@ -5055,6 +5097,8 @@ const database = {
                     author.username = webhookOverride.username ?? webhook.name;
                     author.avatar = webhookOverride.avatar_url ?? null;
                 }
+
+                isWebhook = true;
             } else author = await database.getAccountByUserId(author_id);
 
             if (author == null) {
@@ -5124,6 +5168,10 @@ const database = {
             msg.mentions = mentions;
             msg.mention_everyone = mentions_data.mention_everyone;
             msg.mention_roles = mentions_data.mention_roles;
+
+            if (isWebhook) {
+                msg.webhook_id = author_id.split('_')[1];
+            }
 
             return msg;
         } catch (error) {
