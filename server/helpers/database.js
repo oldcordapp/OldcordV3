@@ -1836,7 +1836,7 @@ const database = {
     },
     updateConnectedAccount: async (connection_id, visibility, friendSync = true, integrations = [], revoked = false) => {
         try {
-            await database.runQuery(`UPDATE connected_accounts SET visibility = $1, friendSync = $2, integrations = $3, revoked = $4 WHERE account_id = $5`, [visibility == true ? 1 : 0, friendSync == true ? 1 : 0, JSON.stringify(integrations), revoked == true ? 1 : 0, connection_id]);
+            await database.runQuery(`UPDATE connected_accounts SET visibility = $1, friendSync = $2, integrations = $3, revoked = $4 WHERE account_id = $5`, [visibility, friendSync, JSON.stringify(integrations), revoked, connection_id]);
 
             return true;
         } catch (error) {
@@ -2482,7 +2482,7 @@ const database = {
                 }
             }
 
-            await database.runQuery(`UPDATE bots SET avatar = $1, username = $2, public = $3, require_code_grant = $4 WHERE id = $5`, [send_icon, bot.username, bot.public === true ? 1 : 0, bot.require_code_grant === true ? 1 : 0, bot.id]);
+            await database.runQuery(`UPDATE bots SET avatar = $1, username = $2, public = $3, require_code_grant = $4 WHERE id = $5`, [send_icon, bot.username, bot.public, bot.require_code_grant, bot.id]);
 
             bot.avatar = send_icon;
 
@@ -2703,7 +2703,7 @@ const database = {
             mentionConditions.push(`m.content LIKE '%<@${user_id}>%'`);
 
             if (include_everyone_mentions) {
-                mentionConditions.push(`m.mention_everyone = 1`);
+                mentionConditions.push(`m.mention_everyone = TRUE`);
             }
 
             query += `(${mentionConditions.join(' OR ')}) `;
@@ -3199,7 +3199,7 @@ const database = {
                 }
 
                 if (!includeNsfw) {
-                    clause += ` AND ch.nsfw = 0`;
+                    clause += ` AND ch.nsfw = FALSE`;
                 }
 
                 return { clause, params: p, nextIndex: pIndex };
@@ -4277,7 +4277,7 @@ const database = {
                 channel_id = null
             }
 
-            await database.runQuery(`UPDATE widgets SET channel_id = $1, enabled = $2 WHERE guild_id = $3`, [channel_id, enabled == true ? 1 : 0, guild_id]);
+            await database.runQuery(`UPDATE widgets SET channel_id = $1, enabled = $2 WHERE guild_id = $3`, [channel_id, enabled, guild_id]);
 
             return true;
         } catch (error) {
@@ -4582,7 +4582,7 @@ const database = {
             const date = new Date().toISOString();
 
             if (!force_regenerate) {
-                const existingInvites = await database.runQuery(`SELECT * FROM invites WHERE guild_id = $1 AND channel_id = $2 AND revoked = $3 AND inviter_id = $4 AND maxuses = $5 AND xkcdpass = $6 AND maxage = $7`, [guild.id, channel.id, temporary == true ? 1 : 0, inviter.id, maxUses, xkcdpass == true ? 1 : 0, maxAge]);
+                const existingInvites = await database.runQuery(`SELECT * FROM invites WHERE guild_id = $1 AND channel_id = $2 AND revoked = $3 AND inviter_id = $4 AND maxuses = $5 AND xkcdpass = $6 AND maxage = $7`, [guild.id, channel.id, temporary , inviter.id, maxUses, xkcdpass, maxAge]);
 
                 if (existingInvites && existingInvites.length > 0) {
                     const invite = await database.getInvite(existingInvites[0].code); //really work on reducing the amount of shit like this
@@ -4590,7 +4590,7 @@ const database = {
                 }
             }
 
-            await database.runQuery(`INSERT INTO invites (guild_id, channel_id, code, temporary, revoked, inviter_id, uses, maxuses, maxage, xkcdpass, createdat) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [guild.id, channel.id, code, temporary == true ? 1 : 0, 0, inviter.id, 0, maxUses, maxAge, xkcdpass == true ? 1 : 0, date]);
+            await database.runQuery(`INSERT INTO invites (guild_id, channel_id, code, temporary, revoked, inviter_id, uses, maxuses, maxage, xkcdpass, createdat) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [guild.id, channel.id, code, temporary, 0, inviter.id, 0, maxUses, maxAge, xkcdpass, date]);
 
             return {
                 code: code,
@@ -5086,7 +5086,7 @@ const database = {
                 author_id,
                 content,
                 null,
-                mentions_data.mention_everyone == true ? 1 : 0,
+                mentions_data.mention_everyone,
                 nonce,
                 date,
                 (tts ? 1 : 0),
