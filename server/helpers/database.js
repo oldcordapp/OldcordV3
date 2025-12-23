@@ -616,6 +616,48 @@ const database = {
             `, []);
             //#endregion
 
+            //#region Change INTEGER to BOOLEAN where deemed fit
+            let booleanMigrationStuff = [
+                { table: 'users', column: 'verified', default: false },
+                { table: 'users', column: 'claimed', default: true },
+                { table: 'users', column: 'mfa_enabled', default: false },
+                { table: 'users', column: 'premium', default: true },
+                { table: 'users', column: 'bot', default: false },
+                { table: 'connected_accounts', column: 'visibility', default: false },
+                { table: 'connected_accounts', column: 'friendSync', default: true },
+                { table: 'connected_accounts', column: 'revoked', default: false },
+                { table: 'channels', column: 'nsfw', default: false },
+                { table: 'bots', column: 'public', default: true },
+                { table: 'bots', column: 'require_code_grant', default: false },
+                { table: 'roles', column: 'hoist', default: false },
+                { table: 'roles', column: 'mentionable', default: false },
+                { table: 'members', column: 'deaf', default: false },
+                { table: 'members', column: 'mute', default: false },
+                { table: 'invites', column: 'temporary', default: false },
+                { table: 'invites', column: 'revoked', default: false },
+                { table: 'messages', column: 'mention_everyone', default: false },
+                { table: 'messages', column: 'tts', default: false },
+                { table: 'messages', column: 'pinned', default: false },
+                { table: 'widgets', column: 'enabled', default: false }
+            ];
+
+            for (let item of booleanMigrationStuff) {
+                let res = await database.runQuery(`SELECT data_type FROM information_schema.columns WHERE table_name = $1 AND column_name = $2;`, [item.table, item.column]);
+
+                if (res && res[0].data_type === 'integer') {
+                    try {
+                        await database.runQuery(`
+                            ALTER TABLE ${item.table} 
+                            ALTER COLUMN ${item.column} DROP DEFAULT,
+                            ALTER COLUMN ${item.column} TYPE BOOLEAN USING (${item.column}::integer::boolean),
+                            ALTER COLUMN ${item.column} SET DEFAULT ${item.default ? 'TRUE' : 'FALSE'};
+                        `, []);
+                    } catch (err) { }
+                }
+            }
+
+            //#endregion
+
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -862,8 +904,8 @@ const database = {
             const member = {
                 id: row.user_id_real,
                 nick: row.nick,
-                deaf: row.deaf == 1,
-                mute: row.mute == 1,
+                deaf: row.deaf,
+                mute: row.mute,
                 roles: JSON.parse(row.roles) ?? [],
                 joined_at: row.joined_at,
                 user: {
@@ -871,7 +913,7 @@ const database = {
                     discriminator: row.discriminator,
                     id: row.user_id_real,
                     avatar: row.avatar,
-                    bot: row.bot == 1,
+                    bot: row.bot,
                     flags: row.flags,
                     premium: true
                 }
@@ -914,7 +956,7 @@ const database = {
                     discriminator: row.discriminator,
                     id: row.user_id_real,
                     avatar: row.avatar,
-                    bot: row.bot == 1,
+                    bot: row.bot,
                     flags: row.flags,
                     premium: true
                 };
@@ -930,8 +972,8 @@ const database = {
                 const member = {
                     id: row.user_id_real,
                     nick: row.nick,
-                    deaf: row.deaf == 1,
-                    mute: row.mute == 1,
+                    deaf: row.deaf,
+                    mute: row.mute,
                     roles: member_roles,
                     joined_at: row.joined_at,
                     user: miniUser
@@ -1294,8 +1336,8 @@ const database = {
                 discriminator: rows[0].discriminator,
                 username: rows[0].username,
                 id: rows[0].id,
-                public: rows[0].public === 1,
-                require_code_grant: rows[0].require_code_grant === 1,
+                public: rows[0].public,
+                require_code_grant: rows[0].require_code_grant,
                 application: application
             }
         }
@@ -1697,7 +1739,7 @@ const database = {
             }
 
             return {
-                mfa_enabled: rows[0].mfa_enabled === 1,
+                mfa_enabled: rows[0].mfa_enabled,
                 mfa_secret: rows[0].mfa_secret
             };
         } catch (error) {
@@ -1721,7 +1763,7 @@ const database = {
             }
 
             return {
-                mfa_enabled: rows[0].mfa_enabled === 1,
+                mfa_enabled: rows[0].mfa_enabled,
                 mfa_secret: rows[0].mfa_secret
             };
         } catch (error) {
@@ -1745,7 +1787,7 @@ const database = {
             }
 
             return {
-                mfa_enabled: rows[0].mfa_enabled === 1,
+                mfa_enabled: rows[0].mfa_enabled,
                 mfa_secret: rows[0].mfa_secret
             };
         } catch (error) {
@@ -2268,14 +2310,14 @@ const database = {
                 attachments: messageAttachments,
                 embeds: rows[0].embeds == null ? [] : JSON.parse(rows[0].embeds),
                 mentions: mentions,
-                mention_everyone: rows[0].mention_everyone === 1,
+                mention_everyone: rows[0].mention_everyone,
                 mention_roles: mentions_data.mention_roles, //to-do: find way to check perms on this without slowing down db much
                 nonce: rows[0].nonce,
                 edited_timestamp: rows[0].edited_timestamp,
                 timestamp: rows[0].timestamp,
                 reactions: reactionRet,
-                tts: rows[0].tts == 1,
-                pinned: rows[0].pinned == 1,
+                tts: rows[0].tts,
+                pinned: rows[0].pinned,
                 overrides: (!rows[0].overrides ? [] : JSON.parse(rows[0].overrides))
             }
         } catch (error) {
@@ -2322,8 +2364,8 @@ const database = {
                 bot: true,
                 discriminator: rows[0].discriminator,
                 id: rows[0].id,
-                public: rows[0].public == 1,
-                require_code_grant: rows[0].require_code_grant == 1,
+                public: rows[0].public,
+                require_code_grant: rows[0].require_code_grant,
                 token: rows[0].token,
                 username: rows[0].username
             };
@@ -2606,8 +2648,8 @@ const database = {
                     discriminator: row.bot_discriminator,
                     username: row.bot_username,
                     id: row.bot_id,
-                    public: row.public === 1,
-                    require_code_grant: row.require_code_grant === 1,
+                    public: row.public,
+                    require_code_grant: row.require_code_grant,
                     application: {
                         id: row.id,
                         name: row.name,
@@ -2755,14 +2797,14 @@ const database = {
                     attachments: messageAttachments,
                     embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
                     mentions: mentions,
-                    mention_everyone: row.mention_everyone === 1,
+                    mention_everyone: row.mention_everyone,
                     mention_roles: mentions_data.mention_roles,
                     nonce: row.nonce,
                     edited_timestamp: row.edited_timestamp,
                     timestamp: row.timestamp,
                     reactions: [], //Not used here either
-                    tts: row.tts === 1,
-                    pinned: row.pinned === 1,
+                    tts: row.tts,
+                    pinned: row.pinned,
                 };
 
                 finalMessages.push(message);
@@ -2954,14 +2996,14 @@ const database = {
                     attachments: messageAttachments,
                     embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
                     mentions: mentions,
-                    mention_everyone: row.mention_everyone === 1,
+                    mention_everyone: row.mention_everyone,
                     mention_roles: mentions_data.mention_roles,
                     nonce: row.nonce,
                     edited_timestamp: row.edited_timestamp,
                     timestamp: row.timestamp,
                     reactions: finalReactions,
-                    tts: row.tts === 1,
-                    pinned: row.pinned === 1,
+                    tts: row.tts,
+                    pinned: row.pinned,
                     overrides: (!row.overrides ? [] : JSON.parse(row.overrides))
                 };
 
@@ -3271,14 +3313,14 @@ const database = {
                     attachments: messageAttachments,
                     embeds: row.embeds === null ? [] : JSON.parse(row.embeds),
                     mentions: mentions,
-                    mention_everyone: row.mention_everyone === 1,
+                    mention_everyone: row.mention_everyone,
                     mention_roles: mentions_data.mention_roles,
                     nonce: row.nonce,
                     edited_timestamp: row.edited_timestamp,
                     timestamp: row.timestamp,
                     reactions: [], //We dont use reactions from here anyways
-                    tts: row.tts === 1,
-                    pinned: row.pinned === 1,
+                    tts: row.tts,
+                    pinned: row.pinned,
                     overrides: (!row.overrides ? [] : JSON.parse(row.overrides))
                 });
             }
@@ -3390,7 +3432,7 @@ const database = {
                 ...(parseInt(row.type) === 0 && {
                     topic: row.topic,
                     rate_limit_per_user: row.rate_limit_per_user,
-                    nsfw: row.nsfw == 1 ?? false,
+                    nsfw: row.nsfw ?? false,
                     last_message_id: row.last_message_id,
                 }),
                 ...(parseInt(row.type) === 2 && {
@@ -3454,8 +3496,8 @@ const database = {
                         permissions: row.permissions,
                         position: row.position,
                         color: row.color,
-                        hoist: row.hoist == 1,
-                        mentionable: row.mentionable == 1
+                        hoist: row.hoist,
+                        mentionable: row.mentionable
                     });
                 }
             }
@@ -3495,8 +3537,8 @@ const database = {
                     membersByGuild.get(guildId).push({
                         id: user.id,
                         nick: row.nick,
-                        deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
-                        mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
+                        deaf: row.deaf,
+                        mute: row.mute,
                         roles: member_roles,
                         joined_at: row.joined_at,
                         user: globalUtils.miniUserObject(user)
@@ -3569,7 +3611,7 @@ const database = {
                         ...(parseInt(row.type) === 0 && {
                             topic: row.topic,
                             rate_limit_per_user: row.rate_limit_per_user,
-                            nsfw: row.nsfw == 1 ?? false,
+                            nsfw: row.nsfw ?? false,
                             last_message_id: row.last_message_id,
                         }),
                         ...(parseInt(row.type) === 2 && {
@@ -3719,8 +3761,8 @@ const database = {
                         permissions: row.permissions,
                         position: row.position,
                         color: row.color,
-                        hoist: row.hoist == 1,
-                        mentionable: row.mentionable == 1
+                        hoist: row.hoist,
+                        mentionable: row.mentionable
                     });
                 }
             }
@@ -3755,8 +3797,8 @@ const database = {
                     members.push({
                         id: user.id,
                         nick: row.nick,
-                        deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
-                        mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
+                        deaf: row.deaf,
+                        mute: row.mute,
                         roles: member_roles,
                         joined_at: row.joined_at,
                         user: globalUtils.miniUserObject(user)
@@ -3829,7 +3871,7 @@ const database = {
                         ...(parseInt(row.type) === 0 && {
                             topic: row.topic,
                             rate_limit_per_user: row.rate_limit_per_user,
-                            nsfw: row.nsfw == 1 ?? false,
+                            nsfw: row.nsfw ?? false,
                             last_message_id: row.last_message_id,
                         }),
                         ...(parseInt(row.type) === 2 && {
@@ -3963,8 +4005,8 @@ const database = {
                         permissions: row.permissions,
                         position: row.position,
                         color: row.color,
-                        hoist: row.hoist == 1,
-                        mentionable: row.mentionable == 1
+                        hoist: row.hoist,
+                        mentionable: row.mentionable
                     });
                 }
             }
@@ -4004,8 +4046,8 @@ const database = {
                     membersByGuild.get(guildId).push({
                         id: user.id,
                         nick: row.nick,
-                        deaf: ((row.deaf == 'TRUE' || row.deaf == 1) ? true : false),
-                        mute: ((row.mute == 'TRUE' || row.mute == 1) ? true : false),
+                        deaf: row.defaf,
+                        mute: row.mute,
                         roles: member_roles,
                         joined_at: row.joined_at,
                         user: globalUtils.miniUserObject(user)
@@ -4078,7 +4120,7 @@ const database = {
                         ...(parseInt(row.type) === 0 && {
                             topic: row.topic,
                             rate_limit_per_user: row.rate_limit_per_user,
-                            nsfw: row.nsfw == 1 ?? false,
+                            nsfw: row.nsfw ?? false,
                             last_message_id: row.last_message_id,
                         }),
                         ...(parseInt(row.type) === 2 && {
@@ -4254,7 +4296,7 @@ const database = {
 
             return {
                 channel_id: rows[0].channel_id,
-                enabled: rows[0].enabled == 1,
+                enabled: rows[0].enabled,
             }
         } catch (error) {
             logText(error, "error");
@@ -4285,32 +4327,13 @@ const database = {
         try {
             //To-do: something with with_counts going forward
             //The long SQL query of DOOM. (Gemini did help with this, I'm not going to take all credit here - I fucking hate SQL - Using joins always confuses the fuck out of me since I never seem to remember the order in which you do it
-            const rows = await database.runQuery(`SELECT i.code, i.temporary, i.revoked, i.maxage, i.maxuses, i.uses, i.createdat, u.id AS inviter_id, u.username, u.discriminator, u.avatar, g.id AS guild_id, g.name AS guild_name, g.icon AS guild_icon, g.splash AS guild_splash, g.owner_id, g.verification_level, g.features, c.id AS channel_id, c.name AS channel_name, c.type AS channel_type FROM (SELECT code, inviter_id, guild_id, channel_id, temporary, revoked, maxage, maxuses, uses, createdat FROM invites WHERE code = $1 UNION ALL SELECT vanity_url AS code, NULL as inviter_id, id as guild_id, NULL as channel_id, 0, 0, 0, 0, 0, creation_date FROM guilds WHERE vanity_url = $1 AND NOT EXISTS (SELECT 1 FROM invites WHERE code = $1)) i LEFT JOIN users u ON i.inviter_id = u.id INNER JOIN guilds g ON i.guild_id = g.id INNER JOIN channels c ON c.id = COALESCE(i.channel_id, (SELECT id FROM channels WHERE guild_id = g.id AND type = 0 ORDER BY position ASC LIMIT 1)) LIMIT 1`, [code]);
+            const rows = await database.runQuery(`SELECT i.code, i.temporary, i.revoked, i.maxage, i.maxuses, i.uses, i.createdat, u.id AS inviter_id, u.username, u.discriminator, u.avatar, g.id AS guild_id, g.name AS guild_name, g.icon AS guild_icon, g.splash AS guild_splash, g.owner_id, g.verification_level, g.features, c.id AS channel_id, c.name AS channel_name, c.type AS channel_type FROM (SELECT code, inviter_id, guild_id, channel_id, temporary, revoked, maxage, maxuses, uses, createdat FROM invites WHERE code = $1 UNION ALL SELECT vanity_url AS code, NULL as inviter_id, id as guild_id, NULL as channel_id, FALSE, FALSE, 0, 0, 0, creation_date FROM guilds WHERE vanity_url = $1 AND NOT EXISTS (SELECT 1 FROM invites WHERE code = $1)) i LEFT JOIN users u ON i.inviter_id = u.id INNER JOIN guilds g ON i.guild_id = g.id INNER JOIN channels c ON c.id = COALESCE(i.channel_id, (SELECT id FROM channels WHERE guild_id = g.id AND type = 0 ORDER BY position ASC LIMIT 1)) LIMIT 1`, [code]);
 
             if (rows == null || rows.length == 0) {
                 return null;
             }
 
             const data = rows[0];
-
-            /*
-            const guildRoles = [];
-            const rolesRows = await database.runQuery(`SELECT role_id AS id, name, permissions, position, color, hoist, mentionable FROM roles WHERE guild_id = $1`, [data.guild_id]);
-
-            if (rolesRows && rolesRows.length > 0) {
-                for(const row of rolesRows) {
-                    guildRoles.push({
-                        id: row.id,
-                        name: row.name,
-                        permissions: row.permissions,
-                        position: row.position,
-                        color: row.color,
-                        hoist: row.hoist === 1,
-                        mentionable: row.mentionable === 1
-                    })
-                }
-            }
-            */
 
             let expiration_date = null;
             

@@ -518,11 +518,11 @@ const globalUtils = {
             email: rows[0].email,
             password: rows[0].password,
             token: rows[0].token,
-            verified: rows[0].verified == 1,
-            mfa_enabled: rows[0].mfa_enabled == 1, //MFA_SMS is another flag in of itself, not looking forward to implementing that.
+            verified: rows[0].verified,
+            mfa_enabled: rows[0].mfa_enabled, //MFA_SMS is another flag in of itself, not looking forward to implementing that.
             premium: true,
             flags: rows[0].flags ?? 0,
-            bot: rows[0].bot == 1,
+            bot: rows[0].bot,
             created_at: rows[0].created_at,
             relationships: relationships,
             settings: JSON.parse(rows[0].settings),
@@ -767,7 +767,7 @@ const globalUtils = {
             username: user.username,
             discriminator: user.discriminator,
             id: user.id,
-            avatar: user.avatar, //just in case
+            avatar: user.avatar,
             bot: user.bot,
             flags: user.flags,
             premium: user.premium || true
