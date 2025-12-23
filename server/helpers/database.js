@@ -2952,8 +2952,6 @@ const database = {
                             webhook: true 
                         };
                     }
-
-                    console.log(author);
                 } else {
                     author = accountMap.get(row.author_id) || { 
                         id: "1279218211430105088", 
