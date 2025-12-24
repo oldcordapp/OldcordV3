@@ -181,7 +181,7 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
 
                 if (response.ok) {
                     const contentType = response.headers.get('content-type');
-                    const extension = contentType.split('/')[1]; // 'png', 'jpeg', etc.
+                    let extension = contentType.split('/')[1]; // 'png', 'jpeg', etc.
             
                     var name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
                     var name_hash = md5(name);
@@ -194,9 +194,9 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
                         fs.mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
                     }
     
-                    const buffer = await response.arrayBuffer();
+                    const arrayBuffer = await response.arrayBuffer();
 
-                    await fs.promises.writeFile(`./www_dynamic/avatars/${webhook.id}/${name_hash}.${extension}`, buffer);
+                    await fs.promises.writeFile(`./www_dynamic/avatars/${webhook.id}/${name_hash}.${extension}`, Buffer.from(arrayBuffer));
         
                     override.avatar_url = name_hash;
                 }
@@ -241,7 +241,7 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
             }
         }
 
-        let createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id, req.body.content, req.body.nonce, null, req.body.tts, false, null, embeds, webhook);
+        let createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, create_override ? `WEBHOOK_${webhook.id}_${override_id}` : `WEBHOOK_${webhook.id}`, req.body.content, req.body.nonce, null, req.body.tts, false, null, embeds, webhook);
 
         if (!createMessage) {
             return res.status(500).json({
@@ -356,7 +356,7 @@ router.post("/:webhookid/:webhooktoken/github", async (req, res) => {
             }]
         }
 
-        const createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id, req.body.content, req.body.nonce, null, req.body.tts, false, embeds);
+        const createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id + "_" + override_id, req.body.content, req.body.nonce, null, req.body.tts, false, embeds);
 
         if (!createMessage) {
             return res.status(500).json({

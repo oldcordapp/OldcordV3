@@ -208,24 +208,29 @@ async function assetsMiddleware(req, res) {
                 return res.status(404).send("File not found");
             }
 
-            let bodyText = await r.text();
+            const arrayBuffer = await r.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
 
             if (bucket !== null) {
-                let path = `${config.gcs_config.gcStorageFolder}/${req.params.asset}`;
+                let cloudPath = `${config.gcs_config.gcStorageFolder}/${req.params.asset}`;
 
-                const cloudFile = bucket.file(path);
+                const cloudFile = bucket.file(cloudPath);
 
-                await cloudFile.save(bodyText, { contentType: r.headers.get("content-type") });
+                await cloudFile.save(buffer, { contentType: r.headers.get("content-type") });
 
                 logText(`[LOG] Uploaded ${req.params.asset} to Google Cloud Storage successfully.`, 'debug');
             }
 
-            fs.writeFileSync(filePath, bodyText);
+            if (!fs.existsSync("./www_dynamic/assets")) {
+                fs.mkdirSync("./www_dynamic/assets", { recursive: true });
+            }
+
+            fs.writeFileSync(filePath, buffer);
 
             logText(`[LOG] Saved ${req.params.asset} from ${snapshot_url} successfully.`, 'debug');
 
             res.writeHead(r.status, { "Content-Type": r.headers.get("content-type") });
-            res.status(r.status).end(bodyText);
+            res.end(buffer);
         }
 
         await handleRequest(doWayback);
