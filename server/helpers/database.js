@@ -2950,7 +2950,7 @@ const database = {
                             avatar: null, 
                             bot: true, 
                             webhook: true 
-                        };
+                        }; //Should we check for this?
                     }
                 } else {
                     author = accountMap.get(row.author_id) || { 
