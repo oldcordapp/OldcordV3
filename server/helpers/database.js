@@ -2273,7 +2273,7 @@ const database = {
                     };
                 }
             } else {
-                author = await database.getAccountByUserId(row.author_id) || {
+                author = await database.getAccountByUserId(rows[0].author_id) || {
                     id: "1279218211430105088",
                     username: "Deleted User",
                     discriminator: "0000",
