@@ -5,8 +5,7 @@ import { Config } from "./config.js";
 export class ResourceLoader {
   constructor() {
     this.patchedUrls = new Map();
-    this.chunkRegex =
-      /[{,]\s*(?:"|')?(\d+)(?:"|')?\s*:\s*(?:"|')([0-9a-f]{20,})(?:"|')/g;
+    this.chunkRegex = /[{,]\s*(?:"|')?(\d+)(?:"|')?\s*:\s*(?:"|')([0-9a-zA-Z._-]{10,})(?:"|')/g;
     this.onChunkProgress = null;
   }
 
@@ -168,8 +167,12 @@ export class ResourceLoader {
       element.setAttribute("src", cached.blob);
       return cached.blob;
     } else {
-      element.setAttribute("src", "https://missing.discord.b3BlcmF0");
-      return "https://missing.discord.b3BlcmF0";
+      utils.loadLog(`Intercepted un-cached chunk: ${normalizedUrl}`, "warning");
+      this.loadScript(normalizedUrl); 
+      let fallback = `${Config.cdn_url}${normalizedUrl}`;
+
+      element.setAttribute("src", fallback);
+      return fallback;
     }
   }
 

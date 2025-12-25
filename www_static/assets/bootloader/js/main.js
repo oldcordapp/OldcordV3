@@ -321,6 +321,11 @@ class Bootloader {
 
         const elem = node;
 
+        if (elem.hasAttribute('integrity')) {
+          elem.removeAttribute('integrity');
+        }
+
+
         if (elem.tagName === 'SCRIPT' && !elem.hasAttribute('src')) {
           const newScript = document.createElement('script');
           
@@ -463,7 +468,7 @@ class Bootloader {
           const attrValue = value ? value.replace(/['"]/g, "") : "";
 
           if (name.toLowerCase() === "integrity") return;
-          
+
           newScript.setAttribute(name, name === "src" ? blobUrl : attrValue);
         });
 
