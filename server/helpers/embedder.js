@@ -46,28 +46,26 @@ const embedder = {
                 }
             }
 
-            let should_embed = false;
             let text = await content.text();
             let $ = cheerio.load(text);
-            let title = $('title').text();
-            let description = $('meta[name="description"]').attr('content') ?? '';
-            let color = $('meta[name="theme-color"]').attr('content') ? hexToDecimal($('meta[name="theme-color"]').attr('content')) : 7506394;
+            let description = $('meta[name="description"]').attr('content');
+            let themeColor = $('meta[name="theme-color"]').attr('content');
             let ogTitle = $('meta[property="og:title"]').attr('content');
-            let twitterImage = $('meta[property="twitter:image"]').attr('content');
-
             let ogImage = $('meta[property="og:image"]').attr('content');
+            let twitterImage = $('meta[property="twitter:image"]').attr('content');
 
             if (!ogImage && twitterImage) {
                 ogImage = twitterImage;
             }
 
-            if (description || color || ogTitle || ogImage) {
-                should_embed = true;
+            let should_embed = !!(description || themeColor || ogTitle || ogImage);
+
+            if (!should_embed) {
+                return null;
             }
 
-            if (should_embed && ogTitle) {
-                title = ogTitle;
-            }
+            let color = themeColor ? hexToDecimal(themeColor) : 7506394;
+            let title = ogTitle || $('title').text() || "";
 
             let embedObj = {
                 color: color,
@@ -76,7 +74,9 @@ const embedder = {
             }
 
             if (ogImage) {
-                fetch2 = await fetch(ogImage, {
+                let full_img = new URL(ogImage, url).href;
+
+                fetch2 = await fetch(full_img, {
                     headers: {
                         'User-Agent': 'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)'
                     }
@@ -98,11 +98,13 @@ const embedder = {
             }
 
             if (ogImage && image_data) {
+                let full_img = new URL(ogImage, url).href;
+
                 embedObj.image = {
-                    url: ogImage,
+                    url: full_img,
                     width: image_data.bitmap.width ?? 400,
                     height: image_data.bitmap.height ?? 400
-                }
+                };
             }
 
             return should_embed ? embedObj : null;
@@ -212,7 +214,7 @@ const embedder = {
                 embed = await embedder.embedYouTube(url);
             }
 
-            if ((global.config.custom_invite_url != "" && url.includes(global.config.custom_invite_url)) || url.includes("oldcord.us") || url.includes("/invite/")) {
+            if ((global.config.custom_invite_url != "" && url.includes(global.config.custom_invite_url)) || url.includes("/invite/") || url.includes("/gifts/")) {
                 continue;
             }
 
