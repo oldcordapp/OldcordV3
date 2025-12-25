@@ -16,7 +16,7 @@ export const Config = {
         WIDGET_ENDPOINT: "",
         INVITE_HOST: config.custom_invite_url,
         GUILD_TEMPLATE_HOST: location.host,
-        GIFT_CODE_HOST: location.host,
+        GIFT_CODE_HOST: `${location.host}/gifts`,
         RELEASE_CHANNEL: "staging",
         MARKETING_ENDPOINT: "",
         BRAINTREE_KEY: "",

@@ -119,7 +119,7 @@ app.use("/guilds", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), guilds);
 app.use("/channels", channels);
 app.use("/entitlements", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), entitlements);
 app.use("/activities", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), activities);
-app.use("/invite", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), invites);
+app.use(["/invite", "/invites"], instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), invites);
 app.use("/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), webhooks);
 app.use("/oauth2", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), oauth2);
 app.use("/store", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), store);
