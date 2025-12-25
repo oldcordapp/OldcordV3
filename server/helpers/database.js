@@ -279,7 +279,7 @@ const database = {
                 uses INTEGER DEFAULT 0,
                 maxUses INTEGER DEFAULT 0,
                 maxAge INTEGER DEFAULT 0,
-                xkcdpass INTEGER DEFAULT 0,
+                xkcdpass BOOLEAN DEFAULT FALSE,
                 createdAt TEXT
            );`, []);
 
@@ -635,6 +635,7 @@ const database = {
                 { table: 'members', column: 'mute', default: false },
                 { table: 'invites', column: 'temporary', default: false },
                 { table: 'invites', column: 'revoked', default: false },
+                { table: 'invites', column: 'xkcdpass', default: false },
                 { table: 'messages', column: 'mention_everyone', default: false },
                 { table: 'messages', column: 'tts', default: false },
                 { table: 'messages', column: 'pinned', default: false },
@@ -2116,8 +2117,8 @@ const database = {
         try {
             let type = parseInt(channel.type);
 
-            //text, voice, category
-            if ([0, 2, 4].includes(type)) {
+            //text, voice, category, news
+            if ([0, 2, 4, 5].includes(type)) {
                 let queryFields = ["name = $1", "parent_id = $2", "position = $3", "permission_overwrites = $4"];
                 let params = [
                     channel.name,
@@ -4231,6 +4232,8 @@ const database = {
                     audit_logs: audit_logs,
                     // v9 responses
                     premium_tier: 3,
+                    premium_subscription_count: 50, //placeholder for now
+                    premium_progress_bar_enabled: true,
                     stickers: [],
                     threads: []
                 });
