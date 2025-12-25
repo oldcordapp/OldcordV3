@@ -461,6 +461,9 @@ class Bootloader {
         originalAttrs.forEach((attr) => {
           const [name, value] = attr.trim().split("=");
           const attrValue = value ? value.replace(/['"]/g, "") : "";
+
+          if (name.toLowerCase() === "integrity") return;
+          
           newScript.setAttribute(name, name === "src" ? blobUrl : attrValue);
         });
 
