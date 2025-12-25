@@ -85,7 +85,22 @@ router.post("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), a
 
         await global.dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
             guild_id: guild.id,
-            emojis: currentEmojis
+            emojis: currentEmojis,
+            guild_hashes: {
+                version: 1,
+                roles: {
+                    hash: "placeholder",
+                    omitted: false
+                },
+                metadata: {
+                    hash: "placeholder2",
+                    omitted: false
+                },
+                channels: {
+                    hash: "placeholder3",
+                    omitted: false
+                }
+            }
         });
 
         return res.status(201).json({
@@ -155,7 +170,22 @@ router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJ
 
         await global.dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
             guild_id: guild.id,
-            emojis: currentEmojis
+            emojis: currentEmojis,
+            guild_hashes: {
+                version: 1,
+                roles: {
+                    hash: "placeholder",
+                    omitted: false
+                },
+                metadata: {
+                    hash: "placeholder2",
+                    omitted: false
+                },
+                channels: {
+                    hash: "placeholder3",
+                    omitted: false
+                }
+            }
         });
 
         return res.status(204).send();
@@ -202,7 +232,22 @@ router.delete("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMO
 
         await global.dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
             guild_id: guild.id,
-            emojis: currentEmojis
+            emojis: currentEmojis,
+            guild_hashes: {
+                version: 1,
+                roles: {
+                    hash: "placeholder",
+                    omitted: false
+                },
+                metadata: {
+                    hash: "placeholder2",
+                    omitted: false
+                },
+                channels: {
+                    hash: "placeholder3",
+                    omitted: false
+                }
+            }
         });
 
         return res.status(204).send();
