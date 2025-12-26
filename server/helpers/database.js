@@ -197,6 +197,15 @@ const database = {
                 note TEXT DEFAULT NULL
             );`, []);
 
+            //never doing user -> nitro subscriptions, so this needs to be clarified.
+            await database.runQuery(`
+            CREATE TABLE IF NOT EXISTS guild_subscriptions (
+                guild_id TEXT,
+                user_id TEXT,
+                subscription_id TEXT,
+                ended BOOLEAN DEFAULT FALSE
+            );`, []);
+
             await database.runQuery(`
             CREATE TABLE IF NOT EXISTS dm_channels (
                 id TEXT,
@@ -276,7 +285,10 @@ const database = {
                 vanity_url TEXT DEFAULT NULL,
                 default_message_notifications INTEGER DEFAULT 0,
                 verification_level INTEGER DEFAULT 0,
-                explicit_content_filter INTEGER DEFAULT 0
+                explicit_content_filter INTEGER DEFAULT 0,
+                premium_tier INTEGER DEFAULT 0,
+                premium_subscription_count INTEGER DEFAULT 0,
+                premium_progress_bar_enabled BOOLEAN DEFAULT FALSE
            );`, []);
 
             await database.runQuery(`
@@ -489,6 +501,14 @@ const database = {
                 `, []);
 
                 await database.runQuery(`DROP TABLE acknowledgements_old`, []);
+            }
+
+            let premium_tier_exists = await database.doescolumnExist("premium_tier", "guilds");
+
+            if (!premium_tier_exists) {
+                await database.runQuery(`ALTER TABLE guilds ADD COLUMN premium_tier INTEGER DEFAULT 0`);
+                await database.runQuery(`ALTER TABLE guilds ADD COLUMN premium_subscription_count INTEGER DEFAULT 0`);
+                await database.runQuery(`ALTER TABLE guilds ADD COLUMN premium_progress_bar_enabled BOOLEAN DEFAULT FALSE`);
             }
 
             //#region Change 'NULL' to NULL defaults
@@ -851,6 +871,190 @@ const database = {
             return ret;
         }
         catch (error) {
+            logText(error, "error");
+            return [];
+        }
+    },
+    getUserSubscriptions: async(user_id) => {
+        try {
+            let query = `SELECT * FROM guild_subscriptions WHERE user_id = $1`;
+            let params = [user_id];
+
+            let rows = await database.runQuery(query, params);
+
+            if (rows === null || rows.length === 0) {
+                return [];
+            }
+
+            let ret = [];
+
+            for (var row of rows) {
+                ret.push({
+                    guild_id: row.guild_id,
+                    user_id: user_id,
+                    id: row.subscription_id,
+                    ended: row.ended
+                });
+            }
+
+            return ret;
+        } catch (error) {
+            logText(error, "error");
+            return [];
+        }
+    },
+    getSubscription: async (subscription_id) => {
+        try {
+            let rows = await database.runQuery(`SELECT * FROM guild_subscriptions WHERE subscription_id = $1`, [subscription_id]);
+
+            if (rows === null || rows.length === 0) {
+                return null;
+            }
+
+            return {
+                id: rows[0].subscription_id,
+                guild_id: rows[0].guild_id,
+                user_id: rows[0].user_id,
+                ended: rows[0].ended
+            }
+        } catch (error) {
+            logText(error, "error");
+            return null;
+        }
+    },
+    removeSubscription: async (subscription) => {
+        try {
+            let guild = await database.getGuildById(subscription.guild_id);
+
+            if (!guild) {
+                return false;
+            }
+
+            await database.runQuery(`DELETE FROM guild_subscriptions WHERE subscription_id = $1`, [subscription.id]);
+
+            let new_sub_count = guild.premium_subscription_count - 1;
+            let new_level = guild.premium_tier;
+            let boostFeatures = ["ANIMATED_ICON", "INVITE_SPLASH", "BANNER", "VANITY_URL"];
+            let baseFeatures = (guild.features || []).filter(f => !boostFeatures.includes(f));
+
+            let earnedFeatures = [];
+
+            if (new_sub_count >= 20 && new_level != 3) { //50 for august 2019 - 20 for september, odd
+                new_level = 3;
+                earnedFeatures = ["ANIMATED_ICON", "INVITE_SPLASH", "BANNER", "VANITY_URL"];
+            } else if (new_sub_count >= 10 && new_level != 2) {
+                new_level = 2;
+                earnedFeatures = ["ANIMATED_ICON", "INVITE_SPLASH", "BANNER"];
+            } else if (new_sub_count >= 2 && new_level != 1) {
+                new_level = 1;
+                earnedFeatures = ["ANIMATED_ICON", "INVITE_SPLASH"];
+            }
+
+            const finalFeatures = [...new Set([...baseFeatures, ...earnedFeatures])];
+
+            guild.premium_subscription_count = new_sub_count;
+            guild.premium_tier = new_level;
+            guild.features = finalFeatures;
+
+            await database.runQuery(
+                `UPDATE guilds SET premium_subscription_count = $1, premium_tier = $2, features = $3 WHERE id = $4`, 
+                [new_sub_count, new_level, JSON.stringify(finalFeatures), guild.id]
+            );
+
+            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_UPDATE", guild);
+            
+            return true;
+        } catch (error) {
+            logText(error, "error");
+            return false;
+        }
+    },
+    createGuildSubscription: async (user, guild) => {
+        try {
+            let subscription_id = Snowflake.generate();
+
+            await database.runQuery(`INSERT INTO guild_subscriptions (guild_id, user_id, subscription_id, ended) VALUES ($1, $2, $3, $4)`, [guild.id, user.id, subscription_id, false]);
+
+            let new_sub_count = guild.premium_subscription_count + 1;
+            let new_level = guild.premium_tier;
+            let msg_type = 8;
+            let new_features = guild.features;
+
+            const addFeatures = (newFeats) => {
+                newFeats.forEach(f => {
+                    if (!new_features.includes(f)) {
+                        new_features.push(f);
+                    }
+                });
+            };
+
+            if (new_sub_count >= 2 && new_sub_count < 10 && new_level != 1) {
+                new_level = 1;
+                msg_type = 9;
+
+                addFeatures(["ANIMATED_ICON", "INVITE_SPLASH"]);
+            } else if (new_sub_count >= 10 && new_sub_count < 20 && new_level != 2) {
+                new_level = 2;
+                msg_type = 10;
+
+                addFeatures(["ANIMATED_ICON", "INVITE_SPLASH", "BANNER", "NEWS"]); 
+            } else if (new_sub_count >= 20 && new_level != 3) { //50 for august 2019 - 20 for september, odd
+                new_level = 3;
+                msg_type = 11;
+
+                addFeatures(["ANIMATED_ICON", "INVITE_SPLASH", "BANNER", "NEWS", "VANITY_URL"]);
+            }
+
+            guild.premium_subscription_count = new_sub_count;
+            guild.premium_tier = new_level;
+            guild.features = new_features;
+
+            await database.runQuery(
+                `UPDATE guilds SET premium_subscription_count = $1, premium_tier = $2, features = $3 WHERE id = $4`, 
+                [new_sub_count, new_level, JSON.stringify(new_features), guild.id]
+            );
+
+            let system_msg = await global.database.createSystemMessage(guild, guild.system_channel_id, msg_type, [user]);
+
+            await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", system_msg); //funny we're doing it here
+            
+            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_UPDATE", guild);
+
+            return {
+                id: subscription_id,
+                guild_id: guild.id,
+                user_id: user.id,
+                ended: false
+            }
+        } catch (error) {
+            logText(error, "error");
+            return [];
+        }
+    },
+    getGuildSubscriptions: async(guild) => {
+        try {
+            let rows = await database.runQuery(`SELECT * FROM guild_subscriptions WHERE guild_id = $1`, [guild.id]);
+
+            if (rows === null || rows.length === 0) {
+                return [];
+            }
+
+            let ret = [];
+
+            for (var row of rows) {
+                let member = guild.members.find(x => x.id === row.user_id).user;
+
+                ret.push({
+                    guild_id: guild.id,
+                    user_id: row.user_id,
+                    id: row.subscription_id,
+                    user: member,
+                    ended: row.ended
+                });
+            }
+
+            return ret;
+        } catch (error) {
             logText(error, "error");
             return [];
         }
@@ -3873,7 +4077,10 @@ const database = {
                 verification_level: guildRow.verification_level ?? 0,
                 explicit_content_filter: guildRow.explicit_content_filter ?? 0,
                 system_channel_id: guildRow.system_channel_id,
-                audit_logs: audit_logs
+                audit_logs: audit_logs,
+                premium_tier: guildRow.premium_tier,
+                premium_subscription_count: guildRow.premium_subscription_count,
+                premium_progress_bar_enabled: guildRow.premium_progress_bar_enabled
             }
         } catch (error) {
             logText(error, "error");
@@ -4148,9 +4355,9 @@ const database = {
                     system_channel_id: guildRow.system_channel_id,
                     audit_logs: audit_logs,
                     // v9 responses
-                    premium_tier: 3,
-                    premium_subscription_count: 50, //placeholder for now
-                    premium_progress_bar_enabled: true,
+                    premium_tier: guildRow.premium_tier,
+                    premium_subscription_count: guildRow.premium_subscription_count,
+                    premium_progress_bar_enabled: guildRow.premium_progress_bar_enabled,
                     stickers: [],
                     threads: []
                 });

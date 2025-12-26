@@ -19,6 +19,12 @@ router.param('guildid', async (req, _, next, guildid) => {
     next();
 });
 
+router.param('subscriptionid', async (req, _, next, subscriptionid) => {
+    req.subscription = await global.database.getSubscription(subscriptionid);
+
+    next();
+});
+
 router.get("/:guildid", guildMiddleware, quickcache.cacheFor(60 * 10, true), async (req, res) => {
     return res.status(200).json(req.guild);
 });
@@ -375,34 +381,47 @@ router.post("/:guildid/prune", guildMiddleware, guildPermissionsMiddleware("MANA
     return res.status(204).send();
 });
 
-router.put("/:guildid/premium/subscriptions", guildMiddleware, async (req, res) => {
-  return res.status(200).json({
-    id: Snowflake.generate(),
-    guild_id: req.params.guildid,
-    user_id: req.account.id,
-    ended: false,
-    premium_since: new Date().toISOString()
-  })
-});
+router.put("/:guildid/premium/subscriptions", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.subscriptions.maxPerTimeFrame, global.config.ratelimit_config.subscriptions.timeFrame), Watchdog.middleware(global.config.ratelimit_config.subscriptions.maxPerTimeFrame, global.config.ratelimit_config.subscriptions.timeFrame, 1), async (req, res) => {
+    let tryBoostServer = await global.database.createGuildSubscription(req.account, req.guild);
 
-router.get("/:guildid/premium/subscriptions", guildMiddleware, async (req, res) => {
-    let fake_amount = 50;
-    let ret = [];
-    let day = new Date().toISOString();
-
-    for(var x = 0; x < fake_amount; x++) {
-        ret.push({
-            id: Snowflake.generate(),
-            guild_id: req.params.guildid,
-            user_id: req.account.id,
-            ended: false,
-            premium_since: day
-        })
+    if (!tryBoostServer) {
+        return res.status(400).json({
+            code: 404,
+            message: "Failed to boost. Please try again." //find the actual fail msg??
+        });
     }
 
-  return res.status(200).json(ret);
+    return res.status(200).json(tryBoostServer);
 });
 
+router.delete("/:guildid/premium/subscriptions/:subscriptionid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.subscriptions.maxPerTimeFrame, global.config.ratelimit_config.subscriptions.timeFrame), Watchdog.middleware(global.config.ratelimit_config.subscriptions.maxPerTimeFrame, global.config.ratelimit_config.subscriptions.timeFrame, 1), async (req, res) => {
+    try {
+        if (!req.subscription) {
+            return res.status(404).json({
+                code: 404,
+                message: "Unknown Subscription"
+            })
+        }
+
+        await global.database.removeSubscription(req.subscription);
+
+        return res.status(204).send();
+    }
+    catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            code: 500,
+            message: "Internal Server Error"
+        })
+    }
+});
+
+router.get("/:guildid/premium/subscriptions", guildMiddleware, quickcache.cacheFor(60 * 5, true), async (req, res) => {
+  let guild_subscriptions = await global.database.getGuildSubscriptions(req.guild);
+
+  return res.status(200).json(guild_subscriptions);
+});
 
 router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30, true), async (req, res) => {
     try {

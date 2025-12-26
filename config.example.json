@@ -19,6 +19,7 @@
     "auto_embed_urls" : false,
     "mfa_required_for_admin" : false,
     "tenor_api_key": "",
+    "infinite_boosts" : true,
     "mr_server": {
         "enabled" : false,
         "port" : 4444,
@@ -135,6 +136,11 @@
         "deep_mode" : false,
         "registration" : {
             "maxPerTimeFrame" : 50,
+            "timeFrame" : 3600000,
+            "breakdown" : "1000 * 60 * 60"
+        },
+        "subscriptions": {
+            "maxPerTimeFrame" : 100,
             "timeFrame" : 3600000,
             "breakdown" : "1000 * 60 * 60"
         },

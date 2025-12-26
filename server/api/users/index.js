@@ -1,6 +1,6 @@
 const express = require('express');
 const { logText } = require('../../helpers/logger');
-const me = require('./me');
+const me = require('./me/index');
 const globalUtils = require('../../helpers/globalutils');
 const { rateLimitMiddleware, userMiddleware } = require('../../helpers/middlewares');
 const quickcache = require('../../helpers/quickcache');

@@ -722,7 +722,7 @@ const globalUtils = {
     },
     formatMessage: (row, author, attachments, mentions, mention_roles, reactions, isWebhook) => {
         return {
-            type: row.type,
+            type: row.type, //8 = boost, 9 = boosted server, guild has reached level 1, 10 = level 2, 11 = level 3 (12 = i have added what a bla bla to this channel?)
             guild_id: row.guild_id, //Is this necessary here?
             id: row.message_id,
             content: row.content,
