@@ -3199,6 +3199,83 @@ const database = {
             return [];
         }
     },
+    getMessagesAround: async (channel_id, message_id, limit = 50) => {
+        try {
+            let actualLimit = Math.floor(limit / 2);
+            let messageRows = await database.runQuery(`(SELECT * FROM messages WHERE channel_id = $1 AND message_id <= $2 ORDER BY message_id DESC LIMIT $3) UNION ALL (SELECT * FROM messages WHERE channel_id = $1 AND message_id > $2 ORDER BY message_id ASC LIMIT $4) ORDER BY message_id ASC`, [channel_id, message_id, actualLimit + 1, actualLimit]);
+
+            if (messageRows.length === 0) {
+                return [];
+            }
+
+            const messageIds = messageRows.map(row => row.message_id);
+            const uniqueUserIds = new Set();
+            
+            messageRows.forEach(row => {
+                uniqueUserIds.add(row.author_id.includes("WEBHOOK_") ? row.author_id.split('_')[1] : row.author_id);
+                const mentionsData = globalUtils.parseMentions(row.content);
+                mentionsData.mentions?.forEach(id => uniqueUserIds.add(id));
+            });
+
+            const [accounts, attachmentsRows] = await Promise.all([
+                database.getAccountsByIds(Array.from(uniqueUserIds)),
+                database.runQuery(`SELECT * FROM attachments WHERE message_id = ANY($1)`, [messageIds])
+            ]);
+
+            const accountMap = new Map(accounts.map(acc => [acc.id, acc]));
+            const attachmentsMap = new Map();
+
+            attachmentsRows?.forEach(att => {
+                if (!attachmentsMap.has(att.message_id)) {
+                    attachmentsMap.set(att.message_id, []);
+                }
+
+                attachmentsMap.get(att.message_id).push({
+                    filename: att.filename,
+                    height: att.height,
+                    width: att.width,
+                    id: att.attachment_id,
+                    proxy_url: att.url,
+                    url: att.url,
+                    size: att.size
+                });
+            });
+
+            return messageRows.map(row => {
+                let authorId = row.author_id;
+                let isWebhook = false;
+
+                if (authorId.includes("WEBHOOK_")) {
+                    authorId = authorId.split('_')[1];
+                    isWebhook = true;
+                }
+
+                let author = accountMap.get(authorId) || {
+                    id: "1279218211430105088",
+                    username: "Deleted User",
+                    discriminator: "0000",
+                    avatar: null,
+                    bot: false
+                };
+
+                const mentionsData = globalUtils.parseMentions(row.content);
+                const mentions = (mentionsData.mentions || []).map(id => accountMap.get(id)).filter(Boolean);
+
+                return globalUtils.formatMessage(
+                    row, 
+                    author, 
+                    attachmentsMap.get(row.message_id) || [], 
+                    mentions, 
+                    mentionsData.mention_roles || [], 
+                    [], 
+                    isWebhook
+                );
+            });
+        } catch (error) {
+            logText(error, "error"); 
+            return [];
+        }
+    }, //to-do move the hydration of author, etc objects to its own function PLEASE.
     getGuildMessages: async (guild_id, author_id, containsContent, channel_id, mentions_user_id, includeNsfw, before_id, after_id, limit, offset) => {
         try {
             let whereClause = ` WHERE m.guild_id = $1 `;

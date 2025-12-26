@@ -9,6 +9,7 @@ const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 
 const { instanceMiddleware, rateLimitMiddleware, guildMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
+const Snowflake = require('../helpers/snowflake');
 
 const router = express.Router();
 
@@ -195,27 +196,38 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
         }
 
         let offset = parseInt(req.query.offset) || 0;
-        let limit = 25;
+        let limit = (req.query.limit && req.query.limit > 0 && req.query.limit <= 50) ? req.query.limit : 50;
         let author_id = req.query.author_id;
         let before_id = req.query.max_id;
         let after_id = req.query.min_id;
+        let around_id = req.query.around;
         let mentions = req.query.mentions; //user_id
         let include_nsfw = req.query.include_nsfw === "true" ?? false;
         let has = req.query.has; //fuck this i cant be fucked today
         //need to do during too
 
-        const results = await global.database.getGuildMessages(
-            guild.id,
-            author_id,
-            content,
-            channel_id,
-            mentions,
-            include_nsfw,
-            before_id,
-            after_id,
-            limit,
-            offset
-        );
+        let results = [];
+
+        if (around_id) {
+            results = await global.database.getMessagesAround(channel_id, limit);
+        } else {
+            results = await global.database.getGuildMessages(
+                guild.id,
+                author_id,
+                content,
+                channel_id,
+                mentions,
+                include_nsfw,
+                before_id,
+                after_id,
+                limit,
+                offset
+            );
+        }
+
+        if (!around_id && !after_id && results.messages && results.messages.length > 0) {
+            results.messages.reverse(); 
+        }
 
         let ret_results = [];
         let minus = 0;
@@ -376,6 +388,35 @@ router.post("/:guildid/prune", guildMiddleware, guildPermissionsMiddleware("MANA
     return res.status(204).send();
 });
 
+router.put("/:guildid/premium/subscriptions", guildMiddleware, async (req, res) => {
+  return res.status(200).json({
+    id: Snowflake.generate(),
+    guild_id: req.params.guildid,
+    user_id: req.account.id,
+    ended: false,
+    premium_since: new Date().toISOString()
+  })
+});
+
+router.get("/:guildid/premium/subscriptions", guildMiddleware, async (req, res) => {
+    let fake_amount = 50;
+    let ret = [];
+    let day = new Date().toISOString();
+
+    for(var x = 0; x < fake_amount; x++) {
+        ret.push({
+            id: Snowflake.generate(),
+            guild_id: req.params.guildid,
+            user_id: req.account.id,
+            ended: false,
+            premium_since: day
+        })
+    }
+
+  return res.status(200).json(ret);
+});
+
+
 router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30, true), async (req, res) => {
     try {
         const widget = await global.database.getGuildWidget(req.params.guildid);
@@ -499,6 +540,8 @@ router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MAN
     }
 });
 
+
+
 router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame, 0.5), async (req, res) => {
     try {
         const sender = req.account;
@@ -551,7 +594,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
                 });
             }
 
-            if (number_type !== 0 && number_type !== 2) {
+            if (number_type !== 0 && number_type !== 2 && number_type != 5) {
                 return res.status(400).json({
                     code: 400,
                     message: "You're a wizard harry, how the bloody hell did you manage to do that?"
@@ -641,6 +684,10 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
           message: "Internal Server Error"
         });
     }
+});
+
+router.post("/:guildid/ack", async (req, res) => {
+    return res.status(204).send(); //to-do
 });
 
 router.use("/:guildid/roles", roles);
