@@ -415,8 +415,8 @@ class session {
                     guild.properties = structuredClone(guild);
 
                     // v9 things
-                    guild.guild_scheduled_events = [{}];
-                    guild.stage_instances = [{}];
+                    guild.guild_scheduled_events = [];
+                    guild.stage_instances = [];
 
                 }
             }
