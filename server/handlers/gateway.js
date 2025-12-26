@@ -1,4 +1,5 @@
 const globalUtils = require("../helpers/globalutils");
+const { logText } = require("../helpers/logger");
 const session = require("../helpers/session");
 const { stringify } = require("lossless-json");
 
@@ -253,9 +254,11 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
         return;
     }
 
-    if (guild_id !== "string") {
+    if (typeof guild_id !== "string") {
         guild_id = stringify(guild_id)
     } // because guild_id is now type object because of lossless-json
+
+    logText("Hit", "DEBUG")
 
     let guild = socket.session.guilds.find(x => x.id === guild_id);
 
