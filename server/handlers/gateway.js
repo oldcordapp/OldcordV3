@@ -1,5 +1,4 @@
 const globalUtils = require("../helpers/globalutils");
-const { logText } = require("../helpers/logger");
 const session = require("../helpers/session");
 const { stringify } = require("lossless-json");
 
