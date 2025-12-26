@@ -753,6 +753,50 @@ const globalUtils = {
             default: return "text";
         }
     },
+    personalizeMessageObject: (msg, guild, client_build_date) => {
+        let boostLvlConversion = {
+            9: 1,
+            10: 2,
+            11: 3
+        }
+
+        if (msg.id === '1279218211430105089') {
+            msg.content = msg.content.replace("[YEAR]", client_build_date.getFullYear());
+            msg.author.bot = true;
+        }
+
+        if (client_build_date.getFullYear() < 2019 && msg.type >= 8 && msg.type != 12 && guild) {
+            let levelReachedText = "";
+
+            if (boostLvlConversion[msg.type]) {
+                levelReachedText = `${guild.name} has reached Level ${boostLvlConversion[msg.type]}!`;
+            }
+
+            msg.content = `${msg.author.username} just boosted the server! ${levelReachedText}`;
+            msg.type = 0;
+            msg.author = {
+                username: "Oldcord",
+                discriminator: "0000",
+                bot: true,
+                id: "1279218211430105089",
+                avatar: null
+            };
+        }
+
+        if (client_build_date <= new Date(2017, 0, 23) && msg.type === 7 && guild) {
+            msg.content = `${msg.author.username} has joined the server!`;
+            msg.type = 0;
+            msg.author = {
+                username: "Oldcord",
+                discriminator: "0000",
+                bot: true,
+                id: "1279218211430105089",
+                avatar: null
+            };
+        }
+
+        return msg;
+    },
     personalizeChannelObject: (req, channel) => {
         if (!req)
             return channel;
