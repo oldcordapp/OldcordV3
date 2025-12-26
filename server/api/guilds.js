@@ -218,10 +218,6 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
             offset
         );
 
-        if (!after_id && results.messages && results.messages.length > 0) {
-            results.messages.reverse(); 
-        } //Client wants it oldest -> newest
-
         let ret_results = [];
         let minus = 0;
         
