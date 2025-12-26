@@ -9,6 +9,9 @@ const Watchdog = require('../../helpers/watchdog');
 const router = express.Router();
 
 router.param('userid', async (req, res, next, userid) => {
+    if (userid === "@me") {
+        userid = req.account.id;
+    }
     req.user = await global.database.getAccountByUserId(userid);
 
     next();

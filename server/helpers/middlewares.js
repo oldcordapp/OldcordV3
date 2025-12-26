@@ -4,6 +4,7 @@ const globalUtils = require('./globalutils');
 const wayback = require('./wayback');
 const fs = require('fs');
 const { Storage } = require('@google-cloud/storage');
+const JSON = require("json-bigint")({ storeAsString: true });
 
 const config = globalUtils.config;
 
@@ -19,22 +20,33 @@ if (config.gcs_config && config.gcs_config.autoUploadBucket && config.gcs_config
 }
 
 function apiVersionMiddleware(req, _, next) {
-  const versionRegex = /^\/v(\d+)/;
-  const match = req.path.match(versionRegex);
+    const versionRegex = /^\/v(\d+)/;
+    const match = req.path.match(versionRegex);
 
-  if (match) {
-    req.apiVersion = parseInt(match[1], 10);
+    if (match) {
+        req.apiVersion = parseInt(match[1], 10);
 
-    req.url = req.url.replace(versionRegex, '');
-    if (req.url === '') {
-      req.url = '/';
+        req.url = req.url.replace(versionRegex, '');
+        if (req.url === '') {
+            req.url = '/';
+        }
+    } else {
+        req.apiVersion = 3;
     }
-  } else {
-    req.apiVersion = 3;
-  }
 
-  next();
+    next();
 };
+
+function normalizeJsonMiddleware(req, res, next) {
+    if (req.body && typeof req.body === 'string') {
+        try {
+            req.body = JSON.parse(req.body);
+        } catch (error) {
+            return res.status(400).send("Invalid JSON");
+        }
+    }
+  next();
+}
 
 async function clientMiddleware(req, res, next) {
     try {
@@ -734,6 +746,7 @@ function channelPermissionsMiddleware(permission) {
 
 module.exports = {
     apiVersionMiddleware,
+    normalizeJsonMiddleware,
     clientMiddleware,
     authMiddleware,
     assetsMiddleware,

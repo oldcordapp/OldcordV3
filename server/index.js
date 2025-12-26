@@ -9,7 +9,7 @@ const database = require('./helpers/database');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const globalUtils = require('./helpers/globalutils');
-const { apiVersionMiddleware, assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
+const { apiVersionMiddleware, normalizeJsonMiddleware, assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
 const { Jimp, ResizeStrategy } = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
@@ -179,9 +179,7 @@ httpServer.listen(config.port, () => {
 
 httpServer.on('request', app);
 
-app.use(express.json({
-    limit: '10mb',
-}));
+app.use(express.text({ type: 'application/json' }), normalizeJsonMiddleware);
 
 app.use(cookieParser());
 

@@ -3,7 +3,7 @@ const globalUtils = require('./helpers/globalutils');
 const WebSocket = require('ws').WebSocket;
 const zlib = require('zlib');
 const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
-const { parse, stringify } = require("lossless-json");
+const JSON = require('json-bigint')({ storeAsString: true });
 
 let erlpack = null;
 
@@ -191,10 +191,10 @@ const gateway = {
     handleClientMessage: async function (socket, data) {
         try {
             const msg = socket.wantsEtf ? data : data.toString("utf-8");
-            const packet = socket.wantsEtf && erlpack !== null ? erlpack.unpack(msg) : parse(msg);
+            const packet = socket.wantsEtf && erlpack !== null ? erlpack.unpack(msg) : JSON.parse(msg);
 
             if (packet.op !== 1) {
-                this.debug(`Incoming -> ${socket.wantsEtf ? stringify(packet) : msg}`);
+                this.debug(`Incoming -> ${socket.wantsEtf ? JSON.stringify(packet) : msg}`);
             } //ignore heartbeat stuff
 
             await gatewayHandlers[packet.op]?.(socket, packet);

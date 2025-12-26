@@ -1,6 +1,6 @@
 const globalUtils = require("../helpers/globalutils");
 const session = require("../helpers/session");
-const { stringify } = require("lossless-json");
+const JSON = require('json-bigint')({ storeAsString: true });
 
 const OPCODES = {
     HEARTBEAT: 1,
@@ -252,10 +252,6 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
     if (!guild_id || !channels) {
         return;
     }
-
-    if (typeof guild_id !== "string") {
-        guild_id = stringify(guild_id)
-    } // because guild_id is now type object because of lossless-json
 
     let guild = socket.session.guilds.find(x => x.id === guild_id);
 
