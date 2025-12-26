@@ -386,6 +386,10 @@ class session {
                             }
                         }
 
+                        if (year < 2019 && channel.type === 5) {
+                            channel.type = 0;
+                        }
+
                         if (!this.socket.channel_types_are_ints) {
                             channel.type = channel.type == 2 ? "voice" : "text";
                         }
