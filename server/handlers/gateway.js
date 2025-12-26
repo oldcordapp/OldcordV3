@@ -258,8 +258,6 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
         guild_id = stringify(guild_id)
     } // because guild_id is now type object because of lossless-json
 
-    logText("Hit", "DEBUG")
-
     let guild = socket.session.guilds.find(x => x.id === guild_id);
 
     if (!guild) {
