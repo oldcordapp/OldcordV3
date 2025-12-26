@@ -370,7 +370,8 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
         await global.dispatcher.dispatchEventTo(author.id, "MESSAGE_ACK", {
             channel_id: req.channel.id,
-            message_id: message.id
+            message_id: message.id,
+            manual: false //This is for if someone clicks mark as read
         });
 
         return res.status(200).json(message);
@@ -545,7 +546,8 @@ router.post("/:messageid/ack", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), ra
 
         await global.dispatcher.dispatchEventTo(guy.id, "MESSAGE_ACK", {
             channel_id: channel.id,
-            message_id: message.id
+            message_id: message.id,
+            manual: false //This is for if someone clicks mark as read
         });
         
         return res.status(200).json({

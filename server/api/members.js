@@ -138,7 +138,7 @@ router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPerm
             nick: newMember.nick,
             guild_id: req.guild.id,
             roles: newMember.roles,
-            joined_at: new Date().toISOString(),
+            joined_at: newMember.joined_at || new Date().toISOString(),
             deaf: false,
             mute: false
         });

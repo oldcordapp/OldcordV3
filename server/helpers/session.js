@@ -411,9 +411,12 @@ class session {
 
                         let getLatestAcknowledgement = await global.database.getLatestAcknowledgement(this.user.id, channel.id);
 
-                        if (getLatestAcknowledgement) {
-                            this.read_states.push(getLatestAcknowledgement);
-                        }
+                        this.read_states.push(getLatestAcknowledgement || {
+                            id: channel.id,
+                            last_message_id: "0",
+                            last_pin_timestamp: "0",
+                            mention_count: 0
+                        });
                     }
                     
                     guild.properties = structuredClone(guild);

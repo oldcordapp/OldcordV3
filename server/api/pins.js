@@ -140,4 +140,32 @@ router.delete("/:messageid", channelMiddleware, async (req, res) => {
     }
 });
 
+router.post("/ack", channelMiddleware, async (req, res) => {
+    try {
+        let latest_pin = await global.database.getLatestPinAcknowledgement(req.account.id, req.channel.id);
+
+        if (latest_pin) {
+            const tryAck = await global.database.acknowledgeMessage(req.account.id, req.channel.id, latest_pin.id, 0, new Date().toISOString());
+
+            if (!tryAck)
+                throw "Message acknowledgement failed";
+
+            await global.dispatcher.dispatchEventTo(req.account.id, "MESSAGE_ACK", {
+                channel_id: req.channel.id,
+                message_id: latest_pin.id,
+                manual: true //They clicked on the channel pins to trigger this
+            });
+        }
+
+        return res.status(204).send();
+    } catch(error) {
+        logText(error, "error");
+
+        return res.status(500).json({
+          code: 500,
+          message: "Internal Server Error"
+        });
+    }
+});
+
 module.exports = router;

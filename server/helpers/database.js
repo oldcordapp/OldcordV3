@@ -306,7 +306,9 @@ const database = {
                 channel_id TEXT,
                 message_id TEXT,
                 timestamp TEXT,
-                mention_count INTEGER DEFAULT 0
+                mention_count INTEGER DEFAULT 0,
+                last_pin_timestamp TEXT DEFAULT '0',
+                UNIQUE(user_id, channel_id)
            );`, []);
 
             await database.runQuery(`CREATE TABLE IF NOT EXISTS attachments (
@@ -406,6 +408,31 @@ const database = {
                 await database.runQuery(`ALTER TABLE channels ADD COLUMN rate_limit_per_user INTEGER DEFAULT 0`);
                 await database.runQuery(`ALTER TABLE channels ADD COLUMN user_limit INTEGER DEFAULT 0`);
                 await database.runQuery(`ALTER TABLE channels ADD COLUMN bitrate INTEGER DEFAULT 64000`);
+            }
+
+            let last_pin_timestamp_exists = await database.doescolumnExist("last_pin_timestamp", "acknowledgements");
+
+            if (!last_pin_timestamp_exists) {
+                await database.runQuery(`ALTER TABLE acknowledgements RENAME TO acknowledgements_old`, []);
+
+                await database.runQuery(`CREATE TABLE acknowledgements (
+                    user_id TEXT,
+                    channel_id TEXT,
+                    message_id TEXT,
+                    timestamp TEXT,
+                    mention_count INTEGER DEFAULT 0,
+                    last_pin_timestamp TEXT DEFAULT "0",
+                    UNIQUE(user_id, channel_id)
+                );`, []);
+
+                await database.runQuery(`
+                    INSERT INTO acknowledgements (user_id, channel_id, message_id, timestamp, mention_count, last_pin_timestamp)
+                    SELECT user_id, channel_id, MAX(message_id), MAX(timestamp), mention_count, last_pin_timestamp
+                    FROM acknowledgements_old
+                    GROUP BY user_id, channel_id
+                `, []);
+
+                await database.runQuery(`DROP TABLE acknowledgements_old`, []);
             }
 
             //#region Change 'NULL' to NULL defaults
@@ -719,10 +746,13 @@ const database = {
             `, [disabled_until, "Spam", user_id]); //to-do actually do this properly
 
             let audit_log = staff.audit_log;
+            let moderation_id = Snowflake.generate();
+            let deconstructed = Snowflake.deconstruct(moderation_id);
+            let timestamp = deconstructed.date.toISOString();
 
             let audit_entry = {
-                moderation_id: Snowflake.generate(),
-                timestamp: new Date().toISOString(),
+                moderation_id: moderation_id,
+                timestamp: timestamp,
                 action: "disable_user",
                 moderated: {
                     id: user_id,
@@ -828,10 +858,13 @@ const database = {
             await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id]); //figure out messages
 
             let audit_log = staff.audit_log;
+            let moderation_id = Snowflake.generate();
+            let deconstructed = Snowflake.deconstruct(moderation_id);
+            let timestamp = deconstructed.date.toISOString();
 
             let audit_entry = {
-                moderation_id: Snowflake.generate(),
-                timestamp: new Date().toISOString(),
+                moderation_id: moderation_id,
+                timestamp: timestamp,
                 action: "delete_user",
                 moderated: {
                     id: user_id
@@ -1085,9 +1118,10 @@ const database = {
 
             return {
                 id: rows[0].channel_id,
-                mention_count: rows[0].mention_count,
-                last_message_id: rows[0].message_id
-            };
+                mention_count: rows[0].mention_count || 0,
+                last_message_id: rows[0].message_id,
+                last_pin_timestamp: rows[0].last_pin_timestamp || "0" //to-do last pin timestamp
+            }; 
         }
         catch (error) {
             logText(error, "error");
@@ -1131,13 +1165,11 @@ const database = {
             return false;
         }
     },
-    acknowledgeMessage: async (user_id, channel_id, message_id, mention_count) => {
+    acknowledgeMessage: async (user_id, channel_id, message_id, mention_count = 0, last_pin_timestamp = "0") => {
         try {
             const date = new Date().toISOString();
 
-            await database.runQuery(`
-                INSERT INTO acknowledgements (user_id, channel_id, message_id, mention_count, timestamp) VALUES ($1, $2, $3, $4, $5)
-            `, [user_id, channel_id, message_id, mention_count, date]);
+            await database.runQuery(`INSERT INTO acknowledgements (user_id, channel_id, message_id, mention_count, timestamp, last_pin_timestamp) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT(user_id, channel_id) DO UPDATE SET message_id = EXCLUDED.message_id, mention_count = EXCLUDED.mention_count, timestamp = EXCLUDED.timestamp, last_pin_timestamp = EXCLUDED.last_pin_timestamp`, [user_id, channel_id, message_id, mention_count, date, last_pin_timestamp]);
 
             return true;
         } catch (error) {
@@ -3452,283 +3484,6 @@ const database = {
             return null;
         }
     },
-    getGuildsByName: async (name) => {
-        try {
-            if (!name) {
-                return [];
-            }
-
-            const guildRows = await database.runQuery(`SELECT * FROM guilds WHERE name ILIKE $1`, [name]);
-
-            if (!guildRows || guildRows.length === 0) {
-                return []
-            };
-
-            const ids = guildRows.map(row => row.id);
-
-            const [
-                channelRows,
-                roleRows,
-                memberRows,
-                webhookRows,
-                auditLogRows
-            ] = await Promise.all([
-                database.runQuery(`SELECT * FROM channels WHERE guild_id = ANY($1::text[])`, [ids]),
-                database.runQuery(`SELECT * FROM roles WHERE guild_id = ANY($1::text[])`, [ids]),
-                database.runQuery(`SELECT * FROM members WHERE guild_id = ANY($1::text[])`, [ids]),
-                database.runQuery(`SELECT * FROM webhooks WHERE guild_id = ANY($1::text[])`, [ids]),
-                database.runQuery(`SELECT * FROM audit_logs WHERE guild_id = ANY($1::text[])`, [ids])
-            ]);
-
-            if (guildRows === null || guildRows.length === 0) {
-                return [];
-            }
-
-            const rolesByGuild = new Map();
-
-            if (roleRows) {
-                for (const row of roleRows) {
-                    const guildId = row.guild_id;
-
-                    if (!rolesByGuild.has(guildId)) {
-                        rolesByGuild.set(guildId, []);
-                    }
-
-                    rolesByGuild.get(guildId).push({
-                        id: row.role_id,
-                        name: row.name,
-                        permissions: row.permissions,
-                        position: row.position,
-                        color: row.color,
-                        hoist: row.hoist,
-                        mentionable: row.mentionable
-                    });
-                }
-            }
-
-            let userIds = new Set();
-
-            if (memberRows) {
-                memberRows.forEach(row => userIds.add(row.user_id));
-            }
-
-            if (webhookRows) {
-                webhookRows.forEach(row => userIds.add(row.creator_id));
-            }
-
-            let userAccounts = await database.getAccountsByIds([...userIds]);
-            let usersMap = new Map(userAccounts.map(user => [user.id, user]));
-
-            const membersByGuild = new Map();
-
-            if (memberRows) {
-                for (const row of memberRows) {
-                    const guildId = row.guild_id;
-                    const user = usersMap.get(row.user_id);
-                    const guildRoles = rolesByGuild.get(guildId) || [];
-
-                    if (!user) continue;
-
-                    let member_roles = JSON.parse(row.roles) ?? [];
-
-                    member_roles = member_roles.filter(role_id => guildRoles.find(guild_role => guild_role.id === role_id) !== undefined);
-                    member_roles = member_roles.filter(x => x !== guildId);
-
-                    if (!membersByGuild.has(guildId)) {
-                        membersByGuild.set(guildId, []);
-                    }
-
-                    membersByGuild.get(guildId).push({
-                        id: user.id,
-                        nick: row.nick,
-                        deaf: row.deaf,
-                        mute: row.mute,
-                        roles: member_roles,
-                        joined_at: row.joined_at,
-                        user: globalUtils.miniUserObject(user)
-                    });
-                }
-            }
-
-            const webhooksByGuild = new Map();
-
-            if (webhookRows) {
-                for (const row of webhookRows) {
-                    const guildId = row.guild_id;
-                    const webhookAuthor = usersMap.get(row.creator_id);
-
-                    if (!webhookAuthor) continue;
-
-                    if (!webhooksByGuild.has(guildId)) webhooksByGuild.set(guildId, []);
-
-                    webhooksByGuild.get(guildId).push({
-                        guild_id: guildId,
-                        channel_id: row.channel_id,
-                        id: row.id,
-                        token: row.token,
-                        avatar: row.avatar,
-                        name: row.name,
-                        user: globalUtils.miniUserObject(webhookAuthor),
-                        type: 1,
-                        application_id: null
-                    });
-                }
-            }
-
-            const channelsByGuild = new Map();
-
-            if (channelRows) {
-                for (var row of channelRows) {
-                    const guildId = row.guild_id;
-
-                    if (!row) continue;
-
-                    let overwrites = [];
-
-                    if (row.permission_overwrites && row.permission_overwrites.includes(":")) {
-                        for (var overwrite of row.permission_overwrites.split(':')) {
-                            let role_id = overwrite.split('_')[0];
-                            let allow_value = overwrite.split('_')[1];
-                            let deny_value = overwrite.split('_')[2];
-                            overwrites.push({
-                                id: role_id, allow: parseInt(allow_value), deny: parseInt(deny_value),
-                                type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
-                            });
-                        }
-                    } else if (row.permission_overwrites && row.permission_overwrites != null) {
-                        let overwrite = row.permission_overwrites;
-                        let role_id = overwrite.split('_')[0];
-                        let allow_value = overwrite.split('_')[1];
-                        let deny_value = overwrite.split('_')[2];
-                        overwrites.push({
-                            id: role_id, allow: parseInt(allow_value), deny: parseInt(deny_value),
-                            type: overwrite.split('_')[3] ? overwrite.split('_')[3] : 'role'
-                        });
-                    }
-
-                    let channel_obj = {
-                        id: row.id,
-                        name: row.name,
-                        guild_id: guildId,
-                        parent_id: row.parent_id,
-                        type: parseInt(row.type),
-                        ...(parseInt(row.type) === 0 && {
-                            topic: row.topic,
-                            rate_limit_per_user: row.rate_limit_per_user,
-                            nsfw: row.nsfw ?? false,
-                            last_message_id: row.last_message_id,
-                        }),
-                        ...(parseInt(row.type) === 2 && {
-                            bitrate: row.bitrate,
-                            user_limit: row.user_limit
-                        }),
-                        permission_overwrites: overwrites,
-                        position: row.position
-                    }
-
-                    if (parseInt(row.type) === 4) {
-                        delete channel_obj.parent_id;
-                    }
-
-                    if (!channelsByGuild.has(guildId)) {
-                        channelsByGuild.set(guildId, []);
-                    }
-
-                    channelsByGuild.get(guildId).push(channel_obj);
-                }
-            }
-
-            const auditLogsByGuild = new Map();
-
-            if (auditLogRows) {
-                for (const row of auditLogRows) {
-                    const guildId = row.guild_id;
-
-                    if (!auditLogsByGuild.has(guildId)) {
-                        auditLogsByGuild.set(guildId, []);
-                    }
-
-                    auditLogsByGuild.get(guildId).push({
-                        id: row.id,
-                        //guild_id: guildId, 
-                        action_type: row.action_type,
-                        target_id: row.target_id,
-                        user_id: row.user_id,
-                        changes: row.changes ? row.changes : []
-                    });
-                }
-            }
-
-            const retGuilds = [];
-
-            for (const guildRow of guildRows) {
-                const guildId = guildRow.id;
-
-                const roles = rolesByGuild.get(guildId) || [];
-                const members = membersByGuild.get(guildId) || [];
-                const webhooks = webhooksByGuild.get(guildId) || [];
-                const channels = channelsByGuild.get(guildId) || [];
-                const audit_logs = auditLogsByGuild.get(guildId) || [];
-
-                let emojis = JSON.parse(guildRow.custom_emojis);
-
-                for (var emoji of emojis) {
-                    emoji.roles = []; emoji.require_colons = true; emoji.managed = false;
-                    emoji.allNamesString = `:${emoji.name}:`
-                }
-
-                let presences = [];
-
-                for (var member of members) {
-                    let sessions = global.userSessions.get(member.id);
-                    if (global.userSessions.size === 0 || !sessions) {
-                        presences.push({ game_id: null, status: 'offline', activities: [], user: globalUtils.miniUserObject(member.user) });
-                    } else {
-                        let session = sessions[sessions.length - 1]
-                        if (!session.presence) {
-                            presences.push({ game_id: null, status: 'offline', activities: [], user: globalUtils.miniUserObject(member.user) });
-                        } else presences.push(session.presence);
-                    }
-                }
-
-                retGuilds.push({
-                    id: guildId, name: guildRow.name,
-                    icon: guildRow.icon,
-                    splash: guildRow.splash,
-                    banner: guildRow.banner,
-                    region: guildRow.region, 
-                    owner_id: guildRow.owner_id,
-                    afk_channel_id: guildRow.afk_channel_id,
-                    afk_timeout: guildRow.afk_timeout,
-                    channels: channels,
-                    exclusions: guildRow.exclusions ? JSON.parse(guildRow.exclusions) : [],
-                    member_count: members.length,
-                    members: members,
-                    large: false, //When is large set to true?
-                    roles: roles,
-                    emojis: emojis,
-                    webhooks: webhooks,
-                    presences: presences,
-                    voice_states: global.guild_voice_states.get(guildId) || [],
-                    vanity_url_code: guildRow.vanity_url,
-                    creation_date: guildRow.creation_date,
-                    features: guildRow.features ? JSON.parse(guildRow.features) : [],
-                    default_message_notifications: guildRow.default_message_notifications ?? 0,
-                    joined_at: new Date().toISOString(),  //to-do get this from members row
-                    verification_level: guildRow.verification_level ?? 0,
-                    explicit_content_filter: guildRow.explicit_content_filter ?? 0,
-                    system_channel_id: guildRow.system_channel_id,
-                    audit_logs: audit_logs
-                });
-            }
-
-            return retGuilds;
-        } catch (error) {
-            logText(error, "error");
-
-            return []; //fallback ?
-        }
-    },
     getGuildById: async (id) => {
         const guildRows = await database.runQuery(`
                 SELECT * FROM guilds WHERE id = $1
@@ -4981,14 +4736,13 @@ const database = {
             const id = Snowflake.generate();
             const nonce = Snowflake.generate();
             const author_id = props[0].id || Snowflake.generate();
+            const date = Snowflake.deconstruct(id).date.toISOString();
             
             let mention_id = Snowflake.generate();
 
             if (type === 1) {
                 mention_id = props[1].id;
             }
-
-            const date = new Date().toISOString();
 
             await database.runQuery(`INSERT INTO messages (type, guild_id, message_id, channel_id, author_id, content, edited_timestamp, mention_everyone, nonce, timestamp, tts, embeds) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`, [
                 type,
@@ -5026,14 +4780,11 @@ const database = {
     createMessage: async (guild_id, channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhook_embeds = null) => {
         try {
             const id = Snowflake.generate();
-            const date = new Date().toISOString();
-
-            if (nonce != null && nonce != null && !Snowflake.isValid(nonce)) {
-                return null;
-            }
+            const deconstructed = Snowflake.deconstruct(id);
+            const date = deconstructed.date.toISOString();
 
             if (!nonce || nonce === null) {
-                nonce = Snowflake.generate();
+                nonce = null; //just make sure its null
             }
 
             //validate snowflakes
@@ -5238,7 +4989,8 @@ const database = {
     createGuild: async (owner, icon, name, region, exclusions, client_date) => {
         try {
             const id = Snowflake.generate();
-            const date = new Date().toISOString();
+            const deconstructed = Snowflake.deconstruct(id);
+            const date = deconstructed.date.toISOString();
 
             if (icon != null) {
                 var extension = icon.split('/')[1].split(';')[0];
@@ -5441,7 +5193,8 @@ const database = {
             let salt = await genSalt(10);
             let pwHash = await hash(password ?? globalUtils.generateString(20), salt);
             let id = Snowflake.generate();
-            let date = new Date().toISOString();
+            let deconstructed = Snowflake.deconstruct(id);
+            let date = deconstructed.date.toISOString();
             let discriminator = Math.round(Math.random() * 9999);
 
             while (discriminator < 1000) {
@@ -5484,6 +5237,41 @@ const database = {
             await database.runQuery(`UPDATE messages SET pinned = $1 WHERE message_id = $2`, [state ? 1 : 0, message_id]);
 
             return true;
+        } catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
+    getLatestPinAcknowledgement: async (user_id, channel_id) => {
+        try {
+            const pinRows = await database.runQuery(`
+                SELECT message_id FROM messages 
+                WHERE channel_id = $1 AND pinned = $2 
+                ORDER BY message_id DESC LIMIT 1
+            `, [channel_id, true]);
+
+            if (!pinRows || pinRows.length === 0) {
+                return null;
+            }
+
+            const latestPinId = pinRows[0].message_id;
+
+            const ackRows = await database.runQuery(`
+                SELECT 1 FROM acknowledgements
+                WHERE user_id = $1 
+                AND channel_id = $2 
+                AND message_id = $3
+                LIMIT 1
+            `, [user_id, channel_id, latestPinId]);
+
+            if (ackRows && ackRows.length > 0) {
+                return null;
+            }
+
+            return {
+                id: latestPinId
+            };
         } catch (error) {
             logText(error, "error");
 
