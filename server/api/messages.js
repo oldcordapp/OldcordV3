@@ -49,8 +49,14 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGES"), quickcache.cacheF
         }
 
         let includeReactions = (req.guild && !req.guild.exclusions.includes("reactions")) || (channel.type === 1 || channel.type === 3); //to-do get rid of magic numbers
+        let around = req.query.around;
+        let messages = [];
 
-        let messages = await global.database.getChannelMessages(channel.id, creator.id, limit, req.query.before, req.query.after, includeReactions);
+        if (around) {
+            messages = await global.database.getMessagesAround(channel.id, around, limit);
+        } else {
+            messages = await global.database.getChannelMessages(channel.id, creator.id, limit, req.query.before, req.query.after, includeReactions);
+        }
 
         for(var msg of messages) {
             if (msg.id === '1279218211430105089') {

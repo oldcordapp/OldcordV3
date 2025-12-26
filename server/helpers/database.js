@@ -3241,22 +3241,43 @@ const database = {
                 });
             });
 
-            return messageRows.map(row => {
-                let authorId = row.author_id;
-                let isWebhook = false;
+            return messageRows.map((async(row) => {;
+                let isWebhook = row.author_id.includes("WEBHOOK_");
 
-                if (authorId.includes("WEBHOOK_")) {
-                    authorId = authorId.split('_')[1];
-                    isWebhook = true;
+                if (isWebhook) {
+                    const webhookId = row.author_id.split('_')[1];
+                    const overrideId = row.author_id.split('_')[2];
+                    const webhook = await database.getWebhookById(webhookId);
+                    const webhookOverride = await database.getWebhookOverrides(webhookId, overrideId);
+
+                    if (webhook) {
+                        author = {
+                            id: webhookId,
+                            username: webhookOverride?.username || webhook.name,
+                            avatar: webhookOverride?.avatar_url || webhook.avatar,
+                            bot: true,
+                            webhook: true,
+                            flags: 0,
+                            discriminator: "0000"
+                        };
+                    } else {
+                        author = { 
+                            id: webhookId, 
+                            username: "Deleted Webhook", 
+                            discriminator: "0000", 
+                            avatar: null, 
+                            bot: true, 
+                            webhook: true 
+                        }; //Should we check for this?
+                    }
+                } else {
+                    author = accountMap.get(row.author_id) || { 
+                        id: "1279218211430105088", 
+                        username: "Deleted User", 
+                        discriminator: "0000", 
+                        bot: false 
+                    };
                 }
-
-                let author = accountMap.get(authorId) || {
-                    id: "1279218211430105088",
-                    username: "Deleted User",
-                    discriminator: "0000",
-                    avatar: null,
-                    bot: false
-                };
 
                 const mentionsData = globalUtils.parseMentions(row.content);
                 const mentions = (mentionsData.mentions || []).map(id => accountMap.get(id)).filter(Boolean);
@@ -3270,7 +3291,7 @@ const database = {
                     [], 
                     isWebhook
                 );
-            });
+            }))
         } catch (error) {
             logText(error, "error"); 
             return [];

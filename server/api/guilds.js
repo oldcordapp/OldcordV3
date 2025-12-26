@@ -200,34 +200,27 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
         let author_id = req.query.author_id;
         let before_id = req.query.max_id;
         let after_id = req.query.min_id;
-        let around_id = req.query.around;
         let mentions = req.query.mentions; //user_id
         let include_nsfw = req.query.include_nsfw === "true" ?? false;
         let has = req.query.has; //fuck this i cant be fucked today
         //need to do during too
 
-        let results = [];
+        let results = await global.database.getGuildMessages(
+            guild.id,
+            author_id,
+            content,
+            channel_id,
+            mentions,
+            include_nsfw,
+            before_id,
+            after_id,
+            limit,
+            offset
+        );
 
-        if (around_id) {
-            results = await global.database.getMessagesAround(channel_id, limit);
-        } else {
-            results = await global.database.getGuildMessages(
-                guild.id,
-                author_id,
-                content,
-                channel_id,
-                mentions,
-                include_nsfw,
-                before_id,
-                after_id,
-                limit,
-                offset
-            );
-        }
-
-        if (!around_id && !after_id && results.messages && results.messages.length > 0) {
+        if (!after_id && results.messages && results.messages.length > 0) {
             results.messages.reverse(); 
-        }
+        } //Client wants it oldest -> newest
 
         let ret_results = [];
         let minus = 0;
