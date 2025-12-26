@@ -2,6 +2,7 @@ const globalUtils = require('./globalutils');
 const { logText } = require("./logger");
 const zlib = require('zlib');
 const Snowflake = require('../helpers/snowflake');
+const { stringify } = require('lossless-json');
 
 let erlpack = null;
 
@@ -215,7 +216,7 @@ class session {
 
         if (this.socket.wantsZlib && this.type === 'gateway') {
             //Closely resembles Discord's zlib implementation from https://gist.github.com/devsnek/4e094812a4798d8f10428d04ee02cab7
-            payload = this.socket.wantsEtf ? payload : JSON.stringify(payload);
+            payload = this.socket.wantsEtf ? payload : stringify(payload);
 
             let buffer;
 
@@ -227,7 +228,7 @@ class session {
             else this.socket.zlibHeader = false;
 
             this.socket.send(buffer);
-        } else this.socket.send(this.socket.wantsEtf ? payload : JSON.stringify(payload));
+        } else this.socket.send(this.socket.wantsEtf ? payload : stringify(payload));
 
         this.lastMessage = Date.now();
     }
@@ -376,19 +377,7 @@ class session {
                     //]
                     //} //someone really do this better
 
-                    // Stolen from Spacebar I am not doing shit
-                    merged_members.push(guild.members.map((x) => {
-                        return (
-                            {
-                                ...x,
-                                guild: {
-                                    id: guild.id,
-                                },
-                                guild_id: guild.id,
-                                settings: undefined,
-                            }
-                        )
-                    }));
+                    merged_members.push(guild.members);
 
                     for (var channel of guild.channels) {
                         if ((year === 2017 && month < 9) || year < 2017) {
