@@ -421,7 +421,7 @@ const database = {
                     message_id TEXT,
                     timestamp TEXT,
                     mention_count INTEGER DEFAULT 0,
-                    last_pin_timestamp TEXT DEFAULT "0",
+                    last_pin_timestamp TEXT DEFAULT '0',
                     UNIQUE(user_id, channel_id)
                 );`, []);
 
