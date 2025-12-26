@@ -3202,7 +3202,15 @@ const database = {
     getMessagesAround: async (channel_id, message_id, limit = 50) => {
         try {
             let actualLimit = Math.floor(limit / 2);
-            let messageRows = await database.runQuery(`(SELECT * FROM messages WHERE channel_id = $1 AND message_id <= $2 ORDER BY message_id DESC LIMIT $3) UNION ALL (SELECT * FROM messages WHERE channel_id = $1 AND message_id > $2 ORDER BY message_id ASC LIMIT $4) ORDER BY message_id ASC`, [channel_id, message_id, actualLimit + 1, actualLimit]);
+            let messageRows = await database.runQuery(`
+                SELECT * FROM (
+                    (SELECT * FROM messages WHERE channel_id = $1 AND message_id <= $2 ORDER BY message_id DESC LIMIT $3)
+                    UNION ALL
+                    (SELECT * FROM messages WHERE channel_id = $1 AND message_id > $2 ORDER BY message_id ASC LIMIT $4)
+                ) AS combined_messages
+                ORDER BY message_id ASC`, 
+                [channel_id, message_id, actualLimit + 1, actualLimit]
+            ); //So select all messages before the around id descending limited by half the sandwich limit, then add it on with the other query to select where its above the 2nd id ascending, then sort the final msgs by ascending order (oldest -> newest)
 
             if (messageRows.length === 0) {
                 return [];
@@ -3241,7 +3249,7 @@ const database = {
                 });
             });
 
-            return messageRows.map((async(row) => {;
+            return await Promise.all(messageRows.map(async(row) => {;
                 let isWebhook = row.author_id.includes("WEBHOOK_");
 
                 if (isWebhook) {
@@ -3291,7 +3299,7 @@ const database = {
                     [], 
                     isWebhook
                 );
-            }))
+            }));
         } catch (error) {
             logText(error, "error"); 
             return [];
