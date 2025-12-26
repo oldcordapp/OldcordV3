@@ -540,6 +540,9 @@ const globalUtils = {
         return user;
     },
     areWeFriends: (user1, user2) => {
+        if (user1.bot || user2.bot) {
+            return false;
+        }
         let ourRelationships = user1.relationships;
         let theirRelationships = user2.relationships;
 
