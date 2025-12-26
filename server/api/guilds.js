@@ -40,9 +40,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
         const creator = req.account;
 
         if (!req.body.region) {
-            return res.status(400).json({
-                name: "A valid server region is required."
-            });
+            req.body.region = "everything"; // default to everything bc of third party clients / mobile
         }
 
         if (req.body.region != "everything" && !globalUtils.canUseServer(req.client_build_date.getFullYear(), req.body.region)) {
