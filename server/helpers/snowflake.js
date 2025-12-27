@@ -22,7 +22,7 @@ class Snowflake {
             bin = String(low & 1) + bin;
             low = Math.floor(low / 2);
             if (high > 0) {
-                low += 5000000000n * (high % 2);
+                low += 5000000000 * (high % 2);
                 high = Math.floor(high / 2);
             }
         }
