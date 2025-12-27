@@ -109,7 +109,7 @@ router.get("/authorize", async (req, res) => {
                         id: guild.id,
                         icon: guild.icon,
                         name: guild.name,
-                        permissions: permissions_number === 0 ? 2146958719 : permissions_number,
+                        permissions: 2146958719, //we'll need to fetch this again from somewhere
                         region: null
                     });
                 }
