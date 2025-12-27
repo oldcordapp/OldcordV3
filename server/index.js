@@ -1,3 +1,4 @@
+// this is needed because of discord kotlin sending in id as Number and not string, and it messes precision
 const originalJsonParse = JSON.parse;
 
 JSON.parse = (text, reviver) => {
