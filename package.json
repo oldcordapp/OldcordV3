@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
-    "@sapphire/snowflake": "^3.5.5",
     "@vitejs/plugin-react": "^5.1.2",
     "babel-plugin-react-compiler": "^19.1.0-rc.3",
     "bcrypt": "^6.0.0",

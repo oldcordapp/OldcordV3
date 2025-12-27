@@ -301,8 +301,16 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
     const baseFilePath = path.join(process.cwd(), 'www_dynamic', 'attachments', req.params.guildid, req.params.channelid, req.params.filename);
     
     try {
-        let { width, height } = req.query;
+        let { format, width, height } = req.query;
         const url = req.url;
+
+        if (format === 'jpeg' && (baseFilePath.endsWith(".mp4") || baseFilePath.endsWith(".mov") || baseFilePath.endsWith(".webm"))) {
+            let file_name = baseFilePath.split('/').pop();
+            let fixed_path = baseFilePath.replace(file_name, "thumbnail.png");
+
+            return res.status(200).type("image/png").sendFile(fixed_path);
+        }
+
         
         if (!url || !width || !height) {
             return res.status(200).sendFile(baseFilePath);

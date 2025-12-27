@@ -341,8 +341,6 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
             const isVideo = file_path.endsWith(".mp4") || file_path.endsWith(".webm");
 
-            let thumbnail_details;
-
             if (isVideo) {
                 try {
                     await new Promise((resolve, reject) => {
@@ -354,20 +352,6 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                                     if (!err && vid_metadata) {
                                         file_details[0].width = vid_metadata.width;
                                         file_details[0].height = vid_metadata.height;
-                                    }
-
-                                    file_details[0].thumbnail_url = file_details[0].url.replace(file_details[0].name, 'thumbnail.png');
-
-                                    let thumb_stats = fs.statSync(path.join(attachmentDir, 'thumbnail.png'));
-
-                                    thumbnail_details = {
-                                        size: thumb_stats.size,
-                                        id: Snowflake.generate(),
-                                        name: 'thumbnail.png',
-                                        width: file_details[0].width,
-                                        height: file_details[0].height,
-                                        url: file_details[0].url.replace(file_details[0].name, 'thumbnail.png'),
-                                        proxy_url: file_details[0].url.replace(file_details[0].name, 'thumbnail.png')
                                     }
 
                                     resolve();
@@ -387,10 +371,6 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 } catch (error) {
                     file_details[0].width = 500;
                     file_details[0].height = 500;
-                }
-
-                if (thumbnail_details) {
-                    file_details[1] = thumbnail_details;
                 }
             } else {
                 try {
