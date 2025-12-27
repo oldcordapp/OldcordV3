@@ -24,7 +24,7 @@ router.use("/:messageid/reactions", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"
 function handleJsonAndMultipart(req, res, next) {
     const contentType = req.headers['content-type'];
     if (contentType && contentType.startsWith('multipart/form-data')) {
-        upload.single('file')(req, res, next);
+        upload.any()(req, res, next);
     } else {
         express.json()(req, res, next);
     }
@@ -85,7 +85,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             });
         }
 
-        if (!req.body.embeds && !req.file && (!req.body.content || typeof req.body.content !== 'string' || req.body.content === "")) {
+        if (!req.body.embeds && !req.files && (!req.body.content || typeof req.body.content !== 'string' || req.body.content === "")) {
             return res.status(400).json({
                 code: 400,
                 message: 'Cannot send an empty message.',
@@ -299,6 +299,15 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
         }
         
         let file_details = null;
+
+        if (req.files && req.files.length === 1) {
+            req.file = req.files[0]
+        } else {
+            return res.status(400).json({
+                code: 400,
+                message: "Uploading more than one attachments is not allowed for compatibility."
+            });
+        }
 
         if (req.file) {
             if (req.file.size >= global.config.limits['attachments'].max_size) {
