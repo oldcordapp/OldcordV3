@@ -161,21 +161,20 @@ const gateway = {
         } else socket.send(heartbeat_payload);
 
         socket.hb = {
-            timeout: setTimeout(async () => {
-                if (socket.session) await socket.session.updatePresence("offline", null);
+            timeout: null,
+            start: () => {
+                if (socket.hb.timeout) clearTimeout(socket.hb.timeout);
 
-                socket.close(4009, 'Session timed out');
-            }, (45 * 1000) + (20 * 1000)),
-            reset: () => {
-                if (socket.hb.timeout != null) {
-                    clearInterval(socket.hb.timeout);
-                }
-
-                socket.hb.timeout = new setTimeout(async () => {
-                    if (socket.session) await socket.session.updatePresence("offline", null);
+                socket.hb.timeout = setTimeout(async () => {
+                    if (socket.session) {
+                        await socket.session.updatePresence("offline", null);
+                    }
 
                     socket.close(4009, 'Session timed out');
                 }, (45 * 1000) + 20 * 1000);
+            },
+            reset: () => {
+                socket.hb.start();
             },
             acknowledge: (d) => {
                 socket.session?.send({
