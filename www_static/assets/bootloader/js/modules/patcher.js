@@ -59,12 +59,8 @@ const patcher = {
       "$1{}"
     );
     script = script.replace(
-      /return \w(?:\.default|\["default"\])\.post\(.*url:\w\.Endpoints\.TRACK.*?\}\s*.*?\}\)/g,
-      "null"
-    );
-    script = script.replace(
-      /\w(?:\.default|\["default"\])\.post\(.*url:\w\.Endpoints\.TRACK.*?\}\s*.*?\}\)/g,
-      ""
+      /(?:return\s+)?\w(?:\.default|\["default"\])\.post\(.*url:\w\.Endpoints\.TRACK.*?\}\s*.*?\}\)\.catch\(function\(\w\)\{.*?\}\)/g,
+      "null;"
     );
     script = script.replace(
       /t\.analyticsTrackingStoreMaker=function\(e\){/,
