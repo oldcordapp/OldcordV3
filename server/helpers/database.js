@@ -762,6 +762,14 @@ const database = {
 
             //#endregion
 
+            //#region fix an oopsie
+            await database.runQuery(`
+                DELETE FROM messages 
+                WHERE guild_id::text LIKE '{"id":%';
+            `, []);
+
+            //#endregion
+
             await database.runQuery(
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
@@ -1014,7 +1022,7 @@ const database = {
                 [new_sub_count, new_level, JSON.stringify(new_features), guild.id]
             );
 
-            let system_msg = await global.database.createSystemMessage(guild, guild.system_channel_id, msg_type, [user]);
+            let system_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, msg_type, [user]);
 
             await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", system_msg); //funny we're doing it here
             
@@ -2608,6 +2616,8 @@ const database = {
                     })
                 }
             }
+
+            console.log(messageAttachments);
 
             const reactionRet = [];
             const msgReactions = JSON.parse(rows[0].reactions);
@@ -5146,7 +5156,7 @@ const database = {
             return null;
         }
     },
-    createMessage: async (guild_id, channel_id, author_id, content, nonce, attachment, tts, mentions_data, webhook_embeds = null) => {
+    createMessage: async (guild_id, channel_id, author_id, content, nonce, attachments, tts, mentions_data, webhook_embeds = null) => {
         try {
             const id = Snowflake.generate();
             const deconstructed = Snowflake.deconstruct(id);
@@ -5164,7 +5174,7 @@ const database = {
                 content = "";
             }
 
-            let embeds = await embedder.generateMsgEmbeds(content, attachment);
+            let embeds = await embedder.generateMsgEmbeds(content, attachments);
 
             if (webhook_embeds && (Array.isArray(webhook_embeds) && webhook_embeds.length > 0)) {
                 embeds = webhook_embeds;
@@ -5186,16 +5196,18 @@ const database = {
 
             await database.runQuery(`UPDATE channels SET last_message_id = $1 WHERE id = $2`, [id, channel_id]);
 
-            if (attachment != null) {
-                await database.runQuery(`INSERT INTO attachments (attachment_id, message_id, filename, height, width, size, url) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [
-                    attachment.id,
-                    id,
-                    attachment.name,
-                    attachment.height,
-                    attachment.width,
-                    attachment.size,
-                    attachment.url,
-                ]);
+            if (attachments && Array.isArray(attachments)) {
+                for(var attachment of attachments) {
+                    await database.runQuery(`INSERT INTO attachments (attachment_id, message_id, filename, height, width, size, url) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [
+                        attachment.id,
+                        id,
+                        attachment.name,
+                        attachment.height,
+                        attachment.width,
+                        attachment.size,
+                        attachment.url,
+                    ]);
+                }
             }
 
             let msg = await database.getMessageById(id);

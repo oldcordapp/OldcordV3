@@ -12,10 +12,10 @@ const upload = multer();
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
+const ffmpeg = require('fluent-ffmpeg');
 
 router.param('messageid', async (req, res, next, messageid) => {
     req.message = await global.database.getMessageById(messageid);
-    
     next();
 });
 
@@ -300,13 +300,8 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
         
         let file_details = null;
 
-        if (req.files && req.files.length === 1) {
-            req.file = req.files[0]
-        } else {
-            return res.status(400).json({
-                code: 400,
-                message: "Uploading more than one attachments is not allowed for compatibility."
-            });
+        if (req.files) {
+            req.file = req.files[0];
         }
 
         if (req.file) {
@@ -317,14 +312,15 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 }); 
             }
 
-            file_details = {
+            file_details = [{
                 id: Snowflake.generate(),
                 size: req.file.size,
-            };
+            }]
 
-            file_details.name = globalUtils.replaceAll(req.file.originalname, ' ', '_').replace(/[^A-Za-z0-9_\-.()\[\]]/g, '');
+            file_details[0].name = globalUtils.replaceAll(req.file.originalname, ' ', '_').replace(/[^A-Za-z0-9_\-.()\[\]]/g, '');
+            file_details[0].filename = file_details[0].name;
 
-            if (!file_details.name || file_details.name == "") {
+            if (!file_details[0].name || file_details[0].name == "") {
                 return res.status(403).json({
                     code: 403,
                     message: "Invalid filename"
@@ -332,10 +328,10 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             }
 
             const channelDir = path.join('.', 'www_dynamic', 'attachments', req.channel.id);
-            const attachmentDir = path.join(channelDir, file_details.id);
-            const file_path = path.join(attachmentDir, file_details.name);
+            const attachmentDir = path.join(channelDir, file_details[0].id);
+            const file_path = path.join(attachmentDir, file_details[0].name);
             
-            file_details.url = `${globalUtils.config.secure ? 'https' : 'http'}://${globalUtils.config.base_url}${globalUtils.nonStandardPort ? `:${globalUtils.config.port}` : ''}/attachments/${req.channel.id}/${file_details.id}/${file_details.name}`;
+            file_details[0].url = `${globalUtils.config.secure ? 'https' : 'http'}://${globalUtils.config.base_url}${globalUtils.nonStandardPort ? `:${globalUtils.config.port}` : ''}/attachments/${req.channel.id}/${file_details[0].id}/${file_details[0].name}`;
 
             if (!fs.existsSync(attachmentDir)) {
                 fs.mkdirSync(attachmentDir, { recursive: true });
@@ -343,22 +339,74 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
             fs.writeFileSync(file_path, req.file.buffer);
 
-            if (!(file_path.endsWith(".mp4") || file_path.endsWith(".webm"))) {
+            const isVideo = file_path.endsWith(".mp4") || file_path.endsWith(".webm");
+
+            let thumbnail_details;
+
+            if (isVideo) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        ffmpeg(file_path)
+                            .on('end', () => {
+                                ffmpeg.ffprobe(file_path, (err, metadata) => {
+                                    let vid_metadata = metadata.streams.find(x => x.codec_type === 'video');
+
+                                    if (!err && vid_metadata) {
+                                        file_details[0].width = vid_metadata.width;
+                                        file_details[0].height = vid_metadata.height;
+                                    }
+
+                                    file_details[0].thumbnail_url = file_details[0].url.replace(file_details[0].name, 'thumbnail.png');
+
+                                    let thumb_stats = fs.statSync(path.join(attachmentDir, 'thumbnail.png'));
+
+                                    thumbnail_details = {
+                                        size: thumb_stats.size,
+                                        id: Snowflake.generate(),
+                                        name: 'thumbnail.png',
+                                        width: file_details[0].width,
+                                        height: file_details[0].height,
+                                        url: file_details[0].url.replace(file_details[0].name, 'thumbnail.png'),
+                                        proxy_url: file_details[0].url.replace(file_details[0].name, 'thumbnail.png')
+                                    }
+
+                                    resolve();
+                                });
+                            })
+                            .on('error', (err) => {
+                                logText(err, "error");
+                                reject(err);
+                            })
+                            .screenshots({
+                                count: 1,
+                                timemarks: ['1'],
+                                filename: 'thumbnail.png',
+                                folder: attachmentDir,
+                            });
+                    });
+                } catch (error) {
+                    file_details[0].width = 500;
+                    file_details[0].height = 500;
+                }
+
+                if (thumbnail_details) {
+                    file_details[1] = thumbnail_details;
+                }
+            } else {
                 try {
                     const image = await Jimp.read(req.file.buffer);
-                    
+
                     if (image) {
-                        file_details.width = image.width;
-                        file_details.height = image.height;
+                        file_details[0].width = image.bitmap.width;
+                        file_details[0].height = image.bitmap.height;
                     }
                 } catch (error) {
-                    file_details.width = 500;
-                    file_details.height = 500;
+                    file_details[0].width = 500;
+                    file_details[0].height = 500;
 
                     logText(error, "error");
                 }
             }
-        
         }
 
         //Write message
@@ -366,7 +414,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
         if (!message)
             throw "Message creation failed";
-        
+
         //Dispatch to correct recipients(s) in DM, group, or guild
         if (req.channel.recipients) {
             await globalUtils.pingPrivateChannel(req.channel);

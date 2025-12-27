@@ -3,6 +3,7 @@ const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 const cheerio = require('cheerio');
 const { Jimp } = require('jimp');
+const path = require('fs');
 
 const hexToDecimal = (hex) => {
     if (hex.startsWith('#')) {
@@ -114,23 +115,30 @@ const embedder = {
             return null;
         }
     },
-    embedAttachedVideo: (url) => {
+    embedAttachedVideo: (url, thumbnail_url, width, height) => {
+        let videoFilename = url.split('/').pop();
+        let thumbFilename = thumbnail_url.split('/').pop();
+        let attachmentVideoUrl = `attachment://${videoFilename}`;
+        let attachmentThumbUrl = `attachment://${thumbFilename}`;
+
         return {
             type: "video",
             inlineMedia: true,
+            url: url,
+            proxy_url: url,
             thumbnail: {
-                proxy_url: url,
-                url: url,
-                width: 500,
-                height: 500
+                url: attachmentThumbUrl,
+                proxy_url: thumbnail_url,
+                width: width,
+                height: height
             },
             video: {
-                url: url,
+                url: attachmentVideoUrl,
                 proxy_url: url,
-                width: 500,
-                height: 500
+                width: width,
+                height: height
             },
-        };
+        }
     },
     embedYouTube: async (url) => {
         try {
@@ -182,15 +190,21 @@ const embedder = {
             return {}; //Return {} if ytdl core thinks you're a bot so it doesn't break messaging.
         }
     },
-    generateMsgEmbeds: async (content, attachment, force) => {
-        if (!global.config.auto_embed_urls) {
-            return [];
-        }
-
+    generateMsgEmbeds: async (content, attachments, force) => {
         let ret = [];
 
-        if (attachment && (attachment.name.endsWith(".mp4") || attachment.name.endsWith(".webm"))) {
-            ret.push(embedder.embedAttachedVideo(attachment.url));
+        if (attachments && Array.isArray(attachments)) {
+            for (let attachment of attachments) {
+                let isVideo = attachment.name.endsWith(".mp4") || attachment.name.endsWith(".webm");
+                
+                if (isVideo && attachment.thumbnail_url) {
+                    ret.push(embedder.embedAttachedVideo(attachment.url, attachment.thumbnail_url, attachment.width, attachment.height));
+                }
+            }
+        }
+
+        if (!global.config.auto_embed_urls) {
+            return ret;
         }
 
         let urls = content.match(/https?:\/\/[^\s]+/g);

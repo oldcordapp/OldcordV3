@@ -49,6 +49,7 @@ const { Readable } = require("stream");
 
 app.set('trust proxy', 1);
 
+
 database.setupDatabase();
 
 global.dispatcher = dispatcher;
@@ -202,9 +203,9 @@ httpServer.listen(config.port, () => {
 
 httpServer.on('request', app);
 
-app.use(express.json({
-    limit: '10mb',
-}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.text({ limit: '10mb' })); 
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(cookieParser());
 
