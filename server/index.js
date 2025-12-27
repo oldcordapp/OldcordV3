@@ -202,7 +202,9 @@ httpServer.listen(config.port, () => {
 
 httpServer.on('request', app);
 
-app.use(express.text({ type: 'application/json' }), normalizeJsonMiddleware);
+app.use(express.json({
+    limit: '10mb',
+}));
 
 app.use(cookieParser());
 

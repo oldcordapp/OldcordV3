@@ -36,17 +36,6 @@ function apiVersionMiddleware(req, _, next) {
     next();
 };
 
-function normalizeJsonMiddleware(req, res, next) {
-    if (req.body && typeof req.body === 'string') {
-        try {
-            req.body = JSON.parse(req.body);
-        } catch (error) {
-            return res.status(400).send("Invalid JSON");
-        }
-    }
-  next();
-}
-
 async function clientMiddleware(req, res, next) {
     try {
         if (spacebarApis.includes(req.path)) return next();
