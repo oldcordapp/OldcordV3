@@ -59,11 +59,11 @@ const patcher = {
       "$1{}"
     );
     script = script.replace(
-      /return \w\["default"\]\.post\(.*url:\w\.Endpoints\.TRACK[^}]*}[^)]*?\)/g,
+      /return \w(?:\.default|\["default"\])\.post\(.*url:\w\.Endpoints\.TRACK.*?\}\s*.*?\}\)/g,
       "null;"
     );
     script = script.replace(
-      /\w\["default"\]\.post\(.*url:\w\.Endpoints\.TRACK[^}]*}[^)]*?\)/g,
+      /\w(?:\.default|\["default"\])\.post\(.*url:\w\.Endpoints\.TRACK.*?\}\s*.*?\}\)/g,
       ""
     );
     script = script.replace(
