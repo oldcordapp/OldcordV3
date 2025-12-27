@@ -90,6 +90,10 @@ const Watchdog = {
                 return next();
             }
 
+            if (req.account && (req.account.bot || global.config.trusted_users.includes(req.account.id))) {
+                return next();
+            }
+
             if (!req.fingerprint) {
                 let fingerprint_outcome = await Watchdog.getFingerprint(req.originalUrl, req.baseUrl, req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
                 let fingerprint = fingerprint_outcome.fingerprint;
