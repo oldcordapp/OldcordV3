@@ -127,7 +127,6 @@
             "max": 4000
         }
     },
-    "gcs_config" : { },
     "trusted_users" : [],
     "custom_invite_url" : "",
     "integration_config" : [],
