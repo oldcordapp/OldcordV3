@@ -90,7 +90,7 @@ const Watchdog = {
                 return next();
             }
 
-            if (req.account && (req.account.bot || global.config.trusted_users.includes(req.account.id))) {
+            if (req.account && (req.account.bot || global.config.trusted_users.includes(req.account.id) || req.is_staff)) {
                 return next();
             }
 
