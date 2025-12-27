@@ -60,7 +60,7 @@ const patcher = {
     );
     script = script.replace(
       /return \w(?:\.default|\["default"\])\.post\(.*url:\w\.Endpoints\.TRACK.*?\}\s*.*?\}\)/g,
-      "null;"
+      "null"
     );
     script = script.replace(
       /\w(?:\.default|\["default"\])\.post\(.*url:\w\.Endpoints\.TRACK.*?\}\s*.*?\}\)/g,
