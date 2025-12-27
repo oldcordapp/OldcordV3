@@ -5,7 +5,7 @@ const cluster = require("cluster");
 // Stolen from fosscord, thanks
 
 class Snowflake {
-    static EPOCH = 1420070400000;
+    static EPOCH = 1420070400000n;
     static INCREMENT = BigInt(0); // max 4095
     static processId = BigInt(process.pid % 31); // max 31
     static workerId = BigInt((cluster.worker?.id || 0) % 31); // max 31
