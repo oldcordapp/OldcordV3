@@ -376,7 +376,17 @@ class session {
                     //]
                     //} //someone really do this better
 
-                    merged_members.push(guild.members);
+                    merged_members.push(guild.members.map((x) => {
+                        return (
+                            {
+                                ...x,
+                                guild: {
+                                    id: guild.id,
+                                },
+                                guild_id: guild.id,
+                            }
+                        )
+                    }));
 
                     for (var channel of guild.channels) {
                         if ((year === 2017 && month < 9) || year < 2017) {
