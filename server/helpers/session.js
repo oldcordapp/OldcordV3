@@ -1,7 +1,6 @@
 const globalUtils = require('./globalutils');
 const { logText } = require("./logger");
 const zlib = require('zlib');
-const Snowflake = require('../helpers/snowflake');
 
 let erlpack = null;
 

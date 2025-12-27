@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const encode = require('base64url');
+const encode = require('./base64url');
 const fs = require('fs');
 const { logText } = require('./logger');
 

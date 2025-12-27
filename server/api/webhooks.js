@@ -6,7 +6,7 @@ const Snowflake = require('../helpers/snowflake');
 const fs = require('fs');
 const router = express.Router({ mergeParams: true });
 const path = require("path");
-const md5 = require('md5');
+const md5 = require('../helpers/md5');
 
 router.param('webhookid', async (req, res, next, webhookid) => {
     req.webhook = await global.database.getWebhookById(webhookid);

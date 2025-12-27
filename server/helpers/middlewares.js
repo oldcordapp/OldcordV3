@@ -3,7 +3,6 @@ const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 const wayback = require('./wayback');
 const fs = require('fs');
-const { Storage } = require('@google-cloud/storage');
 
 const config = globalUtils.config;
 
@@ -11,12 +10,6 @@ const spacebarApis = ["/.well-known/spacebar", "/policies/instance/domains"];
 
 let cached404s = {};
 let bucket = null;
-
-if (config.gcs_config && config.gcs_config.autoUploadBucket && config.gcs_config.autoUploadBucket !== "") {
-    let storage = new Storage();
-
-    bucket = storage.bucket(config.gcs_config.autoUploadBucket);
-}
 
 function apiVersionMiddleware(req, _, next) {
     const versionRegex = /^\/v(\d+)/;
@@ -210,16 +203,6 @@ async function assetsMiddleware(req, res) {
 
             const arrayBuffer = await r.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
-
-            if (bucket !== null) {
-                let cloudPath = `${config.gcs_config.gcStorageFolder}/${req.params.asset}`;
-
-                const cloudFile = bucket.file(cloudPath);
-
-                await cloudFile.save(buffer, { contentType: r.headers.get("content-type") });
-
-                logText(`[LOG] Uploaded ${req.params.asset} to Google Cloud Storage successfully.`, 'debug');
-            }
 
             if (!fs.existsSync("./www_dynamic/assets")) {
                 fs.mkdirSync("./www_dynamic/assets", { recursive: true });

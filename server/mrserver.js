@@ -1,4 +1,3 @@
-const sodium = require('libsodium-wrappers');
 const { logText } = require('./helpers/logger');
 const WebSocket = require('ws');
 const { mrHandlers, OPCODES } = require('./handlers/mr');
