@@ -1,6 +1,5 @@
 const globalUtils = require("../helpers/globalutils");
 const session = require("../helpers/session");
-const JSON = require('json-bigint')({ storeAsString: true, alwaysParseAsBig: false, useNativeBigInt: false });
 
 const OPCODES = {
     HEARTBEAT: 1,

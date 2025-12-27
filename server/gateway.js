@@ -3,7 +3,6 @@ const globalUtils = require('./helpers/globalutils');
 const WebSocket = require('ws').WebSocket;
 const zlib = require('zlib');
 const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
-const JSON = require('json-bigint')({ storeAsString: true, alwaysParseAsBig: false, useNativeBigInt: false });
 
 let erlpack = null;
 

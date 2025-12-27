@@ -2,7 +2,6 @@ const globalUtils = require('./globalutils');
 const { logText } = require("./logger");
 const zlib = require('zlib');
 const Snowflake = require('../helpers/snowflake');
-const JSON = require('json-bigint')({ storeAsString: true, alwaysParseAsBig: false, useNativeBigInt: false });
 
 let erlpack = null;
 

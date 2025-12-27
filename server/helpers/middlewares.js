@@ -4,7 +4,6 @@ const globalUtils = require('./globalutils');
 const wayback = require('./wayback');
 const fs = require('fs');
 const { Storage } = require('@google-cloud/storage');
-const JSON = require("json-bigint")({ storeAsString: true, alwaysParseAsBig: false, useNativeBigInt: false });
 
 const config = globalUtils.config;
 

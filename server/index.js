@@ -1,3 +1,25 @@
+const originalJsonParse = JSON.parse;
+
+JSON.parse = (text, reviver) => {
+    return originalJsonParse(text, (key, value, context) => {
+        if (typeof value === 'number' && context && context.source) {
+            const rawValue = context.source;
+
+            if (value > Number.MAX_SAFE_INTEGER || 
+                value < Number.MIN_SAFE_INTEGER || 
+                rawValue.includes(".")) {
+                value = rawValue;
+            }
+        }
+
+        if (reviver) {
+            return reviver(key, value, context);
+        }
+
+        return value;
+    });
+};
+
 const express = require('express');
 const gateway = require('./gateway');
 const cors = require('cors');

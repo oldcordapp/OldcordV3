@@ -28,7 +28,6 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "jimp": "^1.6.0",
-    "json-bigint": "^1.0.0",
     "libsodium-wrappers": "^0.7.15",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",
