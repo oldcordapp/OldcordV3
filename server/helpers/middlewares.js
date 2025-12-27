@@ -734,7 +734,6 @@ function channelPermissionsMiddleware(permission) {
 
 module.exports = {
     apiVersionMiddleware,
-    normalizeJsonMiddleware,
     clientMiddleware,
     authMiddleware,
     assetsMiddleware,
