@@ -70,6 +70,10 @@ const patcher = {
       /t\.analyticsTrackingStoreMaker=function\(e\){/,
       "t.analyticsTrackingStoreMaker=function(e){return;"
     );
+    script = script.replace(
+      /\w\.default\.track/,
+      "window.noop"
+    );
 
     if (!utils.isOldplungerEnabled()) {
       if (getEnabledPatches().includes("modernizeWebRTC")) {
