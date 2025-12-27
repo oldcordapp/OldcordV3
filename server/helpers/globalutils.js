@@ -810,7 +810,7 @@ const globalUtils = {
         if (channel.recipients)
             clone.recipients = channel.recipients.filter(r => r.id != req.user.id);
         
-        if (!req.plural_recipients) {
+        if (!req.plural_recipients && clone.recipients) {
             clone.is_private = channel.type > 0;
             clone.recipient = clone.recipients[0];
             delete clone.recipients;

@@ -608,7 +608,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
             send_parent_id = req.body.parent_id;
         }
 
-        const channel = await global.database.createChannel(req.params.guildid, req.body.name, number_type, req.guild.channels.length + 1, [], null, send_parent_id);
+        let channel = await global.database.createChannel(req.params.guildid, req.body.name, number_type, req.guild.channels.length + 1, [], null, send_parent_id);
 
         if (channel == null) {
             return res.status(500).json({
