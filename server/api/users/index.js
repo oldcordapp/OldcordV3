@@ -207,7 +207,7 @@ router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, re
             });
         }
 
-        if (req.params.userid === "456226577798135808") {
+        if (req.params.userid === "1279218211430105088") {
             return res.status(200).json([]);
         } //Return [] for the deleted user account
 
