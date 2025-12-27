@@ -314,7 +314,7 @@ async function handleResume(socket, packet) {
     if (!session2) {
         let sesh = new session(globalUtils.generateString(16), socket, socket.user, packet.d.token, false, {
             game_id: null,
-            status: socket.user.settings.status ?? "online",
+            status: socket.user?.settings?.status ?? "online",
             activities: [],
             user: globalUtils.miniUserObject(socket.user),
             roles: []
