@@ -45,6 +45,32 @@ const patcher = {
     // Fix client misidentification
     script = script.replace("__[STANDALONE]__", "");
 
+    // Recaptcha support
+    if (config.captcha_options.enabled)
+      script = script.replaceAll(
+        "6Lef5iQTAAAAAKeIvIY-DeexoO3gj7ryl9rLMEnn",
+        config.captcha_options.site_key
+      );
+
+    // Disable telemetry
+    script = script.replace(/track:function\([^)]*\){/, "$&return;");
+    script = script.replace(
+      /(function \w+\(e\)){[^p]*post\({.*url:\w\.Endpoints\.TRACK[^}]*}\)}/,
+      "$1{}"
+    );
+    script = script.replace(
+      /return \w\["default"\]\.post\(.*url:\w\.Endpoints\.TRACK[^}]*}[^)]*?\)/g,
+      "null;"
+    );
+    script = script.replace(
+      /\w\["default"\]\.post\(.*url:\w\.Endpoints\.TRACK[^}]*}[^)]*?\)/g,
+      ""
+    );
+    script = script.replace(
+      /t\.analyticsTrackingStoreMaker=function\(e\){/,
+      "t.analyticsTrackingStoreMaker=function(e){return;"
+    );
+
     if (!utils.isOldplungerEnabled()) {
       if (getEnabledPatches().includes("modernizeWebRTC")) {
         script = script.replaceAll(
@@ -656,32 +682,6 @@ const patcher = {
         "null!=e&&e.bucket!==f.ExperimentBuckets.CONTROL",
         "true"
       );
-
-    // Recaptcha support
-    if (config.captcha_options.enabled)
-      script = script.replaceAll(
-        "6Lef5iQTAAAAAKeIvIY-DeexoO3gj7ryl9rLMEnn",
-        config.captcha_options.site_key
-      );
-
-    // Disable telemetry
-    script = script.replace(/track:function\([^)]*\){/, "$&return;");
-    script = script.replace(
-      /(function \w+\(e\)){[^p]*post\({.*url:\w\.Endpoints\.TRACK[^}]*}\)}/,
-      "$1{}"
-    );
-    script = script.replace(
-      /return \w\["default"\]\.post\(.*url:\w\.Endpoints\.TRACK[^}]*}[^)]*?\)/g,
-      "null;"
-    );
-    script = script.replace(
-      /\w\["default"\]\.post\(.*url:\w\.Endpoints\.TRACK[^}]*}[^)]*?\)/g,
-      ""
-    );
-    script = script.replace(
-      /t\.analyticsTrackingStoreMaker=function\(e\){/,
-      "t.analyticsTrackingStoreMaker=function(e){return;"
-    );
 
     // Replace text
     function replaceMessage(name, oldValue, value) {
