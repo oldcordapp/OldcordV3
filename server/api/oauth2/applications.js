@@ -1,7 +1,6 @@
 const express = require('express');
 const { logText } = require('../../helpers/logger');
 const router = express.Router({ mergeParams: true });
-const quickcache = require('../../helpers/quickcache');
 
 router.param('applicationid', async (req, res, next, applicationid) => {
     req.application = await global.database.getApplicationById(applicationid);

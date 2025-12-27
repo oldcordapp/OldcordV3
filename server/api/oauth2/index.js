@@ -4,7 +4,6 @@ const router = express.Router({ mergeParams: true });
 const applications = require('./applications');
 const tokens = require('./tokens');
 const globalUtils = require('../../helpers/globalutils');
-const quickcache = require('../../helpers/quickcache');
 
 router.use("/applications", applications);
 router.use("/tokens", tokens);
@@ -101,29 +100,11 @@ router.get("/authorize", async (req, res) => {
 
         if (guilds.length > 0) {
             for(var guild of guilds) {
-                let member = guild.members.find(x => x.id === account.id);
+                let isOwner = guild.owner_id === account.id;
+                let isStaffOverride = req.is_staff && req.staff_details.privilege >= 3;
+                let hasPermission = (isOwner || isStaffOverride) || global.permissions.hasGuildPermissionTo(guild, account.id, "ADMINISTRATOR", null) || global.permissions.hasGuildPermissionTo(guild, account.id, "MANAGE_GUILD", null);
 
-                if (!member) continue; //how?
-
-                if (guild.members.find(x => x.id === application.bot.id)) continue; //fuc kyou
-
-                let roles = member.roles;
-                let permissions_number = 0;
-                let everyoneRole = guild.roles.find(x => x.id === guild.id);
-
-                if (everyoneRole) {
-                    permissions_number = everyoneRole.permissions;
-                }
-
-                for (var roleID of roles) {
-                    let guildRole = guild.roles.find(x => x.id === roleID);
-
-                    if (!guildRole) continue;
-
-                    permissions_number |= guildRole.permissions;
-                }
-
-                if (global.permissions.has(permissions_number, "ADMINISTRATOR") || global.permissions.has(permissions_number, "MANAGE_GUILD") || guild.owner_id === account.id) {
+                if (hasPermission) {
                     guilds_array.push({
                         id: guild.id,
                         icon: guild.icon,
@@ -257,28 +238,12 @@ router.post("/authorize", async (req, res) => {
             });
         }
 
-        let roles = member.roles;
+        let isOwner = guild.owner_id === account.id;
+        let isStaffOverride = req.is_staff && req.staff_details.privilege >= 3;
+        let hasPermission = (isOwner || isStaffOverride) || global.permissions.hasGuildPermissionTo(guild, account.id, "ADMINISTRATOR", null) || global.permissions.hasGuildPermissionTo(guild, account.id, "MANAGE_GUILD", null);
 
-        let permissions_number = 0;
-
-        let everyoneRole = guild.roles.find(x => x.id === guild.id);
-
-        if (everyoneRole) {
-            permissions_number = everyoneRole.permissions;
-        }
-
-        for (var roleID of roles) {
-            let guildRole = guild.roles.find(x => x.id === roleID);
-
-            if (!guildRole) continue;
-
-            permissions_number |= guildRole.permissions;
-        }
-
-        if (global.permissions.has(permissions_number, "ADMINISTRATOR") || global.permissions.has(permissions_number, "MANAGE_GUILD") || guild.owner_id === account.id) {
-            //do the stuff
-
-            const isBanned = await database.isBannedFromGuild(guild.id, application.bot.id);
+        if (hasPermission) {
+            let isBanned = await database.isBannedFromGuild(guild.id, application.bot.id);
 
             if (isBanned) {
                 return res.status(403).json({

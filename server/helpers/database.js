@@ -2617,8 +2617,6 @@ const database = {
                 }
             }
 
-            console.log(messageAttachments);
-
             const reactionRet = [];
             const msgReactions = JSON.parse(rows[0].reactions);
 
