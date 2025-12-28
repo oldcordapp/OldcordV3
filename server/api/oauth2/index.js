@@ -174,14 +174,7 @@ router.post("/authorize", async (req, res) => {
         let guild_id = null;
 
         if (scope === 'bot') {
-            if (!req.body.bot_guild_id) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Missing Permissions"
-                });  
-            }
-
-            guild_id = req.body.bot_guild_id;
+            guild_id = req.body.bot_guild_id || req.body.guild_id;
 
             let bot = await global.database.getBotByApplicationId(application.id);
 
@@ -211,7 +204,7 @@ router.post("/authorize", async (req, res) => {
             });
         }
 
-        let guild = guilds.find(x => x.id === req.body.bot_guild_id);
+        let guild = guilds.find(x => x.id === guild_id);
 
         if (!guild) {
             return res.status(403).json({
