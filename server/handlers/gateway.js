@@ -29,53 +29,46 @@ async function handleIdentify(socket, packet) {
         return socket.close(4004, "Authentication failed");
     }
 
+    let savedStatus = "online";
+    
     if (user.bot) {
-        user.settings = {
-            status: "online"
-        }
+        user.settings = { 
+            status: "online" 
+        };
+    } else {
+        savedStatus = user.settings?.status || "online";
     }
 
     socket.user = user;
 
     let sesh = new session(globalUtils.generateString(16), socket, user, packet.d.token, false, {
         game_id: null,
-        status: "offline",
+        status: savedStatus,
         activities: [],
         user: globalUtils.miniUserObject(socket.user),
         roles: []
     }, undefined, undefined, undefined, socket.apiVersion, packet.d.capabilities ?? socket.client_build_date);
 
     socket.session = sesh;
-
     socket.session.start();
 
     await socket.session.prepareReady();
 
     let pastPresence = packet.d.presence;
+    let finalStatus = savedStatus;
 
-    if (!pastPresence) {
-        pastPresence = {
-            status: socket.user.settings.status ?? "online",
-            since: 0,
-            afk: false,
-            game: null
-        }
-    }
+    if (pastPresence && pastPresence.status && pastPresence.status === savedStatus) {
+        finalStatus = pastPresence.status;
+    } //Only listening if the users settings status is the same as the identify payload - as thats what discord did
 
-    let setStatusTo = pastPresence.status;
-
-    if (setStatusTo && setStatusTo.status === 'idle' && setStatusTo.since === 0 && !setStatusTo.afk) {
-        setStatusTo = 'online';
-    }
-
-    await socket.session.updatePresence(setStatusTo, null);
+    await socket.session.updatePresence(finalStatus, null, false);
 }
 
 async function handleHeartbeat(socket, packet) {
     if (!socket.hb) return;
 
-    socket.hb.acknowledge(packet.d);
     socket.hb.reset();
+    socket.hb.acknowledge(packet.d);
 }
 
 async function handlePresence(socket, packet) {

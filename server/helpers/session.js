@@ -45,8 +45,7 @@ class session {
     onClose(code) {
         this.dead = true;
         this.socket = null;
-
-        setTimeout(this.terminate.bind(this), SESSION_TIMEOUT);
+        this.timeout = setTimeout(this.terminate.bind(this), SESSION_TIMEOUT);
     }
     async updatePresence(status, game_id = null, save_presence = true) {
         if (this.type !== 'gateway') {
@@ -78,14 +77,12 @@ class session {
                 //prevent users from saving offline as their last seen status... as u cant do that
             }
 
-            if (status === "invisible") {
-                status = "offline"; //they shouldnt be able to tell this
-            }
-
             this.presence.status = status.toLowerCase();
             this.presence.game_id = game_id;
 
-            await this.dispatchPresenceUpdate();
+            let broadcastStatus = status.toLowerCase() === "invisible" ? "offline" : status.toLowerCase();
+
+            await this.dispatchPresenceUpdate(broadcastStatus);
         } catch (error) {
             logText(error, "error");
         }
@@ -129,9 +126,15 @@ class session {
             });
         }
     }
-    async dispatchPresenceUpdate() {
+    async dispatchPresenceUpdate(presenceOverride = null) {
         if (this.type !== 'gateway') {
             return;
+        }
+
+        let presence = this.presence;
+
+        if (presenceOverride != null) {
+            presence.status = presenceOverride;
         }
 
         let current_guilds = await global.database.getUsersGuilds(this.user.id);
@@ -139,7 +142,7 @@ class session {
         this.guilds = current_guilds;
 
         if (current_guilds.length == 0) {
-            return await this.dispatch("PRESENCE_UPDATE", this.presence);
+            return await this.dispatch("PRESENCE_UPDATE", presence);
         }
 
         for (let i = 0; i < current_guilds.length; i++) {
@@ -147,7 +150,7 @@ class session {
             let me = guild.members.find(x => x.id === this.user.id);
 
             const guildSpecificPresence = {
-                ...this.presence,
+                ...presence,
                 guild_id: guild.id,
                 roles: me ? me.roles : []
             };
@@ -187,7 +190,7 @@ class session {
         let uSessions = global.userSessions.get(this.user.id);
 
         if (uSessions) {
-            uSessions.splice(uSessions.indexOf(this), 1);
+            uSessions = uSessions.filter(s => s.id !== this.id);
 
             if (uSessions.length >= 1) {
                 global.userSessions.set(this.user.id, uSessions);
@@ -198,10 +201,14 @@ class session {
 
         global.sessions.delete(this.id);
 
-        if (this.type === 'gateway') {
-            if (!uSessions || uSessions.length == 0) {
+       if (this.type === 'gateway') {
+            if (!uSessions || uSessions.length === 0) {
                 await this.updatePresence("offline", null);
-            } else await this.updatePresence(uSessions[uSessions.length - 1].presence.status, uSessions[uSessions.length - 1].presence.game_id);
+            } else {
+                const lastSession = uSessions[uSessions.length - 1];
+
+                await this.updatePresence(lastSession.presence.status, lastSession.presence.game_id);
+            }
         }
     }
     send(payload) {
@@ -257,7 +264,10 @@ class session {
         this.ready = true;
     }
     async resume(seq, socket) {
-        if (this.timeout) clearTimeout(this.timeout);
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+            this.timeout = null;
+        }
 
         this.socket = socket;
         this.dead = false;

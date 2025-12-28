@@ -32,7 +32,7 @@ const gateway = {
         if (socket.client_build.includes("2015")) {
             gameField = packet.d.game_id || null;
 
-            if (packet.d.idle_since != null) {
+            if (packet.d.idle_since != null || packet.d.afk === true) {
                 setStatusTo = "idle";
             }
         } else {
@@ -44,8 +44,6 @@ const gateway = {
 
             if (packet.d.afk) {
                 setStatusTo = "idle";
-            } else if (packet.d.afk === false && packet.d.since === 0 && packet.d.status === "idle") {
-                setStatusTo = "online";
             }
         }
 
@@ -132,7 +130,7 @@ const gateway = {
 
         socket.inCall = false;
 
-        socket.on('close', (code) => this.handleClientClose(code));
+        socket.on('close', (code) => this.handleClientClose(socket, code));
 
         let heartbeat_payload = {
             op: OPCODES.HEARTBEAT_INFO,
@@ -166,9 +164,7 @@ const gateway = {
                 if (socket.hb.timeout) clearTimeout(socket.hb.timeout);
 
                 socket.hb.timeout = setTimeout(async () => {
-                    if (socket.session) {
-                        await socket.session.updatePresence("offline", null);
-                    }
+                    this.debug(`Heartbeat timeout for session: ${socket.session?.id}`);
 
                     socket.close(4009, 'Session timed out');
                 }, (45 * 1000) + 20 * 1000);
@@ -183,6 +179,8 @@ const gateway = {
                 });
             }
         };
+
+        socket.hb.start();
 
         socket.on('message', (data) => this.handleClientMessage(socket, data));
     },

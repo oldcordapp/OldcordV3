@@ -173,15 +173,19 @@ const dispatcher = {
                 let member = guild.members.find(m => m.id === payload.user.id);
 
                 if (member) {
-                    payload.nick = member.nick; 
-                    payload.roles = member.roles;
+                    finalPayload.nick = member.nick; 
+                    finalPayload.roles = member.roles;
                 }
 
-                if (socket?.client_build?.endsWith("2015")) {
-                    finalPayload = { 
-                        ...payload, 
-                        status: ["idle", "offline", "invisible", "dnd"].includes(payload.status) ? "offline" : "online" 
-                    };
+                let isLegacyClient = socket && socket.client_build_date.getFullYear() === 2015 || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() < 8) || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() === 8 && socket.client_build_date.getDate() < 26);
+                let current_status = payload.status.toLowerCase();
+
+                if (isLegacyClient) {
+                    if (["offline", "invisible"].includes(current_status)) {
+                        finalPayload.status = "offline";
+                    } else if (current_status === "dnd") {
+                        finalPayload.status = "online";
+                    }
                 }
             }
 
@@ -217,15 +221,22 @@ const dispatcher = {
             if (!uSessions || uSessions.length === 0) continue;
 
             for(let z = 0; z < uSessions.length; z++) {
-                let socket = uSessions[z].socket;
+                let session = uSessions[z];
+                let socket = session.socket;
+                let finalPayload = { ...payload };
+                let isLegacyClient = socket && socket.client_build_date.getFullYear() === 2015 || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() < 8) || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() === 8 && socket.client_build_date.getDate() < 26);
 
-                if (type == "PRESENCE_UPDATE" && socket && socket.client_build.endsWith("2015")) {
-                    let new_status = payload.status;
-    
-                    payload.status = (new_status != "idle" && new_status != "offline" && new_status != "invisible" && new_status != "dnd") ? "online" : "offline";
+                if (type == "PRESENCE_UPDATE" && isLegacyClient) {
+                    let current_status = payload.status.toLowerCase();
+
+                    if (["offline", "invisible"].includes(current_status)) {
+                        finalPayload.status = "offline";
+                    } else if (current_status === "dnd") {
+                        finalPayload.status = "online";
+                    }
                 }
 
-                uSessions[z].dispatch(type, payload);
+                session.dispatch(type, finalPayload);
             }
         }
 

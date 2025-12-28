@@ -5470,7 +5470,7 @@ const database = {
                         status: "online",
                         activities: [],
                         user: globalUtils.miniUserObject(owner),
-                    }],
+                    }], //to-do make it return the actual owner status here
                     features: [],
                     icon: icon,
                     splash: null,
