@@ -157,11 +157,10 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
         });
 
         await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
-            game_id: null,
-            status: "online",
+            ...globalUtils.getUserPresence({
+                user: globalUtils.miniUserObject(sender)
+            }),
             roles: [],
-            activities: [],
-            user: globalUtils.miniUserObject(sender),
             guild_id: invite.guild.id
         })
 

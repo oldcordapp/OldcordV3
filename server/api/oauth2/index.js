@@ -263,11 +263,10 @@ router.post("/authorize", async (req, res) => {
             });
 
             await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
-                game_id: null,
-                status: "online",
-                activities: [],
+                ...globalUtils.getUserPresence({
+                    user: globalUtils.miniUserObject(application.bot)
+                }),
                 roles: [],
-                user: globalUtils.miniBotObject(application.bot),
                 guild_id: guild.id
             });
 

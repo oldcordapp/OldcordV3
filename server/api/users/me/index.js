@@ -360,7 +360,7 @@ router.patch("/settings", async (req, res) => {
   try {
     let account = req.account;
     let new_settings = account.settings;
-    
+
     if (new_settings == null) {
       return res.status(500).json({
         code: 500,
@@ -379,22 +379,34 @@ router.patch("/settings", async (req, res) => {
 
       await global.dispatcher.dispatchEventTo(account.id, "USER_SETTINGS_UPDATE", settings);
 
-      return res.status(204).send();
-    } else {
+      if (req.body.status) {
+        const userSessions = global.userSessions.get(account.id);
+
+        if (userSessions && userSessions.size > 0) {
+          for (let session of userSessions) {
+            session.presence.status = req.body.status.toLowerCase();
+          }
+
+          await userSessions[0].dispatchPresenceUpdate(userSessions[0].presence.status);
+        }
+
+        return res.status(204).send();
+      } else {
+        return res.status(500).json({
+          code: 500,
+          message: "Internal Server Error"
+        })
+      }
+    } 
+  } catch (error) {
+      logText(error, "error");
+
       return res.status(500).json({
         code: 500,
         message: "Internal Server Error"
       })
     }
-  } catch (error) {
-    logText(error, "error");
-
-    return res.status(500).json({
-      code: 500,
-      message: "Internal Server Error"
-    })
-  }
-});
+  });
 
 router.get(/\/settings-proto\/.*/, async (req, res) => {
   try {

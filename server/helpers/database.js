@@ -5465,12 +5465,9 @@ const database = {
                         roles: [],
                         user: globalUtils.miniUserObject(owner)
                     }],
-                    presences: [{
-                        game_id: null,
-                        status: "online",
-                        activities: [],
-                        user: globalUtils.miniUserObject(owner),
-                    }], //to-do make it return the actual owner status here
+                    presences: [globalUtils.getUserPresence({
+                        user: globalUtils.miniUserObject(owner)
+                    })], //to-do make it return the actual owner status here
                     features: [],
                     icon: icon,
                     splash: null,
@@ -5519,11 +5516,9 @@ const database = {
                     roles: [],
                     user: globalUtils.miniUserObject(owner)
                 }],
-                presences: [{
-                    game_id: null,
-                    status: "online",
-                    user: globalUtils.miniUserObject(owner),
-                }],
+                presences: [globalUtils.getUserPresence({
+                    user: globalUtils.miniUserObject(owner)
+                })],
                 icon: icon,
                 splash: null,
                 id: id,

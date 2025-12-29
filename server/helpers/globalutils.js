@@ -40,6 +40,31 @@ const globalUtils = {
     
         return result;
     },
+    getUserPresence: (member) => {
+        let uSessions = global.userSessions.get(member.user.id);
+
+        if (!uSessions || uSessions.size === 0) {
+            return {
+                status: "offline",
+                game_id: null,
+                activities: [],
+                user: globalUtils.miniUserObject(member.user)
+            }
+        }
+
+        let sessions = uSessions.filter(x => !x.dead);
+
+        if (sessions.length === 0) {
+            return {
+                status: "offline",
+                game_id: null,
+                activities: [],
+                user: globalUtils.miniUserObject(member.user)
+            }
+        }
+
+        return sessions[0].presence;
+    },
     computeMemberList: (guild, channel, ranges) => {
         function arrayPartition(array, callback) {
             return array.reduce(([pass, fail], elem) => {
@@ -51,17 +76,17 @@ const globalUtils = {
             return global.permissions.hasChannelPermissionTo(channel, guild, m.id, "READ_MESSAGES");
         });
         
-        function formatMemberItem(member, guild, forcedStatus = null) {
-            let p = guild.presences.find(pres => pres.user.id === member.id);
+        function formatMemberItem(member, forcedStatus = null) {
+            let p = globalUtils.getUserPresence(member);
+
+            if (forcedStatus != null) {
+                p.status = forcedStatus;
+            }
 
             return {
                 member: {
                     ...member,
-                    presence: {
-                        status: forcedStatus || p?.status || "online",
-                        user: globalUtils.miniUserObject(member),
-                        activities: p?.activities || []
-                    }
+                    presence: p
                 }
             };
         }
@@ -72,8 +97,8 @@ const globalUtils = {
             let [startIndex, endIndex] = range;
 
             let sortedMembers = [...visibleMembers].sort((a, b) => {
-                let pA = guild.presences.find(p => p.user.id === a.id);
-                let pB = guild.presences.find(p => p.user.id === b.id);
+                let pA = globalUtils.getUserPresence(a);
+                let pB = globalUtils.getUserPresence(b);
                 
                 let statusA = (pA?.status && pA.status !== 'offline') ? 1 : 0;
                 let statusB = (pB?.status && pB.status !== 'offline') ? 1 : 0;
@@ -92,7 +117,7 @@ const globalUtils = {
 
             hoistedRoles.forEach(role => {
                 let [roleMembers, others] = arrayPartition(remainingMembers, m => {
-                    let p = guild.presences.find(pres => pres.user.id === m.id);
+                    let p = globalUtils.getUserPresence(m);
                     let isOnline = p && p.status !== 'offline' && p.status !== 'invisible';
 
                     return isOnline && m.roles.includes(role.id);
@@ -109,14 +134,14 @@ const globalUtils = {
                         group 
                     });
 
-                    roleMembers.forEach(m => items.push(formatMemberItem(m, guild)));
+                    roleMembers.forEach(m => items.push(formatMemberItem(m)));
                 }
 
                 remainingMembers = others;
             });
 
             let [onlineLeft, offlineFinal] = arrayPartition(remainingMembers, m => {
-                let p = guild.presences.find(pres => pres.user.id === m.id);
+                let p = globalUtils.getUserPresence(m);
 
                 return p && p.status !== 'offline' && p.status !== 'invisible';
             });
@@ -132,7 +157,7 @@ const globalUtils = {
                     group 
                 });
 
-                onlineLeft.forEach(m => items.push(formatMemberItem(m, guild)));
+                onlineLeft.forEach(m => items.push(formatMemberItem(m)));
             }
 
             if (offlineFinal.length > 0) {
@@ -146,7 +171,7 @@ const globalUtils = {
                     group 
                 });
 
-                offlineFinal.forEach(m => items.push(formatMemberItem(m, guild, "offline")));
+                offlineFinal.forEach(m => items.push(formatMemberItem(m, "offline")));
             }
 
             return { 

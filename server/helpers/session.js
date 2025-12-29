@@ -27,7 +27,7 @@ class session {
         this.dead = false;
         this.lastMessage = Date.now();
         this.ratelimited = false;
-        this.messages = 0;
+        this.last_idle = 0;
         this.channel_id = channel_id;
         this.guild_id = guild_id;
         this.eventsBuffer = [];
@@ -80,7 +80,7 @@ class session {
             this.presence.status = status.toLowerCase();
             this.presence.game_id = game_id;
 
-            let broadcastStatus = status.toLowerCase() === "invisible" ? "offline" : status.toLowerCase();
+            let broadcastStatus = status.toLowerCase() === "invisible" ? "offline" : status.toLowerCase(); //this works i think
 
             await this.dispatchPresenceUpdate(broadcastStatus);
         } catch (error) {
@@ -142,12 +142,16 @@ class session {
         this.guilds = current_guilds;
 
         if (current_guilds.length == 0) {
+            presence.status = presence.status === "invisible" ? "offline" : presence.status;
+
             return await this.dispatch("PRESENCE_UPDATE", presence);
         }
 
         for (let i = 0; i < current_guilds.length; i++) {
             let guild = current_guilds[i];
             let me = guild.members.find(x => x.id === this.user.id);
+
+            presence.status = presence.status === "invisible" ? "offline" : presence.status;
 
             const guildSpecificPresence = {
                 ...presence,
@@ -470,7 +474,6 @@ class session {
 
                 if (!chan)
                     continue;
-
 
                 // thanks spacebar
 

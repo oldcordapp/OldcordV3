@@ -34,6 +34,12 @@ const gateway = {
 
             if (packet.d.idle_since != null || packet.d.afk === true) {
                 setStatusTo = "idle";
+                socket.session.last_idle = Date.now();
+            }
+
+            if (setStatusTo === "idle" && (packet.d.afk === false || !packet.d.idle_since) && socket.session.last_idle > 0) {
+                setStatusTo = "online";
+                socket.session.last_idle = 0;
             }
         } else {
             gameField = packet.d.game || null;
@@ -42,16 +48,23 @@ const gateway = {
                 setStatusTo = packet.d.status.toLowerCase();
             }
 
-            if (packet.d.afk) {
+            if (packet.d.since != 0 || packet.d.afk === true) {
                 setStatusTo = "idle";
+                socket.session.last_idle = Date.now();
+            }
+
+            if (setStatusTo === "idle" && packet.d.afk === false && socket.session.last_idle > 0) {
+                setStatusTo = "online";
+                socket.session.last_idle = 0;
             }
         }
 
         // Sync
         for (let session of allSessions) {
-            if (session.id !== socket.session.id && session.presence.status != setStatusTo && session.presence.game_id != gameField) {
+            if (session.id !== socket.session.id) {
                 session.presence.status = setStatusTo;
                 session.presence.game_id = gameField;
+                session.last_idle = socket.session.last_idle || 0;
             } //only do this for other sessions, not us as we're gonna update in a sec
         }
 
@@ -164,8 +177,6 @@ const gateway = {
                 if (socket.hb.timeout) clearTimeout(socket.hb.timeout);
 
                 socket.hb.timeout = setTimeout(async () => {
-                    this.debug(`Heartbeat timeout for session: ${socket.session?.id}`);
-
                     socket.close(4009, 'Session timed out');
                 }, (45 * 1000) + 20 * 1000);
             },
