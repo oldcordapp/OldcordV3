@@ -96,14 +96,6 @@ const errors = {
             code: 30046,
             message: "Maximum number of edits to messages older than 1 hour reached. Try again later"
         },
-        MAX_FORUM_PINNED_THREADS: {
-            code: 30047,
-            message: "Maximum number of pinned threads in a forum channel has been reached"
-        },
-        MAX_FORUM_TAGS: {
-            code: 30048,
-            message: "Maximum number of tags in a forum channel has been reached"
-        },
         BITRATE_TOO_HIGH: {
             code: 30052,
             message: "Bitrate is too high for channel of this type"
@@ -589,19 +581,19 @@ const errors = {
     },
     response_405: {
         METHOD_NOT_ALLOWED: {
-            message: "405: Method Not Allowed",
-            code: 0
+            code: 405,
+            message: "Method Not Allowed",
         }
     },
     response_500: {
         INTERNAL_SERVER_ERROR: {
-            code: 0,
+            code: 500,
             message: "Internal Server Error"
         },
     },
     response_502: {
         BAD_GATEWAY: {
-            code: 0,
+            code: 502,
             message: "Bad Gateway"
         }
     },
