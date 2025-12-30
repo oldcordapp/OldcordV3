@@ -1,8 +1,148 @@
+// This list is taken from https://docs.discord.food/datamining/errors with some removed because of 2019+ features
+// Thanks discord.food!
+// There are also custom Oldcord-specific errors here too.
+
 const errors = {
     response_400: {
-        INVALID_FORM_BODY: {
-            code: 50035,
-            message: "Invalid Form Body"
+        MAX_GUILDS: {
+            code: 30001,
+            message: "Maximum number of guilds reached (100)"
+        },
+        MAX_FRIENDS: {
+            code: 30002,
+            message: "Maximum number of friends reached (1000)"
+        },
+        MAX_PINS: {
+            code: 30003,
+            message: "Maximum number of pins reached for the channel (250)"
+        },
+        MAX_RECIPIENTS: {
+            code: 30004,
+            message: "Maximum number of recipients reached (10)"
+        },
+        MAX_GUILD_ROLES: {
+            code: 30005,
+            message: "Maximum number of guild roles reached (250)"
+        },
+        TOO_MANY_USERS: {
+            code: 30006,
+            message: "Too many users have this username, please try another"
+        },
+        MAX_WEBHOOKS: {
+            code: 30007,
+            message: "Maximum number of webhooks reached (10)"
+        },
+        MAX_EMOJIS: {
+            code: 30008,
+            message: "Maximum number of emojis reached"
+        },
+        MAX_CONNECTIONS: {
+            code: 30009,
+            message: "Maximum number of connections reached (50)"
+        },
+        MAX_REACTIONS: {
+            code: 30010,
+            message: "Maximum number of reactions reached (20)"
+        },
+        MAX_GROUP_DMS: {
+            code: 30011,
+            message: "Maximum number of group DMs reached (10)"
+        },
+        MAX_GUILD_CHANNELS: {
+            code: 30013,
+            message: "Maximum number of guild channels reached (500)"
+        },
+        MAX_ATTACHMENTS: {
+            code: 30015,
+            message: "Maximum number of attachments in a message reached (10)"
+        },
+        MAX_INVITES: {
+            code: 30016,
+            message: "Maximum number of invites to this server reached."
+        },
+        MAX_ANIMATED_EMOJIS: {
+            code: 30018,
+            message: "Maximum number of animated emojis reached"
+        },
+        MAX_SERVER_MEMBERS: {
+            code: 30019,
+            message: "Maximum number of server members reached"
+        },
+        MAX_SERVER_CATEGORIES: {
+            code: 30030,
+            message: "Maximum number of server categories has been reached (5)"
+        },
+        MAX_TEMPLATE_GUILDS: {
+            code: 30031,
+            message: "Guild already has a template"
+        },
+        MAX_THREAD_PARTICIPANTS: {
+            code: 30033,
+            message: "Max number of thread participants has been reached (1000)"
+        },
+        MAX_BANS_FETCHES: {
+            code: 30037,
+            message: "Max number of bans fetches has been reached. Try again later"
+        },
+        MAX_PRUNE_REQUESTS: {
+            code: 30040,
+            message: "Maximum number of prune requests has been reached. Try again later"
+        },
+        MAX_Guild_WIDGET_UPDATES: {
+            code: 30042,
+            message: "Maximum number of guild widget settings updates has been reached. Try again later"
+        },
+        MAX_MESSAGE_EDITS_OLDER_THAN_HOUR: {
+            code: 30046,
+            message: "Maximum number of edits to messages older than 1 hour reached. Try again later"
+        },
+        MAX_FORUM_PINNED_THREADS: {
+            code: 30047,
+            message: "Maximum number of pinned threads in a forum channel has been reached"
+        },
+        MAX_FORUM_TAGS: {
+            code: 30048,
+            message: "Maximum number of tags in a forum channel has been reached"
+        },
+        BITRATE_TOO_HIGH: {
+            code: 30052,
+            message: "Bitrate is too high for channel of this type"
+        },
+        MAX_PREMIUM_EMOJIS: {
+            code: 30056,
+            message: "Maximum number of premium emojis reached (25)"
+        },
+        MAX_WEBHOOKS_PER_GUILD: {
+            code: 30058,
+            message: "Maximum number of webhooks per guild reached (1000)"
+        },
+        MAX_CHANNEL_OVERWRITES: {
+            code: 30060,
+            message: "Maximum number of channel permission overwrites reached (1000)"
+        },
+        GUILD_CHANNELS_TOO_LARGE: {
+            code: 30061,
+            message: "The channels for this guild are too large"
+        },
+        REQUEST_ENTITY_TOO_LARGE: {
+            code: 40005,
+            message: "Request entity too large"
+        },
+        OLDCORD_TAG_TAKEN: {
+            code: 40008,
+            message: "That OldcordTag is already taken" // Originally That DiscordTag is already taken but we're Oldcord not Discord
+        },
+        OWNERSHIP_TRANSFER_REQUIRED: {
+            code: 40011,
+            message: "You must transfer ownership of any owned guilds before deleting your account"
+        },
+        SERVICE_UNAVAILABLE: {
+            code: 40016,
+            message: "Service is currently unavailable."
+        },
+        TAG_NAMES_MUST_BE_UNIQUE: {
+            code: 40061,
+            message: "Tag names must be unique"
         },
         INVALID_ACCOUNT_TYPE: {
             code: 50002,
@@ -132,17 +272,9 @@ const errors = {
             code: 50068,
             message: "Invalid message type"
         },
-        INVALID_THREAD_NOTIFICATION_SETTINGS: {
-            code: 50084,
-            message: "Invalid thread notification settings"
-        },
-        THREAD_BEFORE_EARLIER_THAN_CREATION: {
-            code: 50085,
-            message: "`before` value is earlier than the thread creation date"
-        },
-        COMMUNITY_CHANNELS_MUST_BE_TEXT: {
-            code: 50086,
-            message: "Community server channels must be text channels"
+        CANNOT_MODIFY_SYSTEM_WEBHOOK: {
+            code: 50073,
+            message: "Cannot modify a system webhook"
         },
         INSUFFICIENT_BOOSTS: {
             code: 50101,
@@ -152,81 +284,13 @@ const errors = {
             code: 50109,
             message: "The request body contains invalid JSON."
         },
-        MAX_GUILDS: {
-            code: 30001,
-            message: "Maximum number of guilds reached (100)"
+        OWNERSHIP_CANNOT_BE_TRANSFERRED_TO_BOT: {
+            code: 50132,
+            message: "Ownership cannot be transferred to a bot user"
         },
-        MAX_FRIENDS: {
-            code: 30002,
-            message: "Maximum number of friends reached (1000)"
-        },
-        MAX_PINS: {
-            code: 30003,
-            message: "Maximum number of pins reached for the channel (250)"
-        },
-        MAX_RECIPIENTS: {
-            code: 30004,
-            message: "Maximum number of recipients reached (10)"
-        },
-        MAX_GUILD_ROLES: {
-            code: 30005,
-            message: "Maximum number of guild roles reached (250)"
-        },
-        TOO_MANY_USERS: {
-            code: 30006,
-            message: "Too many users have this username, please try another"
-        },
-        MAX_WEBHOOKS: {
-            code: 30007,
-            message: "Maximum number of webhooks reached (10)"
-        },
-        MAX_EMOJIS: {
-            code: 30008,
-            message: "Maximum number of emojis reached"
-        },
-        MAX_REACTIONS: {
-            code: 30010,
-            message: "Maximum number of reactions reached (20)"
-        },
-        MAX_GUILD_CHANNELS: {
-            code: 30013,
-            message: "Maximum number of guild channels reached (500)"
-        },
-        MAX_ATTACHMENTS: {
-            code: 30015,
-            message: "Maximum number of attachments in a message reached (10)"
-        },
-        MAX_INVITES: {
-            code: 30016,
-            message: "Maximum number of invites to this server reached."
-        },
-        MAX_ANIMATED_EMOJIS: {
-            code: 30018,
-            message: "Maximum number of animated emojis reached"
-        },
-        MAX_SERVER_MEMBERS: {
-            code: 30019,
-            message: "Maximum number of server members reached"
-        },
-        MAX_SERVER_CATEGORIES: {
-            code: 30030,
-            message: "Maximum number of server categories has been reached (5)"
-        },
-        MAX_BANS_FETCHES: {
-            code: 30037,
-            message: "Max number of bans fetches has been reached. Try again later"
-        },
-        MAX_PRUNE_REQUESTS: {
-            code: 30040,
-            message: "Maximum number of prune requests has been reached. Try again later"
-        },
-        BITRATE_TOO_HIGH: {
-            code: 30052,
-            message: "Bitrate is too high for channel of this type"
-        },
-        REQUEST_ENTITY_TOO_LARGE: {
-            code: 40005,
-            message: "Request entity too large"
+        UPLOADED_FILE_NOT_FOUND: {
+            code: 50146,
+            message: "Uploaded file not found"
         },
         TWOFA_ALREADY_ENABLED: {
             code: 60001,
@@ -252,21 +316,9 @@ const errors = {
             code: 60008,
             message: "Invalid two-factor code / Security key authentication failed"
         },
-        OLDCORD_TAG_TAKEN: {
-            code: 40008,
-            message: "That OldcordTag is already taken" // Originally That DiscordTag is already taken but we're Oldcord not Discord
-        },
-        OWNERSHIP_TRANSFER_REQUIRED: {
-            code: 40011,
-            message: "You must transfer ownership of any owned guilds before deleting your account"
-        },
-        SERVICE_UNAVAILABLE: {
-            code: 40016,
-            message: "Service is currently unavailable."
-        },
-        TAG_NAMES_MUST_BE_UNIQUE: {
-            code: 40061,
-            message: "Tag names must be unique"
+        INVALID_TWOFA_SESSION: {
+            code: 60009,
+            message: "Invalid two-factor session"
         }
     },
     response_401: {
@@ -280,18 +332,6 @@ const errors = {
         }
     },
     response_403: {
-        MISSING_ACCESS: {
-            code: 50001,
-            message: "Missing Access"
-        },
-        MISSING_PERMISSIONS: {
-            code: 50013,
-            message: "Missing Permissions"
-        },
-        CANNOT_SEND_MESSAGES_TO_THIS_USER: {
-            code: 50007,
-            message: "Cannot send messages to this user"
-        },
         BOTS_CANNOT_USE_THIS_ENDPOINT: {
             code: 20001,
             message: "Bots cannot use this endpoint"
@@ -299,6 +339,10 @@ const errors = {
         ONLY_BOTS_CAN_USE_THIS_ENDPOINT: {
             code: 20002,
             message: "Only bots can use this endpoint"
+        },
+        RPC_PROXY_DISALLOWED: {
+            code: 20003,
+            message: "RPC proxy disallowed"
         },
         EXPLICIT_CONTENT_CANNOT_BE_SENT: {
             code: 20009,
@@ -340,13 +384,57 @@ const errors = {
             code: 20037,
             message: "You must be friends with this user to perform this action"
         },
+        ACCOUNT_VERIFICATION_REQUIRED: {
+            code: 40002,
+            message: "You need to verify your account in order to perform this action"
+        },
+        OPENING_DMS_TOO_FAST: {
+            code: 40003,
+            message: "You are opening direct messages too fast"
+        },
+        SEND_MESSAGE_DISABLED: {
+            code: 40004,
+            message: "Send message has been temporarily disabled."
+        },
+        FEATURE_TEMPORARILY_DISABLED: {
+            code: 40006,
+            message: "This feature has been temporarily disabled"
+        },
         USER_BANNED_FROM_GUILD: {
             code: 40007,
             message: "The user is banned from this guild"
         },
+        MUST_CLAIM_ACCOUNT: {
+            code: 40013,
+            message: "This account must be claimed."
+        },
+        MISSING_ACCESS: {
+            code: 50001,
+            message: "Missing Access"
+        },
+        CANNOT_SEND_MESSAGES_TO_THIS_USER: {
+            code: 50007,
+            message: "Cannot send messages to this user"
+        },
+        MISSING_PERMISSIONS: {
+            code: 50013,
+            message: "Missing Permissions"
+        },
         CANNOT_EXECUTE_ON_SYSTEM_MESSAGE: {
             code: 50021,
             message: "Cannot execute action on a system message"
+        },
+        YOU_CANNOT_PERFORM_ACTION_ON_YOURSELF: {
+            code: 50038,
+            message: "You cannot perform this action on yourself"
+        },
+        USER_NOT_IN_VOICE: {
+            code: 40032,
+            message: "Target user is not connected to voice."
+        },
+        INCOMING_FRIEND_REQUESTS_DISABLED: {
+            code: 80000,
+            message: "Incoming friend requests disabled"
         },
         FRIEND_REQUEST_BLOCKED: {
             code: 80001,
@@ -360,6 +448,14 @@ const errors = {
             code: 80003,
             message: "Cannot send friend request to self"
         },
+        USER_DOES_NOT_EXIST: {
+            code: 80004,
+            message: "No users with OldcordTag exist"
+        },
+        NO_INCOMING_FRIEND_REQUEST: {
+            code: 80005,
+            message: "You do not have an incoming friend request from that user"
+        },
         MUST_BE_FRIENDS_TO_CHANGE: {
             code: 80006,
             message: "You need to be friends in order to make this change."
@@ -368,13 +464,13 @@ const errors = {
             code: 80007,
             message: "You are already friends with that user."
         },
+        MUST_INCLUDE_DISCRIMINATOR: {
+            code: 80008,
+            message: "You must include a discriminator."
+        },
         REACTION_BLOCKED: {
             code: 90001,
             message: "Reaction was blocked"
-        },
-        REPLY_WITHOUT_HISTORY_PERMISSION: {
-            code: 160002,
-            message: "Cannot reply without permission to read message history"
         },
         MESSAGE_BLOCKED_BY_FILTER: {
             code: 240000,
