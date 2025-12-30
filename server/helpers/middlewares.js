@@ -275,10 +275,7 @@ async function authMiddleware(req, res, next) {
         req.cannot_pass = false;
         
         if (!token) {
-            return res.status(404).json({
-                code: 0,
-                message: "404: Not Found"
-            }); //discord's old api used to just return this if you tried it unauthenticated. so i guess, return that too?
+            return res.status(404).json(errors.response_404.NOT_FOUND); //discord's old api used to just return this if you tried it unauthenticated. so i guess, return that too?
         }
 
         let account = await global.database.getAccountByToken(token);
@@ -334,10 +331,7 @@ function instanceMiddleware(flag_check) {
                     return next();
                 }
 
-                return res.status(403).json({
-                    code: 403,
-                    message: "You must verify your e-mail address to do this action."
-                }); //figure this error out
+                return res.status(403).json(errors.response_403.ACCOUNT_VERIFICATION_REQUIRED); //figure this error out
             }
 
             return res.status(400).json({
@@ -484,10 +478,7 @@ function guildPermissionsMiddleware(permission) {
 
         if ((guild.owner_id == sender.id || (req.is_staff && req.staff_details.privilege >= 3))) {
             if (!sender.mfa_enabled && global.config.mfa_required_for_admin && req.is_staff) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Your account needs MFA to be enabled in order to perform this action."
-                }); //move this to its own error code
+                return res.status(403).json(errors.response_403.MFA_REQUIRED); //move this to its own error code
             }
 
             return next();
@@ -520,10 +511,7 @@ function channelPermissionsMiddleware(permission) {
 
             if (req.is_staff && req.staff_details.privilege >= 3) {
                 if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
-                    return res.status(403).json({
-                        code: 403,
-                        message: "Your account needs MFA to be enabled in order to perform this action."
-                    });
+                    return res.status(403).json(errors.response_403.MFA_REQUIRED);
                 }
 
                 return next();
@@ -542,10 +530,7 @@ function channelPermissionsMiddleware(permission) {
 
         if (req.is_staff && req.staff_details.privilege >= 3) {
             if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Your account needs MFA to be enabled in order to perform this action."
-                });
+                return res.status(403).json(errors.response_403.MFA_REQUIRED);
             }
 
             return next();

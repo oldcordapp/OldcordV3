@@ -67,7 +67,7 @@ async function updateMember(member, guild, roles, nick) {
             rolesChanged = true;
 
             if (!await global.database.setRoles(guild, newRoles, member.id)) {
-                return { code: 500, message: "Internal Server Error" };
+                return errors.response_500.INTERNAL_SERVER_ERROR;
             }
 
             member.roles = newRoles; 
@@ -77,13 +77,13 @@ async function updateMember(member, guild, roles, nick) {
     if (nick !== undefined && nick !== member.nick) {
         if (nick === "" || nick === member.user.username) nick = null;
         if (nick && (nick.length < global.config.limits['nickname'].min || nick.length >= global.config.limits['nickname'].max)) {
-            return { code: 400, message: "Invalid nickname length" };
+            return errors.response_400.INVALID_NICKNAME_LENGTH;
         }
 
         nickChanged = true;
 
         if (!await global.database.updateGuildMemberNick(guild_id, member.user.id, nick)) {
-            return { code: 500, message: "Internal Server Error" };
+            return errors.response_500.INTERNAL_SERVER_ERROR;
         }
 
         member.nick = nick;

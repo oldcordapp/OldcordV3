@@ -315,6 +315,10 @@ const errors = {
         PARAM_MISSING: {
             code: 9000004,
             message: "Parameters are missing."
+        },
+        INVALID_NICKNAME_LENGTH: {
+            code: 50500,
+            message: "Invalid nickname length"
         }
     },
     response_401: {
@@ -467,9 +471,17 @@ const errors = {
         BOT_DISABLED: {
             code: 20500,
             message: "This bot is disabled"
+        },
+        MFA_REQUIRED: {
+            code: 60003,
+            message: "Two factor is required for this operation"
         }
     },
     response_404: {
+        NOT_FOUND: {
+            code: 0,
+            message: "404: Not Found"
+        },
         UNKNOWN_ACCOUNT: {
             code: 10001,
             message: "Unknown Account"
@@ -589,20 +601,20 @@ const errors = {
     },
     response_405: {
         METHOD_NOT_ALLOWED: {
-            code: 405,
-            message: "Method Not Allowed",
+            code: 0,
+            message: "405: Method Not Allowed",
         }
     },
     response_500: {
         INTERNAL_SERVER_ERROR: {
-            code: 500,
-            message: "Internal Server Error"
+            code: 0,
+            message: "500: Internal Server Error"
         },
     },
     response_502: {
         BAD_GATEWAY: {
-            code: 502,
-            message: "Bad Gateway"
+            code: 0,
+            message: "502: Bad Gateway"
         }
     },
     response_429: {
