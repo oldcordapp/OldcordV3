@@ -76,10 +76,6 @@ const errors = {
             code: 30031,
             message: "Guild already has a template"
         },
-        MAX_THREAD_PARTICIPANTS: {
-            code: 30033,
-            message: "Max number of thread participants has been reached (1000)"
-        },
         MAX_BANS_FETCHES: {
             code: 30037,
             message: "Max number of bans fetches has been reached. Try again later"
