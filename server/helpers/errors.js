@@ -630,7 +630,7 @@ const errors = {
             code: 31002,
             message: "The resource is being rate limited"
         },
-        WATCHDOG_RATE_LIMIT: {
+        WATCHDOG_BLOCKED: {
             code: 31003,
             message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
         }

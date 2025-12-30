@@ -103,7 +103,7 @@ const Watchdog = {
                     logText(`Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - auto blocking them for security of the instance.`, "watchdog");
 
                     return res.status(429).json({
-                        ...errors.response_429.WATCHDOG_RATE_LIMIT,
+                        ...errors.response_429.WATCHDOG_BLOCKED,
                         retry_after: 999999999999,
                         global: true
                     });
@@ -116,7 +116,7 @@ const Watchdog = {
  
             if (!fingerprint) {
                 return res.status(429).json({
-                    ...errors.response_429.WATCHDOG_RATE_LIMIT,
+                    ...errors.response_429.WATCHDOG_BLOCKED,
                     retry_after: 999999999999,
                     global: true
                 });
