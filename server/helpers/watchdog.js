@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
+const errors = require('./errors');
 
 const Watchdog = {
     numHeadersThreshold: 10,
@@ -155,8 +156,7 @@ const Watchdog = {
                     res.setHeader('Retry-After-WD', retryAfterSeconds);
 
                     return res.status(429).json({
-                        code: 31001,
-                        message: "You are being rate limited.",
+                        ...errors.response_429.RATE_LIMITED,
                         retry_after: timeRemaining,
                         global: true
                     });
@@ -164,8 +164,7 @@ const Watchdog = {
                     retryAfterSeconds = Math.min(retryAfterSeconds, 30);
 
                     return res.status(429).json({
-                        code: 31002,
-                        message: "Too many requests. Please try again shortly.",
+                        ...errors.response_429.RESOURCE_RATE_LIMITED,
                         retry_after: retryAfterSeconds * 1000,
                         global: true
                      });

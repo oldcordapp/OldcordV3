@@ -104,8 +104,7 @@ function rateLimitMiddleware(max, windowMs, ignore_trusted = true) {
             const retryAfter = Math.ceil((req.rateLimit.resetTime.getTime() - Date.now()));
 
             res.status(429).json({
-                code: 31001,
-                message: "You are being rate limited.",
+                ...errors.response_429.RATE_LIMITED,
                 retry_after: retryAfter,
                 global: true
             });
