@@ -36,10 +36,7 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
         }
 
         if (userRet.bot) {
-            return res.status(404).json({
-                code: 400,
-                message: "Please use the \"Bots\" tab to lookup bots."
-            });
+            return res.status(400).json(errors.response_400.ADMIN_USE_BOT_TAB);
         } //This is because it has application info, etc
 
         let bots = await global.database.getUsersBots(userRet);
@@ -151,18 +148,15 @@ router.patch("/reports/:reportid", staffAccessMiddleware(1), async (req, res) =>
         let reportid = req.params.reportid;
 
         if (!reportid) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Report"
-            }); // make our own error codes for these
+            return res.status(404).json(errors.response_404.UNKNOWN_REPORT); // make our own error codes for these
         }
 
         let action = req.body.action;
 
         if (!action) {
             return res.status(400).json({
-                code: 400,
-                action: "This field is required"
+                ...errors.response_400.INVALID_FORM_BODY,
+                missing_field: "action"
             });
         }
 
@@ -172,19 +166,13 @@ router.patch("/reports/:reportid", staffAccessMiddleware(1), async (req, res) =>
         ]
 
         if (!valid_states.includes(action.toLowerCase())) {
-            return res.status(400).json({
-                code: 400,
-                message: "Invalid action state"
-            });
+            return res.status(400).json(errors.response_400.INVALID_ACTION_STATE);
         }
 
         let tryUpdateReport = await global.database.updateReport(reportid, action.toUpperCase());
 
         if (!tryUpdateReport) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Report"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_REPORT);
         }
 
         return res.status(204).send();
@@ -228,32 +216,23 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
         let user = req.user;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
-            });
+            return res.status(404).json(user.bot ? errors.response_404.UNKNOWN_BOT : errors.response_404.UNKNOWN_USER);
         } //yeah that is another problem to solve
 
         if (user.id === req.account.id || req.is_user_staff) { //Should we allow them to disable other staff members?
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
-            });
+            return res.status(404).json(user.bot ? errors.response_404.UNKNOWN_BOT : errors.response_404.UNKNOWN_USER);
         }
 
         if (user.disabled_until) {
-            return res.status(400).json({
-                code: 400,
-                message: `${user.bot ? 'Bot' : 'User'} is already disabled.`
-            });
+            return res.status(403).json(user.bot ? errors.response_403.BOT_DISABLED : errors.response_403.ACCOUNT_DISABLED);
         }
 
         let until = req.body.disabled_until;
 
         if (!until) {
             return res.status(400).json({
-                code: 400,
-                disabled_until: "This field is required."
+                ...errors.response_400.INVALID_FORM_BODY,
+                missing_field: "disabled_until"
             });
         }
 
@@ -261,8 +240,8 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
 
         if (!audit_log_reason) {
             return res.status(400).json({
-                code: 400,
-                internal_reason: "This field is required."
+                ...errors.response_400.INVALID_FORM_BODY,
+                missing_field: "internal_reason"
             });
         }
 
@@ -313,23 +292,20 @@ router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
 
         if (!user_id) {
             return res.status(400).json({
-                code: 400,
-                user_id: "This field is required."
+                ...errors.response_400.INVALID_FORM_BODY,
+                missing_field: "user_id"
             });
         }
 
         if (!privilege) {
             return res.status(400).json({
-                code: 400,
-                privilege: "This field is required."
+                ...errors.response_400.INVALID_FORM_BODY,
+                missing_field: "privilege"
             });
         }
 
         if (privilege > 3 || privilege <= 0) {
-            return res.status(400).json({
-                code: 400,
-                privilege: "Invalid Privilege"
-            });
+            return res.status(400).json(errors.response_400.INVALID_PRIVILEGE);
         }
 
         req.user = await global.database.getAccountByUserId(user_id);
@@ -459,8 +435,8 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
 
         if (!channelId && !messageId && !cdnLink) {
             return res.status(400).json({
-                code: 400,
-                message: "channelId or messageId (or cdnLink) is required to search messages."
+                ...errors.response_400.PARAM_MISSING,
+                missing_params: ["channelId", "messageId", "cdnLink"]
             });
         }
 
@@ -468,10 +444,7 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
             message = await global.database.getMessageByCdnLink(cdnLink);
 
             if (message == null) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "No Message found with that CDN Link"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
             }
 
             messageId = message.id;
@@ -492,8 +465,8 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
 
         if (!channelId) {
             return res.status(400).json({
-                code: 400,
-                message: "A channelId is required."
+                ...errors.response_400.PARAM_MISSING,
+                missing_param: "channelId"
             });
         }
 
@@ -578,26 +551,17 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
         let user = req.user;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
-            });
+            return res.status(404).json(user.bot ? errors.response_404.UNKNOWN_BOT : errors.response_404.UNKNOWN_USER);
         }
 
         if (user.id === req.account.id || req.is_user_staff) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown ${user.bot ? 'Bot' : 'User'}`
-            });
+            return res.status(404).json(user.bot ? errors.response_404.UNKNOWN_BOT : errors.response_404.UNKNOWN_USER);
         }
 
         let audit_log_reason = req.body.internal_reason;
 
         if (!audit_log_reason) {
-            return res.status(400).json({
-                code: 400,
-                internal_reason: "This field is required."
-            });
+            return res.status(400).json(user.bot ? errors.response_404.UNKNOWN_BOT : errors.response_404.UNKNOWN_USER);
         }
 
         if (user.bot) {

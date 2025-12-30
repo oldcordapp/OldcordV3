@@ -6,23 +6,23 @@ const errors = {
     response_400: {
         MAX_GUILDS: {
             code: 30001,
-            message: "Maximum number of guilds reached (100)"
+            message: "Maximum number of guilds reached"
         },
         MAX_FRIENDS: {
             code: 30002,
-            message: "Maximum number of friends reached (1000)"
+            message: "Maximum number of friends reached"
         },
         MAX_PINS: {
             code: 30003,
-            message: "Maximum number of pins reached for the channel (250)"
+            message: "Maximum number of pins reached for the channel"
         },
         MAX_RECIPIENTS: {
             code: 30004,
-            message: "Maximum number of recipients reached (10)"
+            message: "Maximum number of recipients reached"
         },
         MAX_GUILD_ROLES: {
             code: 30005,
-            message: "Maximum number of guild roles reached (250)"
+            message: "Maximum number of guild roles reached"
         },
         TOO_MANY_USERS: {
             code: 30006,
@@ -30,7 +30,7 @@ const errors = {
         },
         MAX_WEBHOOKS: {
             code: 30007,
-            message: "Maximum number of webhooks reached (10)"
+            message: "Maximum number of webhooks reached"
         },
         MAX_EMOJIS: {
             code: 30008,
@@ -38,23 +38,23 @@ const errors = {
         },
         MAX_CONNECTIONS: {
             code: 30009,
-            message: "Maximum number of connections reached (50)"
+            message: "Maximum number of connections reached"
         },
         MAX_REACTIONS: {
             code: 30010,
-            message: "Maximum number of reactions reached (20)"
+            message: "Maximum number of reactions reached"
         },
         MAX_GROUP_DMS: {
             code: 30011,
-            message: "Maximum number of group DMs reached (10)"
+            message: "Maximum number of group DMs reached"
         },
         MAX_GUILD_CHANNELS: {
             code: 30013,
-            message: "Maximum number of guild channels reached (500)"
+            message: "Maximum number of guild channels reached"
         },
         MAX_ATTACHMENTS: {
             code: 30015,
-            message: "Maximum number of attachments in a message reached (10)"
+            message: "Maximum number of attachments in a message reached"
         },
         MAX_INVITES: {
             code: 30016,
@@ -70,11 +70,7 @@ const errors = {
         },
         MAX_SERVER_CATEGORIES: {
             code: 30030,
-            message: "Maximum number of server categories has been reached (5)"
-        },
-        MAX_TEMPLATE_GUILDS: {
-            code: 30031,
-            message: "Guild already has a template"
+            message: "Maximum number of server categories has been reached"
         },
         MAX_BANS_FETCHES: {
             code: 30037,
@@ -96,17 +92,13 @@ const errors = {
             code: 30052,
             message: "Bitrate is too high for channel of this type"
         },
-        MAX_PREMIUM_EMOJIS: {
-            code: 30056,
-            message: "Maximum number of premium emojis reached (25)"
-        },
         MAX_WEBHOOKS_PER_GUILD: {
             code: 30058,
-            message: "Maximum number of webhooks per guild reached (1000)"
+            message: "Maximum number of webhooks per guild reached"
         },
         MAX_CHANNEL_OVERWRITES: {
             code: 30060,
-            message: "Maximum number of channel permission overwrites reached (1000)"
+            message: "Maximum number of channel permission overwrites reached"
         },
         GUILD_CHANNELS_TOO_LARGE: {
             code: 30061,
@@ -307,6 +299,22 @@ const errors = {
         INVALID_TWOFA_SESSION: {
             code: 60009,
             message: "Invalid two-factor session"
+        },
+        ADMIN_USE_BOT_TAB: {
+            code: 9000001,
+            message: "Please use the \"Bots\" tab to lookup bots."
+        },
+        INVALID_ACTION_STATE: {
+            code: 9000002,
+            message: "Invalid action state"
+        },
+        INVALID_PRIVILEGE: {
+            code: 9000003,
+            message: "Invalid Privilege"
+        },
+        PARAM_MISSING: {
+            code: 9000004,
+            message: "Parameters are missing."
         }
     },
     response_401: {
@@ -344,10 +352,6 @@ const errors = {
             code: 20013,
             message: "This account is disabled"
         },
-        ACTION_REQUIRES_PREMIUM: {
-            code: 20015,
-            message: "This action requires a premium subscription"
-        },
         ONLY_OWNER_CAN_PERFORM: {
             code: 20018,
             message: "Only the owner of this account can perform this action"
@@ -363,10 +367,6 @@ const errors = {
         WRITE_RATE_LIMIT_SERVER: {
             code: 20029,
             message: "The write action you are performing on the server has hit the write rate limit"
-        },
-        GUILD_PREMIUM_TOO_LOW: {
-            code: 20035,
-            message: "Guild premium subscription level too low"
         },
         MUST_BE_FRIENDS: {
             code: 20037,
@@ -463,6 +463,10 @@ const errors = {
         MESSAGE_BLOCKED_BY_FILTER: {
             code: 240000,
             message: "Message blocked by harmful links filter"
+        },
+        BOT_DISABLED: {
+            code: 20500,
+            message: "This bot is disabled"
         }
     },
     response_404: {
@@ -573,6 +577,14 @@ const errors = {
         UNKNOWN_SUBSCRIPTION_PLAN: {
             code: 10073,
             message: "Unknown Subscription Plan"
+        },
+        UNKNOWN_REPORT: {
+            code: 521001, // official undocumented Discord error DSA_RSL_REPORT_NOT_FOUND repurposed for Oldcord admin panel report system
+            message: "Unknown Report"
+        },
+        UNKNOWN_BOT: {
+            code: 10500,
+            message: "Unknown Bot"
         }
     },
     response_405: {
@@ -601,6 +613,10 @@ const errors = {
         RESOURCE_RATE_LIMITED: {
             code: 31002,
             message: "The resource is being rate limited"
+        },
+        WATCHDOG_RATE_LIMIT: {
+            code: 31003,
+            message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
         },
         SLOWMODE_RATE_LIMIT: {
             code: 20016,

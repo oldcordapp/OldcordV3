@@ -103,8 +103,7 @@ const Watchdog = {
                     logText(`Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - auto blocking them for security of the instance.`, "watchdog");
 
                     return res.status(429).json({
-                        code: 31003,
-                        message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
+                        ...errors.response_429.WATCHDOG_RATE_LIMIT,
                         retry_after: 999999999999,
                         global: true
                     });
@@ -117,8 +116,7 @@ const Watchdog = {
  
             if (!fingerprint) {
                 return res.status(429).json({
-                    code: 31003,
-                    message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
+                    ...errors.response_429.WATCHDOG_RATE_LIMIT,
                     retry_after: 999999999999,
                     global: true
                 });
