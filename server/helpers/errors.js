@@ -272,6 +272,10 @@ const errors = {
             code: 50146,
             message: "Uploaded file not found"
         },
+        INVALID_NICKNAME_LENGTH: {
+            code: 50500,
+            message: "Invalid nickname length"
+        },
         TWOFA_ALREADY_ENABLED: {
             code: 60001,
             message: "This account is already enrolled in two factor authentication"
@@ -315,10 +319,6 @@ const errors = {
         PARAM_MISSING: {
             code: 9000004,
             message: "Parameters are missing."
-        },
-        INVALID_NICKNAME_LENGTH: {
-            code: 50500,
-            message: "Invalid nickname length"
         }
     },
     response_401: {
@@ -376,6 +376,10 @@ const errors = {
             code: 20037,
             message: "You must be friends with this user to perform this action"
         },
+        BOT_DISABLED: {
+            code: 20500,
+            message: "This bot is disabled"
+        },
         ACCOUNT_VERIFICATION_REQUIRED: {
             code: 40002,
             message: "You need to verify your account in order to perform this action"
@@ -400,6 +404,10 @@ const errors = {
             code: 40013,
             message: "This account must be claimed."
         },
+        USER_NOT_IN_VOICE: {
+            code: 40032,
+            message: "Target user is not connected to voice."
+        },
         MISSING_ACCESS: {
             code: 50001,
             message: "Missing Access"
@@ -420,9 +428,9 @@ const errors = {
             code: 50038,
             message: "You cannot perform this action on yourself"
         },
-        USER_NOT_IN_VOICE: {
-            code: 40032,
-            message: "Target user is not connected to voice."
+        MFA_REQUIRED: {
+            code: 60003,
+            message: "Two factor is required for this operation"
         },
         INCOMING_FRIEND_REQUESTS_DISABLED: {
             code: 80000,
@@ -467,14 +475,6 @@ const errors = {
         MESSAGE_BLOCKED_BY_FILTER: {
             code: 240000,
             message: "Message blocked by harmful links filter"
-        },
-        BOT_DISABLED: {
-            code: 20500,
-            message: "This bot is disabled"
-        },
-        MFA_REQUIRED: {
-            code: 60003,
-            message: "Two factor is required for this operation"
         }
     },
     response_404: {
@@ -590,13 +590,13 @@ const errors = {
             code: 10073,
             message: "Unknown Subscription Plan"
         },
-        UNKNOWN_REPORT: {
-            code: 521001, // official undocumented Discord error DSA_RSL_REPORT_NOT_FOUND repurposed for Oldcord admin panel report system
-            message: "Unknown Report"
-        },
         UNKNOWN_BOT: {
             code: 10500,
             message: "Unknown Bot"
+        },
+        UNKNOWN_REPORT: {
+            code: 521001, // official undocumented Discord error DSA_RSL_REPORT_NOT_FOUND repurposed for Oldcord admin panel report system
+            message: "Unknown Report"
         }
     },
     response_405: {
@@ -618,6 +618,10 @@ const errors = {
         }
     },
     response_429: {
+        SLOWMODE_RATE_LIMIT: {
+            code: 20016,
+            message: "This action cannot be performed due to slowmode rate limit"
+        },
         RATE_LIMITED: {
             code: 31001,
             message: "You are being rate limited"
@@ -629,10 +633,6 @@ const errors = {
         WATCHDOG_RATE_LIMIT: {
             code: 31003,
             message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
-        },
-        SLOWMODE_RATE_LIMIT: {
-            code: 20016,
-            message: "This action cannot be performed due to slowmode rate limit"
         }
     }
 };
