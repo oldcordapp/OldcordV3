@@ -274,8 +274,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                     let waitTime = ratelimit - difference;
 
                     return res.status(429).json({
-                        code: 20016,
-                        message: "This action cannot be performed due to slowmode rate limit",
+                        ...errors.response_429.SLOWMODE_RATE_LIMIT,
                         retry_after: waitTime   
                     });
                 }
