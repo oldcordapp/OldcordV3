@@ -4,7 +4,7 @@ const { logText } = require('../helpers/logger');
 const { instanceMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
-
+const errors = require('../helpers/errors');
 const router = express.Router({ mergeParams: true });
 
 router.param('code', async (req, res, next, memberid) => {
@@ -23,20 +23,14 @@ router.get("/:code", quickcache.cacheFor(60 * 30), async (req, res) => {
         const invite = req.invite;
 
         if (!invite) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Invite"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_INVITE);
         }
 
         return res.status(200).json(invite);
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -46,56 +40,38 @@ router.delete("/:code", rateLimitMiddleware(global.config.ratelimit_config.delet
         const invite = req.invite;
 
         if (invite == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Invite"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_INVITE);
         }
 
         const channel = req.guild.channels.find(x => x.id === invite.channel.id);
 
         if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         const guild = req.guild;
 
         if (guild == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         const hasPermission = global.permissions.hasChannelPermissionTo(channel, guild, sender.id, "MANAGE_CHANNELS");
 
         if (!hasPermission) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            }); 
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS); 
         }
 
         const tryDelete = await global.database.deleteInvite(req.params.code);
 
         if (!tryDelete) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -104,28 +80,19 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
         const sender = req.account;
 
         if (sender.bot) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
         }
 
         const invite = req.invite;
 
         if (invite == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Invite"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_INVITE);
         }
 
         let guild = req.guild;
 
         if (guild == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Invite"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         let usersGuild = await global.database.getUsersGuilds(sender.id);
@@ -140,10 +107,7 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
         const joinAttempt = await global.database.useInvite(req.invite, req.guild, sender.id);
 
         if (!joinAttempt) {
-            return res.status(404).json({
-                code: 10006,
-                message: "Invalid Invite"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_INVITE);
         }
 
         guild = await global.database.getGuildById(guild.id); //update to keep in sync?
@@ -167,17 +131,16 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
         if (guild.system_channel_id != null) {
             let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [sender]);
 
-            await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
+            await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", function () {
+                return globalUtils.personalizeMessageObject(join_msg, guild, this.socket.client_build_date);
+            });
         }
 
         return res.status(200).send(invite);
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

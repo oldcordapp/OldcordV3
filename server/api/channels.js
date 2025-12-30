@@ -1,7 +1,6 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
 const messages = require('./messages');
-const webhooks = require("./webhooks");
 const pins = require('./pins');
 const { channelPermissionsMiddleware, rateLimitMiddleware, guildPermissionsMiddleware, channelMiddleware, instanceMiddleware } = require('../helpers/middlewares');
 const globalUtils = require('../helpers/globalutils');
@@ -9,6 +8,7 @@ const router = express.Router({ mergeParams: true });
 const config = globalUtils.config;
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
+const errors = require('../helpers/errors');
 
 router.param('channelid', async (req, res, next, channelid) => {
     const guild = req.guild;
@@ -56,54 +56,31 @@ router.get("/:channelid", channelMiddleware, channelPermissionsMiddleware("READ_
 
 router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("SEND_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.typing.maxPerTimeFrame, global.config.ratelimit_config.typing.timeFrame), Watchdog.middleware(global.config.ratelimit_config.typing.maxPerTimeFrame, global.config.ratelimit_config.typing.timeFrame, 0.4), async (req, res) => {
     try {
-        const typer = req.account;
-
-        if (!typer) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
-        }
-
-        const channel = req.channel;
-
-        if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
-        }
-        
         var payload = {
             channel_id: req.params.channelid,
-            guild_id: channel.guild_id,
-            user_id: typer.id,
+            guild_id: req.channel.guild_id,
+            user_id: req.account.id,
             timestamp: new Date().toISOString(),
             member: req.member,
         };
         
         if (!req.guild) {
             if (!req.channel.recipients) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Channel"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
             }
             
-            payload.member = globalUtils.miniUserObject(typer)
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "TYPING_START", payload);
+            payload.member = globalUtils.miniUserObject(req.account);
+
+            await global.dispatcher.dispatchEventInPrivateChannel(req.channel, "TYPING_START", payload);
         } else {
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "TYPING_START", payload);
+            await global.dispatcher.dispatchEventInChannel(req.guild, req.channel.id, "TYPING_START", payload);
         }
 
         return res.status(204).send();
       } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -112,10 +89,7 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
         let channel = req.channel;
 
         if (!channel.guild_id && channel.type !== 3) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            }); //Can only modify guild channels lol -- okay update, they can modify group channels too
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL); //Can only modify guild channels lol -- okay update, they can modify group channels too
         }
 
         if (req.body.icon) {
@@ -163,23 +137,17 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
         const outcome = await global.database.updateChannel(channel.id, channel);
 
         if (!outcome) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         if (channel.type === 3) {
             channel = outcome;
 
             if (!channel) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", async function() {
+            await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
                 return globalUtils.personalizeChannelObject(this.socket, channel);
             });
 
@@ -196,10 +164,7 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
       } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -211,20 +176,14 @@ router.get("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
       } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
 router.get("/:channelid/call", channelMiddleware, quickcache.cacheFor(60 * 5, false), async (req, res) => {
     try {
         if (!req.channel.recipients) {
-            return res.status(403).json({
-                message: "Missing Permissions",
-                code: 403 //50013
-            })
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS)
         }
 
         return res.status(200).json({
@@ -233,20 +192,14 @@ router.get("/:channelid/call", channelMiddleware, quickcache.cacheFor(60 * 5, fa
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 }); //to-do figure out why this never gets to /ring
 
 router.post("/:channelid/call/ring", channelMiddleware, quickcache.cacheFor(60 * 5, false), async (req, res) => {
     try {
         if (!req.channel.recipients) {
-            return res.status(403).json({
-                message: "Missing Permissions",
-                code: 403 //50013
-            })
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS)
         }
 
         let call_msg = await global.database.createSystemMessage(null, req.channel.id, 3, [req.account]);
@@ -257,10 +210,7 @@ router.post("/:channelid/call/ring", channelMiddleware, quickcache.cacheFor(60 *
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -273,7 +223,7 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
                 code: 400,
                 message: "Creating invites is not allowed."
             })
-        }
+        } //make an error code
 
         let invites = await global.database.getChannelInvites(req.params.channelid);
 
@@ -313,20 +263,14 @@ router.post("/:channelid/invites", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
         const invite = await global.database.createInvite(req.guild, req.channel, sender, temporary, max_uses, max_age, xkcdpass, regenerate);
 
         if (invite == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         return res.status(200).json(invite);
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -337,10 +281,7 @@ router.get("/:channelid/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
         let guild = req.guild;
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);  
         }
 
         let webhooks = guild.webhooks.filter(x => x.channel_id === req.channel.id);
@@ -349,10 +290,7 @@ router.get("/:channelid/webhooks", instanceMiddleware("VERIFIED_EMAIL_REQUIRED")
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     } 
 });
 
@@ -362,14 +300,11 @@ router.post("/:channelid/webhooks",  instanceMiddleware("VERIFIED_EMAIL_REQUIRED
         let guild = req.guild;
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });  
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         if (!req.body.name) {
-            req.body.name = "Captain Hook"; //fuck you 
+            req.body.name = "Captain Hook";
         }
 
         let name = req.body.name;
@@ -377,20 +312,14 @@ router.post("/:channelid/webhooks",  instanceMiddleware("VERIFIED_EMAIL_REQUIRED
         let webhook = await global.database.createWebhook(guild, account, req.channel.id, name, null);
 
         if (!webhook) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         return res.status(200).json(webhook);
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -409,7 +338,7 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
                 code: 404,
                 message: "Unknown Type"
             });
-        }
+        } //figure out this response
         
         let channel = req.channel;
         let channel_overwrites = await global.database.getChannelPermissionOverwrites(req.guild, channel.id);
@@ -452,19 +381,13 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
             let member = req.guild.members.find(x => x.id === id);
 
             if (member == null) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Member"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
             }
         } else if (type == 'role') {
             let role = req.guild.roles.find(x => x.id === id);
 
             if (role == null) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Role"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
             }
         }
 
@@ -482,10 +405,7 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
     } catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -513,10 +433,7 @@ router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_
         channel = req.guild.channels.find(x => x.id === channel_id);
 
         if (!channel?.guild_id) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         if (!req.channel_types_are_ints) {
@@ -529,10 +446,7 @@ router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_
     } catch(error) {
         logText(error, "error");
  
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -548,13 +462,10 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
                 code: 403,
                 message: "Cannot add members to this type of channel."
             });
-        }
+        } //find the error
 
         if (!channel.recipients.find(x => x.id === sender.id)) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
          
         if (channel.recipients.length > 9) {
@@ -567,17 +478,14 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
         const recipient = req.recipient;
         
         if (recipient == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown user"
-            });
+            return res.status(404).json(errors.response_404.UNKNWON_USER);
         }
         
         if (!globalUtils.areWeFriends(sender, recipient)) {
             return res.status(403).json({
                 code: 403,
                 message: "You are not friends with the recipient."
-            });
+            }); //figure this one out
         }
         
         //Add recipient
@@ -587,7 +495,7 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
             throw "Failed to update recipients list in channel";
         
         //Notify everyone else
-        await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", async function() {
+        await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
             return globalUtils.personalizeChannelObject(this.socket, channel);
         });
         
@@ -602,10 +510,7 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
     } catch(error) {
         logText(error, "error");
         
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -623,19 +528,13 @@ router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIE
         }
 
         if (channel.owner_id !== sender.id) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
         
         const recipient = req.recipient;
         
         if (recipient == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown user"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
         
         //Remove recipient
@@ -645,7 +544,7 @@ router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIE
             throw "Failed to update recipients list in channel";
         
         //Notify everyone else
-        await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", async function() {
+        await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
             return globalUtils.personalizeChannelObject(this.socket, channel);
         });
 
@@ -657,10 +556,7 @@ router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIE
     } catch(error) {
         logText(error, "error");
         
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -677,36 +573,27 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
                     message: "You cannot delete all channels in this server"
                 });
             }
-        }
+        } //Should we let them delete all channels in the server?
 
         if (channel.type == 1 || channel.type == 3) {
             //Leaving a private channel
             let userPrivateChannels = await global.database.getPrivateChannels(sender.id);
 
             if (!userPrivateChannels) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Channel"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
             }
 
             //TODO: Elegant but inefficient
             let newUserPrivateChannels = userPrivateChannels.filter(id => id != channel.id);
 
             if (newUserPrivateChannels.length == userPrivateChannels.length) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Channel"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
             }
 
             let tryUpdate = await global.database.setPrivateChannels(sender.id, newUserPrivateChannels);
 
             if (!tryUpdate) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
             
             await global.dispatcher.dispatchEventTo(sender.id, "CHANNEL_DELETE", {
@@ -736,7 +623,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
                 if (!await global.database.updateChannelRecipients(channel.id, newRecipientsList))
                     throw "Failed to update recipients list in channel";
 
-                await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", async function () {
+                await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function () {
                     return globalUtils.personalizeChannelObject(this.socket, channel);
                 });
             }
@@ -757,10 +644,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
             });
 
             if (!await global.database.deleteChannel(channel.id)) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
         }
 
@@ -768,10 +652,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
     } catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

@@ -1,12 +1,9 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
-const messages = require('./messages');
-const webhooks = require("./webhooks");
-const { channelPermissionsMiddleware, rateLimitMiddleware, guildPermissionsMiddleware, channelMiddleware } = require('../helpers/middlewares');
-const globalUtils = require('../helpers/globalutils');
+const { channelMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
-const config = globalUtils.config;
 const quickcache = require('../helpers/quickcache');
+const errors = require('../helpers/errors');
 
 router.param('messageid', async (req, res, next, messageid) => {
     req.message = await global.database.getMessageById(messageid);
@@ -23,10 +20,7 @@ router.get("/", channelMiddleware, quickcache.cacheFor(60 * 5, true), async (req
     }  catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -36,10 +30,7 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
         let message = req.message;
 
         if (!message) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         if (message.pinned) {
@@ -51,10 +42,7 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
         let tryPin = await global.database.setPinState(req.message.id, true);
 
         if (!tryPin) {
-            return res.status(500).json({
-              code: 500,
-              message: "Internal Server Error"
-            }); 
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         message.pinned = true;
@@ -88,10 +76,7 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
     } catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -101,10 +86,7 @@ router.delete("/:messageid", channelMiddleware, async (req, res) => {
         let message = req.message;
 
         if (!message) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         if (!message.pinned) {
@@ -116,10 +98,7 @@ router.delete("/:messageid", channelMiddleware, async (req, res) => {
         let tryPin = await global.database.setPinState(req.message.id, false);
 
         if (!tryPin) {
-            return res.status(500).json({
-              code: 500,
-              message: "Internal Server Error"
-            }); 
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         message.pinned = false;
@@ -133,10 +112,7 @@ router.delete("/:messageid", channelMiddleware, async (req, res) => {
     } catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -161,10 +137,7 @@ router.post("/ack", channelMiddleware, async (req, res) => {
     } catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

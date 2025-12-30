@@ -3,13 +3,13 @@ const { logText } = require('./logger');
 const globalUtils = require('./globalutils');
 const wayback = require('./wayback');
 const fs = require('fs');
+const errors = require('./errors');
 
 const config = globalUtils.config;
 
 const spacebarApis = ["/.well-known/spacebar", "/policies/instance/domains"];
 
 let cached404s = {};
-let bucket = null;
 
 function apiVersionMiddleware(req, _, next) {
     const versionRegex = /^\/v(\d+)/;
@@ -84,10 +84,7 @@ async function clientMiddleware(req, res, next) {
     catch(error) {
         logText(error, "error");
         
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 };
 
@@ -107,6 +104,7 @@ function rateLimitMiddleware(max, windowMs, ignore_trusted = true) {
             const retryAfter = Math.ceil((req.rateLimit.resetTime.getTime() - Date.now()));
 
             res.status(429).json({
+                code: 31001,
                 message: "You are being rate limited.",
                 retry_after: retryAfter,
                 global: true
@@ -231,24 +229,15 @@ function staffAccessMiddleware(privilege_needed) {
             let account = req.account;
 
             if (!account) {
-                return res.status(401).json({
-                    code: 401,
-                    message: "Unauthorized"
-                });
+                return res.status(401).json(errors.response_401.UNAUTHORIZED);
             }
 
             if (!req.is_staff) {
-                return res.status(401).json({
-                    code: 401,
-                    message: "Unauthorized"
-                });
+                return res.status(401).json(errors.response_401.UNAUTHORIZED);
             }
 
             if (req.staff_details.privilege < privilege_needed) {
-                return res.status(401).json({
-                    code: 401,
-                    message: "Unauthorized"
-                });
+                return res.status(401).json(errors.response_401.UNAUTHORIZED);
             }
 
             if (!account.mfa_enabled && global.config.mfa_required_for_admin) {
@@ -256,20 +245,14 @@ function staffAccessMiddleware(privilege_needed) {
                     return next();
                 } //Exclude from the admin info get request
 
-                return res.status(401).json({
-                    code: 401,
-                    message: "Unauthorized"
-                });
+                return res.status(401).json(errors.response_401.UNAUTHORIZED);
             }
 
             next();
         } catch(err) {
             logText(err, "error");
 
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
     };
 }
@@ -293,19 +276,16 @@ async function authMiddleware(req, res, next) {
         req.cannot_pass = false;
         
         if (!token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(404).json({
+                code: 0,
+                message: "404: Not Found"
+            }); //discord's old api used to just return this if you tried it unauthenticated. so i guess, return that too?
         }
 
         let account = await global.database.getAccountByToken(token);
     
         if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);
         }
 
         if (account.disabled_until != null) {
@@ -331,10 +311,7 @@ async function authMiddleware(req, res, next) {
         }
 
         if (req.cannot_pass) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);
         }
 
         req.account = account;
@@ -344,10 +321,7 @@ async function authMiddleware(req, res, next) {
     catch(err) {
         logText(err, "error");
 
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+        return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 }
 
@@ -364,7 +338,7 @@ function instanceMiddleware(flag_check) {
                 return res.status(403).json({
                     code: 403,
                     message: "You must verify your e-mail address to do this action."
-                }); 
+                }); //figure this error out
             }
 
             return res.status(400).json({
@@ -385,19 +359,13 @@ async function guildMiddleware(req, res, next) {
     let guild = req.guild;
 
     if (!guild) {
-        return res.status(404).json({
-            code: 404,
-            message: "Unknown Guild"
-        });
+        return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
     }
 
     const sender = req.account;
 
     if (sender == null) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+        return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
     if (req.is_staff) {
@@ -407,10 +375,7 @@ async function guildMiddleware(req, res, next) {
     let member = guild.members.find(y => y.id == sender.id);
 
     if (!member) {
-        return res.status(404).json({
-            code: 404,
-            message: "Unknown Guild"
-        });
+        return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
     }
 
     next();
@@ -420,19 +385,13 @@ async function userMiddleware(req, res, next) {
     let account = req.account;
 
     if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+        return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
     let user = req.user;
 
     if (!user) {
-        return res.status(404).json({
-            code: 404,
-            message: "Unknown User"
-        });
+        return res.status(404).json(errors.response_404.UNKNOWN_USER);
     }
 
     if (globalUtils.areWeFriends(account, user)) {
@@ -442,19 +401,13 @@ async function userMiddleware(req, res, next) {
     let guilds = await global.database.getUsersGuilds(user.id);
 
     if (guilds.length == 0) {
-        return res.status(404).json({
-            code: 404,
-            message: "Unknown User"
-        });
+        return res.status(404).json(errors.response_404.UNKNOWN_USER);
     } //investigate later
 
     let share = guilds.some(guild => guild.members != null && guild.members.length > 0 && guild.members.some(member => member.id === account.id));
 
     if (!share) {
-        return res.status(404).json({
-            code: 404,
-            message: "Unknown User"
-        });
+        return res.status(404).json(errors.response_404.UNKNOWN_USER);
     }
 
     next();
@@ -464,10 +417,7 @@ async function channelMiddleware(req, res, next) {
     let channel = req.channel;
 
     if (!channel) {
-        return res.status(404).json({
-            code: 404,
-            message: "Unknown Channel"
-        });
+        return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
     }
 
     if (!channel.guild_id) {
@@ -481,10 +431,7 @@ async function channelMiddleware(req, res, next) {
     const sender = req.account;
 
     if (!sender) {
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
     if (!req.guild && channel.id.includes('12792182114301050')) return next();
@@ -500,28 +447,19 @@ async function channelMiddleware(req, res, next) {
     let member = req.guild.members.find(y => y.id == sender.id);
 
     if (member == null) {
-        return res.status(403).json({
-            code: 403,
-            message: "Missing Permissions"
-        });
+        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
     let gCheck = global.permissions.hasGuildPermissionTo(req.guild, member.id, "READ_MESSAGES", req.client_build);
 
     if (!gCheck) {
-        return res.status(403).json({
-            code: 403,
-            message: "Missing Permissions"
-        });
+        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
     let pCheck = global.permissions.hasChannelPermissionTo(req.channel, req.guild, member.id, "READ_MESSAGES");
 
     if (!pCheck) {
-        return res.status(403).json({
-            code: 403,
-            message: "Missing Permissions"
-        });
+        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
     next();
@@ -532,10 +470,7 @@ function guildPermissionsMiddleware(permission) {
         const sender = req.account;
 
         if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);
         }
 
         if (!req.params.guildid) {
@@ -545,10 +480,7 @@ function guildPermissionsMiddleware(permission) {
         const guild = req.guild;
 
         if (guild == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         if ((guild.owner_id == sender.id || (req.is_staff && req.staff_details.privilege >= 3))) {
@@ -556,7 +488,7 @@ function guildPermissionsMiddleware(permission) {
                 return res.status(403).json({
                     code: 403,
                     message: "Your account needs MFA to be enabled in order to perform this action."
-                });
+                }); //move this to its own error code
             }
 
             return next();
@@ -565,10 +497,7 @@ function guildPermissionsMiddleware(permission) {
         let check = await global.permissions.hasGuildPermissionTo(req.guild, sender.id, permission, req.client_build);
 
         if (!check) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         next();
@@ -580,20 +509,14 @@ function channelPermissionsMiddleware(permission) {
         const sender = req.account;
 
         if (sender == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);
         }
 
         if (permission == "MANAGE_MESSAGES" && req.params.messageid) {
             let message = req.message;
 
             if (message == null) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Message"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
             }
 
             if (req.is_staff && req.staff_details.privilege >= 3) {
@@ -615,10 +538,7 @@ function channelPermissionsMiddleware(permission) {
         const channel = req.channel;
 
         if (channel == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         if (req.is_staff && req.staff_details.privilege >= 3) {
@@ -636,10 +556,7 @@ function channelPermissionsMiddleware(permission) {
 
         if (!channel.guild_id && channel.recipients) {
             if (permission == "MANAGE_MESSAGES" && !channel.recipients.includes(sender.id)) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Missing Permissions"
-                });
+                return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
             }
 
             if (permission == "SEND_MESSAGES") {
@@ -651,10 +568,7 @@ function channelPermissionsMiddleware(permission) {
                     let other = await global.database.getAccountByUserId(otherID);
 
                     if (!other) {
-                        return res.status(403).json({
-                            code: 403,
-                            message: "Missing Permissions"
-                        });
+                        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
                     }
 
                     let friends = !sender.bot && !other.bot && globalUtils.areWeFriends(sender, other);
@@ -668,10 +582,7 @@ function channelPermissionsMiddleware(permission) {
                     );
 
                     if (!friends && sharedGuilds.length === 0) {
-                        return res.status(403).json({
-                            code: 403,
-                            message: "Missing Permissions"
-                        });
+                        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
                     }
 
                     let counted = 0;
@@ -683,18 +594,12 @@ function channelPermissionsMiddleware(permission) {
                     }
 
                     if (counted === sharedGuilds.length && !friends) {        
-                        return res.status(403).json({
-                            code: 403,
-                            message: "Missing Permissions"
-                        });
+                        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
                     }
                 } else if (channel.type == 3) {
                     //Permission to send in group chat
                     if (!channel.recipients.some(x => x.id == sender.id)) {
-                        return res.status(403).json({
-                            code: 403,
-                            message: "Missing Permissions"
-                        });
+                        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
                     }
                 }
             }
@@ -705,10 +610,7 @@ function channelPermissionsMiddleware(permission) {
         let check = global.permissions.hasChannelPermissionTo(channel, req.guild, sender.id, permission);
 
         if (!check) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         next();

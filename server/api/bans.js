@@ -5,6 +5,7 @@ const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
+const errors = require('../helpers/errors');
 
 router.param('memberid', async (req, res, next, memberid) => {
     req.member = req.guild.members.find(x => x.id === memberid);
@@ -20,10 +21,7 @@ router.get("/", guildPermissionsMiddleware("BAN_MEMBERS"), quickcache.cacheFor(6
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -32,10 +30,7 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
         const sender = req.account;
 
         if (sender.id == req.params.memberid) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         let member = req.member;
@@ -55,20 +50,14 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
             const attempt = await global.database.leaveGuild(member.id, req.params.guildid);
 
             if (!attempt) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
         }
 
         const tryBan = await global.database.banMember(req.params.guildid, member.id);
 
         if (!tryBan) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         if (userInGuild) {
@@ -125,10 +114,7 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -137,10 +123,7 @@ router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimit
         const sender = req.account;
 
         if (sender.id == req.params.memberid) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         const bans = await global.database.getGuildBans(req.params.guildid);
@@ -148,19 +131,13 @@ router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimit
         const ban = bans.find(x => x.user.id == req.params.memberid);
 
         if (!ban) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Ban"
-            });
-        }
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
+        } //figure out the correct response here
 
         const attempt = await global.database.unbanMember(req.params.guildid, req.params.memberid);
 
         if (!attempt) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchEventTo(sender.id, "GUILD_BAN_REMOVE", {
@@ -173,10 +150,7 @@ router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimit
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

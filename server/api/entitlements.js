@@ -3,6 +3,7 @@ const { logText } = require('../helpers/logger');
 const Snowflake = require('../helpers/snowflake');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
+const errors = require('../helpers/errors');
 
 router.param('code', async (req, _, next, code) => {
     let id = "1279311572212178955";
@@ -130,10 +131,7 @@ router.get("/gift-codes/:code", quickcache.cacheFor(60 * 10), async (req, res) =
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

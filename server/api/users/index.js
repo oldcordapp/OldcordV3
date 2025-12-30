@@ -5,7 +5,7 @@ const globalUtils = require('../../helpers/globalutils');
 const { rateLimitMiddleware, userMiddleware } = require('../../helpers/middlewares');
 const quickcache = require('../../helpers/quickcache');
 const Watchdog = require('../../helpers/watchdog');
-
+const errors = require('../../helpers/errors');
 const router = express.Router();
 
 router.param('userid', async (req, res, next, userid) => {
@@ -105,10 +105,7 @@ router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_con
     } catch(error) {
         logText(error, "error");
     
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -187,10 +184,7 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
     catch(error) {
         logText(error, "error");
     
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        }); 
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
     }
 });
 
@@ -201,10 +195,7 @@ router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, re
         let account = req.account;
 
         if (account.bot) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
         }
 
         if (req.params.userid === "1279218211430105088") {
@@ -214,15 +205,12 @@ router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, re
         let user = req.user;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown User"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         if (user.bot) {
-            return res.status(200).json([]);
-        }
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
+        } // I think this is more professional
 
         let ourFriends = account.relationships;
         let theirFriends = user.relationships;
@@ -242,10 +230,7 @@ router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, re
     catch(error) {
         logText(error, "error");
     
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        }); 
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
     }
 });
 

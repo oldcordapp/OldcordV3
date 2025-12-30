@@ -1,6 +1,6 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
-
+const errors = require('../helpers/errors');
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -23,10 +23,7 @@ router.get("/", async (req, res) => {
   } catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-      code: 500,
-      message: "Internal Server Error"
-    });
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -50,10 +47,7 @@ router.post("/indicators/suppress", async (req, res) => {
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -77,10 +71,7 @@ router.put("/indicators/:indicator", async (req, res) => {
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

@@ -4509,7 +4509,9 @@ const database = {
                     guild_id: data.guild_id,
                     name: data.channel_name,
                     type: data.channel_type
-                }
+                },
+                uses: data.uses,
+                max_uses: data.max_uses
                 //with_counts would return approximate_presence_count: online_count, and approximate_member_count: member_count_total,
             }
 
@@ -4561,7 +4563,7 @@ const database = {
 
             invite.uses++;
 
-            await database.runQuery(`UPDATE invites SET uses = $1 WHERE code = $2`, [invite.uses, invite.code]);
+            await database.runQuery(`UPDATE invites SET uses = $1 WHERE code = $2`, [invite.uses, invite.code]); //look into NaN issue here sometimes
 
             return true;
         } catch (error) {

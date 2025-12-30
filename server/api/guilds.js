@@ -7,9 +7,8 @@ const bans = require('./bans');
 const emojis = require('./emojis');
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
-
+const errors = require('../helpers/errors');
 const { instanceMiddleware, rateLimitMiddleware, guildMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
-const Snowflake = require('../helpers/snowflake');
 
 const router = express.Router();
 
@@ -82,10 +81,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
         const guild = await global.database.createGuild(creator, req.body.icon, req.body.name, req.body.region, exclusions, client_date);
 
         if (guild == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         } else {
             if (!req.channel_types_are_ints) {
                 guild.channels[0].type = "text";
@@ -98,10 +94,7 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
       } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -121,7 +114,7 @@ async function guildDeleteRequest(req, res) {
                         code: 400,
                         message: "Invalid TOTP Code"
                     });
-                }
+                } //Is there a response for this?
             }
             
             await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
@@ -131,10 +124,7 @@ async function guildDeleteRequest(req, res) {
             const del = await global.database.deleteGuild(guild.id);
 
             if (!del) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             return res.status(204).send();
@@ -142,10 +132,7 @@ async function guildDeleteRequest(req, res) {
             const leave = await global.database.leaveGuild(user.id, guild.id);
 
             if (!leave) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             await global.dispatcher.dispatchEventTo(user.id, "GUILD_DELETE", {
@@ -164,10 +151,7 @@ async function guildDeleteRequest(req, res) {
     } catch(error) {
         logText(error, "error");
  
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 }
 
@@ -193,10 +177,7 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
         let channel_id = req.query.channel_id;
 
         if (channel_id && !channelsMap.get(channel_id)) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let offset = parseInt(req.query.offset) || 0;
@@ -256,10 +237,7 @@ router.get("/:guildid/messages/search", guildMiddleware, guildPermissionsMiddlew
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -308,33 +286,24 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
                     code: 400,
                     message: "Cannot change the new owner to the current owner"
                 });
-            }
+            } //Response??
 
             let new_owner = what.members.find(x => x.id == req.body.owner_id);
 
             if (!new_owner) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Member"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
             }
 
             let tryTransferOwner = await global.database.transferGuildOwnership(what.id, req.body.owner_id);
             
             if (!tryTransferOwner) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                }); 
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             what = await global.database.getGuildById(req.params.guildid);
 
             if (what == null) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                }); 
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
     
             await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_UPDATE", what);
@@ -345,19 +314,13 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
         const update = await global.database.updateGuild(req.params.guildid, req.body.afk_channel_id, req.body.afk_timeout, req.body.icon, req.body.splash, req.body.banner, req.body.name, req.body.default_message_notifications, req.body.verification_level, req.body.explicit_content_filter, req.body.system_channel_id);
 
         if (!update) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         what = await global.database.getGuildById(req.params.guildid);
 
         if (what == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_UPDATE", what);
@@ -366,10 +329,7 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
       } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -397,10 +357,7 @@ router.put("/:guildid/premium/subscriptions", guildMiddleware, rateLimitMiddlewa
 router.delete("/:guildid/premium/subscriptions/:subscriptionid", guildMiddleware, rateLimitMiddleware(global.config.ratelimit_config.subscriptions.maxPerTimeFrame, global.config.ratelimit_config.subscriptions.timeFrame), Watchdog.middleware(global.config.ratelimit_config.subscriptions.maxPerTimeFrame, global.config.ratelimit_config.subscriptions.timeFrame, 1), async (req, res) => {
     try {
         if (!req.subscription) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Subscription"
-            })
+            return res.status(404).json(errors.response_404.UNKNOWN_SUBSCRIPTION_PLAN); //only error i can rlly find related
         }
 
         await global.database.removeSubscription(req.subscription);
@@ -410,10 +367,7 @@ router.delete("/:guildid/premium/subscriptions/:subscriptionid", guildMiddleware
     catch (error) {
         console.error(error);
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        })
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -428,20 +382,14 @@ router.get("/:guildid/embed", guildMiddleware, quickcache.cacheFor(60 * 30, true
         const widget = await global.database.getGuildWidget(req.params.guildid);
 
         if (widget == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
         
         return res.status(200).json(widget);
       } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -450,29 +398,20 @@ router.patch("/:guildid/embed", guildMiddleware, guildPermissionsMiddleware("MAN
         const update = await global.database.updateGuildWidget(req.params.guildid, req.body.channel_id, req.body.enabled);
 
         if (!update) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         const widget = await global.database.getGuildWidget(req.params.guildid);
 
         if (widget == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
-        }
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+        } //Should we return Unknown Widget here?
 
         return res.status(200).json(widget);
       } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -524,10 +463,7 @@ router.get("/:guildid/audit-logs", guildMiddleware, guildPermissionsMiddleware("
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -539,10 +475,7 @@ router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MAN
       } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -576,10 +509,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
         const member = req.guild.members.find(x => x.id === sender.id);
 
         if (!member) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Member"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
         }
 
         let number_type = 0;
@@ -592,10 +522,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
 
         if (req.body.parent_id) {
             if (!req.guild.channels.find(x => x.id === req.body.parent_id && x.type === 4)) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Category"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
             }
 
             if (number_type !== 0 && number_type !== 2 && number_type != 5) {
@@ -611,10 +538,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
         let channel = await global.database.createChannel(req.params.guildid, req.body.name, number_type, req.guild.channels.length + 1, [], null, send_parent_id);
 
         if (channel == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         channel.type = typeof req.body.type === 'string' ? req.body.type : number_type;
@@ -627,10 +551,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
     } catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -646,10 +567,7 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
             const channel = req.guild.channels.find(x => x.id === channel_id);
 
             if (channel == null) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
             }
 
             channel.position = position;
@@ -663,11 +581,7 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
             const outcome = await global.database.updateChannel(channel_id, channel);
 
             if (!outcome) {
-
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             if (!req.channel_types_are_ints) {
@@ -683,10 +597,7 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
     } catch(error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -710,10 +621,7 @@ router.get("/:guildid/webhooks", guildMiddleware, quickcache.cacheFor(60 * 5, tr
     } catch (error) {
         logText(error, "error");
    
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -733,10 +641,7 @@ router.get("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware("
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -756,10 +661,7 @@ router.patch("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware
                 code: "Vanity URL is taken or invalid."
             });
         } else if (tryUpdate === -1) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         } else {
             req.guild.vanity_url_code = code;
 
@@ -770,10 +672,7 @@ router.patch("/:guildid/vanity-url", guildMiddleware, guildPermissionsMiddleware
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

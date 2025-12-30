@@ -3,9 +3,9 @@ const express = require('express');
 const globalUtils = require('../../../helpers/globalutils');
 const { logText } = require('../../../helpers/logger');
 const router = express.Router();
-const quickcache = require('../../../helpers/quickcache');
 const { guildMiddleware, rateLimitMiddleware } = require('../../../helpers/middlewares');
 const Watchdog = require('../../../helpers/watchdog');
+const errors = require('../../../helpers/errors');
 
 router.param('guildid', async (req, _, next, guildid) => {
     req.guild = await global.database.getGuildById(guildid);
@@ -27,10 +27,7 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
                 const del = await global.database.deleteGuild(guild.id);
 
                 if (!del) {
-                    return res.status(500).json({
-                        code: 500,
-                        message: "Internal Server Error"
-                    });
+                    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
                 }
 
                 return res.status(204).send();
@@ -38,10 +35,7 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
                 const leave = await global.database.leaveGuild(user.id, guild.id);
 
                 if (!leave) {
-                    return res.status(500).json({
-                        code: 500,
-                        message: "Internal Server Error"
-                    });
+                    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
                 }
 
                 await global.dispatcher.dispatchEventTo(user.id, "GUILD_DELETE", {
@@ -60,10 +54,7 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
         } catch (error) {
             logText(error, "error");
 
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
     } catch (error) {
         logText(error, "error");
@@ -139,10 +130,7 @@ router.patch("/:guildid/settings", guildMiddleware, rateLimitMiddleware(global.c
         let updateSettings = await global.database.setUsersGuildSettings(user.id, usersGuildSettings);
 
         if (!updateSettings) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchEventTo(user.id, "USER_GUILD_SETTINGS_UPDATE", guildSettings);
@@ -151,10 +139,7 @@ router.patch("/:guildid/settings", guildMiddleware, rateLimitMiddleware(global.c
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        })
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
     }
 });
 

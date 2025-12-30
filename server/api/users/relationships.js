@@ -3,6 +3,7 @@ const { logText } = require('../../helpers/logger');
 const globalUtils = require('../../helpers/globalutils');
 const router = express.Router();
 const quickcache = require('../../helpers/quickcache');
+const errors = require('../../helpers/errors');
 
 router.param('userid', async (req, _, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
@@ -17,7 +18,7 @@ router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
     let account = req.account;
 
     if (account.bot) {
-        return res.status(200).json([]); //bots.. ermm
+        return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT) //bots.. ermm
     }
 
     let relationships = account.relationships;
@@ -27,10 +28,7 @@ router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-      code: 500,
-      message: "Internal Server Error"
-    });
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -39,30 +37,27 @@ router.delete("/:userid", async (req, res) => {
         let account = req.account;
 
         if (account.bot) {
-            return res.status(204).send();
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS) //bots cannot add users
         }
 
         let user = req.user;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown User"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         if (user.bot) {
-            return res.status(204).send(); //bots cannot add users
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS) //bots cannot add users
         }
 
         let relationship = account.relationships.find(item => (item.id === req.user.id));
 
         if (!relationship) {
-            return res.status(404).send({code: 404, message: "Unknown User"}); //relationship was not found, is this the correct response?
+            return res.status(404).json(errors.response_404.UNKNOWN_USER); //relationship was not found, is this the correct response?
         }
         
         await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_REMOVE", {
-                id: relationship.id
+            id: relationship.id
         });
 
         if (relationship.type != 2) {
@@ -70,21 +65,18 @@ router.delete("/:userid", async (req, res) => {
             await global.dispatcher.dispatchEventTo(relationship.id, "RELATIONSHIP_REMOVE", {
                 id: account.id
             });
-
         }
 
-        relationship.type = 0 //this happens in all cases
-        await global.database.modifyRelationship(account.id,relationship);
+        relationship.type = 0; //this happens in all cases
+
+        await global.database.modifyRelationship(account.id, relationship);
 
         return res.status(204).send();
 
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -93,20 +85,17 @@ router.put("/:userid", async (req, res) => {
         let account = req.account;
 
         if (account.bot) {
-            return res.status(204).send();
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS);
         }
 
         let user = req.user;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown User"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         if (user.bot) {
-            return res.status(204).send();
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS);
         }
 
         let body = req.body;
@@ -134,7 +123,7 @@ router.put("/:userid", async (req, res) => {
                     code: 403,
                     message: "Failed to send friend request"
                 });
-            }
+            } //figure these responses out
 
             if (!user.settings.friend_source_flags.all) {
                 //to-do: handle mutual_guilds, mutual_friends case
@@ -260,10 +249,7 @@ router.put("/:userid", async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -272,10 +258,7 @@ router.post("/", async (req, res) => {
         let account = req.account;
 
         if (account.bot) {
-            return res.status(403).json({
-                code: 403,
-                message: "Failed to send friend request"
-            });
+            return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS);
         }
 
         let email = null;
@@ -306,17 +289,11 @@ router.post("/", async (req, res) => {
             let user = await global.database.getAccountByEmail(email);
 
             if (!user) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown User"
-                }); 
+                return res.status(404).json(errors.response_404.UNKNOWN_USER); 
             }
 
             if (user.settings.allow_email_friend_request != undefined && !user.settings.allow_email_friend_request) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown User"
-                }); 
+                return res.status(404).json(errors.response_404.UNKNOWN_USER); 
             } //be very vague to protect the users privacy
 
             let relationship = account.relationships.find(item => (item.id === user.id)) ?? {type:0};
@@ -351,17 +328,11 @@ router.post("/", async (req, res) => {
             let user = await global.database.getAccountByUsernameTag(username, discriminator);
 
             if (!user) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown User"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_USER);
             }
 
             if (user.bot) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Failed to send friend request"
-                });
+                return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS); 
             }
 
             let relationship = account.relationships.find(item => (item.id === user.id)) ?? {type:0};
@@ -466,10 +437,7 @@ router.post("/", async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

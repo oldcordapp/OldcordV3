@@ -9,6 +9,7 @@ const Watchdog = require('../../../helpers/watchdog');
 const connections = require('./connections');
 const guilds = require('./guilds');
 const billing = require('./billing');
+const errors = require('../../../helpers/errors');
 
 router.use("/relationships", relationships);
 
@@ -36,10 +37,7 @@ router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
   catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-      code: 500,
-      message: "Internal Server Error"
-    });
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -77,10 +75,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
       account = await global.database.updateBotUser(account);
 
       if (!account) {
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       }
 
       return res.status(200).json(account);
@@ -146,19 +141,13 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
        let tryUpdate = await global.database.updateAccount(account, update.avatar, account.username, account.discriminator, null, null);
 
        if (tryUpdate !== 3 && tryUpdate !== 2) {
-          return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-          });
+          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
        }
 
        let retAccount = await global.database.getAccountByEmail(account.email);
 
        if (!retAccount) {
-          return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-          });
+          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
        }
 
        await global.dispatcher.dispatchEventTo(retAccount.id, "USER_UPDATE", {
@@ -262,10 +251,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
 
     if (attemptToUpdate !== 3) {
       if (attemptToUpdate === -1) {
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       }
 
       if (attemptToUpdate === 2) {
@@ -279,24 +265,18 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
         return res.status(400).json({
           code: 400,
           username: "Username#Tag combo already taken."
-        });
+        }); //need to figure this one out - its a legacy response iirc
       }
 
       if (attemptToUpdate === 1) {
-        return res.status(400).json({
-          code: 400,
-          username: "Too many users have that username. Try another."
-        });
+        return res.status(400).json(errors.response_400.TOO_MANY_USERS);
       }
     }
 
     account = await global.database.getAccountByUserId(account.id);
 
     if (!account) {
-      return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-      });
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
     account = globalUtils.sanitizeObject(account, ['settings', 'created_at', 'password', 'relationships', 'disabled_until', 'disabled_reason']);
@@ -321,26 +301,23 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
     });
 
     return res.status(200).json({
-          avatar: account.avatar,
-          discriminator: account.discriminator,
-          email: account.email,
-          flags: account.flags,
-          id: account.id,
-          token: account.token,
-          username: account.username,
-          verified: account.verified,
-          mfa_enabled: account.mfa_enabled,
-          claimed: true
+      avatar: account.avatar,
+      discriminator: account.discriminator,
+      email: account.email,
+      flags: account.flags,
+      id: account.id,
+      token: account.token,
+      username: account.username,
+      verified: account.verified,
+      mfa_enabled: account.mfa_enabled,
+      claimed: true
     });
   } catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-      code: 500,
-      message: "Internal Server Error"
-    });
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
-});
+}); //someone PLEASE clean this up SOMEHOW
 
 //Or this
 router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
@@ -349,10 +326,7 @@ router.get("/settings", quickcache.cacheFor(60 * 5), async (req, res) => {
   } catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-      code: 500,
-      message: "Internal Server Error"
-    });
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
 })
 
@@ -362,10 +336,7 @@ router.patch("/settings", async (req, res) => {
     let new_settings = account.settings;
 
     if (new_settings == null) {
-      return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-      });
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
     for (let key in req.body) {
@@ -392,31 +363,22 @@ router.patch("/settings", async (req, res) => {
 
         return res.status(204).send();
       } else {
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        })
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
       }
-    } 
-  } catch (error) {
-      logText(error, "error");
-
-      return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-      })
     }
-  });
+  } catch (error) {
+    logText(error, "error");
+
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
+  }
+});
 
 router.get(/\/settings-proto\/.*/, async (req, res) => {
   try {
     let account = req.account;
 
     if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+        return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
     return res.status(200).json({
@@ -450,10 +412,7 @@ router.patch(/\/settings-proto\/.*/, async (req, res) => {
     let account = req.account;
 
     if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+      return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
     return res.status(403).json({
@@ -463,10 +422,7 @@ router.patch(/\/settings-proto\/.*/, async (req, res) => {
   } catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-      code: 500,
-      message: "Internal Server Error"
-    })
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
   }
 });
 
@@ -542,10 +498,7 @@ router.get("/mentions", quickcache.cacheFor(60 * 5), async (req, res) => {
   } catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-    })
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
   }
 })
 
@@ -602,16 +555,13 @@ router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_conf
        return res.status(400).json({
          code: 400,
          message: "Code and secret is required to enable TOTP"
-       })
+       }) //figure this one out too
     }
 
     let user_mfa = await global.database.getUserMfa(req.account.id);
 
     if (user_mfa.mfa_enabled) {
-       return res.status(400).json({
-         code: 400,
-         message: "This account is already protected by MFA"
-       })
+       return res.status(400).json(errors.response_400.TWOFA_ALREADY_ENABLED)
     }
 
     let valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
@@ -643,14 +593,11 @@ router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_conf
     return res.status(200).json({
       code: 200,
       message: "MFA Enabled"
-    })
+    }) // and this??
   } catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-    })
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
   }
 });
 
@@ -668,10 +615,7 @@ router.post("/mfa/totp/disable", rateLimitMiddleware(global.config.ratelimit_con
     let user_mfa = await global.database.getUserMfa(req.account.id);
 
     if (!user_mfa.mfa_enabled) {
-       return res.status(400).json({
-         code: 400,
-         message: "This account does not have MFA enabled"
-       })
+       return res.status(400).json(errors.response_400.TWOFA_NOT_ENABLED)
     }
 
     let valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
@@ -703,14 +647,11 @@ router.post("/mfa/totp/disable", rateLimitMiddleware(global.config.ratelimit_con
     return res.status(200).json({
       code: 200,
       message: "MFA Disabled"
-    })
+    }) //figure out this proper response?
   } catch (error) {
     logText(error, "error");
 
-    return res.status(500).json({
-        code: 500,
-        message: "Internal Server Error"
-    })
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
   }
 });
 

@@ -7,6 +7,7 @@ const fs = require('fs');
 const router = express.Router({ mergeParams: true });
 const path = require("path");
 const md5 = require('../helpers/md5');
+const errors = require('../helpers/errors');
 
 router.param('webhookid', async (req, res, next, webhookid) => {
     req.webhook = await global.database.getWebhookById(webhookid);
@@ -17,37 +18,25 @@ router.param('webhookid', async (req, res, next, webhookid) => {
 router.patch("/:webhookid", authMiddleware, guildPermissionsMiddleware("MANAGE_WEBHOOKS"), async (req, res) => {
     try {
         if (!req.body.channel_id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });  
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);  
         }
 
         let channel = await global.database.getChannelById(req.body.channel_id);
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });  
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL); 
         }
 
         let webhook = req.webhook;
 
         if (!webhook) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_WEBHOOK); 
         }
 
         let guild = await global.database.getGuildById(webhook.guild_id);
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD); 
         }
 
         const newName = req.body.name;
@@ -75,20 +64,14 @@ router.patch("/:webhookid", authMiddleware, guildPermissionsMiddleware("MANAGE_W
         );
 
         if (!tryUpdate) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
         
         return res.status(200).json(tryUpdate);
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -97,38 +80,26 @@ router.delete("/:webhookid", authMiddleware, guildPermissionsMiddleware("MANAGE_
         let webhook = req.webhook;
 
         if (!webhook) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_WEBHOOK); 
         }
 
         let guild = await global.database.getGuildById(webhook.guild_id);
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD); 
         }
 
         let tryDelete = await global.database.deleteWebhook(webhook.id);
 
         if (!tryDelete) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         return res.status(204).send();
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -137,29 +108,20 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
         let webhook = req.webhook;
 
         if (!webhook) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_WEBHOOK); 
         }
 
         let guild = await global.database.getGuildById(webhook.guild_id);
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD); 
         }
 
         let channel = await global.database.getChannelById(webhook.channel_id);
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
-        }
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL); 
+        } // I dont know if it should return these error messages so bluntly, but whatever
 
         let create_override = false;
         let override = {
@@ -244,20 +206,14 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
         let createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, create_override ? `WEBHOOK_${webhook.id}_${override_id}` : `WEBHOOK_${webhook.id}`, req.body.content, req.body.nonce, null, req.body.tts, false, null, embeds, webhook);
 
         if (!createMessage) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         if (create_override) {
             let tryCreateOverride = await global.database.createWebhookOverride(webhook.id, override_id, override.username, override.avatar_url);
 
             if (!tryCreateOverride) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             createMessage.author.username = override.username ?? webhook.name;
@@ -270,10 +226,7 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -282,28 +235,19 @@ router.post("/:webhookid/:webhooktoken/github", async (req, res) => {
         let webhook = req.webhook;
 
         if (!webhook) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_WEBHOOK); 
         }
 
         let guild = await global.database.getGuildById(webhook.guild_id);
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD); 
         }
 
         let channel = await global.database.getChannelById(webhook.channel_id);
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Webhook"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL); 
         }
 
         let override = {
@@ -359,19 +303,13 @@ router.post("/:webhookid/:webhooktoken/github", async (req, res) => {
         const createMessage = await global.database.createMessage(!channel.guild_id ? null : channel.guild_id, channel.id, "WEBHOOK_" + webhook.id + "_" + override_id, req.body.content, req.body.nonce, null, req.body.tts, false, embeds);
 
         if (!createMessage) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         let tryCreateOverride = await global.database.createWebhookOverride(webhook.id, override_id, override.username, override.avatar_url);
 
         if (!tryCreateOverride) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         createMessage.author.username = override.username;
@@ -383,10 +321,7 @@ router.post("/:webhookid/:webhooktoken/github", async (req, res) => {
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

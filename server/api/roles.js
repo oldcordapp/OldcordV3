@@ -5,6 +5,7 @@ const globalUtils = require('../helpers/globalutils');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
+const errors = require('../helpers/errors');
 
 router.param('roleid', async (req, res, next, roleid) => {
     req.role = req.guild.roles.find(x => x.id === roleid);
@@ -21,28 +22,19 @@ router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMi
         let guild = req.guild;
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         let roles = req.guild.roles;
 
         if (roles.length == 0) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Role"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
         }
 
         let role = req.role;
 
         if (role == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Role"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
         }
 
         if (req.body.name != "@everyone" && req.params.roleid == req.params.guildid) {
@@ -80,18 +72,12 @@ router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMi
 
             return res.status(200).json(role);
         } else {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -100,19 +86,13 @@ router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitM
         let guild = req.guild;
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         let role = req.role;
 
         if (role == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Role"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
         }
 
         let members_with_role = req.guild.members.filter(x => x.roles.some(y => y === role.id));
@@ -120,10 +100,7 @@ router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitM
         const attempt = await global.database.deleteRole(req.params.roleid);
 
         if (!attempt) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_ROLE_DELETE", {
@@ -150,10 +127,7 @@ router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitM
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -162,10 +136,7 @@ router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddlewar
         let guild = req.guild;
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         let roles = req.body;
@@ -175,7 +146,7 @@ router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddlewar
                 code: 400,
                 message: "Bad payload"
             });
-        }
+        } //figure this one out
 
         let success = 0;
         let retRoles = [];
@@ -210,20 +181,14 @@ router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddlewar
         }
 
         if (success !== roles.length) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         return res.status(200).json(retRoles);
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -232,10 +197,7 @@ router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware
         let guild = req.guild;
 
         if (!guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         if (guild.roles.length >= global.config.limits['roles_per_guild'].max) {
@@ -248,10 +210,7 @@ router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware
         const role = await global.database.createRole(req.params.guildid, "new role", req.guild.roles.length + 1);
 
         if (role == null) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchEventInGuild(guild, "GUILD_ROLE_UPDATE", {
@@ -263,10 +222,7 @@ router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

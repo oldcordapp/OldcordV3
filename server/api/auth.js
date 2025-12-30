@@ -5,8 +5,8 @@ const Watchdog = require('../helpers/watchdog');
 const instanceMiddleware = require('../helpers/middlewares').instanceMiddleware;
 const rateLimitMiddleware = require("../helpers/middlewares").rateLimitMiddleware;
 const { logText } = require('../helpers/logger');
-const Snowflake = require('../helpers/snowflake');
 const recaptcha = require('../helpers/recaptcha');
+const errors = require('../helpers/errors');
 
 global.config = globalUtils.config;
 
@@ -44,7 +44,6 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                     email: `Must be between ${global.config.limits['email'].min} and ${global.config.limits['email'].max} characters.`,
                 });
             }
-
 
             let badEmail = await globalUtils.badEmail(req.body.email); //WHO THE FUCK MOVED THIS??
 
@@ -131,10 +130,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
         let account = await global.database.getAccountByToken(registrationAttempt.token);
 
         if (account == null) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);
         }
 
         if (emailToken != null) {
@@ -220,10 +216,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
     catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -268,10 +261,7 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
             let tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
 
             if (!tryGetAcc) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             let tryGetStaffDetails = await global.database.getStaffDetails(tryGetAcc.id);
@@ -294,19 +284,13 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
             let tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
 
             if (!tryGetAcc) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             } //fuck? how do we make this work better?
 
             let ticket = await global.database.generateMfaTicket(tryGetAcc.id);
 
             if (!ticket) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             return res.status(200).json({
@@ -323,10 +307,7 @@ router.post("/login", rateLimitMiddleware(global.config.ratelimit_config.registr
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -361,10 +342,7 @@ router.post("/mfa/totp", rateLimitMiddleware(global.config.ratelimit_config.regi
         let token = await global.database.getLoginTokenByMfaTicket(ticket);
 
         if (!token) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         } //???
 
         await global.database.invalidateMfaTicket(ticket);
@@ -375,10 +353,7 @@ router.post("/mfa/totp", rateLimitMiddleware(global.config.ratelimit_config.regi
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -411,7 +386,7 @@ router.post("/forgot", rateLimitMiddleware(global.config.ratelimit_config.regist
                 code: 400,
                 email: "This account has been disabled.",
             });
-        }
+        } //figure this original one out from 2017
 
         //let emailToken = globalUtils.generateString(60);
         //to-do: but basically, handle the case if the user is unverified - then verify them aswell as reset pw
@@ -421,18 +396,15 @@ router.post("/forgot", rateLimitMiddleware(global.config.ratelimit_config.regist
     catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
 router.post("/fingerprint", (_, res) => {
-    let fingerprint = `${Snowflake.generate()}.${globalUtils.generateString(27)}`;
+    let fingerprint = Watchdog.getFingerprint(req.originalUrl, req.baseUrl, req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
 
     return res.status(200).json({
-        fingerprint: fingerprint
+        fingerprint: fingerprint.fingeprint
     })
 });
 
@@ -441,19 +413,13 @@ router.post("/verify", rateLimitMiddleware(global.config.ratelimit_config.regist
         let auth_token = req.headers['authorization'];
 
         if (!auth_token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
+            return res.status(401).json(errors.response_401.UNAUTHORIZED)
         }
 
         let account = await global.database.getAccountByToken(auth_token);
 
         if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
+            return res.status(401).json(errors.response_401.UNAUTHORIZED)
         }
 
         let token = req.body.token;
@@ -496,10 +462,7 @@ router.post("/verify", rateLimitMiddleware(global.config.ratelimit_config.regist
     catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -508,19 +471,13 @@ router.post("/verify/resend", rateLimitMiddleware(global.config.ratelimit_config
         let auth_token = req.headers['authorization'];
 
         if (!auth_token) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
+            return res.status(401).json(errors.response_401.UNAUTHORIZED)
         }
 
         let account = await global.database.getAccountByToken(auth_token);
 
         if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
+            return res.status(401).json(errors.response_401.UNAUTHORIZED)
         }
 
         if (account.verified) {
@@ -542,20 +499,14 @@ router.post("/verify/resend", rateLimitMiddleware(global.config.ratelimit_config
         let trySendRegEmail = await global.emailer.sendRegistrationEmail(account.email, emailToken, account);
 
         if (!trySendRegEmail) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         if (newEmailToken) {
             let tryUpdate = await global.database.updateEmailToken(account.id, emailToken);
 
             if (!tryUpdate) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
         }
 
@@ -564,10 +515,7 @@ router.post("/verify/resend", rateLimitMiddleware(global.config.ratelimit_config
     catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

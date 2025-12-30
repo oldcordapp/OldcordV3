@@ -1,6 +1,7 @@
 const express = require('express');
 const { logText } = require('../../helpers/logger');
 const router = express.Router({ mergeParams: true });
+const errors = require('../../helpers/errors');
 
 router.param('applicationid', async (req, res, next, applicationid) => {
     req.application = await global.database.getApplicationById(applicationid);
@@ -30,10 +31,7 @@ router.get("/", async (req, res) => {
         let account = req.account;
 
         if (!account) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            })
+            return res.status(401).json(errors.response_401.UNAUTHORIZED)
         }
 
         let applications = await global.database.getUsersApplications(req.account);
@@ -59,10 +57,7 @@ router.get("/", async (req, res) => {
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -74,33 +69,27 @@ router.post("/", async (req, res) => {
             return res.status(400).json({
                 code: 400,
                 name: "This field is required"
-            })
+            }) // move this to its own response
         }
 
         if (name.length < 2 || name.length > 30) {
             return res.status(400).json({
                 code: 400,
                 name: "Must be between 2 and 30 characters."
-            })
+            }) //move to its own response
         }
 
         let application = await global.database.createUserApplication(req.account, name);
 
         if (!application) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         return res.status(200).json(application);
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -109,27 +98,18 @@ router.get("/:applicationid", async (req, res) => {
         let account = req.account;
 
         if (!req.application) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION); 
         }
 
         if (req.application.owner.id != account.id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            }); 
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION); //Figure out the proper response here
         }
 
         return res.status(200).json(req.application);
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -139,10 +119,7 @@ router.patch("/:applicationid", async (req, res) => {
         let application = req.application;
 
         if (!application || application.owner.id !== account.id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION); 
         }
 
         if (req.body.name) {
@@ -188,26 +165,20 @@ router.patch("/:applicationid", async (req, res) => {
             return res.status(400).json({
                 code: 400,
                 description: "Must be under 400 characters."
-            })
+            }) //to-do
         }
 
         let tryUpdateApplication = await global.database.updateUserApplication(application);
 
         if (!tryUpdateApplication) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
         }
 
         if (send_update_bot) {
             let tryUpdateBot = await global.database.updateBot(application.bot);
 
             if (!tryUpdateBot) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                }); 
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
             }
 
             tryUpdateApplication.bot = tryUpdateBot;
@@ -222,10 +193,7 @@ router.patch("/:applicationid", async (req, res) => {
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -236,10 +204,7 @@ router.delete("/:applicationid", async (req, res) => {
         let application = req.application;
 
         if (!application || application.owner.id != account.id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
         }
 
         await global.database.deleteBotById(application.id); //I understand this is called deleteBotById - but if you look inside the function, it's the same thing as deleting the application & the bot, so a two for one special.
@@ -248,10 +213,7 @@ router.delete("/:applicationid", async (req, res) => {
     }  catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -261,36 +223,27 @@ router.post("/:applicationid/bot", async (req, res) => {
         let application = req.application;
 
         if (!application || application.owner.id != account.id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
         }
 
         if (application.bot) {
             return res.status(400).json({
                 code: 400,
                 message: "This application has already been turned into a bot"
-            });
+            }); //figure this one out aswell
         }
 
         let tryCreateBot = await global.database.abracadabraApplication(application);
 
         if (!tryCreateBot) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         return res.status(200).json(tryCreateBot);
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -300,10 +253,7 @@ router.post("/:applicationid/delete", async (req, res) => {
         let application = req.application;
 
         if (!application || application.owner.id != account.id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
         }
 
         await global.database.deleteBotById(application.id); //I understand this is called deleteBotById - but if you look inside the function, it's the same thing as deleting the application & the bot, so a two for one special.
@@ -312,10 +262,7 @@ router.post("/:applicationid/delete", async (req, res) => {
     }  catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

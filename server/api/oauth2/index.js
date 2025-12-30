@@ -4,19 +4,16 @@ const router = express.Router({ mergeParams: true });
 const applications = require('./applications');
 const tokens = require('./tokens');
 const globalUtils = require('../../helpers/globalutils');
+const errors = require('../../helpers/errors');
 
 router.use("/applications", applications);
 router.use("/tokens", tokens);
-
 router.get("/authorize", async (req, res) => {
     try {
         let account = req.account;
 
         if (account.bot) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });  
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);  
         }
 
         let client_id = req.query.client_id;
@@ -26,14 +23,14 @@ router.get("/authorize", async (req, res) => {
             return res.status(400).json({
                 code: 400,
                 client_id: "This parameter is required"
-            });
+            }); //figure this error response out
         }
 
         if (!scope) {
             return res.status(400).json({
                 code: 400,
                 scope: "This parameter is required"
-            });
+            }); // citation 2
         }
 
         let return_obj = {
@@ -43,27 +40,18 @@ router.get("/authorize", async (req, res) => {
         let application = await global.database.getApplicationById(client_id);
 
         if (!application) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
         }
 
         if (scope.includes('bot')) {
             let bot = await global.database.getBotByApplicationId(application.id);
 
             if (!bot) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Bot"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
             }
 
             if (!bot.public && application.owner.id != account.id) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Bot"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
             }
             
             let is_public = bot.public;
@@ -122,10 +110,7 @@ router.get("/authorize", async (req, res) => {
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -134,10 +119,7 @@ router.post("/authorize", async (req, res) => {
         let account = req.account;
 
         if (account.bot) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });  
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);  
         }
 
         let client_id = req.query.client_id;
@@ -165,10 +147,7 @@ router.post("/authorize", async (req, res) => {
         let application = await global.database.getApplicationById(client_id);
 
         if (!application) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Application"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
         }
 
         let guild_id = null;
@@ -179,17 +158,11 @@ router.post("/authorize", async (req, res) => {
             let bot = await global.database.getBotByApplicationId(application.id);
 
             if (!bot) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Bot"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
             }
 
             if (!bot.public && application.owner.id != account.id) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Bot"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
             }
         
             application.bot = bot;
@@ -198,37 +171,25 @@ router.post("/authorize", async (req, res) => {
         let guilds = await global.database.getUsersGuilds(account.id);
 
         if (!guilds || guild_id === null) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         let guild = guilds.find(x => x.id === guild_id);
 
         if (!guild) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         let member = guild.members.find(x => x.id === account.id);
 
         if (!member) {
-            return res.status(403).json({
-                code: 403,
-                scope: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         let botAlrThere = guild.members.find(x => x.id === application.bot.id);
 
         if (botAlrThere) {
-            return res.status(403).json({
-                code: 403,
-                scope: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         let isOwner = guild.owner_id === account.id;
@@ -239,19 +200,13 @@ router.post("/authorize", async (req, res) => {
             let isBanned = await database.isBannedFromGuild(guild.id, application.bot.id);
 
             if (isBanned) {
-                return res.status(403).json({
-                    code: 403,
-                    scope: "Missing Permissions"
-                });
+                return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
             }
 
             let tryJoinBot = await global.database.joinGuild(application.bot.id, guild);
 
             if (!tryJoinBot) {
-                return res.status(500).json({
-                    code: 500,
-                    message: "Internal Server Error"
-                });
+                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
             await global.dispatcher.dispatchEventTo(application.bot.id, "GUILD_CREATE", guild);
@@ -272,18 +227,12 @@ router.post("/authorize", async (req, res) => {
 
             return res.json({ location: `${req.protocol}://${req.get('host')}/oauth2/authorized` })
         } else {
-            return res.status(403).json({
-                code: 403,
-                scope: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

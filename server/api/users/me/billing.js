@@ -1,10 +1,5 @@
 const express = require('express');
-const globalUtils = require('../../../helpers/globalutils');
-const { logText } = require('../../../helpers/logger');
 const router = express.Router();
-const quickcache = require('../../../helpers/quickcache');
-const {guildMiddleware, rateLimitMiddleware } = require('../../../helpers/middlewares');
-const Watchdog = require('../../../helpers/watchdog');
 const Snowflake = require('../../../helpers/snowflake');
 
 router.param('guildid', async (req, _, next, guildid) => {

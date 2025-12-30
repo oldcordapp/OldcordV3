@@ -6,6 +6,7 @@ const Snowflake = require('../helpers/snowflake');
 const fs = require('fs');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
+const errors = require('../helpers/errors');
 
 router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
@@ -16,10 +17,7 @@ router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), qu
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -68,10 +66,7 @@ router.post("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), a
         let tryCreateEmoji = await global.database.createCustomEmoji(guild, account, emoji_id, req.body.name);
 
         if (!tryCreateEmoji) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         let currentEmojis = guild.emojis;
@@ -116,10 +111,7 @@ router.post("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), a
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -130,10 +122,7 @@ router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJ
         let emoji = req.guild.emojis.find(x => x.id === emoji_id);
 
         if (emoji == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Emoji"
-            });  
+            return res.status(404).json(errors.response_404.UNKNOWN_EMOJI);  
         }
 
         if (!req.body.name) {
@@ -153,10 +142,7 @@ router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJ
         let tryUpdate = await global.database.updateCustomEmoji(guild, emoji_id, req.body.name);
 
         if (!tryUpdate) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         let currentEmojis = guild.emojis;
@@ -192,10 +178,7 @@ router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJ
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -206,19 +189,13 @@ router.delete("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMO
         let emoji = req.guild.emojis.find(x => x.id === emoji_id);
 
         if (emoji == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Emoji"
-            });  
+            return res.status(404).json(errors.response_404.UNKNOWN_EMOJI);  
         }
 
         let tryDelete = await global.database.deleteCustomEmoji(guild, emoji_id);
 
         if (!tryDelete) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         let currentEmojis = guild.emojis;
@@ -254,10 +231,7 @@ router.delete("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMO
     } catch (error) {
         logText(error, "error");
         
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

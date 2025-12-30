@@ -4,7 +4,7 @@ const { logText } = require('../helpers/logger');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
-
+const errors = require('../helpers/errors');
 const router = express.Router({ mergeParams: true });
 
 router.param('memberid', async (req, res, next, memberid) => {
@@ -23,19 +23,13 @@ router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimi
         const member = req.member;
 
         if (member == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Member"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
         }
 
         const attempt = await global.database.leaveGuild(member.id, req.params.guildid);
 
         if (!attempt) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchEventTo(member.id, "GUILD_DELETE", {
@@ -54,10 +48,7 @@ router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimi
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -121,10 +112,7 @@ async function updateMember(member, guild, roles, nick) {
 router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPermissionsMiddleware("MANAGE_NICKNAMES"), rateLimitMiddleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateMember.maxPerTimeFrame, global.config.ratelimit_config.updateMember.timeFrame, 0.5), async (req, res) => {
     try {
         if (req.member == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Member"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
         }
 
         let newMember = await updateMember(req.member, req.guild, req.body.roles, req.body.nick);
@@ -145,10 +133,7 @@ router.patch("/:memberid", guildPermissionsMiddleware("MANAGE_ROLES"), guildPerm
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -158,10 +143,7 @@ router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLim
         let member = req.guild.members.find(y => y.id == account.id);
 
         if (!member) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
         
         let newMember = await updateMember(member, req.guild, null, req.body.nick);
@@ -174,12 +156,8 @@ router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLim
     } catch (error) {
         logText(error, "error");
  
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
-    //updateGuildMemberNick
 });
 
 module.exports = router;

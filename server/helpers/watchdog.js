@@ -10,7 +10,7 @@ const Watchdog = {
     normalizeHeader: (name) => {
         return name.toLowerCase().trim();
     },
-    getFingerprint: async (url, baseUrl, protocol, headers, account = null, ja3hash = null) => {
+    getFingerprint: (url, baseUrl, protocol, headers, account = null, ja3hash = null) => {
         if (typeof headers !== 'object' || headers === null || Object.entries(headers).length < Watchdog.numHeadersThreshold) {
             return {
                 fingerprint: null,
@@ -95,13 +95,14 @@ const Watchdog = {
             }
 
             if (!req.fingerprint) {
-                let fingerprint_outcome = await Watchdog.getFingerprint(req.originalUrl, req.baseUrl, req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
+                let fingerprint_outcome = Watchdog.getFingerprint(req.originalUrl, req.baseUrl, req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
                 let fingerprint = fingerprint_outcome.fingerprint;
 
                 if (fingerprint === null) {
                     logText(`Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - auto blocking them for security of the instance.`, "watchdog");
 
                     return res.status(429).json({
+                        code: 31003,
                         message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
                         retry_after: 999999999999,
                         global: true
@@ -112,9 +113,10 @@ const Watchdog = {
             }
 
             let { fingerprint } = req;
-
+ 
             if (!fingerprint) {
                 return res.status(429).json({
+                    code: 31003,
                     message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
                     retry_after: 999999999999,
                     global: true
@@ -153,6 +155,7 @@ const Watchdog = {
                     res.setHeader('Retry-After-WD', retryAfterSeconds);
 
                     return res.status(429).json({
+                        code: 31001,
                         message: "You are being rate limited.",
                         retry_after: timeRemaining,
                         global: true
@@ -161,6 +164,7 @@ const Watchdog = {
                     retryAfterSeconds = Math.min(retryAfterSeconds, 30);
 
                     return res.status(429).json({
+                        code: 31002,
                         message: "Too many requests. Please try again shortly.",
                         retry_after: retryAfterSeconds * 1000,
                         global: true

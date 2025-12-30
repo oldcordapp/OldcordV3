@@ -2,7 +2,6 @@ const express = require('express');
 const { authMiddleware, instanceMiddleware } = require('../helpers/middlewares');
 const app = express();
 const globalUtils = require('../helpers/globalutils');
-const config = globalUtils.config;
 const auth = require('./auth');
 const tutorial = require('./tutorial');
 const users = require('./users/index');

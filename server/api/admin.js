@@ -2,11 +2,10 @@ const express = require('express');
 const { logText } = require('../helpers/logger');
 const { staffAccessMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
-const quickcache = require('../helpers/quickcache');
 const globalUtils = require('../helpers/globalutils');
 const fs = require("node:fs");
 const path = require("node:path")
-
+const errors = require('../helpers/errors');
 //PRIVILEGE: 1 - (JANITOR) [Can only flag things for review], 2 - (MODERATOR) [Can only delete messages, mute users, and flag things for review], 3 - (ADMIN) [Free reign, can review flags, disable users, delete servers, etc], 4 - (INSTANCE OWNER) - [Can add new admins, manage staff, etc]
 
 router.param('userid', async (req, res, next, userid) => {
@@ -24,10 +23,7 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
         const userid = req.params.userid;
 
         if (!userid) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown User"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         const [userRet, guilds] = await Promise.all([
@@ -36,10 +32,7 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
         ]); //to-do: make a lite function which just gets the name, id, icon from the database - makes no sense fetching the whole guild object then only using like 3 things from it to fetch it later
 
         if (!userRet) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown User"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         if (userRet.bot) {
@@ -63,10 +56,7 @@ router.get("/users/:userid", staffAccessMiddleware(3), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -75,10 +65,7 @@ router.get("/bots/:userid", staffAccessMiddleware(3), async (req, res) => {
         const userid = req.params.userid;
 
         if (!userid) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Bot"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
         } // there is no point renaming this shit tbh
 
         const [userRet, guilds] = await Promise.all([
@@ -87,10 +74,7 @@ router.get("/bots/:userid", staffAccessMiddleware(3), async (req, res) => {
         ]);
 
         if (!userRet) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Bot"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
         }
 
         const userWithGuilds = {
@@ -102,10 +86,7 @@ router.get("/bots/:userid", staffAccessMiddleware(3), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -114,19 +95,13 @@ router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
         const guildid = req.params.guildid;
 
         if (!guildid) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         const guildRet = await global.database.getGuildById(guildid);
 
         if (!guildRet) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         let owner = await global.database.getAccountByUserId(guildRet.owner_id);
@@ -139,10 +114,7 @@ router.get("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -158,10 +130,7 @@ router.get("/@me", staffAccessMiddleware(1), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -173,10 +142,7 @@ router.get("/reports", staffAccessMiddleware(1), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -188,7 +154,7 @@ router.patch("/reports/:reportid", staffAccessMiddleware(1), async (req, res) =>
             return res.status(404).json({
                 code: 404,
                 message: "Unknown Report"
-            });
+            }); // make our own error codes for these
         }
 
         let action = req.body.action;
@@ -225,10 +191,7 @@ router.patch("/reports/:reportid", staffAccessMiddleware(1), async (req, res) =>
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -237,19 +200,13 @@ router.delete("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => 
         let guildid = req.params.guildid;
 
         if (!guildid) {
-            return res.status(400).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(400).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         let guildRet = await global.database.getGuildById(guildid);
 
         if (!guildRet) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Guild"
-            });
+            return res.status(400).json(errors.response_404.UNKNOWN_GUILD);
         }
 
         await global.database.deleteGuild(guildid);
@@ -262,10 +219,7 @@ router.delete("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => 
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -278,7 +232,7 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
                 code: 404,
                 message: `Unknown ${user.bot ? 'Bot' : 'User'}`
             });
-        }
+        } //yeah that is another problem to solve
 
         if (user.id === req.account.id || req.is_user_staff) { //Should we allow them to disable other staff members?
             return res.status(404).json({
@@ -315,10 +269,7 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
         let tryDisable = await global.database.internalDisableAccount(req.staff_details, req.params.userid, until ?? "FOREVER", audit_log_reason);
 
         if (!tryDisable) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchLogoutTo(req.params.userid);
@@ -327,10 +278,7 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -342,10 +290,7 @@ router.get("/staff", staffAccessMiddleware(4), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -357,10 +302,7 @@ router.get("/staff/audit-logs", staffAccessMiddleware(4), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     } 
 });
 
@@ -393,10 +335,7 @@ router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
         req.user = await global.database.getAccountByUserId(user_id);
 
         if (!req.user) {
-            return res.status(404).json({
-                "code": 404,
-                "message": "Unknown User"
-            })
+            return res.status(404).json(errors.response_404.UNKNOWN_USER)
         }
 
         req.is_user_staff = req.user && (req.user.flags & 1 << 0) === 1 << 0;
@@ -411,10 +350,7 @@ router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
         let tryAddStaff = await global.database.addInstanceStaff(req.user, privilege);
 
         if (!tryAddStaff) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         let new_staff = await global.database.getInstanceStaff();
@@ -423,10 +359,7 @@ router.post("/staff", staffAccessMiddleware(4), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -436,26 +369,17 @@ router.post("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
         let privilege = req.body.privilege;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown User`
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         if (user.id === req.account.id || !req.is_user_staff) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown User`
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         let tryUpdateStaff = await global.database.updateInstanceStaff(user, privilege);
 
         if (!tryUpdateStaff) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         let new_staff = await global.database.getInstanceStaff();
@@ -465,10 +389,7 @@ router.post("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -477,17 +398,11 @@ router.delete("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
         let user = req.user;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown User`
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         if (user.id === req.account.id || !req.is_user_staff) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown User`
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         await global.database.removeFromStaff(user);
@@ -496,10 +411,7 @@ router.delete("/staff/:userid", staffAccessMiddleware(4), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -508,17 +420,11 @@ router.delete("/staff/:userid/audit-logs", staffAccessMiddleware(4), async (req,
         let user = req.user;
 
         if (!user) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown User`
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         if (user.id === req.account.id || !req.is_user_staff) {
-            return res.status(404).json({
-                code: 404,
-                message: `Unknown User`
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_USER);
         }
 
         await global.database.clearStaffAuditLogs(user.id);
@@ -527,10 +433,7 @@ router.delete("/staff/:userid/audit-logs", staffAccessMiddleware(4), async (req,
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -579,10 +482,7 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
             message = await global.database.getMessageById(messageId);
 
             if (message == null) {
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Message"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
             }
 
             if (!channelId) {
@@ -600,10 +500,7 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
         let channel = await global.database.getChannelById(channelId);
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let retMessages = [];
@@ -636,10 +533,7 @@ router.get("/messages", staffAccessMiddleware(2), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -648,28 +542,19 @@ router.delete("/messages/:messageid", staffAccessMiddleware(2), async (req, res)
         let messageid = req.params.messageid;
 
         if (!messageid) {
-            return res.status(400).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         let msgRet = await global.database.getMessageById(messageid);
 
         if (!msgRet) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+           return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         let guildRet = await global.database.getGuildById(msgRet.guild_id);
 
         if (!guildRet) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.database.deleteMessage(messageid);
@@ -684,10 +569,7 @@ router.delete("/messages/:messageid", staffAccessMiddleware(2), async (req, res)
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -728,10 +610,7 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
         let tryDisable = await global.database.internalDeleteAccount(req.staff_details, req.params.userid, audit_log_reason);
 
         if (!tryDisable) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            });
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
         await global.dispatcher.dispatchLogoutTo(req.params.userid);
@@ -740,10 +619,7 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -757,10 +633,7 @@ router.get("/settings", staffAccessMiddleware(4), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 })
 
@@ -784,10 +657,7 @@ router.post("/settings", staffAccessMiddleware(4), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 })
 

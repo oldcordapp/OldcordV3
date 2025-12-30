@@ -5,6 +5,7 @@ const { channelPermissionsMiddleware, rateLimitMiddleware } = require('../helper
 const router = express.Router({ mergeParams: false });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
+const errors = require('../helpers/errors');
 
 router.param('userid', async (req, res, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
@@ -18,28 +19,19 @@ router.delete(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(gl
         let channel = req.channel;
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let guild = req.guild;
 
         if (channel.type != 1 && channel.type != 3 && !guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let message = req.message;
 
         if (!message) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         if (guild && guild.exclusions.includes("reactions")) {
@@ -62,10 +54,7 @@ router.delete(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(gl
         let tryUnReact = await global.database.removeMessageReaction(message, account.id, id, dispatch_name);
 
         if (!tryUnReact) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
         }
         
         const payload = {
@@ -87,10 +76,7 @@ router.delete(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(gl
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
     }
 });
 
@@ -99,37 +85,25 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
         let user = req.user;
 
         if (!user) {
-            return res.status(401).json({
-                code: 401,
-                message: "Unauthorized"
-            });
+            return res.status(401).json(errors.response_401.UNAUTHORIZED);
         }
 
         let channel = req.channel;
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let guild = req.guild;
 
         if (channel.type != 1 && channel.type != 3 && !guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let message = req.message;
 
         if (!message) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         if (guild && guild.exclusions.includes("reactions")) {
@@ -152,10 +126,7 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
         let tryUnReact = await global.database.removeMessageReaction(message, user.id, id, dispatch_name);
 
         if (!tryUnReact) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
         }
         
         const payload = {
@@ -177,10 +148,7 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
     }
 });
 
@@ -190,28 +158,19 @@ router.put(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(globa
         let channel = req.channel;
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let guild = req.guild;
 
         if (channel.type != 1 && channel.type != 3 && !guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let message = req.message;
 
         if (!message) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         if (guild && guild.exclusions.includes("reactions")) {
@@ -246,20 +205,14 @@ router.put(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(globa
             let canAdd = global.permissions.hasChannelPermissionTo(req.channel, req.guild, req.account.id, "ADD_REACTIONS");
         
             if (!canAdd) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Missing Permissions"
-                });
+                return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
             }
         }
 
         let tryReact = await global.database.addMessageReaction(message, account.id, id, encoded);
 
         if (!tryReact) {
-            return res.status(500).json({
-                code: 500,
-                message: "Internal Server Error"
-            }); 
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
         }
         
         const payload = {
@@ -281,10 +234,7 @@ router.put(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(globa
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
     }
 });
 
@@ -293,28 +243,19 @@ router.get("/:urlencoded", quickcache.cacheFor(60 * 5), async (req, res) => {
         let channel = req.channel;
 
         if (!channel) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let guild = req.guild;
 
         if (channel.type != 1 && channel.type != 3 && !guild) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         let message = req.message;
 
         if (!message) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         if (guild && guild.exclusions.includes("reactions")) {
@@ -358,10 +299,7 @@ router.get("/:urlencoded", quickcache.cacheFor(60 * 5), async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
     }
 });
 

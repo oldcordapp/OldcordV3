@@ -4,6 +4,7 @@ const { logText } = require('../helpers/logger');
 const quickcache = require('../helpers/quickcache');
 const router = express.Router({ mergeParams: true });
 const Watchdog = require('../helpers/watchdog');
+const errors = require('../helpers/errors');
 
 router.get("/tenor/search", rateLimitMiddleware(global.config.ratelimit_config.tenorSearch.maxPerTimeFrame, global.config.ratelimit_config.tenorSearch.timeFrame), Watchdog.middleware(global.config.ratelimit_config.tenorSearch.maxPerTimeFrame, global.config.ratelimit_config.tenorSearch.timeFrame, 0.1), quickcache.cacheFor(60 * 30, true), async (req, res) => {
     try {
@@ -47,10 +48,7 @@ router.get("/tenor/search", rateLimitMiddleware(global.config.ratelimit_config.t
     } catch (err) {
         logText(err, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

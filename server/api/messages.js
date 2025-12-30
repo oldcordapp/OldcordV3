@@ -13,6 +13,7 @@ const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const ffmpeg = require('fluent-ffmpeg');
+const errors = require('../helpers/errors');
 
 router.param('messageid', async (req, res, next, messageid) => {
     req.message = await global.database.getMessageById(messageid);
@@ -39,7 +40,7 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGES"), quickcache.cacheF
             return res.status(400).json({
                 code: 400,
                 message: "Cannot get text messages from a voice channel.", //I mean we're cool with you doing that and everything but realistically, who is going to read these messages?
-            });
+            }); //whats the proper response here?
         }
 
         let limit = parseInt(req.query.limit) || 200;
@@ -66,10 +67,7 @@ router.get("/", channelPermissionsMiddleware("READ_MESSAGES"), quickcache.cacheF
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -90,7 +88,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 code: 400,
                 message: 'Cannot send an empty message.',
             });
-        }
+        } //this aswell
 
         if (req.body.content && !req.body.embeds) {
             const min = global.config.limits['messages'].min;
@@ -157,17 +155,11 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
         if (!req.channel.recipients) {
             if (!req.guild) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Unknown channel"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
             }
             
             if (!req.channel.guild_id) {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Unknown channel"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
             }
         }
 
@@ -180,10 +172,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             
             if (req.channel.type !== 1 && req.channel.type !== 3) {
                 //Not a DM channel or group channel
-                return res.status(404).json({
-                    code: 404,
-                    message: "Unknown Channel"
-                });
+                return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
             }
 
             if (req.channel.type == 1) {
@@ -194,10 +183,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 let recipient = await global.database.getAccountByUserId(recipientID);
 
                 if (!recipient) {
-                    return res.status(404).json({
-                        code: 404,
-                        message: "Unknown Channel"
-                    });
+                    return res.status(404).json(errors.response_404.UNKNOWN_USER);
                 }
 
                 let ourFriends = account.relationships;
@@ -225,22 +211,8 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                     theirRelationshipState = theirFriends.find(x => x.user.id == account.id);
                 }
 
-                if (ourRelationshipState?.type === 2) {
-                    //we blocked them
-                    
-                    return res.status(403).json({
-                        code: 403,
-                        message: "You've blocked this user."
-                    })
-                }
-
-                if (theirRelationshipState?.type === 2) {
-                    //they blocked us
-                    
-                    return res.status(403).json({
-                        code: 403,
-                        message: "You've been blocked by this user."
-                    })
+                if (ourRelationshipState?.type === 2 || theirRelationshipState?.type === 2) {
+                    return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
                 }
 
                 let guilds = await global.database.getUsersGuilds(recipient.id);
@@ -255,10 +227,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 }
 
                 if (dmsOff.length === guilds.length && !globalUtils.areWeFriends(account, recipient)) {
-                    return res.status(403).json({
-                        code: 403,
-                        message: "This user has direct messages turned off"
-                    });
+                    return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
                 }
 
                 let shareMutualGuilds = false;
@@ -271,10 +240,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 }
 
                 if (!shareMutualGuilds && !globalUtils.areWeFriends(account, recipient)) {
-                    return res.status(403).json({
-                        code: 403,
-                        message: "You don't share any mutual servers with this user."
-                    });
+                    return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
                 }
             }
         } else {
@@ -420,10 +386,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
     }  catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -433,26 +396,17 @@ router.delete("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
         const message = req.message;
 
         if (message == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         const channel = req.channel;
 
         if ((!channel.recipients && !channel.guild_id)) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         if (channel.recipients && message.author.id != guy.id) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         if (!await global.database.deleteMessage(req.params.messageid))
@@ -474,20 +428,14 @@ router.delete("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
 router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateLimitMiddleware(global.config.ratelimit_config.updateMessage.maxPerTimeFrame, global.config.ratelimit_config.updateMessage.timeFrame), Watchdog.middleware(global.config.ratelimit_config.updateMessage.maxPerTimeFrame, global.config.ratelimit_config.updateMessage.timeFrame, 0.5), async (req, res) => {
     try {
         if (req.body.content && req.body.content == "") {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
         
         const caller = req.account;
@@ -495,26 +443,17 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
         let message = req.message;
 
         if (message == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         const channel = req.channel;
 
         if (!channel.recipients && !channel.guild_id) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Channel"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         if (message.author.id != caller.id) {
-            return res.status(403).json({
-                code: 403,
-                message: "Missing Permissions"
-            });
+            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
 
         //TODO:
@@ -535,10 +474,7 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
         message = await global.database.getMessageById(req.params.messageid);
 
         if (message == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         if (channel.recipients)
@@ -551,10 +487,7 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -564,10 +497,7 @@ router.post("/:messageid/ack", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), ra
         const message = req.message;
 
         if (message == null) {
-            return res.status(404).json({
-                code: 404,
-                message: "Unknown Message"
-            });
+            return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
         }
 
         const channel = req.channel;
@@ -597,10 +527,7 @@ router.post("/:messageid/ack", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), ra
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-          code: 500,
-          message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

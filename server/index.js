@@ -21,6 +21,7 @@ JSON.parse = (text, reviver) => {
     });
 };
 
+const errors = require('./helpers/errors');
 const express = require('express');
 const gateway = require('./gateway');
 const cors = require('cors');
@@ -386,10 +387,7 @@ app.get('/icons/:serverid/:file', async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -418,10 +416,7 @@ app.get("/app-assets/:applicationid/store/:file", async(req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -450,10 +445,7 @@ app.get("/store-directory-assets/applications/:applicationId/:file", async(req, 
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -478,10 +470,7 @@ app.get('/channel-icons/:channelid/:file', async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -506,10 +495,7 @@ app.get('/app-icons/:applicationid/:file', async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -534,10 +520,7 @@ app.get('/splashes/:serverid/:file', async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -562,10 +545,7 @@ app.get('/banners/:serverid/:file', async (req, res) => {
     } catch (error) {
         logText(error, "error");
 
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -597,10 +577,7 @@ app.get('/avatars/:userid/:file', async (req, res) => {
     catch(error) {
         logText(error, "error");
     
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -626,10 +603,7 @@ app.get("/emojis/:file", async (req, res) => {
     catch(error) {
         logText(error, "error");
     
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 
@@ -660,10 +634,7 @@ app.get("/api/users/:userid/avatars/:file", async (req, res) => {
     catch(error) {
         logText(error, "error");
     
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

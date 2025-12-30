@@ -3,6 +3,7 @@ const { logText } = require('../helpers/logger');
 const router = express.Router({ mergeParams: true });
 const { rateLimitMiddleware } = require('../helpers/middlewares');
 const Watchdog = require('../helpers/watchdog');
+const errors = require('../helpers/errors');
 
 router.post("/", rateLimitMiddleware(global.config.ratelimit_config.reports.maxPerTimeFrame, global.config.ratelimit_config.reports.timeFrame), Watchdog.middleware(global.config.ratelimit_config.reports.maxPerTimeFrame, global.config.ratelimit_config.reports.timeFrame, 0.5), async (req, res) => {
     try {
@@ -68,10 +69,7 @@ router.post("/", rateLimitMiddleware(global.config.ratelimit_config.reports.maxP
     } catch (error) {
         logText(error, "error");
     
-        return res.status(500).json({
-            code: 500,
-            message: "Internal Server Error"
-        });
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 });
 

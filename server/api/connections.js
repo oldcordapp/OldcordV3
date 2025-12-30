@@ -3,6 +3,7 @@ const globalUtils = require('../helpers/globalutils');
 const router = express.Router({ mergeParams: true });
 const integrationConfig = globalUtils.config.integration_config;
 const Twitch = require('../helpers/integrations/twitch');
+const errors = require('../helpers/errors');
 
 let pendingCallback = [];
 
@@ -11,10 +12,7 @@ router.get("/:platform/authorize", async (req, res) => {
     let platform = req.params.platform;
 
     if (!token) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        })
+        return res.status(401).json(errors.response_401.UNAUTHORIZED)
     }
 
     let checkPlatform = integrationConfig.find(x => x.platform == platform);
@@ -43,28 +41,19 @@ router.get("/:platform/callback", async (req, res) => {
     let pending = pendingCallback.find(x => x.user_agent == req.headers['user-agent'] && x.release_date == req.client_build);
 
     if (!pending) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+        return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
     
     let token = pending.token;
 
     if (!token) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+        return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
     let account = await global.database.getAccountByToken(token);
 
     if (!account) {
-        return res.status(401).json({
-            code: 401,
-            message: "Unauthorized"
-        });
+        return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
     if (platform != "twitch") {
@@ -72,7 +61,7 @@ router.get("/:platform/callback", async (req, res) => {
             code: 400,
             message: "Unsupported platform"
         })
-    }
+    } //Whats the error here?
 
     if (!code) {
         return res.status(400).json({
