@@ -55,6 +55,7 @@ database.setupDatabase();
 
 global.dispatcher = dispatcher;
 global.gateway = gateway;
+global.slowmodeCache = new Map();
 global.udpServer = udpServer;
 global.rtcServer = rtcServer;
 global.using_media_relay = globalUtils.config && globalUtils.config.mr_server.enabled;

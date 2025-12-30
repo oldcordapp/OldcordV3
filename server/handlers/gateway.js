@@ -61,9 +61,7 @@ async function handleIdentify(socket, packet) {
         finalStatus = pastPresence.status;
     } //Only listening if the users settings status is the same as the identify payload - as thats what discord did
 
-    setImmediate(async () => {
-        await socket.session.updatePresence(finalStatus, null, false);
-    }); //wait for guild_create, etc to fire for bots so they dispatch their presence properly
+    await socket.session.updatePresence(finalStatus, null, false);
 }
 
 async function handleHeartbeat(socket, packet) {

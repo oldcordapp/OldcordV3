@@ -554,6 +554,8 @@ class session {
                         await this.dispatch("GUILD_CREATE", this.guildCache.find(x => x.id == guild.id));
                     }
                 }
+                
+                await this.updatePresence("online", null, false); //bots never seem to send this after coming online
             } //ok
         } catch (error) {
             logText(error, "error");

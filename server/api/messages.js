@@ -262,6 +262,26 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 //Not allowed
                 req.body.tts = false;
             }
+
+            if (req.channel.rate_limit_per_user > 0 && !global.permissions.hasChannelPermissionTo(req.channel, req.guild, author.id, "MANAGE_CHANNELS") && !global.permissions.hasChannelPermissionTo(req.channel, req.guild, author.id, "MANAGE_MESSAGES")) {
+                let key = `${author.id}-${req.channel.id}`;
+                let ratelimit = req.channel.rate_limit_per_user * 1000;
+                let currentTime = Date.now();
+                let lastMessageTimestamp = global.slowmodeCache.get(key) || 0;
+                let difference = currentTime - lastMessageTimestamp;
+
+                if (difference < ratelimit) {
+                    let waitTime = ratelimit - difference;
+
+                    return res.status(429).json({
+                        code: 20016,
+                        message: "This action cannot be performed due to slowmode rate limit",
+                        retry_after: waitTime   
+                    });
+                }
+
+                global.slowmodeCache.set(key, currentTime);
+            } //Slowmode implementation
         }
         
         let file_details = null;
