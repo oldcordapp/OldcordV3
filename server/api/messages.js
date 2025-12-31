@@ -94,10 +94,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
         }
 
         if (!req.body.embeds && !req.files && (!req.body.content || typeof req.body.content !== 'string' || req.body.content === "")) {
-            return res.status(400).json({
-                code: 400,
-                message: 'Cannot send an empty message.',
-            });
+            return res.status(400).json(errors.response_400.CANNOT_SEND_EMPTY_MESSAGE);
         } //this aswell
 
         if (req.body.content && !req.body.embeds) {
@@ -115,10 +112,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
         let embeds = [];  //So... discord removed the ability for users to create embeds in their messages way back in like 2020, killing the whole motive of self bots, but here at Oldcord, we don't care - just don't abuse our API.
 
         if (req.body.embeds && (!Array.isArray(req.body.embeds) || req.body.embeds.length === 0)) {
-            return res.status(400).json({
-                code: 400,
-                message: `Cannot send an empty message.`,
-            });
+            return res.status(400).json(errors.response_400.CANNOT_SEND_EMPTY_MESSAGE);
         }
 
         if (req.body.embeds && Array.isArray(req.body.embeds)) {
