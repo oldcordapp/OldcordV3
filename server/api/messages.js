@@ -89,6 +89,10 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             req.body = JSON.parse(originalJson);
         }
 
+        if (req.body.content && typeof req.body.content === "string") {
+            req.body.content = req.body.content.trim();
+        }
+
         if (!req.body.embeds && !req.files && (!req.body.content || typeof req.body.content !== 'string' || req.body.content === "")) {
             return res.status(400).json({
                 code: 400,
