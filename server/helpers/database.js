@@ -1788,12 +1788,26 @@ const database = {
             return false;
         }
     },
-    //this needs to delete the asset for the emoji
     deleteCustomEmoji: async (guild, emoji_id) => {
         try {
             let custom_emojis = guild.emojis;
 
             custom_emojis = custom_emojis.filter(x => x.id != emoji_id);
+
+            let emojiPath = `./www_dynamic/emojis`;
+
+            if (fs.existsSync(emojiPath)) {
+                let files = fs.readdirSync(emojiPath);
+                let emotes = files.filter(x => x.startsWith(`${emoji_id}.`));
+
+                emotes.forEach(emote => {
+                    try {
+                        fs.unlinkSync(path.join(emojiPath, emote));
+                    } catch (error) {
+                        logText(`Failed to unlink custom guild emote file ${file} (guild -> ${guild.id}): ${err.message}`, "error");
+                    }
+                })
+            }
 
             await database.runQuery(`UPDATE guilds SET custom_emojis = $1 WHERE id = $2`, [JSON.stringify(custom_emojis), guild.id]);
 
@@ -4939,6 +4953,18 @@ const database = {
                 }));
             }
 
+            await database.runQuery(`
+                UPDATE channels 
+                SET last_message_id = (
+                    SELECT message_id 
+                    FROM messages 
+                    WHERE channel_id = $1 
+                    ORDER BY message_id DESC 
+                    LIMIT 1
+                ) 
+                WHERE id = $1 AND last_message_id = $2
+            `, [message.channel_id, message_id]);
+
             return true;
         } catch (error) {
             logText(error, "error");
@@ -4948,6 +4974,21 @@ const database = {
     }, //rewrite asap
     deleteGuild: async (guild_id) => {
         try {
+            let assetTypes = ['banners', 'icons', 'splashes'];
+
+            await Promise.all(assetTypes.map(async (type) => {
+                let dirPath = path.join('./www_dynamic', type, guild_id.toString());
+
+                try {
+                    await fsPromises.rm(dirPath, { 
+                        recursive: true, 
+                        force: true }
+                    );
+                } catch (err) {
+                    logText(`Failed to delete www_dynamic/${type} for guild ${guild_id}: ${err.message}`, "error");
+                }
+            }));
+
             await database.runQuery(`DELETE FROM guilds WHERE id = $1`, [guild_id]);
 
             let channelRows = await database.runQuery(`SELECT id FROM channels WHERE guild_id = $1`, [guild_id]);
