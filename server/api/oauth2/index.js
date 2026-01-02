@@ -214,8 +214,29 @@ router.post("/authorize", async (req, res) => {
             await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
                 roles: [],
                 user: globalUtils.miniBotObject(application.bot),
-                guild_id: guild.id
+                guild_id: guild.id,
+                joined_at: new Date().toISOString(),
+                deaf: false,
+                mute: false,
+                nick: null
             });
+
+            let activeSessions = global.dispatcher.getAllActiveSessions();
+
+            for (let session of activeSessions) {
+                if (session.subscriptions && session.subscriptions[guild.id]) {
+                    //if (session.user.id === application.bot.id) continue;
+
+                    await lazyRequest.handleMemberAdd(session, guild, {
+                        user: globalUtils.miniBotObject(application.bot),
+                        roles: [],
+                        joined_at: new Date().toISOString(),
+                        deaf: false,
+                        mute: false,
+                        nick: null
+                    });
+                }
+            }
 
             await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
                 ...globalUtils.getUserPresence({

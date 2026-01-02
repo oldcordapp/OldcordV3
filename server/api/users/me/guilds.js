@@ -6,6 +6,7 @@ const router = express.Router();
 const { guildMiddleware, rateLimitMiddleware } = require('../../../helpers/middlewares');
 const Watchdog = require('../../../helpers/watchdog');
 const errors = require('../../../helpers/errors');
+const lazyRequest = require('../../../helpers/lazyRequest');
 
 router.param('guildid', async (req, _, next, guildid) => {
     req.guild = await global.database.getGuildById(guildid);
@@ -42,11 +43,20 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
                     id: req.params.guildid
                 });
 
+                let activeSessions = global.dispatcher.getAllActiveSessions();
+
+                for (let session of activeSessions) {
+                    if (session.subscriptions && session.subscriptions[req.guild.id]) {
+                        if (session.user.id === user.id) continue;
+
+                        await lazyRequest.handleMemberRemove(session, req.guild, user.id);
+                    }
+                }
+
                 await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
                     type: "leave",
-                    roles: [],
                     user: globalUtils.miniUserObject(user),
-                    guild_id: req.params.guildid
+                    guild_id: String(req.params.guildid)
                 })
 
                 return res.status(204).send();

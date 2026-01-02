@@ -4196,7 +4196,7 @@ const database = {
                     membersByGuild.get(guildId).push({
                         id: user.id,
                         nick: row.nick,
-                        deaf: row.defaf,
+                        deaf: row.deaf,
                         mute: row.mute,
                         roles: member_roles,
                         joined_at: row.joined_at,
@@ -4835,7 +4835,7 @@ const database = {
     },
     deleteChannelPermissionOverwrite: async (guild, channel_id, overwrite) => {
         try {
-            let current_overwrites = database.getChannelPermissionOverwrites(guild, channel_id);
+            let current_overwrites = await database.getChannelPermissionOverwrites(guild, channel_id);
 
             let findOverwrite = current_overwrites.findIndex(x => x.id == overwrite.id);
 
@@ -4857,7 +4857,7 @@ const database = {
 
             return false;
         }
-    },
+    }, //rewrite
     updateChannelPermissionOverwrites: async (guild, channel_id, overwrites) => {
         try {
             let current_overwrites = await database.getChannelPermissionOverwrites(guild, channel_id);
@@ -4885,7 +4885,7 @@ const database = {
 
             return false;
         }
-    },
+    }, //rewrite
     leaveGuild: async (user_id, guild_id) => {
         try {
             await database.runQuery(`DELETE FROM members WHERE guild_id = $1 AND user_id = $2`, [guild_id, user_id]);

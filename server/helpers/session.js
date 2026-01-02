@@ -1,4 +1,5 @@
 const globalUtils = require('./globalutils');
+const lazyRequest = require('./lazyRequest');
 const { logText } = require("./logger");
 const zlib = require('zlib');
 
@@ -36,7 +37,8 @@ class session {
         this.presences = [];
         this.read_states = [];
         this.relationships = [];
-        this.subscriptions = [];
+        this.subscriptions = {};
+        this.memberListCache = {};
         this.guildCache = [];
         this.apiVersion = apiVersion;
         this.capabilities = capabilities; // Either an integer (recent/third party) or a build date (specific build capabilities). We can use it to give builds/capability flag specific JSON object props.
@@ -47,13 +49,13 @@ class session {
         this.socket = null;
         this.timeout = setTimeout(this.terminate.bind(this), SESSION_TIMEOUT);
     }
-    async updatePresence(status, game_id = null, save_presence = true) {
+    async updatePresence(status, game_id = null, save_presence = true, bypass_check = false) {
         if (this.type !== 'gateway') {
             return;
         }
 
         try {
-            if (this.presence.status.toLowerCase() === status.toLowerCase() && this.presence.game_id === game_id) {
+            if (this.presence.status.toLowerCase() === status.toLowerCase() && this.presence.game_id === game_id && !bypass_check) {
                 return;
             }
 
@@ -127,40 +129,31 @@ class session {
         }
     }
     async dispatchPresenceUpdate(presenceOverride = null) {
-        if (this.type !== 'gateway') {
-            return;
-        }
+        if (this.type !== 'gateway') return;
 
         let presence = this.presence;
-
         if (presenceOverride != null) {
             presence.status = presenceOverride;
         }
 
         let current_guilds = await global.database.getUsersGuilds(this.user.id);
-
         this.guilds = current_guilds;
-
-        if (current_guilds.length == 0) {
-            presence.status = presence.status === "invisible" ? "offline" : presence.status;
-
-            return await this.dispatch("PRESENCE_UPDATE", presence);
-        }
 
         for (let i = 0; i < current_guilds.length; i++) {
             let guild = current_guilds[i];
-            let me = guild.members.find(x => x.id === this.user.id);
+            let broadcastStatus = presence.status === "invisible" ? "offline" : presence.status;
 
-            presence.status = presence.status === "invisible" ? "offline" : presence.status;
-
-            const guildSpecificPresence = {
-                ...presence,
+            let guildSpecificPresence = {
+                status: broadcastStatus,
+                game_id: presence.game_id || null,
+                activities: [],
                 guild_id: guild.id,
-                roles: me ? me.roles : []
+                user: globalUtils.miniUserObject(this.user),
+                roles: guild.members.find(x => x.id === this.user.id)?.roles || []
             };
 
             await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", guildSpecificPresence);
-            await global.dispatcher.dispatchEventInGuildToThoseSubscribedTo(guild, "PRESENCE_UPDATE", guildSpecificPresence);
+            await lazyRequest.syncMemberList(guild, this.user.id);
         }
     }
     async dispatchSelfUpdate() {

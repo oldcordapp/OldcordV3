@@ -41,151 +41,50 @@ const globalUtils = {
         return result;
     },
     getUserPresence: (member) => {
-        let uSessions = global.userSessions.get(member.user.id);
+        const userId = String(member.id || member.user?.id);
+        const uSessions = global.userSessions.get(userId);
+        const activeSessions = uSessions ? Array.from(uSessions).filter(s => !s.dead && s.presence) : [];
 
-        if (!uSessions || uSessions.size === 0) {
-            return {
-                status: "offline",
-                game_id: null,
-                activities: [],
-                user: globalUtils.miniUserObject(member.user)
-            }
-        }
+        if (activeSessions.length > 0) {
+            const statuses = activeSessions.map(s => s.presence.status);
 
-        let sessions = uSessions.filter(x => !x.dead);
+            let finalStatus = "offline";
 
-        if (sessions.length === 0) {
-            return {
-                status: "offline",
-                game_id: null,
-                activities: [],
-                user: globalUtils.miniUserObject(member.user)
-            }
-        }
-
-        return sessions[0].presence;
-    },
-    computeMemberList: (guild, channel, ranges) => {
-        function arrayPartition(array, callback) {
-            return array.reduce(([pass, fail], elem) => {
-                return callback(elem) ? [[...pass, elem], fail] : [pass, [...fail, elem]];
-            }, [[], []]);
-        }
-
-        let visibleMembers = guild.members.filter(m => {
-            return global.permissions.hasChannelPermissionTo(channel, guild, m.id, "READ_MESSAGES");
-        });
-        
-        function formatMemberItem(member, forcedStatus = null) {
-            let p = globalUtils.getUserPresence(member);
-
-            if (forcedStatus != null) {
-                p.status = forcedStatus;
+            if (statuses.includes("online")) {
+                finalStatus = "online";
+            } else if (statuses.includes("dnd")) {
+                finalStatus = "dnd";
+            } else if (statuses.includes("idle")) {
+                finalStatus = "idle";
             }
 
+            let primarySession = activeSessions.find(s => s.presence.activities?.length > 0) || activeSessions[0];
+
             return {
-                member: {
-                    ...member,
-                    presence: p
-                }
+                status: finalStatus,
+                game_id: primarySession.presence.game_id || null,
+                activities: primarySession.presence.activities || [],
+                user: globalUtils.miniUserObject(member.user || primarySession.user)
             };
         }
-
-        let hoistedRoles = (guild.roles || []).filter(r => r.hoist).sort((a, b) => b.position - a.position);
-
-        let ops = ranges.map(range => {
-            let [startIndex, endIndex] = range;
-
-            let sortedMembers = [...visibleMembers].sort((a, b) => {
-                let pA = globalUtils.getUserPresence(a);
-                let pB = globalUtils.getUserPresence(b);
-                
-                let statusA = (pA?.status && pA.status !== 'offline') ? 1 : 0;
-                let statusB = (pB?.status && pB.status !== 'offline') ? 1 : 0;
-
-                if (statusA !== statusB) {
-                    return statusB - statusA;
-                }
-
-                return a.user.username.localeCompare(b.user.username);
-            });
-
-            let pagedMembers = sortedMembers.slice(startIndex, endIndex + 1);
-            let items = [];
-            let groups = [];
-            let remainingMembers = [...pagedMembers];
-
-            hoistedRoles.forEach(role => {
-                let [roleMembers, others] = arrayPartition(remainingMembers, m => {
-                    let p = globalUtils.getUserPresence(m);
-                    let isOnline = p && p.status !== 'offline' && p.status !== 'invisible';
-
-                    return isOnline && m.roles.includes(role.id);
-                });
-
-                if (roleMembers.length > 0) {
-                    let group = { 
-                        id: role.id, 
-                        count: roleMembers.length 
-                    };
-
-                    groups.push(group);
-                    items.push({ 
-                        group 
-                    });
-
-                    roleMembers.forEach(m => items.push(formatMemberItem(m)));
-                }
-
-                remainingMembers = others;
-            });
-
-            let [onlineLeft, offlineFinal] = arrayPartition(remainingMembers, m => {
-                let p = globalUtils.getUserPresence(m);
-
-                return p && p.status !== 'offline' && p.status !== 'invisible';
-            });
-
-            if (onlineLeft.length > 0) {
-                let group = { 
-                    id: "online", 
-                    count: onlineLeft.length 
-                };
-
-                groups.push(group);
-                items.push({ 
-                    group 
-                });
-
-                onlineLeft.forEach(m => items.push(formatMemberItem(m)));
-            }
-
-            if (offlineFinal.length > 0) {
-                let group = { 
-                    id: "offline", 
-                    count: offlineFinal.length 
-                };
-
-                groups.push(group);
-                items.push({ 
-                    group 
-                });
-
-                offlineFinal.forEach(m => items.push(formatMemberItem(m, "offline")));
-            }
-
-            return { 
-                items, 
-                groups, 
-                range 
-            };
-        });
 
         return {
-            ops: ops.map(o => ({ op: "SYNC", range: o.range, items: o.items })),
-            groups: ops[0]?.groups || [],
-            count: visibleMembers.length
+            status: "offline",
+            game_id: null,
+            activities: [],
+            user: globalUtils.miniUserObject(member.user)
         };
+    },
+    getGuildPresences: (guild) => {
+        let presences = [];
+
+        for(var member of guild.members) {
+            let presence = globalUtils.getUserPresence(member);
+
+            presences.push(presence);
+        }
+
+        return presences;
     },
     generateMemorableInviteCode: () => {
         let code = "";

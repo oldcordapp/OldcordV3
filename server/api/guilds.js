@@ -9,6 +9,7 @@ const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
 const { instanceMiddleware, rateLimitMiddleware, guildMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
+const lazyRequest = require('../helpers/lazyRequest');
 
 const router = express.Router();
 
@@ -139,11 +140,20 @@ async function guildDeleteRequest(req, res) {
                 id: req.params.guildid
             });
 
+            let activeSessions = global.dispatcher.getAllActiveSessions();
+
+            for (let session of activeSessions) {
+                if (session.subscriptions && session.subscriptions[req.guild.id]) {
+                    if (session.user.id === user.id) continue;
+
+                    await lazyRequest.handleMemberRemove(session, req.guild, user.id);
+                }
+            }
+
             await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
                 type: "leave",
-                roles: [],
                 user: globalUtils.miniUserObject(user),
-                guild_id: req.params.guildid
+                guild_id: String(req.params.guildid)
             })
 
             return res.status(204).send();

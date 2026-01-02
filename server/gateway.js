@@ -3,6 +3,7 @@ const globalUtils = require('./helpers/globalutils');
 const WebSocket = require('ws').WebSocket;
 const zlib = require('zlib');
 const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
+const lazyRequest = require('./helpers/lazyRequest');
 
 let erlpack = null;
 
@@ -58,8 +59,7 @@ const gateway = {
                 socket.session.last_idle = 0;
             }
         }
-
-        // Sync
+        
         for (let session of allSessions) {
             if (session.id !== socket.session.id) {
                 session.presence.status = setStatusTo;

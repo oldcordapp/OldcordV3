@@ -7,6 +7,7 @@ const rateLimitMiddleware = require("../helpers/middlewares").rateLimitMiddlewar
 const { logText } = require('../helpers/logger');
 const recaptcha = require('../helpers/recaptcha');
 const errors = require('../helpers/errors');
+const lazyRequest = require('../helpers/lazyRequest');
 
 global.config = globalUtils.config;
 
@@ -153,8 +154,29 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                     await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
                         roles: [],
                         user: globalUtils.miniUserObject(account),
-                        guild_id: invite.guild.id
+                        guild_id: invite.guild.id,
+                        joined_at: new Date().toISOString(),
+                        deaf: false,
+                        mute: false,
+                        nick: null
                     });
+
+                    let activeSessions = global.dispatcher.getAllActiveSessions();
+
+                    for (let session of activeSessions) {
+                        if (session.subscriptions && session.subscriptions[guild.id]) {
+                            //if (session.user.id === account.id) continue;
+
+                            await lazyRequest.handleMemberAdd(session, guild, {
+                                user: globalUtils.miniUserObject(account),
+                                roles: [],
+                                joined_at: new Date().toISOString(),
+                                deaf: false,
+                                mute: false,
+                                nick: null
+                            });
+                        }
+                    }
 
                     await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
                         game_id: null,
@@ -189,8 +211,29 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                 await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
                     roles: [],
                     user: globalUtils.miniUserObject(account),
-                    guild_id: guildId
+                    guild_id: guildId,
+                    joined_at: new Date().toISOString(),
+                    deaf: false,
+                    mute: false,
+                    nick: null
                 });
+
+                let activeSessions = global.dispatcher.getAllActiveSessions();
+
+                for (let session of activeSessions) {
+                    if (session.subscriptions && session.subscriptions[guild.id]) {
+                        //if (session.user.id === account.id) continue;
+
+                        await lazyRequest.handleMemberAdd(session, guild, {
+                            user: globalUtils.miniUserObject(account),
+                            roles: [],
+                            joined_at: new Date().toISOString(),
+                            deaf: false,
+                            mute: false,
+                            nick: null
+                        });
+                    }
+                }
 
                 await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
                     game_id: null,

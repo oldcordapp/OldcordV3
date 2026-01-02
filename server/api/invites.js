@@ -5,6 +5,7 @@ const { instanceMiddleware, rateLimitMiddleware } = require('../helpers/middlewa
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
+const lazyRequest = require('../helpers/lazyRequest');
 const router = express.Router({ mergeParams: true });
 
 router.param('code', async (req, res, next, memberid) => {
@@ -117,8 +118,29 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
         await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
             roles: [],
             user: globalUtils.miniUserObject(sender),
-            guild_id: invite.guild.id
+            guild_id: invite.guild.id,
+            joined_at: new Date().toISOString(),
+            deaf: false,
+            mute: false,
+            nick: null
         });
+
+        let activeSessions = global.dispatcher.getAllActiveSessions();
+
+        for (let session of activeSessions) {
+            if (session.subscriptions && session.subscriptions[guild.id]) {
+                //if (session.user.id === sender.id) continue;
+
+                await lazyRequest.handleMemberAdd(session, guild, {
+                    roles: [],
+                    user: globalUtils.miniUserObject(sender),
+                    joined_at: new Date().toISOString(),
+                    deaf: false,
+                    mute: false,
+                    nick: null
+                });
+            }
+        }
 
         await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
             ...globalUtils.getUserPresence({

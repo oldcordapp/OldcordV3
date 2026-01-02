@@ -207,7 +207,7 @@ router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware
             });
         }
         
-        const role = await global.database.createRole(req.params.guildid, "new role", req.guild.roles.length + 1);
+        const role = await global.database.createRole(req.params.guildid, "new role", 1); //Make it appear at the bottom of the list
 
         if (role == null) {
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);

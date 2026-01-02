@@ -6,6 +6,7 @@ const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
+const lazyRequest = require('../helpers/lazyRequest');
 
 router.param('memberid', async (req, res, next, memberid) => {
     req.member = req.guild.members.find(x => x.id === memberid);
@@ -65,12 +66,21 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
                 id: req.params.guildid
             });
 
+            let activeSessions = global.dispatcher.getAllActiveSessions();
+
+            for (let session of activeSessions) {
+                if (session.subscriptions && session.subscriptions[req.guild.id]) {
+                    if (session.user.id === member.user.id) continue;
+
+                    await lazyRequest.handleMemberRemove(session, req.guild, member.user.id);
+                }
+            }
+
             await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
                 type: "ban",
                 moderator: globalUtils.miniUserObject(sender),
                 user: globalUtils.miniUserObject(member.user),
-                roles: [],
-                guild_id: req.params.guildid
+                guild_id: String(req.params.guildid)
             });
         }
 

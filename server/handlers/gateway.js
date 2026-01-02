@@ -1,4 +1,5 @@
 const globalUtils = require("../helpers/globalutils");
+const lazyRequest = require("../helpers/lazyRequest");
 const session = require("../helpers/session");
 
 const OPCODES = {
@@ -61,7 +62,7 @@ async function handleIdentify(socket, packet) {
         finalStatus = pastPresence.status;
     } //Only listening if the users settings status is the same as the identify payload - as thats what discord did
 
-    await socket.session.updatePresence(finalStatus, null, false);
+    await socket.session.updatePresence(finalStatus, null, false, true);
 }
 
 async function handleHeartbeat(socket, packet) {
@@ -229,59 +230,7 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
     //This new rewritten code was mainly inspired by spacebar if you couldn't tell since their OP 14 is more stable than ours at the moment.
     //TO-DO: add support for shit like INSERT and whatnot (hell)
 
-    if (!socket.session) {
-        return;
-    }
-
-    let { 
-        guild_id, 
-        typing,  //to-do - ASSUMPTION: typing field means the client wants to be subscribed to the ranges the currently-typing members are on.
-        activities, //to-do - ASSUMPTION: activities field means the client wants to be subscribed to the ranges the currently active members are on.
-        members: memberIds, 
-        channels 
-    } = packet.d;
-
-    if (!guild_id || !channels) {
-        return;
-    }
-
-    let guild = socket.session.guilds.find(x => x.id === guild_id);
-
-    if (!guild) {
-        return;
-    }
-
-    let channelId = Object.keys(channels)[0];
-    let channel = guild.channels.find(x => x.id === channelId);
-
-    if (!channel) {
-        return;
-    }
-
-    let ranges = channels[channelId];
-
-    if (!Array.isArray(ranges)) {
-        return;
-    }
-
-    socket.session.subscriptions[guild_id] = {
-        channel_id: channelId,
-        ranges: ranges
-    };
-
-    if (memberIds && Array.isArray(memberIds)) {
-        memberIds.forEach(id => {
-            let presence = guild.presences.find(p => p.user.id === id);
-
-            if (presence) {
-                socket.session.dispatch("PRESENCE_UPDATE", presence);
-            }
-        });
-    }
-
-    //{"op":14,"d":{"guild_id":"1452084502238138368","typing":true,"activities":true,"channels":{"1452084502242332675":[[0,99]]}}}
-
-    await global.dispatcher.dispatchMemberListUpdate(socket.session, guild, channelId, ranges);
+    await lazyRequest.fire(socket, packet);
 }
 
 async function handleResume(socket, packet) {

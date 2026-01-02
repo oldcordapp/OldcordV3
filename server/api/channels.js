@@ -11,12 +11,31 @@ const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
 
 router.param('channelid', async (req, res, next, channelid) => {
-    const guild = req.guild;
+    let guild = req.guild;
 
     if (!guild) {
-        //fallback for dm channels & group dms
+        //fallback for dm channels & group dms & legacy clients
 
         req.channel = await global.database.getChannelById(channelid); 
+
+        //req.guild = await global.database.getGuildById(channelid);
+
+        /*
+        if (req.guild === null) {
+            req.channel = await global.database.getChannelById(channelid); 
+        } else {
+            let found_channel = req.guild.channels.filter(y => y.type === 0 && y.id === channelid && global.permissions.hasChannelPermissionTo(y, req.guild, req.account.id, "READ_MESSAGES"));
+
+            if (found_channel) {
+                req.channel = found_channel;
+                return next();
+            }
+
+            let text_channels = req.guild.channels.filter(x => x.type === 0 && global.permissions.hasChannelPermissionTo(x, req.guild, req.account.id, "READ_MESSAGES"));
+
+            req.channel = text_channels.length > 0 ? text_channels[0] : null;
+        } //So this is a bug with older clients where it wants the first text channel using the guild id as the channel id
+         */
 
         return next();
     }
@@ -326,7 +345,6 @@ router.post("/:channelid/webhooks",  instanceMiddleware("VERIFIED_EMAIL_REQUIRED
 router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, guildPermissionsMiddleware("MANAGE_ROLES"), async (req, res) => {
     try {
         let id = req.params.id;
-        let channel_id = req.params.channelid;
         let type = req.body.type;
 
         if (!type) {
@@ -393,7 +411,7 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
 
         await global.database.updateChannelPermissionOverwrites(req.guild, channel.id, overwrites);
 
-        channel = req.guild.channels.find(x => x.id === channel_id);
+        channel = await global.database.getChannelById(channel.id); //do this better
 
         if (!req.channel_types_are_ints) {
             channel.type = channel.type == 2 ? "voice" : "text";
@@ -430,7 +448,7 @@ router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_
 
         await global.database.deleteChannelPermissionOverwrite(req.guild, channel_id, channel_overwrites[overwriteIndex]);
 
-        channel = req.guild.channels.find(x => x.id === channel_id);
+        channel = await global.database.getChannelById(channel.id); //do this better
 
         if (!channel?.guild_id) {
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);

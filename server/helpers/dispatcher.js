@@ -1,42 +1,42 @@
 const { logText } = require("./logger");
 const globalUtils = require('./globalutils');
-const murmur = require("murmurhash-js");
+const lazyRequest = require("./lazyRequest");
 
 const dispatcher = {
     dispatchEventTo: async (user_id, type, payload) => {
         let sessions = global.userSessions.get(user_id);
-        
+
         if (!sessions || sessions.size === 0) return false;
 
-        for(let z = 0; z < sessions.length; z++) {
+        for (let z = 0; z < sessions.length; z++) {
             sessions[z].dispatch(type, payload);
         }
     },
     dispatchLogoutTo: async (user_id) => {
         let sessions = global.userSessions.get(user_id);
-        
+
         if (!sessions || sessions.size === 0) return false;
 
-        for(let z = 0; z < sessions.length; z++) {
+        for (let z = 0; z < sessions.length; z++) {
             sessions[z].socket.close(4004, 'Authentication failed');
             sessions[z].onClose(4004);
         }
     },
     dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis: async (type, payload) => {
         global.userSessions.forEach((sessions, userId) => {
-            for(let z = 0; z < sessions.length; z++) {
+            for (let z = 0; z < sessions.length; z++) {
                 sessions[z].dispatch(type, payload);
             }
         })
     },
     dispatchGuildMemberUpdateToAllTheirGuilds: async (user_id, new_user) => {
         let sessions = global.userSessions.get(user_id);
-        
+
         if (!sessions || sessions.size === 0) return false;
 
-        for(let z = 0; z < sessions.length; z++) {
+        for (let z = 0; z < sessions.length; z++) {
             sessions[z].user = new_user;
-            
+
             sessions[z].dispatchSelfUpdate();
         }
     },
@@ -49,7 +49,7 @@ const dispatcher = {
 
         if (channel_id) {
             channel = guild.channels.find(x => x.id === channel_id);
-            
+
             if (!channel)
                 return false;
         }
@@ -58,7 +58,7 @@ const dispatcher = {
 
         if (members.length == 0) return false;
 
-        for(let i = 0; i < members.length; i++) {
+        for (let i = 0; i < members.length; i++) {
             let member = members[i];
 
             let uSessions = global.userSessions.get(member.id);
@@ -67,7 +67,7 @@ const dispatcher = {
 
             for (let z = 0; z < uSessions.length; z++) {
                 let uSession = uSessions[z];
-                
+
                 if (guild.owner_id != member.id && uSession && uSession.socket) { //Skip checks if owner
                     let guildPermCheck = global.permissions.hasGuildPermissionTo(guild, member.id, permission_check, uSession.socket.client_build);
 
@@ -92,98 +92,52 @@ const dispatcher = {
 
         return true;
     },
-    dispatchMemberListUpdate: async (session, guild, channelId, ranges) => {
-        if (!session || !guild || !channelId) {
-            return;
-        }
-
-        let channel = guild.channels.find(x => x.id === channelId);
-
-        function getListId(channel, everyoneRole) {
-            if (!channel) {
-                session.subscriptions[guild.id] = {};
-
-                return murmur.murmur3("", 0).toString();
-            }
-
-            let READ_MESSAGES = global.permissions.toObject().READ_MESSAGES;
-            let everyoneOverwrite = channel.permission_overwrites.find(ov => ov.id === everyoneRole.id);
-
-            let everyoneCanView = (everyoneRole.permissions & READ_MESSAGES);
-
-            if (everyoneOverwrite && (everyoneOverwrite.deny & READ_MESSAGES)) {
-                everyoneCanView = false;
-            }
-
-            let otherDenyRules = channel.permission_overwrites.some(ov => ov.id !== everyoneRole.id && (ov.deny & READ_MESSAGES));
-
-            if (everyoneCanView && !otherDenyRules) {
-                return "everyone";
-            }
-        
-            let perms = [];
-            channel.permission_overwrites.forEach((overwrite) => {
-                if (overwrite.allow & READ_MESSAGES) {
-                    perms.push(`allow:${overwrite.id}`);
-                } else if (overwrite.deny & READ_MESSAGES) {
-                    perms.push(`deny:${overwrite.id}`);
-                }
-            });
-
-            if (perms.length === 0) {
-                return murmur.murmur3("", 0).toString();
-            }
-
-            return murmur.murmur3(perms.sort().join(","), 0).toString();
-        }
-
-        let list_id = getListId(channel, guild.roles.find(x => x.id === guild.id));
-
-        let { 
-            ops, 
-            groups,
-            count
-        } = globalUtils.computeMemberList(guild, channel, ranges);
-
-        session.dispatch("GUILD_MEMBER_LIST_UPDATE", {
-            guild_id: guild.id,
-            id: list_id,
-            ops,
-            groups,
-            member_count: count,
-            online_count: guild.presences.filter(p => p.status !== 'offline').length
-        });
-    },
     //this system is so weird but hey it works - definitely due for a rewrite
-    dispatchEventInGuildToThoseSubscribedTo: async (guild, type, payload, ignorePayload = false) => {
+    dispatchEventInGuildToThoseSubscribedTo: async (guild, type, payload, ignorePayload = false, typeOverride = null) => {
         if (!guild?.id) return;
 
         let activeSessions = Array.from(global.userSessions.values()).flat();
         let updatePromises = activeSessions.map(async (session) => {
             let guildInSession = session.guilds?.find(g => g.id === guild.id);
-
-            if (!guildInSession) {
-                return;
-            }
+            if (!guildInSession) return;
 
             let socket = session.socket;
             let finalPayload = payload;
+            let finalType = typeOverride || type;
 
-            if (type === "PRESENCE_UPDATE") {
-                let member = guild.members.find(m => m.id === payload.user.id);
+            if (typeof payload === 'function') {
+                try {
+                    finalPayload = await payload.call(session);
+
+                    if (!finalPayload) return;
+
+                    if (finalPayload.ops) {
+                        finalType = "GUILD_MEMBER_LIST_UPDATE";
+                    }
+                } catch (err) {
+                    logText(`Error executing dynamic payload: ${err}`, "error");
+                    return;
+                }
+            }
+            else if (type === "PRESENCE_UPDATE" && payload && payload.user) {
+                finalPayload = { ...payload };
+
+                let member = guild.members.find(m => m.user.id === finalPayload.user.id);
 
                 if (member) {
-                    finalPayload.nick = member.nick; 
+                    finalPayload.nick = member.nick;
                     finalPayload.roles = member.roles;
                 }
 
-                let isLegacyClient = socket && socket.client_build_date.getFullYear() === 2015 || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() < 8) || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() === 8 && socket.client_build_date.getDate() < 26);
-                let current_status = payload.status.toLowerCase();
+                let isLegacy = socket && (socket.client_build_date.getFullYear() < 2016 || (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() < 8));
 
-                if (isLegacyClient) {
+                let current_status = finalPayload.status.toLowerCase();
+                
+                if (isLegacy) {
                     if (["offline", "invisible"].includes(current_status)) {
                         finalPayload.status = "offline";
-                    } else if (current_status === "dnd") {
+                    }
+                    else if (current_status === "dnd") {
                         finalPayload.status = "online";
                     }
                 }
@@ -192,26 +146,32 @@ const dispatcher = {
             let sub = session.subscriptions?.[guild.id];
 
             if (sub) {
-                await global.dispatcher.dispatchMemberListUpdate(session, guild, sub.channel_id, sub.ranges);
+                let channel = guild.channels.find(x => x.id === sub.channel_id);
+
+                if (channel) {
+                    await lazyRequest.handleMembersSync(session, channel, guild, sub);
+                }
             }
-            
+
             if (!ignorePayload) {
-                session.dispatch(type, finalPayload);
+                session.dispatch(finalType, finalPayload);
             }
         });
 
         await Promise.all(updatePromises);
-        
-        logText(`(Subscription event in ${guild.id}) -> ${type}`, 'dispatcher');
 
+        logText(`(Subscription event in ${guild.id}) -> ${type}`, 'dispatcher');
+        
         return true;
     },
-    dispatchEventInGuild: async (guild, type, payload) => {
+    getSessionsInGuild: (guild) => {
+        let sessions = [];
+
         if (!guild || !guild.members) {
-            return;
+            return [];
         }
-        
-        for(let i = 0; i < guild.members.length; i++) {
+
+        for (let i = 0; i < guild.members.length; i++) {
             let member = guild.members[i];
 
             if (!member) continue;
@@ -220,7 +180,39 @@ const dispatcher = {
 
             if (!uSessions || uSessions.length === 0) continue;
 
-            for(let z = 0; z < uSessions.length; z++) {
+            sessions.push(...uSessions);
+        }
+
+        return sessions;
+    },
+    getAllActiveSessions: () => {
+        let usessions = [];
+
+        global.userSessions.forEach((sessions, userId) => {
+            for (let z = 0; z < sessions.length; z++) {
+                if (sessions[z].dead || sessions[z].terminated) continue;
+
+                usessions.push(sessions[z]);
+            }
+        })
+
+        return usessions;
+    },
+    dispatchEventInGuild: async (guild, type, payload) => {
+        if (!guild || !guild.members) {
+            return;
+        }
+
+        for (let i = 0; i < guild.members.length; i++) {
+            let member = guild.members[i];
+
+            if (!member) continue;
+
+            let uSessions = global.userSessions.get(member.user.id);
+
+            if (!uSessions || uSessions.length === 0) continue;
+
+            for (let z = 0; z < uSessions.length; z++) {
                 let session = uSessions[z];
                 let socket = session.socket;
                 let finalPayload = { ...payload };
@@ -247,14 +239,14 @@ const dispatcher = {
     dispatchEventInPrivateChannel: async (channel, type, payload) => {
         if (channel === null || !channel.recipients) return false;
 
-        for(let i = 0; i < channel.recipients.length; i++) {
+        for (let i = 0; i < channel.recipients.length; i++) {
             let recipient = channel.recipients[i].id;
 
             let uSessions = global.userSessions.get(recipient);
 
             if (!uSessions || uSessions.length === 0) continue;
 
-            for(let z = 0; z < uSessions.length; z++) {
+            for (let z = 0; z < uSessions.length; z++) {
                 uSessions[z].dispatch(type, payload);
             }
         }
@@ -270,7 +262,7 @@ const dispatcher = {
 
         if (channel == null) return false;
 
-        for(let i = 0; i < guild.members.length; i++) {
+        for (let i = 0; i < guild.members.length; i++) {
             let member = guild.members[i];
 
             if (!member) continue;
@@ -283,7 +275,7 @@ const dispatcher = {
 
             if (!uSessions || uSessions.length === 0) continue;
 
-            for(let z = 0; z < uSessions.length; z++) {
+            for (let z = 0; z < uSessions.length; z++) {
                 uSessions[z].dispatch(type, payload);
             }
         }

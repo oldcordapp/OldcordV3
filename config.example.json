@@ -20,6 +20,7 @@
     "mfa_required_for_admin" : false,
     "tenor_api_key": "",
     "infinite_boosts" : true,
+    "sync_only" : true,
     "mr_server": {
         "enabled" : false,
         "port" : 4444,
