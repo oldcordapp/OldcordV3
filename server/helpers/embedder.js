@@ -31,7 +31,7 @@ const embedder = {
             let image_buffer;
             let image_data;
 
-            if (url.endsWith(".png") || url.endsWith(".jpg") || url.endsWith(".jpeg")) {
+            if (url.endsWith(".png") || url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".gif")) {
                 image_buffer = await content.arrayBuffer();
                 image_data = await Jimp.read(image_buffer);
 
@@ -49,6 +49,9 @@ const embedder = {
 
             let text = await content.text();
             let $ = cheerio.load(text);
+            let videoUrl = $('meta[property="og:video"]').attr('content') || $('meta[property="twitter:player:stream"]').attr('content');
+            let videoWidth = parseInt($('meta[property="og:video:width"]').attr('content') || $('meta[property="twitter:player:width"]').attr('content')) || 480;
+            let videoHeight = parseInt($('meta[property="og:video:height"]').attr('content') || $('meta[property="twitter:player:height"]').attr('content')) || 270;
             let description = $('meta[name="description"]').attr('content');
             let themeColor = $('meta[name="theme-color"]').attr('content');
             let ogTitle = $('meta[property="og:title"]').attr('content');
@@ -106,6 +109,14 @@ const embedder = {
                     width: image_data.bitmap.width ?? 400,
                     height: image_data.bitmap.height ?? 400
                 };
+            }
+
+            if (videoUrl) {
+                embedObj.video = {
+                    url: videoUrl,
+                    width: videoWidth,
+                    height: videoHeight
+                }
             }
 
             return should_embed ? embedObj : null;
@@ -255,21 +266,62 @@ const embedder = {
                 }
 
                 if (url.startsWith("https://tenor.com")) {
-                    embed.thumbnail = result.image != null ? {
-                        proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
-                        url: result.image.url,
-                        width: (result.image.width > 800 ? 800 : result.image.width),
-                        height: (result.image.height > 800 ? 800 : result.image.height)
-                    } : null
+                    embed.type = "gifv";
+                    embed.provider = {
+                        name: "Tenor",
+                        url: "https://tenor.com"
+                    };
+
+                    if (result.image) {
+                        embed.thumbnail = {
+                            proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
+                            url: result.image.url,
+                            width: result.image.width,
+                            height: result.image.height
+                        };
+
+                        if (result.video) {
+                            embed.video = {
+                                url: result.video.url,
+                                proxy_url: `/proxy/${encodeURIComponent(result.video.url)}`,
+                                width: result.video.width,
+                                height: result.video.height
+                            };
+                        }
+                    }
+
+                    delete embed.title;
+                    delete embed.description;
+                } else if (url.endsWith(".gif")) {
+                    embed = {
+                        type: "gifv",
+                        url: url,
+                        thumbnail: {
+                            proxy_url: `/proxy/${encodeURIComponent(url)}`,
+                            url: url,
+                            width: result.image?.width ?? 400,
+                            height: result.image?.height ?? 400
+                        },
+                        video: {
+                            url: url,
+                            proxy_url: `/proxy/${encodeURIComponent(url)}`,
+                            width: result.image?.width ?? 400,
+                            height: result.image?.height ?? 400
+                        }
+                    };
+
+                    delete embed.title;
+                    delete embed.description;
                 } else {
+                    embed.type = "rich";
                     embed.image = result.image != null ? {
                         proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
                         url: result.image.url,
                         width: (result.image.width > 800 ? 800 : result.image.width),
                         height: (result.image.height > 800 ? 800 : result.image.height)
-                    } : null
+                    } : null;
                 }
-            }
+            } //This could probably be done better
 
             ret.push(embed);
 
