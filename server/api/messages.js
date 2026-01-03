@@ -115,36 +115,66 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             return res.status(400).json(errors.response_400.CANNOT_SEND_EMPTY_MESSAGE);
         }
 
-        if (req.body.embeds && Array.isArray(req.body.embeds)) {
-            for(var embed of req.body.embeds) {
+        let MAX_EMBEDS = 10; //to-do make this configurable
+        let proxyUrl = (url) => {
+            return url ? `/proxy/${encodeURIComponent(url)}` : null;
+        }
+
+        if (Array.isArray(req.body.embeds)) {
+            embeds = req.body.embeds.slice(0, MAX_EMBEDS).map(embed => {
                 let embedObj = {
                     type: "rich",
                     color: embed.color ?? 7506394
                 };
 
-                if (embed.title) {
-                    embedObj.title = embed.title;
-                }
-
-                if (embed.description) {
-                    embedObj.description = embed.description;
-                }
+                if (embed.title) embedObj.title = embed.title;
+                if (embed.description) embedObj.description = embed.description;
+                if (embed.url) embedObj.url = embed.url;
+                if (embed.timestamp) embedObj.timestamp = embed.timestamp;
 
                 if (embed.author) {
+                    let icon = proxyUrl(embed.author.icon_url);
+
                     embedObj.author = {
-                        icon_url: embed.author.icon_url ? `/proxy/${encodeURIComponent(embed.author.icon_url)}` : null,
                         name: embed.author.name ?? null,
-                        proxy_icon_url: embed.author.icon_url ? `/proxy/${encodeURIComponent(embed.author.icon_url)}` : null,
-                        url: embed.author.url ?? null
-                    }
+                        url: embed.author.url ?? null,
+                        icon_url: icon,
+                        proxy_icon_url: icon
+                    };
                 }
 
-                if (embed.fields) {
-                    embedObj.fields = embed.fields;
+                if (embed.thumbnail?.url) {
+                    let thumb = proxyUrl(embed.thumbnail.url);
+
+                    embedObj.thumbnail = { url: thumb, proxy_url: thumb };
                 }
 
-                embeds.push(embedObj);
-            }
+                if (embed.image?.url) {
+                    let img = proxyUrl(embed.image.url);
+
+                    embedObj.image = { url: img, proxy_url: img };
+                }
+
+                if (embed.footer) {
+                    let footerIcon = proxyUrl(embed.footer.icon_url);
+
+                    embedObj.footer = {
+                        text: embed.footer.text ?? null,
+                        icon_url: footerIcon,
+                        proxy_icon_url: footerIcon
+                    };
+                }
+
+                if (Array.isArray(embed.fields) && embed.fields.length > 0) {
+                    embedObj.fields = embed.fields.map(f => ({
+                        name: f.name ?? "",
+                        value: f.value ?? "",
+                        inline: !!f.inline
+                    }));
+                }
+
+                return embedObj;
+            });
         }
 
         const mentions_data = globalUtils.parseMentions(req.body.content);
