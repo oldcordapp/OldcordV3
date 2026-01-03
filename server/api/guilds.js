@@ -88,7 +88,69 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
                 guild.channels[0].type = "text";
             }
 
+            let presence = guild.presences[0];
+            let isOnline = presence.status !== "offline";
+
+            let onlineCount = isOnline ? 1 : 0;
+            let offlineCount = isOnline ? 0 : 1;
+
+            let listItems = [];
+
+            listItems.push({ group: { id: "online", count: onlineCount } });
+
+            if (isOnline) {
+                listItems.push({
+                    member: {
+                        user: globalUtils.miniUserObject(guild.members[0].user),
+                        roles: [],
+                        presence: {
+                            user: globalUtils.miniUserObject(guild.members[0].user),
+                            status: presence.status,
+                            activities: [],
+                            game_id: null
+                        },
+                        joined_at: guild.joined_at,
+                        mute: false,
+                        deaf: false
+                    }
+                });
+            }
+
+            listItems.push({ group: { id: "offline", count: offlineCount } });
+
+            if (!isOnline) {
+                listItems.push({
+                    member: {
+                        user: globalUtils.miniUserObject(guild.members[0].user),
+                        roles: [],
+                        presence: {
+                            user: globalUtils.miniUserObject(guild.members[0].user),
+                            status: "offline",
+                            activities: [],
+                            game_id: null
+                        },
+                        joined_at: guild.joined_at,
+                        mute: false,
+                        deaf: false
+                    }
+                });
+            }
+
             await global.dispatcher.dispatchEventTo(creator.id, "GUILD_CREATE", guild);
+            await global.dispatcher.dispatchEventTo(creator.id, "GUILD_MEMBER_LIST_UPDATE", {
+                id: "everyone",
+                guild_id: guild.id,
+                member_count: 1,
+                groups: [
+                    { id: "online", count: onlineCount },
+                    { id: "offline", count: offlineCount }
+                ],
+                ops: [{
+                    op: "SYNC",
+                    range: [0, 99],
+                    items: listItems
+                }]
+            });
 
             return res.status(200).json(guild);
         }

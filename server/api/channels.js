@@ -70,7 +70,7 @@ router.param('recipientid', async (req, res, next, recipientid) => {
 });
 
 router.get("/:channelid", channelMiddleware, channelPermissionsMiddleware("READ_MESSAGES"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
-    return res.status(200).json(req.channel);
+    return res.status(200).json(globalUtils.personalizeChannelObject(req, req.channel, req.account)); //req.account is a dirty hack ok
 });
 
 router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), channelMiddleware, channelPermissionsMiddleware("SEND_MESSAGES"), rateLimitMiddleware(global.config.ratelimit_config.typing.maxPerTimeFrame, global.config.ratelimit_config.typing.timeFrame), Watchdog.middleware(global.config.ratelimit_config.typing.maxPerTimeFrame, global.config.ratelimit_config.typing.timeFrame, 0.4), async (req, res) => {

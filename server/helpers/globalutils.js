@@ -721,7 +721,7 @@ const globalUtils = {
 
         return msg;
     },
-    personalizeChannelObject: (req, channel) => {
+    personalizeChannelObject: (req, channel, user = null) => {
         if (!req)
             return channel;
         
@@ -732,10 +732,11 @@ const globalUtils = {
         Object.assign(clone, channel);
         
         if (channel.recipients)
-            clone.recipients = channel.recipients.filter(r => r.id != req.user.id);
+            clone.recipients = channel.recipients.filter(r => r.id != (req.user || user).id);
+        
+        clone.is_private = clone.recipients && clone.recipients.length > 0 ? true : false;
         
         if (!req.plural_recipients && clone.recipients) {
-            clone.is_private = channel.type > 0;
             clone.recipient = clone.recipients[0];
             delete clone.recipients;
         }

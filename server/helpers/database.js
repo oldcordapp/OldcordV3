@@ -2392,9 +2392,13 @@ const database = {
             return {
                 id: channel_id,
                 name: name,
-                guild_id: guild_id,
-                parent_id: parent_id,
-                type: type,
+                ...((parseInt(type) === 0 || parseInt(type) === 2 || parseInt(type) === 5 || parseInt(type) === 4) && {
+                    guild_id: guild_id,
+                }), //do this better
+                ...((parseInt(type) === 0 || parseInt(type) === 2 || parseInt(type) === 5) && {
+                    parent_id: parent_id,
+                }),
+                type: parseInt(type),
                 ...(parseInt(type) === 0 && {
                     topic: null,
                     rate_limit_per_user: 0,
@@ -3815,6 +3819,8 @@ const database = {
                     }
                 }
 
+                delete privChannel.guild_id;
+
                 return privChannel;
             }
 
@@ -3850,8 +3856,12 @@ const database = {
             return {
                 id: row.id,
                 name: row.name,
-                guild_id: row.guild_id,
-                parent_id: row.parent_id,
+                ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5 || parseInt(row.type) === 4) && {
+                    guild_id: row.guild_id,
+                }), 
+                ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5) && {
+                    parent_id: row.parent_id,
+                }),
                 type: parseInt(row.type),
                 ...(parseInt(row.type) === 0 && {
                     topic: row.topic,
@@ -4012,8 +4022,12 @@ const database = {
                     let channel_obj = {
                         id: row.id,
                         name: row.name,
-                        guild_id: row.guild_id,
-                        parent_id: row.parent_id,
+                        ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5 || parseInt(row.type) === 4) && {
+                            guild_id: row.guild_id,
+                        }), 
+                        ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5) && {
+                            parent_id: row.parent_id,
+                        }),
                         type: parseInt(row.type),
                         ...(parseInt(row.type) === 0 && {
                             topic: row.topic,
@@ -4264,8 +4278,12 @@ const database = {
                     let channel_obj = {
                         id: row.id,
                         name: row.name,
-                        guild_id: guildId,
-                        parent_id: row.parent_id,
+                        ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5 || parseInt(row.type) === 4) && {
+                            guild_id: guildId,
+                        }), 
+                       ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5) && {
+                            parent_id: row.parent_id,
+                        }),
                         type: parseInt(row.type),
                         ...(parseInt(row.type) === 0 && {
                             topic: row.topic,
@@ -5411,8 +5429,8 @@ const database = {
     createGuild: async (owner, icon, name, region, exclusions, client_date) => {
         try {
             const id = Snowflake.generate();
-            const deconstructed = Snowflake.deconstruct(id);
-            const date = deconstructed.date.toISOString();
+             const deconstructed = Snowflake.deconstruct(id);
+            const date = deconstructed.date.toISOString(); 
 
             if (icon != null) {
                 var extension = icon.split('/')[1].split(';')[0];
@@ -5439,144 +5457,120 @@ const database = {
                 }
             }
 
-            await database.runQuery(`INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [id, name, icon, region, owner.id, null, 300, date, JSON.stringify(exclusions)])
+            await database.runQuery('BEGIN');
+
+            await database.runQuery(
+                `INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, 
+                [id, name, icon, region, owner.id, null, 300, date, JSON.stringify(exclusions)]
+            );
+
+            let channelsResponse = [];
 
             if ((client_date.getFullYear() === 2017 && client_date.getMonth() >= 9) || client_date.getFullYear() >= 2018) {
-                //do categories
-                let text_channels_id = Snowflake.generate();
-                let voice_channels_id = Snowflake.generate();
-                let general_text_id = Snowflake.generate();
-                let general_vc_id = Snowflake.generate();
+                const tCatId = Snowflake.generate();
+                const vCatId = Snowflake.generate();
+                const genTextId = Snowflake.generate();
+                const genVoiceId = Snowflake.generate();
 
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [text_channels_id, 4, id, null, '0', null, 'Text Channels', 0]);
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_text_id, 0, id, text_channels_id, null, '0', null, 'general', 0]);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 4, $2, $3, 0)`, [tCatId, id, 'Text Channels']);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, name, position) VALUES ($1, 0, $2, $3, $4, 0)`, [genTextId, id, tCatId, 'general']);
 
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [voice_channels_id, 4, id, null, '0', null, 'Voice Channels', 1]);
-                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [general_vc_id, 2, id, voice_channels_id, null, '0', null, 'General', 0]);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 4, $2, $3, 1)`, [vCatId, id, 'Voice Channels']);
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, parent_id, name, position) VALUES ($1, 2, $2, $3, $4, 0)`, [genVoiceId, id, vCatId, 'General']);
 
-                await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]);
-                await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner.id, null, '[]', date, 0, 0]);
-                await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, null, 0]);
+                channelsResponse = [
+                    { id: tCatId, type: 4, name: 'Text Channels', position: 0, guild_id: id, permission_overwrites: [] },
+                    { id: genTextId, type: 0, name: 'general', position: 0, parent_id: tCatId, guild_id: id, topic: null, nsfw: false, last_message_id: '0', rate_limit_per_user: 0, permission_overwrites: [] },
+                    { id: vCatId, type: 4, name: 'Voice Channels', position: 1, guild_id: id, permission_overwrites: [] },
+                    { id: genVoiceId, type: 2, name: 'General', position: 0, parent_id: vCatId, guild_id: id, user_limit: 0, bitrate: 64000, permission_overwrites: [] }
+                ];
+            } else {
+                // Legacy 2017
+                let voiceId = Snowflake.generate();
 
-                return {
-                    afk_channel_id: null,
-                    afk_timeout: 300,
-                    channels: [{
-                        type: 4,
-                        position: 0,
-                        permission_overwrites: [],
-                        name: 'Text Channels',
-                        id: text_channels_id,
-                        guild_id: id,
-                    }, {
+                await database.runQuery(`INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 0, $2, $3, 0)`, [id, id, 'general']);
+
+                await database
+                .runQuery(
+                    `INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 2, $2, $3, 1)`, 
+                    [voiceId, id, 'General']
+                );
+
+                channelsResponse = [
+                    {
                         type: 0,
-                        topic: null,
-                        nsfw: false,
-                        position: 0,
-                        permission_overwrites: [],
                         name: 'general',
-                        last_message_id: '0',
-                        id: general_text_id,
-                        guild_id: id,
-                        parent_id: text_channels_id,
-                        rate_limit_per_user: 0
-                    }, {
-                        type: 4,
-                        position: 1,
-                        permission_overwrites: [],
-                        name: 'Voice Channels',
-                        id: text_channels_id,
-                        guild_id: id,
-                    }, {
-                        type: 2,
                         position: 0,
-                        permission_overwrites: [],
-                        name: 'General',
-                        id: general_vc_id,
-                        guild_id: id,
-                        parent_id: voice_channels_id,
-                        user_limit: 0,
-                        bitrate: 64000,
-                    }],
-                    member_count: 1,
-                    members: [{
-                        deaf: false,
-                        mute: false,
-                        nick: null,
-                        id: owner.id,
-                        joined_at: date,
-                        roles: [],
-                        user: globalUtils.miniUserObject(owner)
-                    }],
-                    presences: [globalUtils.getUserPresence({
-                        user: globalUtils.miniUserObject(owner)
-                    })], //to-do make it return the actual owner status here
-                    features: [],
-                    icon: icon,
-                    splash: null,
-                    banner: null,
-                    id: id,
-                    name: name,
-                    owner_id: owner.id,
-                    joined_at: date,
-                    region: region,
-                    voice_states: [],
-                    roles: [{
                         id: id,
-                        name: "@everyone",
-                        permissions: 104193089,
-                        position: 0
-                    }]
-                }
+                        guild_id: id,
+                        permission_overwrites: [],
+                        topic: null,
+                        last_message_id: '0'
+                    },
+                    {
+                        type: 2,
+                        name: 'General',
+                        position: 1,
+                        id: voiceId,
+                        guild_id: id,
+                        permission_overwrites: [],
+                        bitrate: 64000,
+                        user_limit: 0
+                    }
+                ];
             }
 
-            await database.runQuery(`INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, [id, 0, id, null, '0', null, 'general', 0]);
-            await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`, [id, id, '@everyone', 104193089, 0]);
-            await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id, owner.id, null, '[]', date, 0, 0]);
-            await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, $2, $3)`, [id, null, 0]);
+            await database.runQuery(`INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $1, '@everyone', 104193089, 0)`, [id]);
+            await database.runQuery(`INSERT INTO members (guild_id, user_id, nick, roles, joined_at, deaf, mute) VALUES ($1, $2, null, '[]', $3, FALSE, FALSE)`, [id, owner.id, date]);
+            await database.runQuery(`INSERT INTO widgets (guild_id, channel_id, enabled) VALUES ($1, null, FALSE)`, [id]);
+            await database.runQuery('COMMIT');
 
             return {
-                afk_channel_id: null,
-                afk_timeout: 300,
-                channels: [{
-                    type: 0,
-                    topic: null,
-                    nsfw: false,
-                    position: 0,
-                    permission_overwrites: [],
-                    name: 'general',
-                    last_message_id: '0',
-                    id: id,
-                    guild_id: id,
-                    rate_limit_per_user: 0
-                }],
-                members: [{
-                    deaf: false,
-                    mute: false,
-                    nick: null,
-                    id: owner.id,
-                    joined_at: date,
-                    roles: [],
-                    user: globalUtils.miniUserObject(owner)
-                }],
-                presences: [globalUtils.getUserPresence({
-                    user: globalUtils.miniUserObject(owner)
-                })],
-                icon: icon,
-                splash: null,
                 id: id,
                 name: name,
-                owner_id: owner.id,
+                icon: icon,
                 region: region,
-                voice_states: [],
+                owner_id: owner.id,
+                joined_at: date,
+                afk_channel_id: null,
+                afk_timeout: 300,
+                verification_level: 0,
+                default_message_notifications: 0,
+                explicit_content_filter: 0,
                 roles: [{
                     id: id,
                     name: "@everyone",
                     permissions: 104193089,
-                    position: 0
-                }]
-            }
-
+                    position: 0,
+                    color: 0,
+                    hoist: false,
+                    managed: false,
+                    mentionable: false
+                }],
+                emojis: [],
+                features: [],
+                application_id: null,
+                widget_enabled: false,
+                widget_channel_id: null,
+                system_channel_id: null,
+                channels: channelsResponse,
+                members: [{
+                    user: globalUtils.miniUserObject(owner),
+                    nick: null,
+                    roles: [],
+                    joined_at: date,
+                    deaf: false,
+                    mute: false
+                }],
+                presences: [globalUtils.getUserPresence({
+                    user: globalUtils.miniUserObject(owner)
+                })],
+                member_count: 1,
+                voice_states: [],
+                large: false,
+                unavailable: false
+            };
         } catch (error) {
             logText(error, "error");
 

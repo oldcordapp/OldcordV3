@@ -215,7 +215,7 @@ const dispatcher = {
             for (let z = 0; z < uSessions.length; z++) {
                 let session = uSessions[z];
                 let socket = session.socket;
-                let finalPayload = { ...payload };
+                let finalPayload = (typeof payload === 'function') ? payload : { ...payload };
                 let isLegacyClient = socket && socket.client_build_date.getFullYear() === 2015 || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() < 8) || socket && (socket.client_build_date.getFullYear() === 2016 && socket.client_build_date.getMonth() === 8 && socket.client_build_date.getDate() < 26);
 
                 if (type == "PRESENCE_UPDATE" && isLegacyClient) {
