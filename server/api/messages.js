@@ -146,13 +146,19 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                 if (embed.thumbnail?.url) {
                     let thumb = proxyUrl(embed.thumbnail.url);
 
-                    embedObj.thumbnail = { url: thumb, proxy_url: thumb };
+                    let raw_width = embed.thumbnail.width ?? 400;
+                    let raw_height = embed.thumbnail.height ?? 400;
+
+                    embedObj.thumbnail = { url: thumb, proxy_url: thumb, width: Math.min(Math.max(raw_width, 400), 800), height: Math.min(Math.max(raw_height, 400), 800) };
                 }
 
                 if (embed.image?.url) {
                     let img = proxyUrl(embed.image.url);
 
-                    embedObj.image = { url: img, proxy_url: img };
+                    let raw_width = embed.image.width ?? 400;
+                    let raw_height = embed.image.height ?? 400;
+
+                    embedObj.image = { url: img, proxy_url: img, width: Math.min(Math.max(raw_width, 400), 800), height: Math.min(Math.max(raw_height, 400), 800) };
                 }
 
                 if (embed.footer) {
