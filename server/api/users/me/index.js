@@ -564,7 +564,7 @@ router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_conf
        return res.status(400).json(errors.response_400.TWOFA_ALREADY_ENABLED)
     }
 
-    let valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
+    let valid = await global.database.validateTotpCode(req.account.id, code, secret); //I KNOW I KNOW
 
     if (!valid) {
       return res.status(400).json({

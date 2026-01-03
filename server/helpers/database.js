@@ -1981,16 +1981,16 @@ const database = {
             return [];
         }
     },
-    validateTotpCode: async (user_id, code) => {
+    validateTotpCode: async (user_id, code, overriden_secret = null) => {
         try {
             let mfa_status = await database.getUserMfa(user_id);
 
-            if (!mfa_status.mfa_enabled || !mfa_status.mfa_secret) {
+            if (!mfa_status.mfa_secret && !overriden_secret) {
                 return false;
             }
 
             let valid = speakeasy.totp.verify({
-                secret: mfa_status.mfa_secret,
+                secret: mfa_status.mfa_secret || overriden_secret,
                 encoding: 'base32',
                 token: code
             });

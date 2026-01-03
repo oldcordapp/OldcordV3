@@ -375,18 +375,26 @@ router.post("/mfa/totp", rateLimitMiddleware(global.config.ratelimit_config.regi
             });
         }
 
+        let token = await global.database.getLoginTokenByMfaTicket(ticket);
+
+        if (!token) {
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+        } //???
+
+        let account = await global.database.getAccountByToken(token);
+
+        if (!account) {
+            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+        } // ihate this so fucking much
+
+        let valid = await global.database.validateTotpCode(account.id, code);
+
         if (!valid) {
             return res.status(400).json({
                 code: 400,
                 message: "Invalid TOTP code"
             }); //to-do find the actual error msgs
         }
-
-        let token = await global.database.getLoginTokenByMfaTicket(ticket);
-
-        if (!token) {
-            return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-        } //???
 
         await global.database.invalidateMfaTicket(ticket);
 
