@@ -137,6 +137,7 @@ class session {
         }
 
         let current_guilds = await global.database.getUsersGuilds(this.user.id);
+
         this.guilds = current_guilds;
 
         for (let i = 0; i < current_guilds.length; i++) {
@@ -323,6 +324,14 @@ class session {
                         this.unavailable_guilds.push(guild.id);
 
                         continue;
+                    }
+
+                    if (guild.webhooks && Array.isArray(guild.webhooks)) {
+                        guild.webhooks = guild.webhooks.map(webhook => {
+                            let { token, ...sanitizedWebhook } = webhook;
+
+                            return sanitizedWebhook;
+                        });
                     }
 
                     if (guild.region != "everything" && !globalUtils.canUseServer(year, guild.region)) {
