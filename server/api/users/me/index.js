@@ -575,25 +575,21 @@ router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_conf
 
     await global.database.updateUserMfa(req.account.id, 1, secret);
 
-    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", {
-      avatar: req.account.avatar,
-      discriminator: req.account.discriminator,
-      email: req.account.email,
-      flags: req.account.flags,
-      id: req.account.id,
-      token: req.account.token,
-      username: req.account.username,
-      verified: req.account.verified,
-      mfa_enabled: true,
-      claimed: true
-    });
+    let returnedObj = globalUtils.sanitizeObject(req.account,
+      ['settings', 'token', 'password', 'disabled_until', 'disabled_reason', 'relationships', 'created_at']
+    );
 
-    await global.dispatcher.dispatchLogoutTo(req.account.id);
+    returnedObj.mfa_enabled = true;
+
+    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", returnedObj);
 
     return res.status(200).json({
-      code: 200,
-      message: "MFA Enabled"
-    }) // and this??
+      token: req.headers['authorization'],
+      backup_codes: [{
+        code: "not-working-rn",
+        consumed: false
+      }]
+    }) 
   } catch (error) {
     logText(error, "error");
 
@@ -629,25 +625,15 @@ router.post("/mfa/totp/disable", rateLimitMiddleware(global.config.ratelimit_con
 
     await global.database.updateUserMfa(req.account.id, 0, null);
 
-    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", {
-      avatar: req.account.avatar,
-      discriminator: req.account.discriminator,
-      email: req.account.email,
-      flags: req.account.flags,
-      id: req.account.id,
-      token: req.account.token,
-      username: req.account.username,
-      verified: req.account.verified,
-      mfa_enabled: false,
-      claimed: true
-    });
+    let returnedObj = globalUtils.sanitizeObject(req.account,
+      ['settings', 'token', 'password', 'disabled_until', 'disabled_reason', 'relationships', 'created_at']
+    );
 
-    await global.dispatcher.dispatchLogoutTo(req.account.id);
+    returnedObj.mfa_enabled = false;
 
-    return res.status(200).json({
-      code: 200,
-      message: "MFA Disabled"
-    }) //figure out this proper response?
+    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", returnedObj);
+
+    return res.status(200).json(returnedObj);
   } catch (error) {
     logText(error, "error");
 

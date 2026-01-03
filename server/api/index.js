@@ -11,6 +11,7 @@ const invites = require('./invites');
 const channels = require('./channels');
 const connections = require('./connections');
 const admin = require('./admin');
+const gifs = require('./gifs');
 const webhooks = require('./webhooks');
 const store = require('./store');
 const oauth2 = require('./oauth2/index');
@@ -81,7 +82,6 @@ app.get("/gateway", (req, res) => {
     });
 });
 
-
 app.get("/gateway/bot", (req, res) => {
     return res.status(200).json({
         url: globalUtils.generateGatewayURL(req),
@@ -94,7 +94,6 @@ app.get("/gateway/bot", (req, res) => {
         }
     });
 });
-
 
 app.get("/voice/ice", (req, res) => {
     return res.status(200).json({
@@ -116,6 +115,7 @@ app.use("/users", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), users);
 app.use("/voice", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), voice);
 app.use("/guilds", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), guilds);
 app.use("/channels", channels);
+app.use("/gifs", gifs);
 app.use("/entitlements", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), entitlements);
 app.use("/activities", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), activities);
 app.use(["/invite", "/invites"], instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), invites);
