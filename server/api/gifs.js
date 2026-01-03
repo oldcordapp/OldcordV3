@@ -15,7 +15,7 @@ router.get("/trending", quickcache.cacheFor(60 * 5, true), async (req, res) => {
 
         let catRes = await fetch(`https://tenor.googleapis.com/v2/categories?key=${global.config.tenor_api_key}&type=featured`);
         let catData = await catRes.json();
-        
+
         let trendRes = await fetch(`https://tenor.googleapis.com/v2/featured?key=${global.config.tenor_api_key}&limit=10&media_filter=tinygif`);
         let trendData = await trendRes.json();
 
@@ -46,7 +46,7 @@ router.get("/trending", quickcache.cacheFor(60 * 5, true), async (req, res) => {
     }
 });
 
-router.get("/trending-gifs", async (req, res) => {
+router.get("/trending-gifs", quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         if (!global.config.tenor_api_key) {
             return res.status(200).json([]);
@@ -77,7 +77,7 @@ router.get("/trending-gifs", async (req, res) => {
     }
 });
 
-router.get("/search", async (req, res) => {
+router.get("/search", quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
         if (!global.config.tenor_api_key) {
             return res.status(200).json([]);
