@@ -1,4 +1,5 @@
 const globalUtils = require('./globalutils');
+const Intents = require('./intents');
 const lazyRequest = require('./lazyRequest');
 const { logText } = require("./logger");
 const zlib = require('zlib');
@@ -90,12 +91,48 @@ class session {
         }
     }
     async dispatch(type, payload) {
-        if (this.type !== 'gateway') {
+        if (this.type !== 'gateway' || !this.ready || this.dead) {
             return;
         }
 
-        if (!this.ready) return;
-        if (this.dead) return;
+        //Evaluate dynamic payload
+        if ((typeof payload) == "function") {
+            payload = await payload.call(this);
+        }
+
+        let userBitfield = global.gatewayIntentMap.get(this.user.id);
+        let requiredBit;
+        let DEFAULT_BOT_INTENTS = global.config.default_bot_intents ?? 46847;
+        let DEFAULT_USER_INTENTS = global.config.default_user_intents ?? 67108863;
+
+        if (global.config.intents_required && userBitfield === undefined) {
+            return;
+        }
+
+        let activeBitfield = (userBitfield !== undefined) ? userBitfield : (this.user.bot ? DEFAULT_BOT_INTENTS.value : DEFAULT_USER_INTENTS.value); //This should cover everything we care about if a user & no intents
+
+        if (Intents.ComplexEvents[type]) {
+            requiredBit = Intents.ComplexEvents[type](payload);
+        } else {
+            requiredBit = Intents.EventToBit[type];
+        }
+
+        if (requiredBit !== undefined) {
+            if ((activeBitfield & requiredBit) === 0) {
+                return;
+            }
+        } //gateway intents of course
+
+        let hasContentIntent = (activeBitfield & (1 << 15)) !== 0;
+
+        if (!hasContentIntent && (type === 'MESSAGE_CREATE' || type === 'MESSAGE_UPDATE')) {
+            payload = { 
+                ...payload, 
+                content: "", 
+                embeds: [], 
+                attachments: []
+            };
+        } //scrub message contents from update/edit if they arent subscribed
 
         let sequence = ++this.seq;
 
@@ -112,11 +149,6 @@ class session {
                 payload: payload,
                 seq: sequence
             })
-        }
-
-        //Evaluate dynamic payload
-        if ((typeof payload) == "function") {
-            payload = await payload.call(this);
         }
 
         if (payload) {

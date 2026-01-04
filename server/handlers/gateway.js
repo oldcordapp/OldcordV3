@@ -30,6 +30,14 @@ async function handleIdentify(socket, packet) {
         return socket.close(4004, "Authentication failed");
     }
 
+    let providedIntents = packet.d.intents;
+
+    global.gatewayIntentMap.delete(user.id);
+
+    if (providedIntents !== undefined && providedIntents !== null) {
+        global.gatewayIntentMap.set(user.id, Number(providedIntents));
+    }
+
     let savedStatus = "online";
     
     if (user.bot) {

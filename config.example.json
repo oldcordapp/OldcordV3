@@ -14,6 +14,15 @@
     "gateway_erlpack": false,
     "cache404s": false,
     "serve_selector": true,
+    "intents_required" : false,
+    "default_bot_intents" : {
+        "value" : 46847,
+        "equation" : "0xFFFF & ~(1 << 8) & ~(1 << 11) & ~(1 << 14)"
+    },
+    "default_user_intents" : {
+        "value" : 67108863,
+        "equation" : "(1 << 26) - 1"
+    },
     "require_release_date_cookie": true,
     "cache_authenticated_get_requests" : true,
     "auto_embed_urls" : false,
