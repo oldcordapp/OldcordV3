@@ -102,8 +102,12 @@ class session {
 
         let userBitfield = global.gatewayIntentMap.get(this.user.id);
         let requiredBit;
-        let DEFAULT_BOT_INTENTS = global.config.default_bot_intents ?? 46847;
-        let DEFAULT_USER_INTENTS = global.config.default_user_intents ?? 67108863;
+        let DEFAULT_BOT_INTENTS = global.config.default_bot_intents ?? {
+            value: 46847
+        };
+        let DEFAULT_USER_INTENTS = global.config.default_user_intents ?? {
+            value: 67108863
+        };
 
         if (global.config.intents_required && userBitfield === undefined) {
             return;
