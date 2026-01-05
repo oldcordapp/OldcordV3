@@ -86,6 +86,23 @@ const globalUtils = {
 
         return presences;
     },
+    getGuildOnlineUserIds: (guild_id) => {
+        let user_ids = new Set();
+
+        for (let [userId, sessions] of global.userSessions) {
+            let isOnlineAndVisible = sessions.some(s => {
+                return !s.dead && s.presence?.status !== 'offline' && s.presence?.status !== 'invisible';
+            });
+
+            if (isOnlineAndVisible) {
+                if (sessions[0].guilds?.some(g => g.id === guild_id)) {
+                    user_ids.add(userId);
+                }
+            }
+        }
+
+        return Array.from(user_ids);
+    },
     generateMemorableInviteCode: () => {
         let code = "";
 
@@ -523,7 +540,8 @@ const globalUtils = {
                     }
                     if (text.startsWith("here", i)) {
                         //Mention @here
-                        result.mention_here = true;
+                        result.mention_everyone = true;
+                        result.mention_here = true; //keep this for internal tracking i guess? but @here, and @everyone are bundled under the same logic internally
                         i += "here".length;
                         break;
                     }

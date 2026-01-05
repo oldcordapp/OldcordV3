@@ -189,6 +189,10 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
             mentions_data.mention_everyone = false;
             mentions_data.mention_here = false;
         }
+
+        if (mentions_data.mention_here) {
+            mentions_data.mention_everyone = true;
+        } //just make sure both are set to true
         
         //Coerce tts field to boolean
         req.body.tts = req.body.tts === true || req.body.tts === "true";
@@ -419,6 +423,10 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
 
         if (!message)
             throw "Message creation failed";
+
+        if (mentions_data.mention_everyone || mentions_data.mention_here) {
+            global.database.incrementMentions(req.channel.id, req.guild.id, mentions_data.mention_here ? 'here' : 'everyone').catch(err => logText(err, "error"));
+        }
 
         //Dispatch to correct recipients(s) in DM, group, or guild
         if (req.channel.recipients) {

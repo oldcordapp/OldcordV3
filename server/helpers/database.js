@@ -1397,6 +1397,31 @@ const database = {
             return null;
         }
     },
+    incrementMentions: async (channel_id, guild_id, mentionType) => {
+        try {
+            let userIds = [];
+
+            if (mentionType === 'everyone') {
+                let members = await database.runQuery(`SELECT user_id FROM members WHERE guild_id = $1`, [guild_id]);
+
+                userIds = members.map(m => m.user_id);
+            } else if (mentionType === 'here') {
+                userIds = globalUtils.getGuildOnlineUserIds(guild_id)
+            }
+
+            if (userIds.length === 0) return false;
+
+            for (let uid of userIds) {
+                await database.runQuery(`INSERT INTO acknowledgements (user_id, channel_id, mention_count, message_id) VALUES ($1, $2, 1, '0') ON CONFLICT (user_id, channel_id) DO UPDATE SET mention_count = acknowledgements.mention_count + 1`, [uid, channel_id]);
+            }
+
+            return true;
+        } catch (error) {
+            logText(error, "error");
+
+            return false;
+        }
+    },
     getStaffDetails: async (user_id) => {
         try {
             const rows = await database.runQuery(`
