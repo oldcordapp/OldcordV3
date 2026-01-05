@@ -162,7 +162,9 @@ router.patch("/@me/nick", guildPermissionsMiddleware("CHANGE_NICKNAME"), rateLim
             return res.status(newMember.code).json(newMember);
         }
 
-        return res.status(204).send();
+        return res.status(200).json({
+            nick: req.body.nick
+        })
     } catch (error) {
         logText(error, "error");
  
