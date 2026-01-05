@@ -2,23 +2,28 @@
 const originalJsonParse = JSON.parse;
 
 JSON.parse = (text, reviver) => {
-    return originalJsonParse(text, (key, value, context) => {
-        if (typeof value === 'number' && context && context.source) {
-            const rawValue = context.source;
+    try {
+        return originalJsonParse(text, (key, value, context) => {
+            if (typeof value === 'number' && context && context.source) {
+                const rawValue = context.source;
 
-            if (value > Number.MAX_SAFE_INTEGER || 
-                value < Number.MIN_SAFE_INTEGER || 
-                rawValue.includes(".")) {
-                value = rawValue;
+                if (value > Number.MAX_SAFE_INTEGER ||
+                    value < Number.MIN_SAFE_INTEGER ||
+                    rawValue.includes(".")) {
+                    value = rawValue;
+                }
             }
-        }
 
-        if (reviver) {
-            return reviver(key, value, context);
-        }
+            if (reviver) {
+                return reviver(key, value, context);
+            }
 
-        return value;
-    });
+            return value;
+        });
+    }
+    catch (e) {
+        return originalJsonParse(text, reviver);
+    }
 };
 
 const errors = require('./helpers/errors');
@@ -49,7 +54,6 @@ const mrServer = require('./mrserver');
 const { Readable } = require("stream");
 
 app.set('trust proxy', 1);
-
 
 database.setupDatabase();
 
@@ -211,6 +215,21 @@ app.use(express.text({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(cookieParser());
+
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        logText(`Body Parsing Error: ${err.message}`, "error");
+
+        return res.status(400).json({
+            code: 400,
+            message: "Malformed JSON body"
+        });
+    } //find the error for this
+
+    logText(`Unhandled Error: ${err.stack}`, "error");
+    
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+});
 
 app.use(cors());
 
