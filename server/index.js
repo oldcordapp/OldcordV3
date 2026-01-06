@@ -4,21 +4,17 @@ const originalJsonParse = JSON.parse;
 JSON.parse = (text, reviver) => {
     try {
         return originalJsonParse(text, (key, value, context) => {
-            if (typeof value === 'number' && context && context.source) {
+            let result = value;
+
+            if (typeof value === 'number' && context?.source) {
                 const rawValue = context.source;
 
-                if (value > Number.MAX_SAFE_INTEGER ||
-                    value < Number.MIN_SAFE_INTEGER ||
-                    rawValue.includes(".")) {
-                    value = rawValue;
+                if (!Number.isSafeInteger(value) || rawValue.includes('.') || rawValue.toLowerCase().includes('e')) {
+                    result = rawValue;
                 }
             }
 
-            if (reviver) {
-                return reviver(key, value, context);
-            }
-
-            return value;
+            return reviver ? reviver(key, result, context) : result;
         });
     }
     catch (e) {
