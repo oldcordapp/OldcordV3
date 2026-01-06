@@ -358,15 +358,13 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
         const image = await Jimp.read(imageBuffer);
 
         if (isNaN(parseInt(width)) || parseInt(width) > 2560 || parseInt(width) < 0) {
-            willResize = true;
             width = 800;
             height = image.height * 800 / image.width
         } else {
             width = parseInt(width);
         }
         
-        if ((isNaN(parseInt(height)) || parseInt(height) > 1440 || parseInt(height) < 0) && !willResize) {
-            willResize = true;
+        if ((isNaN(parseInt(height)) || parseInt(height) > 1440 || parseInt(height) < 0)) {
             height = 800;
             width = image.width / image.height * 800
         } else {
