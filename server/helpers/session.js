@@ -395,7 +395,7 @@ class session {
                         }]
 
                         guild.name = `${globalUtils.serverRegionToYear(guild.region)} ONLY! CHANGE BUILD`;
-                        guild.owner_id = "1279218211430105089";
+                        guild.owner_id = "643945264868098049";
 
                         merged_members.push([]);
 

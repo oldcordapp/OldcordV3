@@ -774,7 +774,7 @@ const database = {
                 `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
                 WHERE NOT EXISTS (SELECT 1 FROM channels WHERE id = $1)`,
-                ['1279218211430105089', 0, '1279218211430105089', '[OVERRIDENTOPIC]', null, '0', null, 'please-read-me', 0]
+                ['643945264868098049', 0, '643945264868098049', '[OVERRIDENTOPIC]', null, '0', null, 'please-read-me', 0]
             );
 
             await database.runQuery(
@@ -782,14 +782,14 @@ const database = {
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
                 WHERE NOT EXISTS (SELECT 1 FROM messages WHERE message_id = $2)`,
                 [
-                    '1279218211430105089',
-                    '1279218211430105089',
-                    '1279218211430105089',
-                    '1279218211430105089',
+                    '643945264868098049',
+                    '643945264868098049',
+                    '643945264868098049',
+                    '643945264868098049',
                     `Hey! It looks like you're using a client build that isn't supported by this guild. Your current build is from [YEAR] (if this shows the current year, you are either running a third party client or mobile client). Please check the channel topic or guild name for more details.`,
                     null,
                     0,
-                    '1279218211430105089',
+                    '643945264868098049',
                     new Date().toISOString(),
                     0,
                     '[]'
@@ -800,7 +800,7 @@ const database = {
                 `INSERT INTO users (id, username, discriminator, email, password, token, created_at, avatar, bot, flags)
                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
                 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = $1)`,
-                ['1279218211430105089', 'Oldcord', '0000', 'system@oldcordapp.com', 'aLq6abXnklLRql3MEEpEHge4F9j3cE', null, new Date().toISOString(), null, 1, 4096]
+                ['643945264868098049', 'Oldcord', '0000', 'system@oldcordapp.com', 'aLq6abXnklLRql3MEEpEHge4F9j3cE', null, new Date().toISOString(), null, 1, 4096]
             );
 
             await database.runQuery(`CREATE EXTENSION IF NOT EXISTS pg_trgm;`);
@@ -816,7 +816,7 @@ const database = {
     },
     internalDisableAccount: async (staff, user_id, disabled_until, audit_log_reason) => {
         try {
-            if (user_id === staff.user_id || user_id === '1279218211430105089') {
+            if (user_id === staff.user_id || user_id === '643945264868098049') {
                 return false;
             } // Safety net
 
@@ -1119,7 +1119,7 @@ const database = {
     },
     internalDeleteAccount: async (staff, user_id, audit_log_reason) => {
         try {
-            if (user_id === staff.user_id || user_id === '1279218211430105089') {
+            if (user_id === staff.user_id || user_id === '643945264868098049') {
                 return false;
             } // Safety net
 
@@ -3787,7 +3787,7 @@ const database = {
     getChannelById: async (id) => {
         try {
             if (id.includes("12792182114301050")) {
-                id = "1279218211430105089";
+                id = "643945264868098049";
             } //special case
 
             const rows = await database.runQuery(`

@@ -702,7 +702,7 @@ const globalUtils = {
             11: 3
         }
 
-        if (msg.id === '1279218211430105089') {
+        if (msg.id === '643945264868098049') {
             msg.content = msg.content.replace("[YEAR]", client_build_date.getFullYear());
             msg.author.bot = true;
         }
@@ -720,7 +720,7 @@ const globalUtils = {
                 username: "Oldcord",
                 discriminator: "0000",
                 bot: true,
-                id: "1279218211430105089",
+                id: "643945264868098049",
                 avatar: null
             };
         }
@@ -732,7 +732,7 @@ const globalUtils = {
                 username: "Oldcord",
                 discriminator: "0000",
                 bot: true,
-                id: "1279218211430105089",
+                id: "643945264868098049",
                 avatar: null
             };
         }
