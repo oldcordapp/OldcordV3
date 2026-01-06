@@ -2618,7 +2618,7 @@ const database = {
                 }
             } else {
                 author = await database.getAccountByUserId(rows[0].author_id) || {
-                    id: "1279218211430105088",
+                    id: "456226577798135808",
                     username: "Deleted User",
                     discriminator: "0000",
                     avatar: null,
@@ -3143,7 +3143,7 @@ const database = {
                     }
                 } else {
                     author = accountMap.get(row.author_id) || {
-                        id: "1279218211430105088",
+                        id: "456226577798135808",
                         username: "Deleted User",
                         discriminator: "0000",
                         avatar: null,
@@ -3298,7 +3298,7 @@ const database = {
                     }
                 } else {
                     author = accountMap.get(row.author_id) || { 
-                        id: "1279218211430105088", 
+                        id: "456226577798135808", 
                         username: "Deleted User", 
                         discriminator: "0000", 
                         bot: false 
@@ -3591,7 +3591,7 @@ const database = {
                     }
                 } else {
                     author = accountMap.get(row.author_id) || { 
-                        id: "1279218211430105088", 
+                        id: "456226577798135808", 
                         username: "Deleted User", 
                         discriminator: "0000", 
                         bot: false 
@@ -3747,7 +3747,7 @@ const database = {
 
                 if (!author) {
                     author = {
-                        id: "1279218211430105088",
+                        id: "456226577798135808",
                         username: "Deleted User",
                         discriminator: "0000",
                         avatar: null,

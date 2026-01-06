@@ -242,7 +242,7 @@ const Messages = () => {
                                         </> : <>
                                                 {data.map((message, i) => (
                                                     <div ref={msgId === message.id ? selectedMessageRef : null} className={`message-result-container ${(selectedMessage && selectedMessage.id === message.id || messageId && messageId === message.id && !selectedMessage) ? 'selected-message' : ''}`} key={message.id} onClick={() => setSelectedMessage(message)}>
-                                                        {message.author.id !== "1279218211430105088" && message.author.username !== "Deleted User" ? <>
+                                                        {message.author.id !== "456226577798135808" && message.author.username !== "Deleted User" ? <>
                                                             <img
                                                                 src={message.author.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + message.author.id + '/' + message.author.avatar + ".png"}
                                                                 alt={`${message.author.username}'s avatar`}
@@ -270,7 +270,7 @@ const Messages = () => {
                                                         </>}
                                                         <div className='message-result-body'>
                                                             <div className='message-header-details'>
-                                                                {message.author.id !== "1279218211430105088" && message.author.username !== "Deleted User" ? <>
+                                                                {message.author.id !== "456226577798135808" && message.author.username !== "Deleted User" ? <>
                                                                     <h1 style={{
                                                                         cursor: 'pointer'
                                                                     }} className='message-result-username' onClick={() => navigate(`/users?searchInput=${message.author.id}`)}>{message.author.username}</h1>
