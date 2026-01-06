@@ -229,7 +229,13 @@ app.use((err, req, res, next) => {
     return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
 });
 
-app.use(cors());
+app.use(cors({
+    origin: `${config.secure ? "https://" : "http://"}${global.config.baseUrl}`,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Super-Properties'],
+    credentials: true,
+    optionsSuccessStatus: 200
+}));
 
 app.get('/proxy/:url', async (req, res) => {
     let requestUrl;
@@ -318,58 +324,67 @@ app.get('/proxy/:url', async (req, res) => {
 });
 
 app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
-    const baseFilePath = path.join(process.cwd(), 'www_dynamic', 'attachments', req.params.guildid, req.params.channelid, req.params.filename);
-    
+    const guildId = path.basename(req.params.guildid);
+    const channelId = path.basename(req.params.channelid);
+    const fileName = path.basename(req.params.filename);
+    const safeBabyModeExtensionsImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    const safeBabyModeExtensionsVideo = ['.mp4', '.mov', '.webm'];
+    const baseFilePath = path.join(process.cwd(), 'www_dynamic', 'attachments', guildId, channelId, fileName);
+    const ext = path.extname(fileName).toLowerCase();
+
+    res.setHeader('X-Content-Type-Options', 'nosniff');  //fuck you browser
+
+    //to-do make html, text, etc files render as plain text
+
     try {
         let { format, width, height } = req.query;
-        const url = req.url;
 
-        if (format === 'jpeg' && (baseFilePath.endsWith(".mp4") || baseFilePath.endsWith(".mov") || baseFilePath.endsWith(".webm"))) {
-            let file_name = baseFilePath.split('/').pop();
-            let fixed_path = baseFilePath.replace(file_name, "thumbnail.png");
+        if (format === 'jpeg' && safeVideoExts.includes(ext)) {
+            let fixed_path = baseFilePath.replace(fileName, "thumbnail.png");
 
-            return res.status(200).type("image/png").sendFile(fixed_path);
+            if (fs.existsSync(fixed_path)) {
+                return res.status(200).type("image/png").sendFile(fixed_path);
+            }
         }
-
         
-        if (!url || !width || !height) {
+        if (!width || !height) {
+            if (!safeBabyModeExtensionsImage.includes(ext) && !safeBabyModeExtensionsVideo.includes(ext)) {
+                res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+                res.setHeader('Content-Type', 'application/octet-stream');
+            }
+
             return res.status(200).sendFile(baseFilePath);
         }
-        
-        let urlWithoutParams = url.split('?', 2)[0];
-        
-        if (urlWithoutParams.endsWith(".gif") || urlWithoutParams.endsWith(".mp4") || urlWithoutParams.endsWith(".webm")) {
+
+        if (ext === ".gif" || safeBabyModeExtensionsVideo.includes(ext)) {
             return res.status(200).sendFile(baseFilePath);
         }
 
-        const mime = req.params.filename.endsWith(".jpg") ? 'image/jpeg' : 'image/png';
-
-        const resizedFileName = `${req.params.filename.split('.').slice(0, -1).join('.')}_${width}_${height}.${mime.split('/')[1]}`;
-        const resizedFilePath = path.join(process.cwd(), 'www_dynamic', 'attachments', req.params.guildid, req.params.channelid, resizedFileName);
+        const mime = (ext === ".jpg" || ext === ".jpeg") ? 'image/jpeg' : 'image/png';
+        const resizedFileName = `${fileName.split('.').slice(0, -1).join('.')}_${width}_${height}.${mime.split('/')[1]}`;
+        const resizedFilePath = path.join(process.cwd(), 'www_dynamic', 'attachments', guildId, channelId, resizedFileName);
 
         if (fs.existsSync(resizedFilePath)) {
             return res.status(200).type(mime).sendFile(resizedFilePath);
         }
 
         const imageBuffer = fs.readFileSync(baseFilePath);
-
         const image = await Jimp.read(imageBuffer);
 
-        if (isNaN(parseInt(width)) || parseInt(width) > 2560 || parseInt(width) < 0) {
-            width = 800;
-            height = image.height * 800 / image.width
-        } else {
-            width = parseInt(width);
-        }
-        
-        if ((isNaN(parseInt(height)) || parseInt(height) > 1440 || parseInt(height) < 0)) {
-            height = 800;
-            width = image.width / image.height * 800
-        } else {
-            height = parseInt(height);
+        let w = parseInt(width);
+        let h = parseInt(height);
+
+        if (isNaN(w) || w > 2560 || w < 0) {
+            w = 800;
+            h = Math.round(image.bitmap.height * (800 / image.bitmap.width));
         }
 
-        image.resize({ w: width, h: height, mode: ResizeStrategy.BICUBIC});
+        if (isNaN(h) || h > 1440 || h < 0) {
+            h = 800;
+            w = Math.round(image.bitmap.width * (800 / image.bitmap.height));
+        }
+
+        image.resize(w, h);
 
         const resizedImage = await image.getBuffer(mime);
 
@@ -378,11 +393,16 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
         return res.status(200).type(mime).sendFile(resizedFilePath);
     }
     catch(err) {
-        logText(err, "error");
+        if (!safeBabyModeExtensionsImage.includes(ext) && !safeBabyModeExtensionsVideo.includes(ext)) {
+            res.setHeader('Content-Type', 'application/octet-stream');
+            res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        }
+        
         return res.status(200).sendFile(baseFilePath);
     }
 });
 
+//No one can upload to these other than the instance owner so no real risk here until we allow them to
 app.get('/icons/:serverid/:file', async (req, res) => {
     try {
         const directoryPath = path.join(process.cwd(), 'www_dynamic', 'icons', req.params.serverid);

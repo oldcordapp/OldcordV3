@@ -402,18 +402,25 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
                     file_details[0].height = 500;
                 }
             } else {
-                try {
-                    const image = await Jimp.read(req.file.buffer);
+                const imageExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif'];
+                const fileExt = path.extname(file_details[0].name).toLowerCase();
 
-                    if (image) {
-                        file_details[0].width = image.bitmap.width;
-                        file_details[0].height = image.bitmap.height;
+                if (imageExtensions.includes(fileExt)) {
+                    try {
+                        const image = await Jimp.read(req.file.buffer);
+                        if (image) {
+                            file_details[0].width = image.bitmap.width;
+                            file_details[0].height = image.bitmap.height;
+                        }
+                    } catch (error) {
+                        file_details[0].width = 500;
+                        file_details[0].height = 500;
+
+                        logText("Failed to parse image dimension - possible vulnerability attempt?", "warn");
                     }
-                } catch (error) {
-                    file_details[0].width = 500;
-                    file_details[0].height = 500;
-
-                    logText(error, "error");
+                } else {
+                    file_details[0].width = 0;
+                    file_details[0].height = 0;
                 }
             }
         }
