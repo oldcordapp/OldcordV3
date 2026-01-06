@@ -230,7 +230,7 @@ app.use((err, req, res, next) => {
 });
 
 app.use(cors({
-    origin: `${config.secure ? "https://" : "http://"}${global.config.baseUrl}`,
+    origin: `${config.secure ? "https://" : "http://"}${config.baseUrl}`,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Super-Properties'],
     credentials: true,
