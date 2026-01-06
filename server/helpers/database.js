@@ -786,7 +786,7 @@ const database = {
                     '1279218211430105089',
                     '1279218211430105089',
                     '1279218211430105089',
-                    `Hey! It looks like you're using a client build that isn't supported by this guild. Your current build is from [YEAR]. Please check the channel topic or guild name for more details.`,
+                    `Hey! It looks like you're using a client build that isn't supported by this guild. Your current build is from [YEAR] (if this shows the current year, you are either running a third party client or mobile client). Please check the channel topic or guild name for more details.`,
                     null,
                     0,
                     '1279218211430105089',

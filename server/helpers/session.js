@@ -371,35 +371,33 @@ class session {
                     }
 
                     if (guild.region != "everything" && !globalUtils.canUseServer(year, guild.region)) {
-                        if (typeof this.capabilities === "number" || this.capabilities === "thirdPartyOrMobile") {
-                            this.guilds = this.guilds.filter(g => g !== guild);
-                        } else {
-                            guild.channels = [{
-                                type: this.socket.channel_types_are_ints ? 0 : "text",
-                                name: guild.name.replace(/" "/g, "_"),
-                                topic: `This server only supports ${globalUtils.serverRegionToYear(guild.region)} and you're using ${year}! Please change your client and try again.`,
-                                last_message_id: "0",
-                                id: `12792182114301050${Math.round(Math.random() * 100).toString()}`,
-                                parent_id: null,
-                                guild_id: guild.id,
-                                permission_overwrites: [],
-                                nsfw: false,
-                                rate_limit_per_user: 0
-                            }];
+                        guild.channels = [{
+                            type: this.socket.channel_types_are_ints ? 0 : "text",
+                            name: "readme",
+                            topic: `This server only supports ${globalUtils.serverRegionToYear(guild.region)} builds! Please change your client and try again.`,
+                            last_message_id: "0",
+                            id: `12792182114301050${Math.round(Math.random() * 100).toString()}`,
+                            parent_id: null,
+                            guild_id: guild.id,
+                            permission_overwrites: [],
+                            nsfw: false,
+                            rate_limit_per_user: 0
+                        }];
 
-                            guild.roles = [{
-                                id: guild.id,
-                                name: "@everyone",
-                                permissions: 104186945,
-                                position: 0,
-                                color: 0,
-                                hoist: false,
-                                mentionable: false
-                            }]
+                        guild.roles = [{
+                            id: guild.id,
+                            name: "@everyone",
+                            permissions: 104186945,
+                            position: 0,
+                            color: 0,
+                            hoist: false,
+                            mentionable: false
+                        }]
 
-                            guild.name = `${globalUtils.serverRegionToYear(guild.region)} ONLY! CHANGE BUILD`;
-                            guild.owner_id = "1279218211430105089";
-                        }
+                        guild.name = `${globalUtils.serverRegionToYear(guild.region)} ONLY! CHANGE BUILD`;
+                        guild.owner_id = "1279218211430105089";
+
+                        merged_members.push([]);
 
                         continue;
                     }
