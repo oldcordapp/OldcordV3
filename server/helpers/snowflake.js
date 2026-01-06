@@ -7,6 +7,7 @@ const { DiscordSnowflake } = require("@sapphire/snowflake");
 // Modified to use @sapphire/snowflake as a compat layer because of bigint concerns
 
 class Snowflake {
+    static INCREMENT = BigInt(0); // max 4095
     static processId = BigInt(process.pid % 31); // max 31
     static workerId = BigInt((cluster.worker?.id || 0) % 31); // max 31
 
@@ -14,9 +15,8 @@ class Snowflake {
         throw new Error(`The ${this.constructor.name} class may not be instantiated.`);
     }
 
-
     static generate() {
-        return DiscordSnowflake.generate({processId: Snowflake.processId, workerId: Snowflake.workerId}).toString();
+        return DiscordSnowflake.generate({increment: Snowflake.INCREMENT, processId: Snowflake.processId, workerId: Snowflake.workerId}).toString();
     }
 
     static deconstruct(snowflake) {
