@@ -9,7 +9,7 @@ JSON.parse = (text, reviver) => {
             if (typeof value === 'number' && context?.source) {
                 const rawValue = context.source;
 
-                if (!Number.isSafeInteger(value) || rawValue.includes('.') || rawValue.toLowerCase().includes('e')) {
+                if (!Number.isSafeInteger(value) && !rawValue.includes('.') && !rawValue.toLowerCase().includes('e')) {
                     result = rawValue;
                 }
             }
