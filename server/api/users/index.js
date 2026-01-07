@@ -164,7 +164,7 @@ router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), asyn
 
         ret.user = globalUtils.miniUserObject(user);
         ret.connected_accounts = connectedAccounts;
-        ret.premium_since = new Date();
+        ret.premium_since = new Date().toISOString();
 
          // v9 responses
         ret.premium_type = 2;

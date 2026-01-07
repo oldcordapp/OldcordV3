@@ -397,7 +397,38 @@ class session {
                         guild.name = `${globalUtils.serverRegionToYear(guild.region)} ONLY! CHANGE BUILD`;
                         guild.owner_id = "643945264868098049";
 
-                        merged_members.push([]);
+                        merged_members.push([
+                            {
+                                id: "643945264868098049",
+                                user: {
+                                    username: "Oldcord",
+                                    discriminator: "0000",
+                                    bot: true,
+                                    id: "643945264868098049",
+                                    avatar: null
+                                },
+                                roles: [],
+                                joined_at: new Date().toISOString(),
+                                flags: 0,
+                                guild: {
+                                    id: guild.id,
+                                },
+                                guild_id: guild.id,
+                            },
+                            ...guild.members.map((x) => {
+                                return (
+                                    {
+                                        ...x,
+                                        guild: {
+                                            id: guild.id,
+                                        },
+                                        guild_id: guild.id,
+                                    }
+                                )
+                            })
+                        ]);
+
+                        guild.properties = structuredClone(guild);
 
                         continue;
                     }
