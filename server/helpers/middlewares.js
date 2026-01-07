@@ -18,23 +18,6 @@ function corsMiddleware(req, res, next) {
     res.set("Access-Control-Allow-Methods", req.header("Access-Control-Request-Method") || "*");
     res.set("Access-Control-Allow-Origin", req.header("Origin") ?? "*");
     res.set("Access-Control-Max-Age", "5"); // dont make it too long so we can change it dynamically
-    // TODO: Allow twitch/other connections
-    res.set(
-    "Content-Security-Policy",
-    [
-        "default-src 'self';",
-        "script-src 'self';",
-        "style-src 'self';",
-        "img-src 'self' data:;",
-        "connect-src 'self';",
-        "font-src 'self';",
-        "object-src 'none';",
-        "base-uri 'self';",
-        "form-action 'self';",
-        "frame-ancestors 'none';",
-        "upgrade-insecure-requests;"
-    ].join(" ")
-);
 
     if (req.method === "OPTIONS") {
         res.status(204).end();
