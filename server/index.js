@@ -110,6 +110,7 @@ const portAppend = globalUtils.nonStandardPort ? ":" + config.port : "";
 const base_url = config.base_url + portAppend;
 
 global.full_url = base_url;
+global.protocol_url = (config.secure ? 'https://' : 'http://') + config.base_url;
 
 process.on('uncaughtException', (error) => {
     logText(error, "error");
@@ -230,7 +231,7 @@ app.use((err, req, res, next) => {
 });
 
 app.use(cors({
-    origin: `${config.secure ? "https://" : "http://"}${config.baseUrl}`,
+    origin: global.protocol_url,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Super-Properties'],
     credentials: true,
