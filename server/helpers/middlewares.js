@@ -19,6 +19,8 @@ function corsMiddleware(req, res, next) {
     res.set("Access-Control-Allow-Origin", req.header("Origin") ?? "*");
     res.set("Access-Control-Max-Age", "5"); // dont make it too long so we can change it dynamically
 
+    // TODO: Do CSP without breaking selector
+
     if (req.method === "OPTIONS") {
         res.status(204).end();
         return;
