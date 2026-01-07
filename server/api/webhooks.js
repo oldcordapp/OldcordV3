@@ -145,7 +145,7 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
                     const contentType = response.headers.get('content-type');
                     let extension = contentType.split('/')[1]; // 'png', 'jpeg', etc.
 
-                    var name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    var name = globalUtils.generateString(30);
                     var name_hash = md5(name);
 
                     if (extension == "jpeg") {

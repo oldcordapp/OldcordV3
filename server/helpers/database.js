@@ -1854,7 +1854,7 @@ const database = {
             if (avatar != null && avatar.includes("data:image/")) {
                 var extension = avatar.split('/')[1].split(';')[0];
                 var imgData = avatar.replace(`data:image/${extension};base64,`, "");
-                var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                var file_name = globalUtils.generateString(30);
                 var name_hash = md5(file_name);
 
                 if (extension == "jpeg") {
@@ -1901,7 +1901,7 @@ const database = {
             if (avatar != null && avatar.includes("data:image/")) {
                 var extension = avatar.split('/')[1].split(';')[0];
                 var imgData = avatar.replace(`data:image/${extension};base64,`, "");
-                var name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                var name = globalUtils.generateString(30);
                 var name_hash = md5(name);
 
                 avatarHash = name_hash;

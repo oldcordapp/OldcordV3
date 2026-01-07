@@ -174,7 +174,7 @@ async function handleVoiceState(socket, packet) {
     if (!room.participants.find(x => x.user.id === socket.user.id)) {
         room.participants.push({
             user: globalUtils.miniUserObject(socket.user),
-            ssrc: Math.round(Math.random() * 100000)
+            ssrc: globalUtils.generateString(30)
         });
 
         let voiceStates = global.guild_voice_states.get(guild_id);
