@@ -2493,7 +2493,7 @@ const database = {
                 if (channel.icon && channel.icon.includes("data:image/")) {
                     const extension = channel.icon.split('/')[1].split(';')[0].replace('jpeg', 'jpg');
                     const imgData = channel.icon.replace(/^data:image\/\w+;base64,/, "");
-                    const iconHash = md5(Math.random().toString());
+                    const iconHash = md5(globalUtils.generateString(30));
 
                     const dir = `./www_dynamic/group_icons/${channel_id}`;
 
@@ -2764,7 +2764,7 @@ const database = {
                 if (bot.avatar.includes("data:image")) {
                     var extension = bot.avatar.split('/')[1].split(';')[0];
                     var imgData = bot.avatar.replace(`data:image/${extension};base64,`, "");
-                    var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    var file_name = globalUtils.generateString(30);
                     var hash = md5(file_name);
 
                     if (extension == "jpeg") {
@@ -2808,7 +2808,7 @@ const database = {
                 if (bot.avatar.includes("data:image")) {
                     var extension = bot.avatar.split('/')[1].split(';')[0];
                     var imgData = bot.avatar.replace(`data:image/${extension};base64,`, "");
-                    var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    var file_name = globalUtils.generateString(30);
                     var hash = md5(file_name);
 
                     if (extension == "jpeg") {
@@ -2852,7 +2852,7 @@ const database = {
                 if (application.icon.includes("data:image")) {
                     var extension = application.icon.split('/')[1].split(';')[0];
                     var imgData = application.icon.replace(`data:image/${extension};base64,`, "");
-                    var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    var file_name = globalUtils.generateString(30);
                     var hash = md5(file_name);
 
                     if (extension == "jpeg") {
@@ -5359,7 +5359,7 @@ const database = {
                 if (icon.includes("data:image")) {
                     var extension = icon.split('/')[1].split(';')[0];
                     var imgData = icon.replace(`data:image/${extension};base64,`, "");
-                    var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    var file_name = globalUtils.generateString(30);
                     var hash = md5(file_name);
 
                     if (extension == "jpeg") {
@@ -5388,7 +5388,7 @@ const database = {
                 if (splash.includes("data:image")) {
                     var extension = splash.split('/')[1].split(';')[0];
                     var imgData = splash.replace(`data:image/${extension};base64,`, "");
-                    var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    var file_name = globalUtils.generateString(30);
                     var hash = md5(file_name);
 
                     if (extension == "jpeg") {
@@ -5417,7 +5417,7 @@ const database = {
                 if (banner.includes("data:image")) {
                     var extension = banner.split('/')[1].split(';')[0];
                     var imgData = banner.replace(`data:image/${extension};base64,`, "");
-                    var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    var file_name = globalUtils.generateString(30);
                     var hash = md5(file_name);
 
                     if (extension == "jpeg") {
@@ -5460,7 +5460,7 @@ const database = {
             if (icon != null) {
                 var extension = icon.split('/')[1].split(';')[0];
                 var imgData = icon.replace(`data:image/${extension};base64,`, "");
-                var file_name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                var file_name = globalUtils.generateString(30);
                 var hash = md5(file_name);
 
                 if (extension == "jpeg") {
@@ -5854,7 +5854,7 @@ const database = {
                 if (avatar != null && avatar.includes("data:image/")) {
                     const extension = avatar.split('/')[1].split(';')[0];
                     const imgData = avatar.replace(`data:image/${extension};base64,`, "");
-                    const name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    const name = globalUtils.generateString(30);
                     const name_hash = md5(name);
 
                     const validExtension = extension === "jpeg" ? "jpg" : extension;
@@ -5919,7 +5919,7 @@ const database = {
                 if (new_avatar != null && new_avatar.includes("data:image/")) {
                     const extension = new_avatar.split('/')[1].split(';')[0];
                     const imgData = new_avatar.replace(`data:image/${extension};base64,`, "");
-                    const name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                    const name = globalUtils.generateString(30);
                     const name_hash = md5(name);
 
                     const validExtension = extension === "jpeg" ? "jpg" : extension;
@@ -5960,7 +5960,7 @@ const database = {
             } else if (new_avatar != null && new_avatar.includes("data:image/")) {
                 const extension = new_avatar.split('/')[1].split(';')[0];
                 const imgData = new_avatar.replace(`data:image/${extension};base64,`, "");
-                const name = Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+                const name = globalUtils.generateString(30);
                 const name_hash = md5(name);
 
                 const validExtension = extension === "jpeg" ? "jpg" : extension;

@@ -590,6 +590,14 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
             number_type = req.body.type == "text" ? 0 : 1;
         } else number_type = req.body.type;
 
+        //Guild Text, Guild Voice, Guild Category, Guild News
+        if (![0, 2, 4, 5].includes(number_type)) {
+            return res.status(400).json({
+                code: 400,
+                message: "Invalid channel type (Must be one of 0, 2, 4, 5)"
+            })
+        }
+
         let send_parent_id = null;
 
         if (req.body.parent_id) {
