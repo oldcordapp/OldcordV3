@@ -1,4 +1,4 @@
-const { isValid } = require('./helpers/snowflake');
+const Snowflake = require('./helpers/snowflake');
 
 // this is needed because of discord kotlin sending in id as Number and not string, and it messes precision
 const originalJsonParse = JSON.parse;
@@ -11,7 +11,7 @@ JSON.parse = (text, reviver) => {
             if (typeof value === 'number' && context?.source) {
                 const rawValue = context.source;
 
-                if (!Number.isSafeInteger(value) && !rawValue.includes('.') && !rawValue.toLowerCase().includes('e') && isValid(rawValue)) {
+                if (!Number.isSafeInteger(value) && !rawValue.includes('.') && !rawValue.toLowerCase().includes('e') && Snowflake.isValid(rawValue)) {
                     result = rawValue;
                 }
             }
