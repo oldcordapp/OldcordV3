@@ -27,7 +27,6 @@ JSON.parse = (text, reviver) => {
 const errors = require('./helpers/errors');
 const express = require('express');
 const gateway = require('./gateway');
-const cors = require('cors');
 const fs = require('fs');
 const { createServer } = require('http');
 const https = require('https');
