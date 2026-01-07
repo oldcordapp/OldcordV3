@@ -36,7 +36,7 @@ const database = require('./helpers/database');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const globalUtils = require('./helpers/globalutils');
-const { apiVersionMiddleware, assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
+const { corsMiddleware, apiVersionMiddleware, assetsMiddleware, clientMiddleware } = require('./helpers/middlewares');
 const router = require('./api/index');
 const { Jimp, ResizeStrategy } = require('jimp');
 const dispatcher = require('./helpers/dispatcher');
@@ -230,13 +230,7 @@ app.use((err, req, res, next) => {
     return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
 });
 
-app.use(cors({
-    origin: global.protocol_url,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Super-Properties'],
-    credentials: true,
-    optionsSuccessStatus: 200
-}));
+app.use(corsMiddleware);
 
 app.get('/proxy/:url', async (req, res) => {
     let requestUrl;
