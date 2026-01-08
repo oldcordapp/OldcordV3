@@ -333,7 +333,7 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
     try {
         let { format, width, height } = req.query;
 
-        if (format === 'jpeg' && safeVideoExts.includes(ext)) {
+        if (format === 'jpeg' && safeBabyModeExtensionsVideo.includes(ext)) {
             let fixed_path = baseFilePath.replace(fileName, "thumbnail.png");
 
             if (fs.existsSync(fixed_path)) {
