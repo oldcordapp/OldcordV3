@@ -10,3 +10,4 @@ oldplunger/src/plugins/plugins.js
 *.un~
 *.swp
 *.pem
+server/dist/

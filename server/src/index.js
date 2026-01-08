@@ -73,7 +73,7 @@ if (globalUtils.config.email_config.enabled) {
 global.sessions = new Map();
 global.userSessions = new Map();
 global.database = database;
-global.permissions = permissions;
+global.permissions = permissions.default;
 global.config = globalUtils.config;
 global.rooms = [];
 global.MEDIA_CODECS = [

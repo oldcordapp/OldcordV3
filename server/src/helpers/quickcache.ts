@@ -1,10 +1,11 @@
-const crypto = require('crypto');
+import crypto from "crypto";
+
 const globalUtils = require('./globalutils');
 
-const quickcache = {
+export const quickcache = {
     cacheStore: new Map(),
     requestLock: new Map(),
-    getCacheKey(req, shared) {
+    getCacheKey(req: any, shared: boolean) {
         if (!req.headers['authorization'] && !shared) {
             return null;
         }
@@ -22,8 +23,8 @@ const quickcache = {
 
         return hash;
     },
-    cacheFor(ttl, shared = false) {
-        return function (req, res, next) {
+    cacheFor(ttl: number, shared: boolean = false) {
+        return function (req: any, res: any, next: any) {
             if (req.method !== 'GET' || req.headers['cache-control'] === 'no-cache' || !globalUtils.config['cache_authenticated_get_requests']) {
                 return next();
             } //NEVER cache anything other than GET or well no-cache
@@ -57,7 +58,7 @@ const quickcache = {
 
             let originalJson = res.json;
 
-            res.json = (body) => {
+            res.json = (body: any) => {
                 let expiry = currentTime + ttl;
 
                 let cacheEntry = {
@@ -75,7 +76,7 @@ const quickcache = {
                     cached_until: expiry
                 };
 
-                waitList.forEach(client => {
+                waitList.forEach((client: any) => {
                     client.setHeader('x-oldcord-cache-info', JSON.stringify(cacheInfo));
 
                     originalJson.call(client, body);

@@ -5,6 +5,7 @@ const applications = require('./applications');
 const tokens = require('./tokens');
 const globalUtils = require('../../helpers/globalutils');
 const errors = require('../../helpers/errors');
+const lazyRequest = require('../../helpers/lazyRequest');
 
 router.use("/applications", applications);
 router.use("/tokens", tokens);

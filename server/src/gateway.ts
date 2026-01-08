@@ -1,28 +1,30 @@
+import { GatewayPacket } from "./types/gatewaypacket";
+import { GatewayClientSocket } from "./types/socket";
+import { WebSocket, WebSocketServer } from 'ws';
+
 const { logText } = require('./helpers/logger');
 const globalUtils = require('./helpers/globalutils');
-const WebSocket = require('ws').WebSocket;
 const zlib = require('zlib');
 const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
-const lazyRequest = require('./helpers/lazyRequest');
 
-let erlpack = null;
+let erlpack: any;
 
 if (globalUtils.config.gateway_erlpack) {
     erlpack = require('@spacebarchat/erlpack')
 }
 
 const gateway = {
-    server: null,
-    port: null,
+    server: null as WebSocketServer | null,
+    port: null as number | null,
     debug_logs: false,
-    debug(message) {
+    debug(message: string) {
         if (!this.debug_logs) {
             return;
         }
 
         logText(message, 'GATEWAY');
     },
-    syncPresence: async function (socket, packet) {
+    syncPresence: async function (socket: GatewayClientSocket, packet: GatewayPacket) {
         let allSessions = global.userSessions.get(socket.user.id);
 
         if (!allSessions || allSessions.size === 0) return;
@@ -30,7 +32,7 @@ const gateway = {
         let setStatusTo = "online";
         let gameField = null;
 
-        if (socket.client_build.includes("2015")) {
+        if (socket.client_build?.includes("2015")) {
             gameField = packet.d.game_id || null;
 
             if (packet.d.idle_since != null || packet.d.afk === true) {
@@ -70,7 +72,7 @@ const gateway = {
 
         await socket.session.updatePresence(setStatusTo, gameField);
     },
-    handleClientConnect: async function (socket, req) {
+    handleClientConnect: async function (socket: GatewayClientSocket, req: any) {
         const reqHost = req.headers.origin ?? req.headers.host;
 
         const isInstanceLocal = global.full_url.includes('localhost') || global.full_url.includes('127.0.0.1');
@@ -100,11 +102,15 @@ const gateway = {
             cookies = `release_date=${globalUtils.config.default_client_build || "october_5_2017"};default_client_build=${globalUtils.config.default_client_build || "october_5_2017"};`
         }
 
-        let cookieStore = cookies?.split(';').reduce((acc, cookie) => {
-            const [key, value] = cookie.split('=').map(v => v.trim());
-            acc[key] = value;
-            return acc;
-        }, {});
+        let cookieStore: Record<string, string> = {};
+
+        if (cookies) {
+            cookieStore = cookies?.split(';').reduce((acc: Record<string, string>, cookie: any) => {
+                const [key, value] = cookie.split('=').map((v: any) => v.trim());
+                acc[key] = value;
+                return acc;
+            }, {});
+        }
 
         if (!cookieStore) {
             cookieStore = {}
@@ -145,7 +151,7 @@ const gateway = {
 
         socket.on('close', (code) => this.handleClientClose(socket, code));
 
-        let heartbeat_payload = {
+        let heartbeat_payload: any = {
             op: OPCODES.HEARTBEAT_INFO,
             s: null,
             d: {
@@ -174,16 +180,24 @@ const gateway = {
         socket.hb = {
             timeout: null,
             start: () => {
-                if (socket.hb.timeout) clearTimeout(socket.hb.timeout);
+                let hb = socket.hb;
 
-                socket.hb.timeout = setTimeout(async () => {
+                if (!hb) {
+                    return;
+                }
+
+                if (hb.timeout) {
+                    clearTimeout(hb.timeout);
+                }
+
+                hb.timeout = setTimeout(async () => {
                     socket.close(4009, 'Session timed out');
                 }, (45 * 1000) + 20 * 1000);
             },
             reset: () => {
-                socket.hb.start();
+                socket.hb?.start();
             },
-            acknowledge: (d) => {
+            acknowledge: (d: any) => {
                 socket.session?.send({
                     op: OPCODES.HEARTBEAT_ACK,
                     d: d
@@ -195,14 +209,14 @@ const gateway = {
 
         socket.on('message', (data) => this.handleClientMessage(socket, data));
     },
-    handleClientMessage: async function (socket, data) {
+    handleClientMessage: async function (socket: GatewayClientSocket, data: any) {
         try {
             const msg = socket.wantsEtf ? data : data.toString("utf-8");
             const packet = socket.wantsEtf && erlpack !== null ? erlpack.unpack(msg) : JSON.parse(msg);
 
             if (packet.op !== 1) {
                 this.debug(`Incoming -> ${socket.wantsEtf ? JSON.stringify(packet) : msg}`);
-            } //ignore heartbeat stuff
+            }
 
             await gatewayHandlers[packet.op]?.(socket, packet);
         }
@@ -212,11 +226,11 @@ const gateway = {
             socket.close(4000, 'Invalid payload');
         }
     },
-    handleClientClose: async function(socket, code) {
+    handleClientClose: async function(socket: GatewayClientSocket, code: number) {
         if (socket.session) {
             if (socket.current_guild) {
                 let voiceStates = global.guild_voice_states.get(socket.current_guild.id);
-                let possibleIndex = voiceStates.findIndex(x => x.user_id === socket.user.id);
+                let possibleIndex = voiceStates.findIndex((x: any) => x.user_id === socket.user.id);
                 let myVoiceState = voiceStates[possibleIndex];
 
                 if (myVoiceState) {
@@ -232,7 +246,11 @@ const gateway = {
         }
     },
     handleEvents: function () {
-        const server = gateway.server;
+        const server: any = gateway.server;
+
+        if (!server) {
+            return;
+        }
 
         server.on("listening", () => {
             this.debug("Listening for connections");
@@ -240,9 +258,9 @@ const gateway = {
 
         server.on('connection', this.handleClientConnect.bind(this));
     },
-    ready: function (server, debug_logs = false) {
+    ready: function (server: any, debug_logs = false) {
         gateway.debug_logs = debug_logs;
-        gateway.server = new WebSocket.Server({
+        gateway.server = new WebSocketServer({
             perMessageDeflate: false,
             server: server
         });

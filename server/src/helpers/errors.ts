@@ -2,7 +2,7 @@
 // Thanks discord.food!
 // There are also custom Oldcord-specific errors here too.
 
-const errors = {
+export const errors = {
     response_400: {
         MAX_GUILDS: {
             code: 30001,
@@ -635,6 +635,8 @@ const errors = {
             message: "You have been blocked by the Watchdog of this instance. Contact the admins to appeal.",
         }
     }
-};
+} as const;
+
+export type DiscordErrorResponse = typeof errors;
 
 module.exports = errors;
