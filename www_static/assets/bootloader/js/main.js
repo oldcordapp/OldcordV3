@@ -105,9 +105,6 @@ class Bootloader {
       const envCheck = await this.checkEnvironment();
       if (envCheck.status === "ready") {
         await this.loadApplication();
-      } else if (envCheck.status === "temp_build") {
-        await utils.timer(3000);
-        window.location.href = window.location.href;
       }
     } catch (e) {
       utils.loadLog("Fatal error occurred. Please check the console.", "error");
@@ -123,10 +120,7 @@ class Bootloader {
       return { status: "fatal" };
     }
 
-    const needsTempBuild = this.checkLoginCompatibility();
-    if (needsTempBuild) {
-      return { status: "temp_build" };
-    }
+    this.checkLoginCompatibility();
 
     window.BetterDiscord = true;
     window.Firebug = { chrome: { isInitialized: false } };
