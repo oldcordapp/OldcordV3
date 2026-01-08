@@ -12,7 +12,7 @@ class Bootloader {
     window.cdn_url = Config.cdn_url;
     window.release_date = utils.getReleaseDate();
     this.release_date = window.release_date;
-    this.originalBuild = utils.getOriginalBuild();
+    this.originalBuild = null;
     this.localStorage = window.localStorage;
     this.oldplunger = null;
 

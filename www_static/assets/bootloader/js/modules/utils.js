@@ -37,11 +37,6 @@ export const utils = {
     return parts.length === 2 ? parts.pop().split(";").shift() : null;
   },
 
-  getOriginalBuild() {
-    const parts = `; ${document.cookie}`.split("; original_build=");
-    return parts.length === 2 ? parts.pop().split(";").shift() : null;
-  },
-
   getDefaultClientBuild() {
     const parts = `; ${document.cookie}`.split("; default_client_build=");
     return parts.length === 2
