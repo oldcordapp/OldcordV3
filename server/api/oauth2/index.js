@@ -5,6 +5,7 @@ const applications = require('./applications');
 const tokens = require('./tokens');
 const globalUtils = require('../../helpers/globalutils');
 const errors = require('../../helpers/errors');
+const lazyRequest = require("../../helpers/lazyRequest");
 
 router.use("/applications", applications);
 router.use("/tokens", tokens);
@@ -203,49 +204,48 @@ router.post("/authorize", async (req, res) => {
                 return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
             }
 
-            let tryJoinBot = await global.database.joinGuild(application.bot.id, guild);
+            try {
+                await global.database.joinGuild(application.bot.id, guild);
+                
+                await global.dispatcher.dispatchEventTo(application.bot.id, "GUILD_CREATE", guild);
 
-            if (!tryJoinBot) {
-                return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-            }
+                await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
+                    roles: [],
+                    user: globalUtils.miniBotObject(application.bot),
+                    guild_id: guild.id,
+                    joined_at: new Date().toISOString(),
+                    deaf: false,
+                    mute: false,
+                    nick: null
+                });
 
-            await global.dispatcher.dispatchEventTo(application.bot.id, "GUILD_CREATE", guild);
+                let activeSessions = global.dispatcher.getAllActiveSessions();
 
-            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
-                roles: [],
-                user: globalUtils.miniBotObject(application.bot),
-                guild_id: guild.id,
-                joined_at: new Date().toISOString(),
-                deaf: false,
-                mute: false,
-                nick: null
-            });
+                for (let session of activeSessions) {
+                    if (session.subscriptions && session.subscriptions[guild.id]) {
+                        //if (session.user.id === application.bot.id) continue;
 
-            let activeSessions = global.dispatcher.getAllActiveSessions();
-
-            for (let session of activeSessions) {
-                if (session.subscriptions && session.subscriptions[guild.id]) {
-                    //if (session.user.id === application.bot.id) continue;
-
-                    await lazyRequest.handleMemberAdd(session, guild, {
-                        user: globalUtils.miniBotObject(application.bot),
-                        roles: [],
-                        joined_at: new Date().toISOString(),
-                        deaf: false,
-                        mute: false,
-                        nick: null
-                    });
+                        await lazyRequest.handleMemberAdd(session, guild, {
+                            user: globalUtils.miniBotObject(application.bot),
+                            roles: [],
+                            joined_at: new Date().toISOString(),
+                            deaf: false,
+                            mute: false,
+                            nick: null
+                        });
+                    }
                 }
+
+                await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
+                    ...globalUtils.getUserPresence({
+                        user: globalUtils.miniUserObject(application.bot)
+                    }),
+                    roles: [],
+                    guild_id: guild.id
+                });
             }
-
-            await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
-                ...globalUtils.getUserPresence({
-                    user: globalUtils.miniUserObject(application.bot)
-                }),
-                roles: [],
-                guild_id: guild.id
-            });
-
+            catch { }
+            
             return res.json({ location: `${req.protocol}://${req.get('host')}/oauth2/authorized` })
         } else {
             return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
