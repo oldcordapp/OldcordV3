@@ -1,12 +1,7 @@
-import { logText } from "./logger";
+const { logText } = require('./logger');
 
-export interface WaybackTimestamps {
-    first_ts: string;
-    last_ts: string;
-};
-
-export const wayback = {
-    convertTimestampToCustomFormat: (timestamp: string): string => {
+const wayback = {
+    convertTimestampToCustomFormat: (timestamp) => {
         const dateObject = new Date(timestamp);
   
         const year = dateObject.getUTCFullYear();
@@ -18,7 +13,7 @@ export const wayback = {
       
         return `${year}${month}${day}${hours}${minutes}${seconds}`;
     },
-    getTimestamps: async (url: string): Promise<WaybackTimestamps | null> => {
+    getTimestamps: async (url) => {
         try {
             const response = await fetch("https://web.archive.org/web/timemap/link/" + url, {
                 headers: {

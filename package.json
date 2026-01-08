@@ -7,16 +7,14 @@
     "oldplunger"
   ],
   "scripts": {
-    "build:server": "tsc -p server",
     "build:oldplunger": "npm run build --workspace=oldplunger",
     "build:selector": "npm run build --workspace=frontend/selector",
     "build:admin": "npm run build --workspace=frontend/admin",
-    "build:all": "npm run build:selector && npm run build:admin && npm run build:oldplunger && npm run build:server",
-    "start:server": "node server/dist/index.js",
+    "build:all": "npm run build:selector && npm run build:admin && npm run build:oldplunger",
+    "start:server": "node server/index.js",
     "start": "npm run build:all && npm run start:server",
     "dev:admin": "npm run dev --workspace=frontend/admin",
     "dev:selector": "npm run dev --workspace=frontend/selector",
-    "dev:server": "nodemon server/src/index.ts",
     "dev:oldplunger": "npm run dev --workspace=oldplunger"
   },
   "dependencies": {
@@ -45,23 +43,11 @@
     "speakeasy": "^2.0.0",
     "vite": "npm:rolldown-vite@7.3.0",
     "vite-plugin-svgr": "^4.5.0",
-    "ws": "^8.19.0",
-    "zod": "^4.3.5"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
-    "@types/cookie-parser": "^1.4.10",
-    "@types/express": "^5.0.6",
-    "@types/fluent-ffmpeg": "^2.1.28",
-    "@types/murmurhash-js": "^1.0.6",
-    "@types/node": "^25.0.3",
-    "@types/pg": "^8.16.0",
     "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@types/ws": "^8.18.1",
-    "nodemon": "^3.1.11",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "@types/react-dom": "^19.2.3"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.3.0"

@@ -1,7 +1,5 @@
-function encode(stringToHash: any) {
+function encode(stringToHash) {
     return Buffer.from(stringToHash).toString('base64url');
 }
-
-export default encode;
 
 module.exports = encode;

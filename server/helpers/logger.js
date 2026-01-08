@@ -4,7 +4,7 @@ let properties = {
     fullErrors: true
 };
 
-export const logText = (text: any, type: string) => {
+const logText = (text, type) => {
     if (properties.disabled || (type == 'debug' && properties.ignoreDebug)) {
         return;
     }

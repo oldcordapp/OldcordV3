@@ -553,14 +553,6 @@ router.get("/:guildid/invites", guildMiddleware, guildPermissionsMiddleware("MAN
 
 router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("MANAGE_CHANNELS"), rateLimitMiddleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createChannel.maxPerTimeFrame, global.config.ratelimit_config.createChannel.timeFrame, 0.5), async (req, res) => {
     try {
-        /*
-        const result = CreateChannelSchema.safeParse(req.body);
-        
-        if (!result.success) {
-            return res.status(400).json({ error: result.error.format() });
-        }
-        */ //const { .. bla bla } = result.data;
-
         const sender = req.account;
 
         if (req.guild.channels.length >= global.config.limits['channels_per_guild'].max) {

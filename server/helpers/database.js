@@ -4,7 +4,7 @@ const globalUtils = require('./globalutils');
 const { genSalt, hash, compareSync } = require('bcrypt');
 const Snowflake = require('./snowflake');
 const fs = require('fs');
-const md5 = require('./md5');
+const md5 = require('../helpers/md5');
 const path = require('path');
 const embedder = require('./embedder');
 const fsPromises = require('fs').promises;
@@ -93,7 +93,7 @@ const database = {
 
             await database.runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`, [0.1]); //for the people who update their instance but do not manually run the relationships migration script
 
-            let v = await database.runQuery(`SELECT * FROM instance_info;`);
+            v = await database.runQuery(`SELECT * FROM instance_info;`);
 
             if (v[0].version != database.version) { //auto migrate for the time being
                 let value = await database.runQuery(`SELECT * FROM users;`, [], true);
