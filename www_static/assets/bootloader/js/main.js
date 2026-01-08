@@ -133,10 +133,10 @@ class Bootloader {
     try {
       hasToken = Boolean(window.localStorage?.getItem("token"));
     } catch {
-      return false;
+      return;
     }
 
-    if (hasToken) return false;
+    if (hasToken) return;
 
     const brokenBuilds = [
       "november_16_2017",
@@ -160,9 +160,7 @@ class Bootloader {
       );
       this.originalBuild = this.release_date;
       this.release_date = window.release_date = "february_25_2018";
-      return true;
     }
-    return false;
   }
 
   startTokenMonitor() {
