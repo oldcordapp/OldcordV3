@@ -2,11 +2,13 @@
 const express = require('express');
 const globalUtils = require('../../../helpers/globalutils');
 const { logText } = require('../../../helpers/logger');
-const router = express.Router();
 const { guildMiddleware, rateLimitMiddleware } = require('../../../helpers/middlewares');
 const Watchdog = require('../../../helpers/watchdog');
 const errors = require('../../../helpers/errors');
 const lazyRequest = require('../../../helpers/lazyRequest');
+const dispatcher = require('../../../helpers/dispatcher');
+
+const router = express.Router();
 
 router.param('guildid', async (req, _, next, guildid) => {
     req.guild = await global.database.getGuildById(guildid);
@@ -21,7 +23,7 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
             const guild = req.guild;
 
             if (guild.owner_id == user.id) {
-                await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
+                await dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
                     id: req.params.guildid
                 });
 
@@ -39,11 +41,11 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
                     return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
                 }
 
-                await global.dispatcher.dispatchEventTo(user.id, "GUILD_DELETE", {
+                await dispatcher.dispatchEventTo(user.id, "GUILD_DELETE", {
                     id: req.params.guildid
                 });
 
-                let activeSessions = global.dispatcher.getAllActiveSessions();
+                let activeSessions = dispatcher.getAllActiveSessions();
 
                 for (let session of activeSessions) {
                     if (session.subscriptions && session.subscriptions[req.guild.id]) {
@@ -53,7 +55,7 @@ router.delete("/:guildid", guildMiddleware, rateLimitMiddleware(global.config.ra
                     }
                 }
 
-                await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
+                await dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
                     type: "leave",
                     user: globalUtils.miniUserObject(user),
                     guild_id: String(req.params.guildid)
@@ -143,7 +145,7 @@ router.patch("/:guildid/settings", guildMiddleware, rateLimitMiddleware(global.c
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventTo(user.id, "USER_GUILD_SETTINGS_UPDATE", guildSettings);
+        await dispatcher.dispatchEventTo(user.id, "USER_GUILD_SETTINGS_UPDATE", guildSettings);
 
         return res.status(204).send();
     } catch (error) {

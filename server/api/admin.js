@@ -3,6 +3,7 @@ const { logText } = require('../helpers/logger');
 const { staffAccessMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
 const globalUtils = require('../helpers/globalutils');
+const dispatcher = require('../helpers/dispatcher');
 const fs = require("node:fs");
 const path = require("node:path")
 const errors = require('../helpers/errors');
@@ -199,7 +200,7 @@ router.delete("/guilds/:guildid", staffAccessMiddleware(3), async (req, res) => 
 
         await global.database.deleteGuild(guildid);
 
-        await global.dispatcher.dispatchEventInGuild(guildRet, "GUILD_DELETE", {
+        await dispatcher.dispatchEventInGuild(guildRet, "GUILD_DELETE", {
             id: req.params.guildid
         });
 
@@ -251,7 +252,7 @@ router.post("/users/:userid/moderate/disable", staffAccessMiddleware(3), async (
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchLogoutTo(req.params.userid);
+        await dispatcher.dispatchLogoutTo(req.params.userid);
 
         return res.status(200).json(tryDisable);
     } catch (error) {
@@ -532,7 +533,7 @@ router.delete("/messages/:messageid", staffAccessMiddleware(2), async (req, res)
 
         await global.database.deleteMessage(messageid);
 
-        await global.dispatcher.dispatchEventInGuild(guildRet, "MESSAGE_DELETE", {
+        await dispatcher.dispatchEventInGuild(guildRet, "MESSAGE_DELETE", {
             id: msgRet.id,
             guild_id: msgRet.guild_id,
             channel_id: msgRet.channel_id
@@ -566,7 +567,7 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
 
         if (user.bot) {
             await global.database.deleteBotById(req.params.userid);
-            await global.dispatcher.dispatchLogoutTo(req.params.userid);
+            await dispatcher.dispatchLogoutTo(req.params.userid);
 
             return res.status(204).send();
         }
@@ -577,7 +578,7 @@ router.post("/users/:userid/moderate/delete", staffAccessMiddleware(3), async (r
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchLogoutTo(req.params.userid);
+        await dispatcher.dispatchLogoutTo(req.params.userid);
 
         return res.status(200).json(tryDisable);
     } catch (error) {

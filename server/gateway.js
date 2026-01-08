@@ -222,7 +222,7 @@ const gateway = {
                 if (myVoiceState) {
                     myVoiceState.channel_id = null;
 
-                    await global.dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", myVoiceState);
+                    await dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", myVoiceState);
                 }
 
                 voiceStates.splice(possibleIndex, 1);

@@ -1,6 +1,7 @@
 const globalUtils = require('./globalutils');
 const Intents = require('./intents');
 const lazyRequest = require('./lazyRequest');
+const dispatcher = require('./dispatcher');
 const { logText } = require("./logger");
 const zlib = require('zlib');
 
@@ -189,7 +190,7 @@ class session {
                 roles: guild.members.find(x => x.id === this.user.id)?.roles || []
             };
 
-            await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", guildSpecificPresence);
+            await dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", guildSpecificPresence);
             await lazyRequest.syncMemberList(guild, this.user.id);
         }
     }
@@ -211,7 +212,7 @@ class session {
 
             if (!our_member) continue;
 
-            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_UPDATE", {
+            await dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_UPDATE", {
                 roles: our_member.roles,
                 user: globalUtils.miniUserObject(our_member.user),
                 guild_id: guild.id

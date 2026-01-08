@@ -2,10 +2,12 @@ const express = require('express');
 const { logText } = require('../helpers/logger');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const globalUtils = require('../helpers/globalutils');
-const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
+
+const router = express.Router({ mergeParams: true });
 
 router.param('roleid', async (req, res, next, roleid) => {
     req.role = req.guild.roles.find(x => x.id === roleid);
@@ -65,7 +67,7 @@ router.patch("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMi
             role.permissions = req.body.permissions ?? 0;
             role.position = req.body.position ?? role.position;
 
-            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_ROLE_UPDATE", {
+            await dispatcher.dispatchEventInGuild(guild, "GUILD_ROLE_UPDATE", {
                 guild_id: guild.id,
                 role: role
             });
@@ -103,7 +105,7 @@ router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitM
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_ROLE_DELETE", {
+        await dispatcher.dispatchEventInGuild(req.guild, "GUILD_ROLE_DELETE", {
             guild_id: req.params.guildid,
             role_id: req.params.roleid
         });
@@ -114,7 +116,7 @@ router.delete("/:roleid", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitM
 
                 member_with_roles = member_with_roles.filter(x => x !== role.id);
     
-                await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_UPDATE", {
+                await dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_UPDATE", {
                     roles: member_with_roles,
                     user: globalUtils.miniUserObject(member_with_role.user),
                     guild_id: req.guild.id,
@@ -169,7 +171,7 @@ router.patch("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddlewar
 
                 if (!tryUpdate) continue;
 
-                await global.dispatcher.dispatchEventInGuild(guild, "GUILD_ROLE_UPDATE", {
+                await dispatcher.dispatchEventInGuild(guild, "GUILD_ROLE_UPDATE", {
                     guild_id: guild.id,
                     role: guildRole
                 });
@@ -213,7 +215,7 @@ router.post("/", guildPermissionsMiddleware("MANAGE_ROLES"), rateLimitMiddleware
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_ROLE_UPDATE", {
+        await dispatcher.dispatchEventInGuild(guild, "GUILD_ROLE_UPDATE", {
             guild_id: guild.id,
             role: role
         });

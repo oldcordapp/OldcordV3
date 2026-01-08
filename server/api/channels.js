@@ -4,11 +4,13 @@ const messages = require('./messages');
 const pins = require('./pins');
 const { channelPermissionsMiddleware, rateLimitMiddleware, guildPermissionsMiddleware, channelMiddleware, instanceMiddleware } = require('../helpers/middlewares');
 const globalUtils = require('../helpers/globalutils');
-const router = express.Router({ mergeParams: true });
-const config = globalUtils.config;
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
+
+const router = express.Router({ mergeParams: true });
+const config = globalUtils.config;
 
 router.param('channelid', async (req, res, next, channelid) => {
     let guild = req.guild;
@@ -90,9 +92,9 @@ router.post("/:channelid/typing", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"),
             
             payload.member = globalUtils.miniUserObject(req.account);
 
-            await global.dispatcher.dispatchEventInPrivateChannel(req.channel, "TYPING_START", payload);
+            await dispatcher.dispatchEventInPrivateChannel(req.channel, "TYPING_START", payload);
         } else {
-            await global.dispatcher.dispatchEventInChannel(req.guild, req.channel.id, "TYPING_START", payload);
+            await dispatcher.dispatchEventInChannel(req.guild, req.channel.id, "TYPING_START", payload);
         }
 
         return res.status(204).send();
@@ -166,7 +168,7 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
                 return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
+            await dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
                 return globalUtils.personalizeChannelObject(this.socket, channel);
             });
 
@@ -177,7 +179,7 @@ router.patch("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chann
             channel.type = channel.type == 2 ? "voice" : "text";
         }
 
-        await global.dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGES", "CHANNEL_UPDATE", channel);
+        await dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGES", "CHANNEL_UPDATE", channel);
 
         return res.status(200).json(channel);
       } catch (error) {
@@ -223,7 +225,7 @@ router.post("/:channelid/call/ring", channelMiddleware, quickcache.cacheFor(60 *
 
         let call_msg = await global.database.createSystemMessage(null, req.channel.id, 3, [req.account]);
 
-        await global.dispatcher.dispatchEventInPrivateChannel(req.channel, "MESSAGE_CREATE", call_msg);
+        await dispatcher.dispatchEventInPrivateChannel(req.channel, "MESSAGE_CREATE", call_msg);
 
         return res.status(204).send();
     } catch (error) {
@@ -417,7 +419,7 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
             channel.type = channel.type == 2 ? "voice" : "text";
         }
 
-        await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_UPDATE", channel);
+        await dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_UPDATE", channel);
 
         return res.status(204).send();
     } catch(error) {
@@ -441,7 +443,7 @@ router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_
         }
 
         if (overwriteIndex === -1) {
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_UPDATE", channel);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_UPDATE", channel);
 
             return res.status(204).send();
         }
@@ -458,7 +460,7 @@ router.delete("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_
             channel.type = channel.type == 2 ? "voice" : "text";
         }
 
-        await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_UPDATE", channel);
+        await dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_UPDATE", channel);
 
         return res.status(204).send();
     } catch(error) {
@@ -513,7 +515,7 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
             throw "Failed to update recipients list in channel";
         
         //Notify everyone else
-        await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
+        await dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
             return globalUtils.personalizeChannelObject(this.socket, channel);
         });
         
@@ -522,7 +524,7 @@ router.put("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIED_E
 
         let add_msg = await global.database.createSystemMessage(null, channel.id, 1, [sender, recipient]);
 
-        await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", add_msg);
+        await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", add_msg);
         
         return res.status(204).send();
     } catch(error) {
@@ -562,13 +564,13 @@ router.delete("/:channelid/recipients/:recipientid", instanceMiddleware("VERIFIE
             throw "Failed to update recipients list in channel";
         
         //Notify everyone else
-        await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
+        await dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function() {
             return globalUtils.personalizeChannelObject(this.socket, channel);
         });
 
         let remove_msg = await global.database.createSystemMessage(null, channel.id, 2, [recipient]);
 
-        await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", remove_msg);
+        await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", remove_msg);
 
         return res.status(204).send();
     } catch(error) {
@@ -614,7 +616,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
                 return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
             
-            await global.dispatcher.dispatchEventTo(sender.id, "CHANNEL_DELETE", {
+            await dispatcher.dispatchEventTo(sender.id, "CHANNEL_DELETE", {
                 id: channel.id,
                 guild_id: null
             });
@@ -641,7 +643,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
                 if (!await global.database.updateChannelRecipients(channel.id, newRecipientsList))
                     throw "Failed to update recipients list in channel";
 
-                await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function () {
+                await dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_UPDATE", function () {
                     return globalUtils.personalizeChannelObject(this.socket, channel);
                 });
             }
@@ -656,7 +658,7 @@ router.delete("/:channelid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
                 });
             }
 
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_DELETE", {
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_DELETE", {
                 id: channel.id,
                 guild_id: channel.guild_id
             });

@@ -6,6 +6,7 @@ const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
 const lazyRequest = require('../helpers/lazyRequest');
+const dispatcher = require('../helpers/dispatcher');
 const router = express.Router({ mergeParams: true });
 
 router.param('code', async (req, res, next, memberid) => {
@@ -113,9 +114,9 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
 
         guild = await global.database.getGuildById(guild.id); //update to keep in sync?
 
-        await global.dispatcher.dispatchEventTo(sender.id, "GUILD_CREATE", guild);
+        await dispatcher.dispatchEventTo(sender.id, "GUILD_CREATE", guild);
 
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
+        await dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
             roles: [],
             user: globalUtils.miniUserObject(sender),
             guild_id: invite.guild.id,
@@ -125,7 +126,7 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
             nick: null
         });
 
-        let activeSessions = global.dispatcher.getAllActiveSessions();
+        let activeSessions = dispatcher.getAllActiveSessions();
 
         for (let session of activeSessions) {
             if (session.subscriptions && session.subscriptions[guild.id]) {
@@ -142,7 +143,7 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
             }
         }
 
-        await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
+        await dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
             ...globalUtils.getUserPresence({
                 user: globalUtils.miniUserObject(sender)
             }),
@@ -153,7 +154,7 @@ router.post("/:code", instanceMiddleware("NO_INVITE_USE"), rateLimitMiddleware(g
         if (guild.system_channel_id != null) {
             let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [sender]);
 
-            await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", function () {
+            await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", function () {
                 return globalUtils.personalizeMessageObject(join_msg, guild, this.socket.client_build_date);
             });
         }

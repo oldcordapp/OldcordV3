@@ -1,9 +1,11 @@
 const express = require('express');
 const globalUtils = require('../../../helpers/globalutils');
 const { logText } = require('../../../helpers/logger');
-const router = express.Router();
 const quickcache = require('../../../helpers/quickcache');
 const errors = require('../../../helpers/errors');
+const dispatcher = require('../../../helpers/dispatcher');
+
+const router = express.Router();
 
 router.get("/", quickcache.cacheFor(60 * 5), async (req, res) => {
     try {
@@ -56,7 +58,7 @@ router.delete("/:platform/:connectionid", async (req, res) => {
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventTo(account.id, "USER_CONNECTIONS_UPDATE", {});
+        await dispatcher.dispatchEventTo(account.id, "USER_CONNECTIONS_UPDATE", {});
 
         let connectedAccounts = await global.database.getConnectedAccounts(account.id);
 
@@ -101,7 +103,7 @@ router.patch("/:platform/:connectionid", async (req, res) => {
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventTo(account.id, "USER_CONNECTIONS_UPDATE", {});
+        await dispatcher.dispatchEventTo(account.id, "USER_CONNECTIONS_UPDATE", {});
 
         let connectedAccounts = await global.database.getConnectedAccounts(account.id);
 

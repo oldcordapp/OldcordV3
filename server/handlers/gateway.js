@@ -1,4 +1,5 @@
 const globalUtils = require("../helpers/globalutils");
+const dispatcher = require('../helpers/dispatcher');
 const lazyRequest = require("../helpers/lazyRequest");
 const session = require("../helpers/session");
 
@@ -100,7 +101,7 @@ async function handleVoiceState(socket, packet) {
 
             voiceStates.splice(voiceStates.findIndex(x => x.user_id === socket.user.id), 1);
 
-            await global.dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", {
+            await dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", {
                 channel_id: channel_id,
                 guild_id: socket.current_guild.id, //must be guild id even if they left the vc and they dont send any guild id
                 user_id: socket.user.id,
@@ -158,7 +159,7 @@ async function handleVoiceState(socket, packet) {
         room = global.rooms.find(x => x.room_id === `${guild_id}:${channel_id}`);
     }
 
-    await global.dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", {
+    await dispatcher.dispatchEventInGuild(socket.current_guild, "VOICE_STATE_UPDATE", {
         channel_id: channel_id,
         guild_id: guild_id,
         user_id: socket.user.id,

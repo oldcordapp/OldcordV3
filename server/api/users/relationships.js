@@ -1,9 +1,11 @@
 const express = require('express');
 const { logText } = require('../../helpers/logger');
 const globalUtils = require('../../helpers/globalutils');
-const router = express.Router();
 const quickcache = require('../../helpers/quickcache');
 const errors = require('../../helpers/errors');
+const dispatcher = require('../../helpers/dispatcher');
+
+const router = express.Router();
 
 router.param('userid', async (req, _, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
@@ -56,13 +58,13 @@ router.delete("/:userid", async (req, res) => {
             return res.status(404).json(errors.response_404.UNKNOWN_USER); //relationship was not found, is this the correct response?
         }
         
-        await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_REMOVE", {
+        await dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_REMOVE", {
             id: relationship.id
         });
 
         if (relationship.type != 2) {
             //the only case where a user other than the requester receives an event
-            await global.dispatcher.dispatchEventTo(relationship.id, "RELATIONSHIP_REMOVE", {
+            await dispatcher.dispatchEventTo(relationship.id, "RELATIONSHIP_REMOVE", {
                 id: account.id
             });
         }
@@ -185,13 +187,13 @@ router.put("/:userid", async (req, res) => {
 
             await global.database.addRelationship(account.id, 3, user.id);
 
-            await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
+            await dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
                 id: user.id,
                 type: 4,
                 user: globalUtils.miniUserObject(user)
             });
     
-            await global.dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
+            await dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
                 id: account.id,
                 type: 3,
                 user: globalUtils.miniUserObject(account)
@@ -205,13 +207,13 @@ router.put("/:userid", async (req, res) => {
 
                 await global.database.modifyRelationship(account.id, relationship);
 
-                await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
+                await dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
                     id: user.id,
                     type: 1,
                     user: globalUtils.miniUserObject(user)
                 });
 
-                await global.dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
+                await dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
                     id: account.id,
                     type: 1,
                     user: globalUtils.miniUserObject(account)
@@ -231,14 +233,14 @@ router.put("/:userid", async (req, res) => {
 
                 await global.database.modifyRelationship(account.id, relationship);
 
-                await global.dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_REMOVE", {
+                await dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_REMOVE", {
                     id: account.id
                 });
             }
 
             await global.database.addRelationship(account.id, 2, user.id);
 
-            await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
+            await dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
                 id: user.id,
                 type: 2,
                 user: globalUtils.miniUserObject(user)
@@ -309,13 +311,13 @@ router.post("/", async (req, res) => {
 
             await global.database.addRelationship(account.id, 3, user.id);
 
-            await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
+            await dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
                 id: user.id,
                 type: 4,
                 user: globalUtils.miniUserObject(user)
             });
 
-            await global.dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
+            await dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
                 id: account.id,
                 type: 3,
                 user: globalUtils.miniUserObject(account)
@@ -420,13 +422,13 @@ router.post("/", async (req, res) => {
 
             await global.database.addRelationship(account.id, 3, user.id);
 
-            await global.dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
+            await dispatcher.dispatchEventTo(account.id, "RELATIONSHIP_ADD", {
                 id: user.id,
                 type: 4,
                 user: globalUtils.miniUserObject(user)
             });
 
-            await global.dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
+            await dispatcher.dispatchEventTo(user.id, "RELATIONSHIP_ADD", {
                 id: account.id,
                 type: 3,
                 user: globalUtils.miniUserObject(account)

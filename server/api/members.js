@@ -6,6 +6,8 @@ const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
 const lazyRequest = require('../helpers/lazyRequest');
+const dispatcher = require('../helpers/dispatcher');
+
 const router = express.Router({ mergeParams: true });
 
 router.param('memberid', async (req, res, next, memberid) => {
@@ -33,11 +35,11 @@ router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimi
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventTo(member.id, "GUILD_DELETE", {
+        await dispatcher.dispatchEventTo(member.id, "GUILD_DELETE", {
             id: req.params.guildid
         });
 
-        let activeSessions = global.dispatcher.getAllActiveSessions();
+        let activeSessions = dispatcher.getAllActiveSessions();
 
         for (let session of activeSessions) {
             if (session.subscriptions && session.subscriptions[req.guild.id]) {
@@ -47,7 +49,7 @@ router.delete("/:memberid", guildPermissionsMiddleware("KICK_MEMBERS"), rateLimi
             }
         }
 
-        await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
+        await dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
             type: "kick",
             moderator: globalUtils.miniUserObject(sender),
             user: globalUtils.miniUserObject(member.user),
@@ -107,7 +109,7 @@ async function updateMember(member, guild, roles, nick) {
             nick: member.nick
         };
 
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_UPDATE", updatePayload);
+        await dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_UPDATE", updatePayload);
         await lazyRequest.syncMemberList(guild, member.id);
     }
 

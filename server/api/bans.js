@@ -1,6 +1,7 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
 const globalUtils = require('../helpers/globalutils');
+const dispatcher = require('../helpers/dispatcher');
 const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
@@ -62,11 +63,11 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
         }
 
         if (userInGuild) {
-            await global.dispatcher.dispatchEventTo(member.id, "GUILD_DELETE", {
+            await dispatcher.dispatchEventTo(member.id, "GUILD_DELETE", {
                 id: req.params.guildid
             });
 
-            let activeSessions = global.dispatcher.getAllActiveSessions();
+            let activeSessions = dispatcher.getAllActiveSessions();
 
             for (let session of activeSessions) {
                 if (session.subscriptions && session.subscriptions[req.guild.id]) {
@@ -76,7 +77,7 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
                 }
             }
 
-            await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
+            await dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
                 type: "ban",
                 moderator: globalUtils.miniUserObject(sender),
                 user: globalUtils.miniUserObject(member.user),
@@ -109,7 +110,7 @@ router.put("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimitMid
                         let tryDelete = await global.database.deleteMessage(message.id);
 
                         if (tryDelete) {
-                            await global.dispatcher.dispatchEventInChannel(req.guild, message.channel_id, "MESSAGE_DELETE", {
+                            await dispatcher.dispatchEventInChannel(req.guild, message.channel_id, "MESSAGE_DELETE", {
                                 id: message.id,
                                 guild_id: req.params.guildid,
                                 channel_id: message.channel_id
@@ -150,7 +151,7 @@ router.delete("/:memberid", guildPermissionsMiddleware("BAN_MEMBERS"), rateLimit
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventTo(sender.id, "GUILD_BAN_REMOVE", {
+        await dispatcher.dispatchEventTo(sender.id, "GUILD_BAN_REMOVE", {
             guild_id: req.params.guildid,
             user: globalUtils.miniUserObject(ban.user),
             roles: []

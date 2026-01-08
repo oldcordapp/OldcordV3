@@ -1,8 +1,7 @@
 const express = require('express');
 const globalUtils = require('../../../helpers/globalutils');
-const { rateLimitMiddleware, guildMiddleware } = require('../../../helpers/middlewares');
+const { rateLimitMiddleware } = require('../../../helpers/middlewares');
 const { logText } = require('../../../helpers/logger');
-const router = express.Router();
 const relationships = require('../relationships');
 const quickcache = require('../../../helpers/quickcache');
 const Watchdog = require('../../../helpers/watchdog');
@@ -10,6 +9,9 @@ const connections = require('./connections');
 const guilds = require('./guilds');
 const billing = require('./billing');
 const errors = require('../../../helpers/errors');
+const dispatcher = require('../../../helpers/dispatcher');
+
+const router = express.Router();
 
 router.use("/relationships", relationships);
 
@@ -150,7 +152,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
        }
 
-       await global.dispatcher.dispatchEventTo(retAccount.id, "USER_UPDATE", {
+       await dispatcher.dispatchEventTo(retAccount.id, "USER_UPDATE", {
          avatar: retAccount.avatar,
          discriminator: retAccount.discriminator,
          email: retAccount.email,
@@ -163,7 +165,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
          claimed: true
        });
 
-       await global.dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(retAccount.id, retAccount);
+       await dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(retAccount.id, retAccount);
 
        return res.status(200).json({
           avatar: retAccount.avatar,
@@ -287,7 +289,7 @@ router.patch("/", rateLimitMiddleware(global.config.ratelimit_config.updateMe.ma
        await global.database.unverifyEmail(account.id);
     } //unverify them as they need to uh verify with their new email thingimajig
 
-    await global.dispatcher.dispatchEventTo(account.id, "USER_UPDATE", {
+    await dispatcher.dispatchEventTo(account.id, "USER_UPDATE", {
       avatar: account.avatar,
       discriminator: account.discriminator,
       email: account.email,
@@ -348,7 +350,7 @@ router.patch("/settings", async (req, res) => {
     if (attempt) {
       const settings = new_settings;
 
-      await global.dispatcher.dispatchEventTo(account.id, "USER_SETTINGS_UPDATE", settings);
+      await dispatcher.dispatchEventTo(account.id, "USER_SETTINGS_UPDATE", settings);
 
       if (req.body.status) {
         const userSessions = global.userSessions.get(account.id);
@@ -461,7 +463,7 @@ router.put("/notes/:userid", async (req, res) => {
       })
     }
 
-    await global.dispatcher.dispatchEventTo(account.id, "USER_NOTE_UPDATE", {
+    await dispatcher.dispatchEventTo(account.id, "USER_NOTE_UPDATE", {
       id: user.id,
       note: new_notes
     });
@@ -581,7 +583,7 @@ router.post("/mfa/totp/enable", rateLimitMiddleware(global.config.ratelimit_conf
 
     returnedObj.mfa_enabled = true;
 
-    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", returnedObj);
+    await dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", returnedObj);
 
     return res.status(200).json({
       token: req.headers['authorization'],
@@ -631,7 +633,7 @@ router.post("/mfa/totp/disable", rateLimitMiddleware(global.config.ratelimit_con
 
     returnedObj.mfa_enabled = false;
 
-    await global.dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", returnedObj);
+    await dispatcher.dispatchEventTo(req.account.id, "USER_UPDATE", returnedObj);
 
     return res.status(200).json(returnedObj);
   } catch (error) {

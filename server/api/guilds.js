@@ -10,6 +10,7 @@ const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
 const { instanceMiddleware, rateLimitMiddleware, guildMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
 const lazyRequest = require('../helpers/lazyRequest');
+const dispatcher = require('../helpers/dispatcher');
 
 const router = express.Router();
 
@@ -136,8 +137,8 @@ router.post("/", instanceMiddleware("NO_GUILD_CREATION"), rateLimitMiddleware(gl
                 });
             }
 
-            await global.dispatcher.dispatchEventTo(creator.id, "GUILD_CREATE", guild);
-            await global.dispatcher.dispatchEventTo(creator.id, "GUILD_MEMBER_LIST_UPDATE", {
+            await dispatcher.dispatchEventTo(creator.id, "GUILD_CREATE", guild);
+            await dispatcher.dispatchEventTo(creator.id, "GUILD_MEMBER_LIST_UPDATE", {
                 id: "everyone",
                 guild_id: guild.id,
                 member_count: 1,
@@ -180,7 +181,7 @@ async function guildDeleteRequest(req, res) {
                 } //Is there a response for this?
             }
             
-            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
+            await dispatcher.dispatchEventInGuild(guild, "GUILD_DELETE", {
                 id: req.params.guildid
             });
             
@@ -198,11 +199,11 @@ async function guildDeleteRequest(req, res) {
                 return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
 
-            await global.dispatcher.dispatchEventTo(user.id, "GUILD_DELETE", {
+            await dispatcher.dispatchEventTo(user.id, "GUILD_DELETE", {
                 id: req.params.guildid
             });
 
-            let activeSessions = global.dispatcher.getAllActiveSessions();
+            let activeSessions = dispatcher.getAllActiveSessions();
 
             for (let session of activeSessions) {
                 if (session.subscriptions && session.subscriptions[req.guild.id]) {
@@ -212,7 +213,7 @@ async function guildDeleteRequest(req, res) {
                 }
             }
 
-            await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
+            await dispatcher.dispatchEventInGuild(req.guild, "GUILD_MEMBER_REMOVE", {
                 type: "leave",
                 user: globalUtils.miniUserObject(user),
                 guild_id: String(req.params.guildid)
@@ -378,7 +379,7 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
                 return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
             }
     
-            await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_UPDATE", what);
+            await dispatcher.dispatchEventInGuild(req.guild, "GUILD_UPDATE", what);
     
             return res.status(200).json(what);
         }
@@ -395,7 +396,7 @@ router.patch("/:guildid", guildMiddleware, guildPermissionsMiddleware("MANAGE_GU
             return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventInGuild(req.guild, "GUILD_UPDATE", what);
+        await dispatcher.dispatchEventInGuild(req.guild, "GUILD_UPDATE", what);
 
         return res.status(200).json(what);
       } catch (error) {
@@ -615,7 +616,7 @@ router.post("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("M
 
         channel.type = typeof req.body.type === 'string' ? req.body.type : number_type;
 
-        await global.dispatcher.dispatchEventInGuild(req.guild, "CHANNEL_CREATE", function() {
+        await dispatcher.dispatchEventInGuild(req.guild, "CHANNEL_CREATE", function() {
             return globalUtils.personalizeChannelObject(this.socket, channel);
         });
 
@@ -662,7 +663,7 @@ router.patch("/:guildid/channels", guildMiddleware, guildPermissionsMiddleware("
 
             ret.push(channel);
 
-            await global.dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGES", "CHANNEL_UPDATE", channel);
+            await dispatcher.dispatchEventToAllPerms(channel.guild_id, channel.id, "READ_MESSAGES", "CHANNEL_UPDATE", channel);
         }
 
         return res.status(200).json(ret);

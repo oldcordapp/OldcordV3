@@ -1,9 +1,11 @@
 const express = require('express');
 const globalUtils = require('../helpers/globalutils');
-const router = express.Router({ mergeParams: true });
-const integrationConfig = globalUtils.config.integration_config;
 const Twitch = require('../helpers/integrations/twitch');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
+
+const router = express.Router({ mergeParams: true });
+const integrationConfig = globalUtils.config.integration_config;
 
 let pendingCallback = [];
 
@@ -101,7 +103,7 @@ router.get("/:platform/callback", async (req, res) => {
 
     pendingCallback = pendingCallback.filter(x => x !== pending);
 
-    await global.dispatcher.dispatchEventTo(account.id, "USER_CONNECTIONS_UPDATE", {});
+    await dispatcher.dispatchEventTo(account.id, "USER_CONNECTIONS_UPDATE", {});
 
     return res.status(200).json({
         code: 200,
