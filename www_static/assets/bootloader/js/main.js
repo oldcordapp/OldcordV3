@@ -159,9 +159,7 @@ class Bootloader {
         "warning"
       );
       this.originalBuild = this.release_date;
-      utils.setCookie("original_build", this.originalBuild);
       this.release_date = window.release_date = "february_25_2018";
-      utils.setCookie("release_date", "february_25_2018");
       return true;
     }
     return false;
@@ -171,44 +169,20 @@ class Bootloader {
     utils.loadLog("Starting token monitor...", "warning");
 
     // Workaround for Discord's monkey patching of localStorage
-    this.storageFrame = document.body.appendChild(
+    const storageFrame = document.body.appendChild(
       document.createElement("iframe")
     );
-    this.localStorage = this.storageFrame.contentWindow.localStorage;
+    storageFrame.style.display = "none";
 
     return setInterval(() => {
       try {
-        if (this.checkForToken()) {
-          this.handleLoginDetected();
+        const token = storageFrame.contentWindow.localStorage.getItem("token");
+        if (token) {
+          utils.loadLog("Token detected! Refreshing...", "warning");
+          location.reload();
         }
-      } catch (e) {
-        utils.loadLog("Error in token monitor: " + e, "error");
-      }
-    }, 100);
-  }
-
-  checkForToken() {
-    try {
-      return Boolean(this.localStorage?.token);
-    } catch (e) {
-      utils.loadLog("Token check error: " + e, "error");
-      return false;
-    }
-  }
-
-  handleLoginDetected() {
-    utils.loadLog(
-      "Token detected! Switching back to: " + this.originalBuild,
-      "warning"
-    );
-    // Clean up the iframe before reload
-    this.storageFrame?.remove();
-
-    this.release_date = window.release_date = this.originalBuild;
-    utils.setCookie("release_date", this.originalBuild);
-    utils.removeCookie("original_build");
-
-    window.location.href = window.location.pathname;
+      } catch (e) {}
+    }, 1000);
   }
 
   async loadApplication() {
