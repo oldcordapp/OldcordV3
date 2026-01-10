@@ -11,18 +11,20 @@
     "oldplunger"
   ],
   "scripts": {
+    "build": "npm run build:selector && npm run build:admin && npm run build:oldplunger && npm run build:server",
     "build:admin": "npm run build --workspace=frontend/admin",
-    "build:all": "npm run build:selector && npm run build:admin && npm run build:oldplunger",
     "build:oldplunger": "npm run build --workspace=oldplunger",
     "build:selector": "npm run build --workspace=frontend/selector",
+    "build:server": "tsc -p server --outDir dist_server",
     "dev:admin": "npm run dev --workspace=frontend/admin",
     "dev:oldplunger": "npm run dev --workspace=oldplunger",
     "dev:selector": "npm run dev --workspace=frontend/selector",
+    "dev:server": "tsx server/index.ts",
     "lint": "npm run prettier && npx eslint .",
     "lint:fix": "npm run prettier && npx eslint --fix .",
     "prettier": "npx prettier . --write",
     "start": "npm run build:all && npm run start:server",
-    "start:server": "tsx server/index.ts",
+    "start:server": "node dist_server/index.js",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -49,7 +51,6 @@
     "react-transition-group": "^4.4.5",
     "semantic-sdp": "^3.31.1",
     "speakeasy": "^2.0.0",
-
     "vite": "npm:rolldown-vite@7.3.1",
     "vite-plugin-svgr": "^4.5.0",
     "ws": "^8.19.0"

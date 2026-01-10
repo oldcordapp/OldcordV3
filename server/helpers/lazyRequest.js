@@ -1,4 +1,4 @@
-const globalUtils = require('../helpers/globalutils');
+const globalUtils = require('./globalutils');
 const dispatcher = require('./dispatcher');
 const murmur = require('murmurhash-js');
 
