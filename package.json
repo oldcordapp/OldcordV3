@@ -16,9 +16,9 @@
     "dev:admin": "npm run dev --workspace=frontend/admin",
     "dev:selector": "npm run dev --workspace=frontend/selector",
     "dev:oldplunger": "npm run dev --workspace=oldplunger",
-    "lint": "npx eslint .",
-    "lint:fix": "npx eslint --fix .",
-    "prettier": "npx prettier . --write"
+    "prettier": "npx prettier . --write",
+    "lint": "npm run prettier && npx eslint .",
+    "lint:fix": "npm run prettier && npx eslint --fix ."
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
