@@ -2,20 +2,20 @@
 
 // Following Vencord's src/Vencord.ts
 
-import { Logger } from "./utils/logger";
-import * as Webpack from "./webpack";
-import { initializePlugins, startPlugins } from "./plugins";
+import { Logger } from './utils/logger';
+import * as Webpack from './webpack';
+import { initializePlugins, startPlugins } from './plugins';
 
-export { startPlugins } from "./plugins";
+export { startPlugins } from './plugins';
 
-const logger = new Logger("Main");
+const logger = new Logger('Main');
 
 async function init() {
   window.oldplunger = {};
   Webpack.init();
 }
 
-logger.log("Starting Oldplunger...");
+logger.log('Starting Oldplunger...');
 initializePlugins();
-startPlugins("Init");
+startPlugins('Init');
 init();

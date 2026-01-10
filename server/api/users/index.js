@@ -11,229 +11,257 @@ const dispatcher = require('../../helpers/dispatcher');
 const router = express.Router();
 
 router.param('userid', async (req, res, next, userid) => {
-    if (userid === "@me") {
-        userid = req.account.id;
-    }
-    req.user = await global.database.getAccountByUserId(userid);
+  if (userid === '@me') {
+    userid = req.account.id;
+  }
+  req.user = await global.database.getAccountByUserId(userid);
 
-    next();
+  next();
 });
 
-router.use("/@me", me);
+router.use('/@me', me);
 
-router.get("/:userid", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
-    return res.status(200).json(globalUtils.miniUserObject(req.user));
+router.get('/:userid', userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
+  return res.status(200).json(globalUtils.miniUserObject(req.user));
 });
 
 //new dm system / group dm system
-router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame, global.config.ratelimit_config.createPrivateChannel.timeFrame), Watchdog.middleware(global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame, global.config.ratelimit_config.createPrivateChannel.timeFrame, 0.5), async (req, res) => {
+router.post(
+  '/:userid/channels',
+  rateLimitMiddleware(
+    global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame,
+    global.config.ratelimit_config.createPrivateChannel.timeFrame,
+  ),
+  Watchdog.middleware(
+    global.config.ratelimit_config.createPrivateChannel.maxPerTimeFrame,
+    global.config.ratelimit_config.createPrivateChannel.timeFrame,
+    0.5,
+  ),
+  async (req, res) => {
     try {
-        let recipients = req.body.recipients;
-        let account = req.account;
-        
-        if (req.body.recipient_id) {
-            recipients = [req.body.recipient_id];
-        } else if (req.body.recipient) {
-            recipients = [req.body.recipient];
-        }
-        
-        if (!recipients) {
-            return res.status(400).json({
-                code: 400,
-                message: "Valid recipients are required."
-            });
-        }
-        
-        if (recipients.length > 9) {
-            return res.status(400).json({
-                code: 400,
-                message: "Too many recipients. (max: 10)"
-            })
-        }
-        
-        let validRecipientIDs = [];
-        let map = {};
+      let recipients = req.body.recipients;
+      let account = req.account;
 
-        validRecipientIDs.push(account.id);
+      if (req.body.recipient_id) {
+        recipients = [req.body.recipient_id];
+      } else if (req.body.recipient) {
+        recipients = [req.body.recipient];
+      }
 
-        for(var recipient of recipients) {
-            if (validRecipientIDs.includes(recipient))
-                continue;
-            
-            let userObject = await global.database.getAccountByUserId(recipient);
+      if (!recipients) {
+        return res.status(400).json({
+          code: 400,
+          message: 'Valid recipients are required.',
+        });
+      }
 
-            if (!userObject)
-                continue;
+      if (recipients.length > 9) {
+        return res.status(400).json({
+          code: 400,
+          message: 'Too many recipients. (max: 10)',
+        });
+      }
 
-            map[recipient] = userObject;
+      let validRecipientIDs = [];
+      let map = {};
 
-            validRecipientIDs.push(recipient);
-        }
-        
-        let channel = null;
-        let type = validRecipientIDs.length > 2 ? 3 : 1;
+      validRecipientIDs.push(account.id);
 
-        if (type == 1)
-            channel = await global.database.findPrivateChannel(account.id, validRecipientIDs[validRecipientIDs[0] == account.id ? 1 : 0]);
+      for (var recipient of recipients) {
+        if (validRecipientIDs.includes(recipient)) continue;
 
-        if (type === 3) {
-            for(var validRecipientId of validRecipientIDs) {
-                if (validRecipientId === account.id) {
-                    continue;
-                }
+        let userObject = await global.database.getAccountByUserId(recipient);
 
-                let userObject = map[validRecipientId];
+        if (!userObject) continue;
 
-                if (!globalUtils.areWeFriends(account, userObject)) {
-                    validRecipientIDs = validRecipientIDs.filter(x => x !== validRecipientId);
-                    continue;
-                }
-            }
+        map[recipient] = userObject;
 
-            type = validRecipientIDs.length > 2 ? 3 : 1;
+        validRecipientIDs.push(recipient);
+      }
+
+      let channel = null;
+      let type = validRecipientIDs.length > 2 ? 3 : 1;
+
+      if (type == 1)
+        channel = await global.database.findPrivateChannel(
+          account.id,
+          validRecipientIDs[validRecipientIDs[0] == account.id ? 1 : 0],
+        );
+
+      if (type === 3) {
+        for (var validRecipientId of validRecipientIDs) {
+          if (validRecipientId === account.id) {
+            continue;
+          }
+
+          let userObject = map[validRecipientId];
+
+          if (!globalUtils.areWeFriends(account, userObject)) {
+            validRecipientIDs = validRecipientIDs.filter((x) => x !== validRecipientId);
+            continue;
+          }
         }
 
-        channel ??= await global.database.createChannel(null, null, type, 0, validRecipientIDs, account.id);
-  
-        let pChannel = globalUtils.personalizeChannelObject(req, channel);
-        
-        if (type == 3)
-            await globalUtils.pingPrivateChannel(channel);
-        else
-            await dispatcher.dispatchEventTo(account, "CHANNEL_CREATE", pChannel);
-        
-        return res.status(200).json(pChannel);
+        type = validRecipientIDs.length > 2 ? 3 : 1;
+      }
 
-    } catch(error) {
-        logText(error, "error");
-    
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      channel ??= await global.database.createChannel(
+        null,
+        null,
+        type,
+        0,
+        validRecipientIDs,
+        account.id,
+      );
+
+      let pChannel = globalUtils.personalizeChannelObject(req, channel);
+
+      if (type == 3) await globalUtils.pingPrivateChannel(channel);
+      else await dispatcher.dispatchEventTo(account, 'CHANNEL_CREATE', pChannel);
+
+      return res.status(200).json(pChannel);
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
-});
+  },
+);
 
-router.get("/:userid/profile", userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
-    try {
-        let account = req.account;
-        let user = req.user;
-        let ret = {};
+router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
+  try {
+    let account = req.account;
+    let user = req.user;
+    let ret = {};
 
-        let guilds = await global.database.getUsersGuilds(user.id);
+    let guilds = await global.database.getUsersGuilds(user.id);
 
-        let sharedGuilds = guilds.filter(guild => guild.members != null && guild.members.length > 0 && guild.members.some(member => member.id === account.id));
-        let mutualGuilds = [];
+    let sharedGuilds = guilds.filter(
+      (guild) =>
+        guild.members != null &&
+        guild.members.length > 0 &&
+        guild.members.some((member) => member.id === account.id),
+    );
+    let mutualGuilds = [];
 
-        for(var sharedGuild of sharedGuilds) {
-            let id = sharedGuild.id;
-            let member = sharedGuild.members.find(y => y.id == user.id);
+    for (var sharedGuild of sharedGuilds) {
+      let id = sharedGuild.id;
+      let member = sharedGuild.members.find((y) => y.id == user.id);
 
-            if (!member) continue;
+      if (!member) continue;
 
-            let nick = member.nick;
+      let nick = member.nick;
 
-            mutualGuilds.push({
-                id: id,
-                nick: nick,
-                roles: member.roles
-            });
-        }
-
-        ret.mutual_guilds = req.query.with_mutual_guilds === "false" ? undefined : mutualGuilds; 
-
-        let sharedFriends = [];
-
-        if (!user.bot) {
-            let ourFriends = account.relationships;
-            let theirFriends = user.relationships;
-
-            if (ourFriends.length > 0 && theirFriends.length > 0) {
-                let theirFriendsSet = new Set(theirFriends.map(friend => friend.user.id && friend.type == 1));
-            
-                for (let ourFriend of ourFriends) {
-                    if (theirFriendsSet.has(ourFriend.user.id) && ourFriend.type == 1) {
-                        sharedFriends.push(globalUtils.miniUserObject(ourFriend.user));
-                    }
-                }
-            }
-        }
-
-        ret.mutual_friends = sharedFriends;
-
-        let connectedAccounts = await global.database.getConnectedAccounts(user.id);
-
-        connectedAccounts = connectedAccounts.filter(x => x.visibility == 1);
-
-        connectedAccounts.forEach(x => x = globalUtils.sanitizeObject(x, ['integrations', 'revoked', 'visibility']));
-
-        ret.user = globalUtils.miniUserObject(user);
-        ret.connected_accounts = connectedAccounts;
-        ret.premium_since = new Date().toISOString();
-
-         // v9 responses
-        ret.premium_type = 2;
-        ret.user_profile = {
-            accent_color: 0,
-            banner: "",
-            bio: "",
-            emoji: null,
-            popout_animation_particle_type: null,
-            profile_effect: null,
-            pronouns: "",
-            theme_colors: []
-        }
-
-        return res.status(200).json(ret);
+      mutualGuilds.push({
+        id: id,
+        nick: nick,
+        roles: member.roles,
+      });
     }
-    catch(error) {
-        logText(error, "error");
-    
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
+
+    ret.mutual_guilds = req.query.with_mutual_guilds === 'false' ? undefined : mutualGuilds;
+
+    let sharedFriends = [];
+
+    if (!user.bot) {
+      let ourFriends = account.relationships;
+      let theirFriends = user.relationships;
+
+      if (ourFriends.length > 0 && theirFriends.length > 0) {
+        let theirFriendsSet = new Set(
+          theirFriends.map((friend) => friend.user.id && friend.type == 1),
+        );
+
+        for (let ourFriend of ourFriends) {
+          if (theirFriendsSet.has(ourFriend.user.id) && ourFriend.type == 1) {
+            sharedFriends.push(globalUtils.miniUserObject(ourFriend.user));
+          }
+        }
+      }
     }
+
+    ret.mutual_friends = sharedFriends;
+
+    let connectedAccounts = await global.database.getConnectedAccounts(user.id);
+
+    connectedAccounts = connectedAccounts.filter((x) => x.visibility == 1);
+
+    connectedAccounts.forEach(
+      (x) => (x = globalUtils.sanitizeObject(x, ['integrations', 'revoked', 'visibility'])),
+    );
+
+    ret.user = globalUtils.miniUserObject(user);
+    ret.connected_accounts = connectedAccounts;
+    ret.premium_since = new Date().toISOString();
+
+    // v9 responses
+    ret.premium_type = 2;
+    ret.user_profile = {
+      accent_color: 0,
+      banner: '',
+      bio: '',
+      emoji: null,
+      popout_animation_particle_type: null,
+      profile_effect: null,
+      pronouns: '',
+      theme_colors: [],
+    };
+
+    return res.status(200).json(ret);
+  } catch (error) {
+    logText(error, 'error');
+
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+  }
 });
 
 //Never share this cache because it's mutuals and whatnot, different for each requester
 //We're gonna remove the userMiddleware from this since it needs to work on users we're friends with without any guilds in common
-router.get("/:userid/relationships", quickcache.cacheFor(60 * 5), async (req, res) => {
-    try {
-        let account = req.account;
+router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req, res) => {
+  try {
+    let account = req.account;
 
-        if (account.bot) {
-            return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
-        }
-
-        if (req.params.userid === "456226577798135808") {
-            return res.status(200).json([]);
-        } //Return [] for the deleted user account
-
-        let user = req.user;
-
-        if (!user) {
-            return res.status(404).json(errors.response_404.UNKNOWN_USER);
-        }
-
-        if (user.bot) {
-            return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
-        } // I think this is more professional
-
-        let ourFriends = account.relationships;
-        let theirFriends = user.relationships;
-
-        let sharedFriends = [];
-
-        for (var ourFriend of ourFriends) {
-            for (var theirFriend of theirFriends) {
-                if (theirFriend.user.id === ourFriend.user.id && theirFriend.type === 1 && ourFriend.type === 1) {
-                    sharedFriends.push(globalUtils.miniUserObject(theirFriend.user));
-                }
-            }
-        }
-
-        return res.status(200).json(sharedFriends);
+    if (account.bot) {
+      return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
     }
-    catch(error) {
-        logText(error, "error");
-    
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR); 
+
+    if (req.params.userid === '456226577798135808') {
+      return res.status(200).json([]);
+    } //Return [] for the deleted user account
+
+    let user = req.user;
+
+    if (!user) {
+      return res.status(404).json(errors.response_404.UNKNOWN_USER);
     }
+
+    if (user.bot) {
+      return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
+    } // I think this is more professional
+
+    let ourFriends = account.relationships;
+    let theirFriends = user.relationships;
+
+    let sharedFriends = [];
+
+    for (var ourFriend of ourFriends) {
+      for (var theirFriend of theirFriends) {
+        if (
+          theirFriend.user.id === ourFriend.user.id &&
+          theirFriend.type === 1 &&
+          ourFriend.type === 1
+        ) {
+          sharedFriends.push(globalUtils.miniUserObject(theirFriend.user));
+        }
+      }
+    }
+
+    return res.status(200).json(sharedFriends);
+  } catch (error) {
+    logText(error, 'error');
+
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+  }
 });
 
 module.exports = router;

@@ -28,7 +28,8 @@ transform: translateY(150.078%) translateZ(0px);
 .notice-region-enter-active {
   transform: translateY(0);
   opacity: 1;
-  transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+  transition:
+    transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
     opacity 0.2s ease-out;
 }
 
@@ -40,7 +41,8 @@ transform: translateY(150.078%) translateZ(0px);
 .notice-region-exit-active {
   transform: translateY(150%);
   opacity: 0;
-  transition: transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+  transition:
+    transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
     opacity 0.2s ease-out;
 }
 

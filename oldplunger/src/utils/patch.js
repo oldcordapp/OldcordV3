@@ -1,9 +1,9 @@
-import cookieManager from "./cookieManager";
-import { Logger } from "./logger";
+import cookieManager from './cookieManager';
+import { Logger } from './logger';
 
-const logger = new Logger("Patcher");
+const logger = new Logger('Patcher');
 
-const isDebugMode = cookieManager.get("debug_mode");
+const isDebugMode = cookieManager.get('debug_mode');
 
 // I think from Vencord's side this is for plugins to add in their patches
 
@@ -12,8 +12,8 @@ export const patches = [];
 // So we also took some code from Vencord here, I guess
 
 function addBypassEvalTypeError(moduleId, moduleString, patch) {
-  const bodyStartIndex = moduleString.indexOf("{") + 1;
-  const bodyEndIndex = moduleString.lastIndexOf("}");
+  const bodyStartIndex = moduleString.indexOf('{') + 1;
+  const bodyEndIndex = moduleString.lastIndexOf('}');
 
   if (bodyStartIndex > 0 && bodyEndIndex > bodyStartIndex) {
     const functionHeader = moduleString.substring(0, bodyStartIndex);
@@ -21,7 +21,7 @@ function addBypassEvalTypeError(moduleId, moduleString, patch) {
     const functionFooter = moduleString.substring(bodyEndIndex);
 
     const newBody = `try { ${originalBody} } catch (err) { console.error('[Patcher] Runtime error in patched module ${String(
-      moduleId
+      moduleId,
     )} from plugin ${patch.plugin.name}:', err); }`;
 
     moduleString = functionHeader + newBody + functionFooter;
@@ -41,7 +41,7 @@ function callbackReplacer(replacement, args) {
         originalString
           .substring(Math.max(0, offset - 50), offset)
           .trimEnd()
-          .includes(exclusion)
+          .includes(exclusion),
     )
   ) {
     return fullMatch;
@@ -55,15 +55,15 @@ function callbackReplacer(replacement, args) {
 }
 
 export function patchModule(module, id) {
-  if (typeof module !== "function") return module;
+  if (typeof module !== 'function') return module;
 
   // 0, prefix to turn it into an expression: 0,function(){} would be invalid syntax without the 0,
-  let moduleString = "0," + String(module);
+  let moduleString = '0,' + String(module);
   let bypassApplied = false;
 
   for (const patch of patches) {
     if (
-      (typeof patch.find === "string" && !moduleString.includes(patch.find)) ||
+      (typeof patch.find === 'string' && !moduleString.includes(patch.find)) ||
       (patch.find instanceof RegExp && !patch.find.test(moduleString))
     ) {
       continue;
@@ -74,25 +74,16 @@ export function patchModule(module, id) {
 
     for (const replacement of patch.replacement) {
       if (replacement.find) {
-        moduleString = moduleString.replace(
-          replacement.find,
-          function (...args) {
-            return callbackReplacer(replacement, args);
-          }
-        );
+        moduleString = moduleString.replace(replacement.find, function (...args) {
+          return callbackReplacer(replacement, args);
+        });
         continue;
       }
 
       if (replacement.match.global || replacement.global) {
-        moduleString = moduleString.replaceAll(
-          replacement.match,
-          replacement.replace
-        );
+        moduleString = moduleString.replaceAll(replacement.match, replacement.replace);
       } else {
-        moduleString = moduleString.replace(
-          replacement.match,
-          replacement.replace
-        );
+        moduleString = moduleString.replace(replacement.match, replacement.replace);
       }
     }
 
@@ -100,7 +91,7 @@ export function patchModule(module, id) {
       continue;
     }
 
-    if (moduleString.includes("[Patcher] Runtime error in patched module")) {
+    if (moduleString.includes('[Patcher] Runtime error in patched module')) {
       bypassApplied = true;
     }
 
@@ -116,17 +107,13 @@ export function patchModule(module, id) {
     try {
       module = (0, eval)(
         `${moduleString}${
-          !patch.plugin.debug ||
-          isDebugMode !== "true" ||
-          moduleString.includes("//# sourceURL")
-            ? ""
+          !patch.plugin.debug || isDebugMode !== 'true' || moduleString.includes('//# sourceURL')
+            ? ''
             : `//# sourceURL=oldplunger:///WebpackModule${String(id)}`
-        }`
+        }`,
       );
     } catch (e) {
-      logger.error(
-        `Failed to patch ${id}, ${patch.plugin.name} is causing it.`
-      );
+      logger.error(`Failed to patch ${id}, ${patch.plugin.name} is causing it.`);
       module = originalModule;
       moduleString = originalModuleString;
     }

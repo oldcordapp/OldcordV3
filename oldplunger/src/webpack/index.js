@@ -5,8 +5,8 @@
  - Export React and other tools (useful for backporting the report modal, reply functionality and server banners)
 */
 
-import { Logger } from "../utils/logger";
+import { Logger } from '../utils/logger';
 
-export * from "./init";
-export * as search from "./search";
-export const logger = new Logger("Webpack");
+export * from './init';
+export * as search from './search';
+export const logger = new Logger('Webpack');

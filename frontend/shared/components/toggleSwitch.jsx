@@ -1,8 +1,8 @@
-import "./toggleSwitch.css";
+import './toggleSwitch.css';
 
 export default function ({ isChecked, onChange, uniqueId, disabled = false }) {
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onChange();
     }
@@ -10,7 +10,7 @@ export default function ({ isChecked, onChange, uniqueId, disabled = false }) {
 
   return (
     <div
-      className={`toggle-switch ${isChecked ? "checked" : ""}`}
+      className={`toggle-switch ${isChecked ? 'checked' : ''}`}
       tabIndex={0}
       onClick={onChange}
       onKeyDown={handleKeyDown}

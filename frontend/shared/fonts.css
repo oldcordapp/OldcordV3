@@ -1,103 +1,102 @@
 /* Nebula Sans Font Declarations - Based of 2018 Discord Whitney Declarations, 92.5% scale down is required since Nebula Sans is larger than Whitney */
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-Light.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-Light.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-LightItalic.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-LightItalic.woff2') format('woff2');
   font-weight: 300;
   font-style: italic;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-Book.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-Book.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-BookItalic.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-BookItalic.woff2') format('woff2');
   font-weight: 400;
   font-style: italic;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-Medium.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-MediumItalic.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-MediumItalic.woff2') format('woff2');
   font-weight: 500;
   font-style: italic;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-Semibold.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-Semibold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-SemiboldItalic.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-SemiboldItalic.woff2') format('woff2');
   font-weight: 600;
   font-style: italic;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-Bold.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-BoldItalic.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-BoldItalic.woff2') format('woff2');
   font-weight: 700;
   font-style: italic;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-Black.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-Black.woff2') format('woff2');
   font-weight: 800;
   font-style: normal;
   size-adjust: 92.5%;
 }
 
 @font-face {
-  font-family: "Nebula Sans";
-  src: url("/assets/fonts/NebulaSans-BlackItalic.woff2") format("woff2");
+  font-family: 'Nebula Sans';
+  src: url('/assets/fonts/NebulaSans-BlackItalic.woff2') format('woff2');
   font-weight: 800;
   font-style: italic;
   size-adjust: 92.5%;
 }
 
 :root {
-  --font-code: "SourceCodePro", Consolas, "Liberation Mono", Menlo, Courier,
-    monospace;
+  --font-code: 'SourceCodePro', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 }
 
 a {
@@ -141,17 +140,23 @@ code,
 
 .font-semibold {
   font-weight: 600 !important;
-  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(
+    1.03
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .font-bold {
   font-weight: 700 !important;
-  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(
+    1.03
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .font-extrabold {
   font-weight: 800 !important;
-  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(
+    1.03
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .font-size-10 {

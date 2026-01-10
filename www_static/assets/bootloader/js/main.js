@@ -1,8 +1,8 @@
-import { ResourceLoader } from "./modules/resource_loader.js";
-import { utils } from "./modules/utils.js";
-import { Config } from "./modules/config.js";
-import { LOADING_QUOTES } from "./modules/quotes.js";
-import { shim } from "./modules/shim.js";
+import { ResourceLoader } from './modules/resource_loader.js';
+import { utils } from './modules/utils.js';
+import { Config } from './modules/config.js';
+import { LOADING_QUOTES } from './modules/quotes.js';
+import { shim } from './modules/shim.js';
 
 class Bootloader {
   constructor() {
@@ -20,43 +20,39 @@ class Bootloader {
     this.setLoadingBackground();
     this.showRandomQuote();
 
-    this.progressBar = document.getElementById("oldcord-loading-progress");
-    this.progressInner = document.getElementById(
-      "oldcord-loading-progress-inner"
-    );
+    this.progressBar = document.getElementById('oldcord-loading-progress');
+    this.progressInner = document.getElementById('oldcord-loading-progress-inner');
   }
 
   getYearFromRelease(release) {
-    const year = release.split("_")[2];
+    const year = release.split('_')[2];
     return year;
   }
 
   showRandomQuote() {
     const year = this.getYearFromRelease(this.release_date);
-    const randomQuote =
-      LOADING_QUOTES[Math.floor(Math.random() * LOADING_QUOTES.length)];
+    const randomQuote = LOADING_QUOTES[Math.floor(Math.random() * LOADING_QUOTES.length)];
     const quoteText = randomQuote.text.replace(/\{year\}/g, year);
 
-    document.getElementById("oldcord-loading-quote").textContent = quoteText;
+    document.getElementById('oldcord-loading-quote').textContent = quoteText;
 
-    const submitter = document.getElementById("oldcord-loading-submitter");
+    const submitter = document.getElementById('oldcord-loading-submitter');
 
-    let submitterText = "";
+    let submitterText = '';
 
     if (!randomQuote.submittedBy) {
-      submitter.style.display = "none";
+      submitter.style.display = 'none';
       return;
     } else {
-      submitter.style.display = "block";
+      submitter.style.display = 'block';
     }
 
     if (randomQuote.fromDiscord) {
       submitterText = `ORIGINALLY APPEARED ON <span>DISCORD</span> IN <span>${randomQuote.appearedIn}</span>`;
-      submitterText +=
-        randomQuote.submittedBy === "Discord" ? "" : "<br/>ORIGINALLY ";
+      submitterText += randomQuote.submittedBy === 'Discord' ? '' : '<br/>ORIGINALLY ';
     }
 
-    if (randomQuote.submittedBy !== "Discord") {
+    if (randomQuote.submittedBy !== 'Discord') {
       submitterText += randomQuote.submittedVia
         ? `SUBMITTED BY <span>${randomQuote.submittedBy}</span> VIA <span>${randomQuote.submittedVia}</span>`
         : `SUBMITTED BY <span>${randomQuote.submittedBy}</span>`;
@@ -66,58 +62,56 @@ class Bootloader {
   }
 
   setLoadingText(text) {
-    const loadingElement = document.getElementById("oldcord-loading-text");
+    const loadingElement = document.getElementById('oldcord-loading-text');
     if (loadingElement) loadingElement.textContent = text;
   }
 
   setProgress(current, total, show = true) {
     if (show) {
-      this.progressBar.classList.add("active");
+      this.progressBar.classList.add('active');
       const percent = (current / total) * 100;
       this.progressInner.style.width = `${percent}%`;
     } else {
-      this.progressBar.classList.remove("active");
+      this.progressBar.classList.remove('active');
     }
   }
 
   async initialize() {
     try {
       // Clean up invalid tokens
-      const token = this.localStorage?.getItem("token");
-      if (token === "null" || token === "undefined") {
-        this.localStorage.removeItem("token");
+      const token = this.localStorage?.getItem('token');
+      if (token === 'null' || token === 'undefined') {
+        this.localStorage.removeItem('token');
       }
 
       window.oldcord = {};
 
-      utils.loadLog("Build: " + this.release_date);
-      utils.loadLog("Loading instance config...");
+      utils.loadLog('Build: ' + this.release_date);
+      utils.loadLog('Loading instance config...');
       window.oldcord.config = await Config.load();
       document.title = window.oldcord.config.instance.name;
 
       // Load the mod immediately before loading Discord locally
       this.oldplunger =
-        document.cookie.includes("oldplunger_enabled=true") &&
-        (await import(
-          `${location.protocol}//${window.location.host}/assets/oldplunger/index.js`
-        ));
+        document.cookie.includes('oldplunger_enabled=true') &&
+        (await import(`${location.protocol}//${window.location.host}/assets/oldplunger/index.js`));
 
       const envCheck = await this.checkEnvironment();
-      if (envCheck.status === "ready") {
+      if (envCheck.status === 'ready') {
         await this.loadApplication();
       }
     } catch (e) {
-      utils.loadLog("Fatal error occurred. Please check the console.", "error");
+      utils.loadLog('Fatal error occurred. Please check the console.', 'error');
       throw e;
     }
   }
 
   async checkEnvironment() {
-    if (window.DiscordNative && this.release_date === "april_1_2018") {
-      utils.loadLog("This build does not work on desktop client.", "error");
+    if (window.DiscordNative && this.release_date === 'april_1_2018') {
+      utils.loadLog('This build does not work on desktop client.', 'error');
       await utils.timer(3000);
-      window.location.replace("/selector");
-      return { status: "fatal" };
+      window.location.replace('/selector');
+      return { status: 'fatal' };
     }
 
     this.checkLoginCompatibility();
@@ -125,13 +119,13 @@ class Bootloader {
     window.BetterDiscord = true;
     window.Firebug = { chrome: { isInitialized: false } };
     window.GLOBAL_ENV = window.oldcord.config.globalEnv;
-    return { status: "ready" };
+    return { status: 'ready' };
   }
 
   checkLoginCompatibility() {
     let hasToken = false;
     try {
-      hasToken = Boolean(window.localStorage?.getItem("token"));
+      hasToken = Boolean(window.localStorage?.getItem('token'));
     } catch {
       return;
     }
@@ -139,44 +133,42 @@ class Bootloader {
     if (hasToken) return;
 
     const brokenBuilds = [
-      "november_16_2017",
-      "december_21_2017",
-      "january_27_2018",
-      "march_7_2018",
-      "april_1_2018",
-      "april_23_2018",
+      'november_16_2017',
+      'december_21_2017',
+      'january_27_2018',
+      'march_7_2018',
+      'april_1_2018',
+      'april_23_2018',
     ];
 
     // Check if current build is either broken login or no captcha build
     const hasLoginIssues =
       brokenBuilds.includes(this.release_date) ||
-      this.release_date.endsWith("_2015") ||
-      this.release_date.endsWith("_2016");
+      this.release_date.endsWith('_2015') ||
+      this.release_date.endsWith('_2016');
 
     if (hasLoginIssues) {
       utils.loadLog(
         `Warning: Login issues detected in the build you're trying to use. Switching to February 25 2018 temporarily...`,
-        "warning"
+        'warning',
       );
       this.originalBuild = this.release_date;
-      this.release_date = window.release_date = "february_25_2018";
+      this.release_date = window.release_date = 'february_25_2018';
     }
   }
 
   startTokenMonitor() {
-    utils.loadLog("Starting token monitor...", "warning");
+    utils.loadLog('Starting token monitor...', 'warning');
 
     // Workaround for Discord's monkey patching of localStorage
-    const storageFrame = document.body.appendChild(
-      document.createElement("iframe")
-    );
-    storageFrame.style.display = "none";
+    const storageFrame = document.body.appendChild(document.createElement('iframe'));
+    storageFrame.style.display = 'none';
 
     return setInterval(() => {
       try {
-        const token = storageFrame.contentWindow.localStorage.getItem("token");
+        const token = storageFrame.contentWindow.localStorage.getItem('token');
         if (token) {
-          utils.loadLog("Token detected! Refreshing...", "warning");
+          utils.loadLog('Token detected! Refreshing...', 'warning');
           location.reload();
         }
       } catch (e) {}
@@ -186,17 +178,15 @@ class Bootloader {
   async loadApplication() {
     // Set up chunk loading progress tracking first
     this.loader.onChunkProgress = (current, total, type) => {
-      if (type === "find") {
+      if (type === 'find') {
         this.setLoadingText(`CHECKING VALID CHUNKS (${current}/${total})`);
-      } else if (type === "load") {
-        this.setLoadingText(
-          `LOADING AND PATCHING CHUNKS (${current}/${total})`
-        );
+      } else if (type === 'load') {
+        this.setLoadingText(`LOADING AND PATCHING CHUNKS (${current}/${total})`);
       }
       this.setProgress(current, total);
     };
 
-    this.setLoadingText("DOWNLOADING APPLICATION");
+    this.setLoadingText('DOWNLOADING APPLICATION');
     const html = await this.fetchAppHtml();
 
     const { head, body } = this.parseHtml(html);
@@ -211,12 +201,10 @@ class Bootloader {
       styleUrls.map(async (url) => {
         const result = await this.loader.loadCSS(url);
         loadedFiles++;
-        this.setLoadingText(
-          `DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`
-        );
+        this.setLoadingText(`DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`);
         this.setProgress(loadedFiles, totalFiles);
         return result;
-      })
+      }),
     );
 
     const scripts = [];
@@ -224,22 +212,20 @@ class Bootloader {
       const result = await this.loader.loadScript(url);
       if (result) scripts.push(result);
       loadedFiles++;
-      this.setLoadingText(
-        `DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`
-      );
+      this.setLoadingText(`DOWNLOADING CSS AND JS FILES (${loadedFiles}/${totalFiles})`);
       this.setProgress(loadedFiles, totalFiles);
     }
 
     this.setupDOM(head, body, styles, scripts);
 
-    this.oldplunger && this.oldplunger.startPlugins("DOMContentLoaded");
+    this.oldplunger && this.oldplunger.startPlugins('DOMContentLoaded');
 
     this.setupResourceInterceptor();
 
     shim();
 
     this.setProgress(0, 1, false);
-    this.setLoadingText("READY");
+    this.setLoadingText('READY');
     await utils.timer(1000);
 
     await this.executeScripts();
@@ -250,12 +236,10 @@ class Bootloader {
 
   extractResourceUrls(head, body) {
     const getUrls = (regex) =>
-      [...(head + body).matchAll(regex)]
-        .map((m) => m[1])
-        .filter((url) => url.startsWith("/"));
+      [...(head + body).matchAll(regex)].map((m) => m[1]).filter((url) => url.startsWith('/'));
 
     const styleUrls = getUrls(/<link[^>]+href="([^"]+)"[^>]*>/g).filter(
-      (url) => !url.endsWith(".ico")
+      (url) => !url.endsWith('.ico'),
     );
     const scriptUrls = getUrls(/<script[^>]+src="([^"]+)"[^>]*>/g);
 
@@ -269,10 +253,10 @@ class Bootloader {
     const headFragment = document.createDocumentFragment();
     const bodyFragment = document.createDocumentFragment();
 
-    const tempHead = document.createElement("div");
+    const tempHead = document.createElement('div');
     tempHead.innerHTML = head;
 
-    const tempBody = document.createElement("div");
+    const tempBody = document.createElement('div');
     tempBody.innerHTML = body;
 
     const styleMap = new Map(styles.map((s) => [s.url, s.blob]));
@@ -291,16 +275,15 @@ class Bootloader {
           elem.removeAttribute('integrity');
         }
 
-
         if (elem.tagName === 'SCRIPT' && !elem.hasAttribute('src')) {
           const newScript = document.createElement('script');
-          
+
           newScript.textContent = elem.textContent;
 
           for (const attr of elem.attributes) {
             newScript.setAttribute(attr.name, attr.value);
           }
-          
+
           targetFragment.appendChild(newScript);
           continue;
         }
@@ -327,7 +310,7 @@ class Bootloader {
 
     processNodes(tempHead, headFragment);
     processNodes(tempBody, bodyFragment);
-    
+
     document.head.appendChild(headFragment);
     document.body.appendChild(bodyFragment);
   }
@@ -335,15 +318,13 @@ class Bootloader {
   async waitForMount() {
     await new Promise((resolve) => {
       const check = setInterval(() => {
-        const mount = document.getElementById("app-mount");
+        const mount = document.getElementById('app-mount');
         if (mount?.children.length) {
           clearInterval(check);
 
           this.originalChildren.forEach((child) => child.remove());
 
-          const loadingCss = document.querySelector(
-            'link[href*="loading.css"]'
-          );
+          const loadingCss = document.querySelector('link[href*="loading.css"]');
           loadingCss?.remove();
           resolve();
         }
@@ -354,11 +335,11 @@ class Bootloader {
   startHeadCleanup() {
     setInterval(() => {
       const seen = new Set();
-      document.head.querySelectorAll("link, script").forEach((element) => {
+      document.head.querySelectorAll('link, script').forEach((element) => {
         const attrs = Array.from(element.attributes)
           .map((attr) => `${attr.name}=${attr.value}`)
           .sort()
-          .join("|");
+          .join('|');
 
         if (seen.has(attrs)) {
           element.remove();
@@ -370,31 +351,25 @@ class Bootloader {
   }
 
   async fetchAppHtml() {
-    utils.loadLog("Downloading client files...");
+    utils.loadLog('Downloading client files...');
     let html;
     try {
-      if (window.location.href.includes("/developers")) {
-        let dev_year = this.release_date.split("_")[2];
+      if (window.location.href.includes('/developers')) {
+        let dev_year = this.release_date.split('_')[2];
 
-        if (
-          isNaN(parseInt(dev_year)) ||
-          parseInt(dev_year) <= 2017 ||
-          parseInt(dev_year) > 2019
-        ) {
-          dev_year = "2018";
+        if (isNaN(parseInt(dev_year)) || parseInt(dev_year) <= 2017 || parseInt(dev_year) > 2019) {
+          dev_year = '2018';
         }
 
         html = await (
-          await fetch(
-            `${cdn_url}/assets/clients/developers_${dev_year}/app.html`
-          )
+          await fetch(`${cdn_url}/assets/clients/developers_${dev_year}/app.html`)
         ).text();
       } else
         html = await (
           await fetch(`${cdn_url}/assets/clients/${this.release_date}/app.html`)
         ).text();
     } catch (e) {
-      utils.loadLog("Fatal error occurred. Please check the console.", "error");
+      utils.loadLog('Fatal error occurred. Please check the console.', 'error');
       throw e;
     }
     return html;
@@ -402,45 +377,39 @@ class Bootloader {
 
   parseHtml(html) {
     // Remove GLOBAL_ENV scripts
-    html = html.replace(
-      /<script(\s[^>]*)?>\s*window\.GLOBAL_ENV\s*=[\s\S]*?<\/script>/g,
-      ""
-    );
+    html = html.replace(/<script(\s[^>]*)?>\s*window\.GLOBAL_ENV\s*=[\s\S]*?<\/script>/g, '');
 
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
+    const doc = parser.parseFromString(html, 'text/html');
     return { head: doc.head.innerHTML, body: doc.body.innerHTML };
   }
 
   async executeScripts() {
-    const scriptElements = [...document.getElementsByTagName("script")].filter(
-      (script) => script.src.startsWith("blob:")
+    const scriptElements = [...document.getElementsByTagName('script')].filter((script) =>
+      script.src.startsWith('blob:'),
     );
 
     for (const scriptElem of scriptElements) {
       await new Promise((resolve, reject) => {
         const blobUrl = scriptElem.src;
-        const newScript = document.createElement("script");
+        const newScript = document.createElement('script');
 
         // Preserve attribute order by getting the original element's outerHTML
         const originalAttrs =
           scriptElem.outerHTML
             .match(/<script([^>]*)>/i)[1]
-            .match(/\s+(?:[a-zA-Z-]+(?:=(?:"[^"]*"|'[^']*'|[^"'\s]+))?)/g) ||
-          [];
+            .match(/\s+(?:[a-zA-Z-]+(?:=(?:"[^"]*"|'[^']*'|[^"'\s]+))?)/g) || [];
 
         originalAttrs.forEach((attr) => {
-          const [name, value] = attr.trim().split("=");
-          const attrValue = value ? value.replace(/['"]/g, "") : "";
+          const [name, value] = attr.trim().split('=');
+          const attrValue = value ? value.replace(/['"]/g, '') : '';
 
-          if (name.toLowerCase() === "integrity") return;
+          if (name.toLowerCase() === 'integrity') return;
 
-          newScript.setAttribute(name, name === "src" ? blobUrl : attrValue);
+          newScript.setAttribute(name, name === 'src' ? blobUrl : attrValue);
         });
 
-        const appendTarget = scriptElem.closest("head")
-          ? document.head
-          : document.body;
+        const appendTarget = scriptElem.closest('head') ? document.head : document.body;
 
         newScript.onload = () => {
           URL.revokeObjectURL(blobUrl);
@@ -461,7 +430,7 @@ class Bootloader {
 
   isAfterBuild(currentBuild, compareBuild) {
     const parseDate = (build) => {
-      const [month, day, year] = build.split("_");
+      const [month, day, year] = build.split('_');
       const months = {
         january: 0,
         february: 1,
@@ -483,9 +452,9 @@ class Bootloader {
   }
 
   setLoadingBackground() {
-    const container = document.getElementById("oldcord-loading-container");
-    if (container && this.isAfterBuild(this.release_date, "october_5_2017")) {
-      setTimeout(() => container.classList.add("new-bg"), 50);
+    const container = document.getElementById('oldcord-loading-container');
+    if (container && this.isAfterBuild(this.release_date, 'october_5_2017')) {
+      setTimeout(() => container.classList.add('new-bg'), 50);
     }
   }
 
@@ -494,5 +463,5 @@ class Bootloader {
   }
 }
 
-utils.loadLog("Initializing bootloader...");
+utils.loadLog('Initializing bootloader...');
 new Bootloader().initialize().catch(console.error);

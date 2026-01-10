@@ -1,14 +1,12 @@
 export default {
   isSupported() {
     try {
-      const testKey = "__testLocalStorage__";
+      const testKey = '__testLocalStorage__';
       localStorage.setItem(testKey, testKey);
       localStorage.removeItem(testKey);
       return true;
     } catch (e) {
-      console.warn(
-        "LocalStorage is not supported or is disabled in this browser."
-      );
+      console.warn('LocalStorage is not supported or is disabled in this browser.');
       return false;
     }
   },
@@ -42,17 +40,11 @@ export default {
 
     const currentValue = this.get(key);
 
-    if (
-      typeof currentValue === "object" &&
-      currentValue !== null &&
-      !Array.isArray(currentValue)
-    ) {
+    if (typeof currentValue === 'object' && currentValue !== null && !Array.isArray(currentValue)) {
       const newValue = { ...currentValue, ...updates };
       this.set(key, newValue);
     } else {
-      console.warn(
-        `Cannot update key "${key}". The existing value is not a plain object.`
-      );
+      console.warn(`Cannot update key "${key}". The existing value is not a plain object.`);
     }
   },
   remove(key) {
@@ -70,7 +62,7 @@ export default {
     try {
       localStorage.clear();
     } catch (error) {
-      console.error("Error clearing localStorage:", error);
+      console.error('Error clearing localStorage:', error);
     }
   },
 };

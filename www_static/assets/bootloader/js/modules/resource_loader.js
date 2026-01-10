@@ -1,6 +1,6 @@
-import { patcher } from "./patcher.js";
-import { utils } from "./utils.js";
-import { Config } from "./config.js";
+import { patcher } from './patcher.js';
+import { utils } from './utils.js';
+import { Config } from './config.js';
 
 export class ResourceLoader {
   constructor() {
@@ -21,8 +21,8 @@ export class ResourceLoader {
 
     return utils.safeExecute(async () => {
       // For newer versions, just return the full URL for icons
-      if (type === "ico") {
-        const fullUrl = normalizedPath.startsWith("http")
+      if (type === 'ico') {
+        const fullUrl = normalizedPath.startsWith('http')
           ? normalizedPath
           : `${Config.cdn_url}${normalizedPath}`;
         return fullUrl;
@@ -33,10 +33,7 @@ export class ResourceLoader {
         const response = await fetch(fullUrl);
 
         if (!response.ok) {
-          if (
-            response.status === 404 &&
-            normalizedPath.startsWith("/assets/")
-          ) {
+          if (response.status === 404 && normalizedPath.startsWith('/assets/')) {
             return this.loadResource(normalizedPath.substring(8), type);
           }
           throw new Error(`HTTP ${response.status}`);
@@ -46,75 +43,80 @@ export class ResourceLoader {
 
         const content = await response.text();
         const processed =
-          type === "script"
-            ? patcher.js(content, "root", window.oldcord.config)
+          type === 'script'
+            ? patcher.js(content, 'root', window.oldcord.config)
             : patcher.css(content);
 
         // Find if a script has chunks
-        if (type === "script") {
+        if (type === 'script') {
           await this.preloadChunks(content);
         }
 
-        const blob = new Blob([type === "script" ? `${processed}\n//# sourceURL=${location.protocol}//${window.location.host}${normalizedPath}` : `${processed}\n/*# sourceURL=${location.protocol}//${window.location.host}${normalizedPath} */`], {
-          type: type === "script" ? "application/javascript" : "text/css",
-        });
+        const blob = new Blob(
+          [
+            type === 'script'
+              ? `${processed}\n//# sourceURL=${location.protocol}//${window.location.host}${normalizedPath}`
+              : `${processed}\n/*# sourceURL=${location.protocol}//${window.location.host}${normalizedPath} */`,
+          ],
+          {
+            type: type === 'script' ? 'application/javascript' : 'text/css',
+          },
+        );
         const blobUrl = URL.createObjectURL(blob);
 
         const result = { url: fullUrl, blob: blobUrl };
         this.patchedUrls.set(normalizedPath, result);
 
-        utils.loadLog(
-          `Successfully loaded ${type} ${normalizedPath} as blob URL: ${blobUrl}`
-        );
-        
+        utils.loadLog(`Successfully loaded ${type} ${normalizedPath} as blob URL: ${blobUrl}`);
+
         return result;
       } catch (error) {
-        if (error.message.startsWith("HTTP ")) return null;
+        if (error.message.startsWith('HTTP ')) return null;
         throw error;
       }
     }, `${type} load error: ${normalizedPath}`);
   }
 
   loadScript(path) {
-    return this.loadResource(path, "script");
+    return this.loadResource(path, 'script');
   }
 
   loadCSS(path) {
-    return this.loadResource(path, "css");
+    return this.loadResource(path, 'css');
   }
 
   normalizeScriptPath(path) {
-    if (path.startsWith("http")) {
+    if (path.startsWith('http')) {
       return new URL(path).pathname;
     }
-    const url = path.startsWith("/") ? path : "/assets/" + path;
+    const url = path.startsWith('/') ? path : '/assets/' + path;
     return url;
   }
 
   setupInterceptors() {
-    utils.loadLog("Setting up resource interceptor...");
+    utils.loadLog('Setting up resource interceptor...');
 
     const shouldIntercept = (url) =>
-      typeof url === "string" &&
-      !url.includes("/bootloader/") &&
-      !url.startsWith("blob:") &&
-      !url.includes("oldplunger");
+      typeof url === 'string' &&
+      !url.includes('/bootloader/') &&
+      !url.startsWith('blob:') &&
+      !url.includes('oldplunger');
 
     const originalCreateElement = document.createElement.bind(document);
     document.createElement = (tagName) => {
       const element = originalCreateElement(tagName);
 
-      if (tagName.toLowerCase() === "script") {
-        let srcValue = "";
+      if (tagName.toLowerCase() === 'script') {
+        let srcValue = '';
         let blobUrl = null;
-        Object.defineProperty(element, "src", {
+        Object.defineProperty(element, 'src', {
           get: () => srcValue,
           set: (url) => {
             if (blobUrl) {
               URL.revokeObjectURL(blobUrl);
             }
             srcValue = this.handleScriptSrc(element, url, shouldIntercept);
-            if (srcValue.startsWith("blob:")) {
+            if (srcValue.startsWith('blob:')) {
               blobUrl = srcValue;
             }
             return true;
@@ -123,10 +125,10 @@ export class ResourceLoader {
         });
       }
 
-      if (tagName.toLowerCase() === "link") {
-        let hrefValue = "";
+      if (tagName.toLowerCase() === 'link') {
+        let hrefValue = '';
         let blobUrl = null;
-        Object.defineProperty(element, "href", {
+        Object.defineProperty(element, 'href', {
           get: () => hrefValue,
           set: (url) => {
             if (blobUrl) {
@@ -134,14 +136,14 @@ export class ResourceLoader {
             }
             hrefValue = this.handleLinkAttribute(
               element,
-              "href",
+              'href',
               url,
               (_, val) => {
-                element.setAttribute("href", val);
+                element.setAttribute('href', val);
               },
-              shouldIntercept
+              shouldIntercept,
             );
-            if (hrefValue.startsWith("blob:")) {
+            if (hrefValue.startsWith('blob:')) {
               blobUrl = hrefValue;
             }
             return true;
@@ -156,7 +158,7 @@ export class ResourceLoader {
 
   handleScriptSrc(element, url, shouldIntercept) {
     if (!shouldIntercept(url)) {
-      element.setAttribute("src", url);
+      element.setAttribute('src', url);
       return url;
     }
 
@@ -164,26 +166,20 @@ export class ResourceLoader {
     if (this.patchedUrls.has(normalizedUrl)) {
       utils.loadLog(`Using cached script: ${normalizedUrl}`);
       const cached = this.patchedUrls.get(normalizedUrl);
-      element.setAttribute("src", cached.blob);
+      element.setAttribute('src', cached.blob);
       return cached.blob;
     } else {
-      utils.loadLog(`Intercepted un-cached chunk: ${normalizedUrl}`, "warning");
-      this.loadScript(normalizedUrl); 
+      utils.loadLog(`Intercepted un-cached chunk: ${normalizedUrl}`, 'warning');
+      this.loadScript(normalizedUrl);
       let fallback = `${Config.cdn_url}${normalizedUrl}`;
 
-      element.setAttribute("src", fallback);
+      element.setAttribute('src', fallback);
       return fallback;
     }
   }
 
-  handleLinkAttribute(
-    element,
-    name,
-    value,
-    originalSetAttribute,
-    shouldIntercept
-  ) {
-    if (name !== "href" || !value.endsWith(".css") || !shouldIntercept(value)) {
+  handleLinkAttribute(element, name, value, originalSetAttribute, shouldIntercept) {
+    if (name !== 'href' || !value.endsWith('.css') || !shouldIntercept(value)) {
       originalSetAttribute.call(element, name, value);
       return value;
     }
@@ -195,12 +191,8 @@ export class ResourceLoader {
       originalSetAttribute.call(element, name, cached.blob);
       return cached.blob;
     } else {
-      originalSetAttribute.call(
-        element,
-        name,
-        "https://missing.discord.b3BlcmF0"
-      );
-      return "https://missing.discord.b3BlcmF0";
+      originalSetAttribute.call(element, name, 'https://missing.discord.b3BlcmF0');
+      return 'https://missing.discord.b3BlcmF0';
     }
   }
 
@@ -238,7 +230,7 @@ export class ResourceLoader {
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         const response = await fetch(fullUrl, {
-          method: "HEAD",
+          method: 'HEAD',
           signal: controller.signal,
         });
 
@@ -251,8 +243,8 @@ export class ResourceLoader {
           utils.saveFailedChunk(window.release_date, normalizedUrl);
         }
       } catch (error) {
-        if (error.name === "AbortError") {
-          utils.loadLog(`Chunk request timeout: ${normalizedUrl}`, "warning");
+        if (error.name === 'AbortError') {
+          utils.loadLog(`Chunk request timeout: ${normalizedUrl}`, 'warning');
         }
         utils.saveFailedChunk(window.release_date, normalizedUrl);
       }
@@ -269,15 +261,20 @@ export class ResourceLoader {
 
       const response = await fetch(fullUrl);
       const text = await response.text();
-      const processed = patcher.js(text, "chunk", window.oldcord.config);
-      const blob = new Blob([`${processed}\n//# sourceURL=${location.protocol}//${window.location.host}${normalizedUrl}`], { type: "application/javascript" });
+      const processed = patcher.js(text, 'chunk', window.oldcord.config);
+      const blob = new Blob(
+        [
+          `${processed}\n//# sourceURL=${location.protocol}//${window.location.host}${normalizedUrl}`,
+        ],
+        { type: 'application/javascript' },
+      );
       const blobUrl = URL.createObjectURL(blob);
 
       this.patchedUrls.set(normalizedUrl, { url: fullUrl, blob: blobUrl });
       utils.loadLog(`Successfully patched chunk: ${normalizedUrl}`);
       return true;
     } catch (error) {
-      utils.loadLog(`Failed to load chunk ${normalizedUrl}`, "error");
+      utils.loadLog(`Failed to load chunk ${normalizedUrl}`, 'error');
       return false;
     }
   }
@@ -285,7 +282,7 @@ export class ResourceLoader {
   async preloadChunks(content) {
     const urlsByHash = this.extractChunkUrls(content);
     if (urlsByHash.size === 0) {
-      this.onChunkProgress?.(1, 1, "find");
+      this.onChunkProgress?.(1, 1, 'find');
       return;
     }
 
@@ -308,12 +305,12 @@ export class ResourceLoader {
             }
           }
         } catch (error) {
-          utils.loadLog(`Failed to process chunk ${hash}: ${error}`, "error");
+          utils.loadLog(`Failed to process chunk ${hash}: ${error}`, 'error');
         } finally {
           findProgress++;
-          this.onChunkProgress?.(findProgress, urlsByHash.size, "find");
+          this.onChunkProgress?.(findProgress, urlsByHash.size, 'find');
         }
-      })
+      }),
     );
 
     utils.loadLog(`Found ${chunksToLoad.size} loadable chunks`);
@@ -326,9 +323,9 @@ export class ResourceLoader {
             await this.loadChunk(url, hash);
           } finally {
             loadProgress++;
-            this.onChunkProgress?.(loadProgress, chunksToLoad.size, "load");
+            this.onChunkProgress?.(loadProgress, chunksToLoad.size, 'load');
           }
-        })
+        }),
       );
     }
   }

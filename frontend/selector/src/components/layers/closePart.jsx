@@ -1,6 +1,6 @@
-import { useEffect, useCallback } from "react";
-import "./closePart.css";
-import Xmark from "@oldcord/frontend-shared/assets/xmark.svg?react";
+import { useEffect, useCallback } from 'react';
+import './closePart.css';
+import Xmark from '@oldcord/frontend-shared/assets/xmark.svg?react';
 
 export default function ({ onClose }) {
   const handleClose = useCallback(() => {
@@ -9,15 +9,15 @@ export default function ({ onClose }) {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         handleClose();
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleClose]);
 

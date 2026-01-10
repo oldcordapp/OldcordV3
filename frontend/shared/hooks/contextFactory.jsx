@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext } from 'react';
 
 export default function (useHook) {
   const Context = createContext(null);
@@ -11,9 +11,7 @@ export default function (useHook) {
   const useContextHook = () => {
     const context = useContext(Context);
     if (Context === null) {
-      throw new Error(
-        "[Selector] useContextHook must be used within its Provider"
-      );
+      throw new Error('[Selector] useContextHook must be used within its Provider');
     }
     return context;
   };

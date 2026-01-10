@@ -1,17 +1,17 @@
-import contextFactory from "@oldcord/frontend-shared/hooks/contextFactory";
-import { useState, useEffect } from "react";
+import contextFactory from '@oldcord/frontend-shared/hooks/contextFactory';
+import { useState, useEffect } from 'react';
 
 async function fetchOldPlungerPlugins() {
   try {
     const response = await fetch(
-      `${location.protocol}//${location.host}/assets/oldplunger/plugins.json`
+      `${location.protocol}//${location.host}/assets/oldplunger/plugins.json`,
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return await response.json();
   } catch (error) {
-    console.error("Failed to fetch plunger plugins:", error);
+    console.error('Failed to fetch plunger plugins:', error);
     return null;
   }
 }
@@ -27,7 +27,7 @@ function useOldplungerPluginsState() {
       if (data) {
         setPlugins(data);
       } else {
-        console.log("Failed to load plugins.");
+        console.log('Failed to load plugins.');
       }
       setLoading(false);
     };

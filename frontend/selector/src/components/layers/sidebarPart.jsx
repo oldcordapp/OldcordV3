@@ -1,4 +1,4 @@
-import "./sidebarPart.css";
+import './sidebarPart.css';
 
 export default function ({ children }) {
   return (

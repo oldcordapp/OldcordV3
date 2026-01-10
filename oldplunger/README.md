@@ -1,12 +1,15 @@
 ![Herple...](/.assets/hurple.png)
+
 <!-- Oldcord: bring back the past -->
 
 # Oldplunger
-WIP Discord mod, only usable on Oldcord. 
+
+WIP Discord mod, only usable on Oldcord.
 
 The AOT part of Oldplunger is still at `/www_assets/bootloader/patcher.js` which we intend to put in here, along with the shimming.
 
 ## Roadmap
+
 - [ ] Patch webpack
 - [ ] Plugin api
 - [ ] AOT and shims (for Electron Compat and use Oldcord API/Gateway)
@@ -15,5 +18,5 @@ The AOT part of Oldplunger is still at `/www_assets/bootloader/patcher.js` which
 
 **⚠️ If you do not know what you're doing, including people who only made (current year) plugins for XYZ client mod without any 2015-2018 experience, don't (or do it at your own risk)!**
 
-We intend to make our plugin system similar to how Vencord does (but not API compatible). If you want to, [check out this guide](https://gist.github.com/sunnniee/28bd595f8c07992f6d03289911289ba8), 
+We intend to make our plugin system similar to how Vencord does (but not API compatible). If you want to, [check out this guide](https://gist.github.com/sunnniee/28bd595f8c07992f6d03289911289ba8),
 just replace Vencord things with Oldplunger things, for example, definePlugin -> plain old export default. Shifting your mind from (current year) to 2015-2018 works too, a.k.a. don't blindly follow the guide.

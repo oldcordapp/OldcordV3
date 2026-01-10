@@ -1,8 +1,8 @@
 export const Config = {
-  cdn_url: "https://cdn.oldcordapp.com",
+  cdn_url: 'https://cdn.oldcordapp.com',
 
   async load() {
-    const config = await fetch("/instance").then((r) => r.json());
+    const config = await fetch('/instance').then((r) => r.json());
     return {
       ...config,
       globalEnv: {
@@ -13,27 +13,27 @@ export const Config = {
         CDN_HOST: `//${location.host}`,
         ASSET_ENDPOINT: this.cdn_url,
         MEDIA_PROXY_ENDPOINT: `//${location.host}`,
-        WIDGET_ENDPOINT: "",
+        WIDGET_ENDPOINT: '',
         INVITE_HOST: config.custom_invite_url,
         GUILD_TEMPLATE_HOST: location.host,
         GIFT_CODE_HOST: `${location.host}/gifts`,
-        RELEASE_CHANNEL: "staging",
-        MARKETING_ENDPOINT: "",
-        BRAINTREE_KEY: "",
-        STRIPE_KEY: "",
-        NETWORKING_ENDPOINT: "",
-        RTC_LATENCY_ENDPOINT: "",
-        ACTIVITY_APPLICATION_HOST: "",
-        PROJECT_ENV: "development",
-        REMOTE_AUTH_ENDPOINT: "",
+        RELEASE_CHANNEL: 'staging',
+        MARKETING_ENDPOINT: '',
+        BRAINTREE_KEY: '',
+        STRIPE_KEY: '',
+        NETWORKING_ENDPOINT: '',
+        RTC_LATENCY_ENDPOINT: '',
+        ACTIVITY_APPLICATION_HOST: '',
+        PROJECT_ENV: 'development',
+        REMOTE_AUTH_ENDPOINT: '',
         SENTRY_TAGS: {
-          buildId: "0",
-          buildType: "CLIENT_MOD_PLEASE_IGNORE",
+          buildId: '0',
+          buildType: 'CLIENT_MOD_PLEASE_IGNORE',
         },
-        MIGRATION_SOURCE_ORIGIN: "",
-        MIGRATION_DESTINATION_ORIGIN: "",
+        MIGRATION_SOURCE_ORIGIN: '',
+        MIGRATION_DESTINATION_ORIGIN: '',
         HTML_TIMESTAMP: 1724751950316,
-        ALGOLIA_KEY: "",
+        ALGOLIA_KEY: '',
       },
     };
   },

@@ -20,7 +20,7 @@
   Reminder: These only access currently loaded modules into the the cache.
 */
 
-import { getRequire } from ".";
+import { getRequire } from '.';
 
 const filterModules =
   (modules, single = false) =>
@@ -54,13 +54,10 @@ export const findAll = (filter) => filterModules(getModules())(filter);
 
 const propsFilter = (props) => (m) => props.every((p) => m[p] !== undefined);
 const dNameFilter = (name, defaultExp) =>
-  defaultExp
-    ? (m) => m.displayName === name
-    : (m) => m?.default?.displayName === name;
+  defaultExp ? (m) => m.displayName === name : (m) => m?.default?.displayName === name;
 
 export const findByProps = (...props) => find(propsFilter(props));
 export const findByPropsAll = (...props) => findAll(propsFilter(props));
-export const findByDisplayName = (name, defaultExp = true) =>
-  find(dNameFilter(name, defaultExp));
+export const findByDisplayName = (name, defaultExp = true) => find(dNameFilter(name, defaultExp));
 export const findByDisplayNameAll = (name, defaultExp = true) =>
   findAll(dNameFilter(name, defaultExp));

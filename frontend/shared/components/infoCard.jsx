@@ -1,4 +1,4 @@
-import "./infoCard.css";
+import './infoCard.css';
 
 export default function ({ title, children, style }) {
   return (

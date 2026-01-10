@@ -1,5 +1,5 @@
-import "./navigationList.css";
-import { useState } from "react";
+import './navigationList.css';
+import { useState } from 'react';
 
 export default function ({ navItems, activeView, onItemClick }) {
   const [clickingIndex, setClickingIndex] = useState(null);
@@ -8,9 +8,9 @@ export default function ({ navItems, activeView, onItemClick }) {
     setClickingIndex(index);
 
     setTimeout(() => {
-        setClickingIndex(null); 
+      setClickingIndex(null);
 
-        item.onClick();
+      item.onClick();
     }, 50);
   };
 
@@ -18,45 +18,39 @@ export default function ({ navItems, activeView, onItemClick }) {
     <div className="nav-list">
       {navItems.map((item, index) => {
         switch (item.type) {
-          case "header":
+          case 'header':
             return (
               <div key={index} className="nav-header">
                 {item.label}
               </div>
             );
-          case "openModal":
+          case 'openModal':
             return (
-              <div
-                key={index}
-                className={`nav-item`}
-                onClick={() => item.onClick()}
-              >
+              <div key={index} className={`nav-item`} onClick={() => item.onClick()}>
                 {item.label}
               </div>
             );
-          case "openUrl":
+          case 'openUrl':
             return (
               <div
                 key={index}
-                className={`nav-item ${clickingIndex === index ? "selected" : ""}`}
+                className={`nav-item ${clickingIndex === index ? 'selected' : ''}`}
                 onClick={() => handleOpenUrlClick(item, index)}
               >
                 {item.label}
               </div>
             );
-          case "item":
+          case 'item':
             return (
               <div
                 key={index}
-                className={`nav-item ${
-                  activeView === item.view ? "selected" : ""
-                }`}
+                className={`nav-item ${activeView === item.view ? 'selected' : ''}`}
                 onClick={() => onItemClick(item.view)}
               >
                 {item.label}
               </div>
             );
-          case "separator":
+          case 'separator':
             return <div key={index} className="nav-separator" />;
         }
       })}

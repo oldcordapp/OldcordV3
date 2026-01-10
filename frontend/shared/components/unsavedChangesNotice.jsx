@@ -1,14 +1,14 @@
-import { useRef } from "react";
-import { CSSTransition } from "react-transition-group";
-import "./unsavedChangesNotice.css";
-import Button from "./button";
+import { useRef } from 'react';
+import { CSSTransition } from 'react-transition-group';
+import './unsavedChangesNotice.css';
+import Button from './button';
 
 export default function ({
   show,
   onSave,
   onReset,
   displayRedNotice,
-  message = "Careful — you have unsaved changes!"
+  message = 'Careful — you have unsaved changes!',
 }) {
   const noticeRef = useRef(null);
 
@@ -21,9 +21,7 @@ export default function ({
       unmountOnExit
     >
       <div className="notice-region" ref={noticeRef}>
-        <div
-          className={`notice-container ${displayRedNotice ? "red-notice" : ""}`}
-        >
+        <div className={`notice-container ${displayRedNotice ? 'red-notice' : ''}`}>
           <div className="notice-message">{message}</div>
           <div className="button-group">
             <Button variant="ghost" onClick={onReset}>

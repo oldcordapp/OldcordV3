@@ -1,4 +1,4 @@
-import "./inputField.css";
+import './inputField.css';
 
 export default function ({
   label,
@@ -8,10 +8,9 @@ export default function ({
   type,
   style,
   value,
-  maxLength=1250,
-  onChange
+  maxLength = 1250,
+  onChange,
 }) {
-
   const isTextarea = type === 'textarea';
 
   const commonProps = {
@@ -20,23 +19,23 @@ export default function ({
     required: required,
     value: value,
     onChange: onChange,
-    className: "input-field"
+    className: 'input-field',
   };
 
-return (
+  return (
     <div className="input-container" style={style}>
-      <label className="input-label" htmlFor={id}>{label} {required ? (<span className="required-text">(Required)</span>) : <></>}</label>
-      
+      <label className="input-label" htmlFor={id}>
+        {label} {required ? <span className="required-text">(Required)</span> : <></>}
+      </label>
+
       {isTextarea ? (
-        <textarea 
-          {...commonProps} 
-          style={{ minHeight: '150px', padding: '10px', resize: 'vertical' }} maxLength={maxLength}
+        <textarea
+          {...commonProps}
+          style={{ minHeight: '150px', padding: '10px', resize: 'vertical' }}
+          maxLength={maxLength}
         ></textarea>
       ) : (
-        <input 
-          {...commonProps} 
-          type={type} maxLength={maxLength} 
-        />
+        <input {...commonProps} type={type} maxLength={maxLength} />
       )}
     </div>
   );

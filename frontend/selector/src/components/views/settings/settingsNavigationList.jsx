@@ -1,22 +1,22 @@
-import NavigationList from "@oldcord/frontend-shared/components/navigationList";
-import ViewHandler from "../../../hooks/viewHandler";
-import { useUnsavedChanges } from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
-import { useState } from "react";
-import Changelog from "./modals/changelog";
-import { Text } from "@oldcord/frontend-shared/components/textComponent";
-import getUserAgent from "../../../lib/getUserAgent";
+import NavigationList from '@oldcord/frontend-shared/components/navigationList';
+import ViewHandler from '../../../hooks/viewHandler';
+import { useUnsavedChanges } from '@oldcord/frontend-shared/hooks/unsavedChangesHandler';
+import { useState } from 'react';
+import Changelog from './modals/changelog';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import getUserAgent from '../../../lib/getUserAgent';
 
 export const SETTINGS_VIEWS = {
-  INFO: "info",
-  OLDPLUNGER_SETTINGS: "oldplunger_settings",
-  PLUGINS_AND_PATCHES: "plugins_and_patches",
-  THEMES: "themes",
-  DOWNLOAD_QUEUE: "download_queue",
-  OPFS_SETTINGS: "opfs_settings",
-  CHANGELOG: "changelog",
-  REPORT_CONTENT: "report_content",
-  DEVELOPER_PORTAL: "developer_portal",
-  ADVANCED_SETTINGS: "advanced_settings",
+  INFO: 'info',
+  OLDPLUNGER_SETTINGS: 'oldplunger_settings',
+  PLUGINS_AND_PATCHES: 'plugins_and_patches',
+  THEMES: 'themes',
+  DOWNLOAD_QUEUE: 'download_queue',
+  OPFS_SETTINGS: 'opfs_settings',
+  CHANGELOG: 'changelog',
+  REPORT_CONTENT: 'report_content',
+  DEVELOPER_PORTAL: 'developer_portal',
+  ADVANCED_SETTINGS: 'advanced_settings',
 };
 
 const { Provider, useContextHook } = ViewHandler({
@@ -30,58 +30,58 @@ export default function () {
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   const navItems = [
-    { type: "header", label: "Oldplunger" },
-    { type: "item", label: "Transition Info", view: SETTINGS_VIEWS.INFO },
+    { type: 'header', label: 'Oldplunger' },
+    { type: 'item', label: 'Transition Info', view: SETTINGS_VIEWS.INFO },
     {
-      type: "item",
-      label: "Oldplunger Settings",
+      type: 'item',
+      label: 'Oldplunger Settings',
       view: SETTINGS_VIEWS.OLDPLUNGER_SETTINGS,
     },
     {
-      type: "item",
-      label: "Plugins & Patches",
+      type: 'item',
+      label: 'Plugins & Patches',
       view: SETTINGS_VIEWS.PLUGINS_AND_PATCHES,
     },
-    { type: "item", label: "Themes", view: SETTINGS_VIEWS.THEMES },
-    { type: "separator" },
-    { type: "header", label: "OPFS" },
+    { type: 'item', label: 'Themes', view: SETTINGS_VIEWS.THEMES },
+    { type: 'separator' },
+    { type: 'header', label: 'OPFS' },
     {
-      type: "item",
-      label: "Download Queue",
+      type: 'item',
+      label: 'Download Queue',
       view: SETTINGS_VIEWS.DOWNLOAD_QUEUE,
     },
     {
-      type: "item",
-      label: "OPFS Settings",
+      type: 'item',
+      label: 'OPFS Settings',
       view: SETTINGS_VIEWS.OPFS_SETTINGS,
     },
-    { type: "separator" },
-    { type: "header", label: "Instance" },
+    { type: 'separator' },
+    { type: 'header', label: 'Instance' },
     {
-      type: "openUrl",
-      label: "Developer Portal",
+      type: 'openUrl',
+      label: 'Developer Portal',
       onClick: () => {
-        window.open("/developers");
+        window.open('/developers');
       },
     },
     {
-      type: "item",
-      label: "Report Content",
+      type: 'item',
+      label: 'Report Content',
       view: SETTINGS_VIEWS.REPORT_CONTENT,
     },
-    { type: "separator" },
-    { type: "header", label: "Oldcord" },
+    { type: 'separator' },
+    { type: 'header', label: 'Oldcord' },
     {
-      type: "openModal",
-      label: "Changelog",
+      type: 'openModal',
+      label: 'Changelog',
       view: SETTINGS_VIEWS.CHANGELOG,
       onClick: () => {
         setIsChangelogOpen(true);
       },
     },
     {
-      type: "item",
-      label: "Advanced Settings",
+      type: 'item',
+      label: 'Advanced Settings',
       view: SETTINGS_VIEWS.ADVANCED_SETTINGS,
     },
   ];
@@ -96,20 +96,16 @@ export default function () {
 
   return (
     <>
-      <NavigationList
-        navItems={navItems}
-        activeView={activeView}
-        onItemClick={handleItemClick}
-      />
-      <div style={{ padding: "8px 10px" }}>
+      <NavigationList navItems={navItems} activeView={activeView} onItemClick={handleItemClick} />
+      <div style={{ padding: '8px 10px' }}>
         <Text
           variant="body"
           style={{
-            fontSize: "12px",
-            fontWeight: "400",
-            lineHeight: "1.333",
-            color: "#72767d",
-            marginTop: "0",
+            fontSize: '12px',
+            fontWeight: '400',
+            lineHeight: '1.333',
+            color: '#72767d',
+            marginTop: '0',
           }}
         >
           Oldcord {import.meta.env.VITE_APP_GIT_COMMIT_HASH}
@@ -117,10 +113,7 @@ export default function () {
           {getUserAgent()}
         </Text>
       </div>
-      <Changelog
-        isOpen={isChangelogOpen}
-        onClose={() => setIsChangelogOpen(false)}
-      />
+      <Changelog isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
     </>
   );
 }

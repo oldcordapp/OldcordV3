@@ -55,5 +55,5 @@
 }
 
 .card.exit {
-    animation: cardExit 0.3s cubic-bezier(0.5, 1.78, 0.5, 0.75) forwards;
+  animation: cardExit 0.3s cubic-bezier(0.5, 1.78, 0.5, 0.75) forwards;
 }

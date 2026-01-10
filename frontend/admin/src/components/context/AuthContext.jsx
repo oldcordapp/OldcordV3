@@ -5,67 +5,63 @@ const AuthUserContext = createContext(null);
 export const useAuthUser = () => useContext(AuthUserContext);
 
 export const AuthUserProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const fetchUserData = async () => {
-        const token = localStorage.getItem("token");
+  const fetchUserData = async () => {
+    const token = localStorage.getItem('token');
 
-        if (!token) {
-            setUser(null);
-            setIsLoading(false);
-            return;
-        }
+    if (!token) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
 
-        try {
-            const storedUser = localStorage.getItem("user_data");
+    try {
+      const storedUser = localStorage.getItem('user_data');
 
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
-                setIsLoading(false);
-            }
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setIsLoading(false);
+      }
 
-            const response = await fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/@me`, {
-                headers: {
-                    'Authorization': token.replace(/"/g, ''),
-                    'Cookie': 'release_date=october_5_2017;',
-                }
-            });
+      const response = await fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/@me`, {
+        headers: {
+          Authorization: token.replace(/"/g, ''),
+          Cookie: 'release_date=october_5_2017;',
+        },
+      });
 
-            if (!response.ok) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user_data");
-                setUser(null);
-                location.reload();
-                throw new Error('Failed to fetch user data');
-            }
+      if (!response.ok) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user_data');
+        setUser(null);
+        location.reload();
+        throw new Error('Failed to fetch user data');
+      }
 
-            const userData = await response.json();
-    
-            setUser(userData);
+      const userData = await response.json();
 
-            localStorage.setItem("user_data", JSON.stringify(userData));
-        } catch (error) {
-            console.error("Error fetching user data:", error);
-            setUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      setUser(userData);
 
-    useEffect(() => {
-        fetchUserData();
-    }, []); 
+      localStorage.setItem('user_data', JSON.stringify(userData));
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const contextValue = {
-        user,
-        isLoading,
-        fetchUserData,
-    };
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
-    return (
-        <AuthUserContext.Provider value={contextValue}>
-            {children}
-        </AuthUserContext.Provider>
-    );
+  const contextValue = {
+    user,
+    isLoading,
+    fetchUserData,
+  };
+
+  return <AuthUserContext.Provider value={contextValue}>{children}</AuthUserContext.Provider>;
 };

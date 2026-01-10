@@ -1,5 +1,5 @@
-function noop () {}
+function noop() {}
 
-export function shim () {
-    window.noop = noop;
+export function shim() {
+  window.noop = noop;
 }

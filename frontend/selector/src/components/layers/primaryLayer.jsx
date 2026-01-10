@@ -1,7 +1,7 @@
-import "./primaryLayer.css";
-import { useLayer } from "../../hooks/layerHandler";
-import Selector from "../views/selector/main";
-import { useEffect, useRef } from "react";
+import './primaryLayer.css';
+import { useLayer } from '../../hooks/layerHandler';
+import Selector from '../views/selector/main';
+import { useEffect, useRef } from 'react';
 
 export default function () {
   const { activeLayer } = useLayer();
@@ -11,9 +11,9 @@ export default function () {
   useEffect(() => {
     if (ref.current) {
       if (!isActive) {
-        ref.current.classList.add("transitionToSecondaryLayer");
+        ref.current.classList.add('transitionToSecondaryLayer');
       } else {
-        ref.current.classList.remove("transitionToSecondaryLayer");
+        ref.current.classList.remove('transitionToSecondaryLayer');
       }
     }
   }, [activeLayer]);

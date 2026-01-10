@@ -1,35 +1,34 @@
-import cookieManager from "../utils/cookieManager.js";
-import { Logger } from "../utils/logger";
-import { patches as patchesToDo } from "../utils/patch";
+import cookieManager from '../utils/cookieManager.js';
+import { Logger } from '../utils/logger';
+import { patches as patchesToDo } from '../utils/patch';
 
 // We just import all the plugins that are valid from esbuild
-import * as availablePlugins from "./plugins.js";
+import * as availablePlugins from './plugins.js';
 
-const logger = new Logger("Plugin Manager");
+const logger = new Logger('Plugin Manager');
 
 const plugins = {};
 
 export function initializePlugins() {
-  logger.log("Initializing plugins...");
+  logger.log('Initializing plugins...');
   for (const key in availablePlugins) {
     let canInitializePlugin = true;
 
     const availablePlugin = availablePlugins[key];
 
-    if (!JSON.parse(cookieManager.get("enabled_plugins")).includes(key)) {
+    if (!JSON.parse(cookieManager.get('enabled_plugins')).includes(key)) {
       canInitializePlugin = false;
     }
 
     if (
-      (window.location.pathname.includes("developers") &&
-        availablePlugin.target === "client") ||
-      (!window.location.pathname.includes("developers") &&
-        availablePlugin.target === "developerPortal")
+      (window.location.pathname.includes('developers') && availablePlugin.target === 'client') ||
+      (!window.location.pathname.includes('developers') &&
+        availablePlugin.target === 'developerPortal')
     ) {
       canInitializePlugin = false;
     }
 
-    if (!window.DiscordNative && availablePlugin.target === "electron") {
+    if (!window.DiscordNative && availablePlugin.target === 'electron') {
       canInitializePlugin = false;
     }
 
@@ -41,7 +40,7 @@ export function initializePlugins() {
 
     if (availablePlugin.patches) {
       const patches =
-        typeof availablePlugin.patches === "function"
+        typeof availablePlugin.patches === 'function'
           ? availablePlugin.patches()
           : availablePlugin.patches;
 
@@ -51,7 +50,7 @@ export function initializePlugins() {
           plugin: {
             name: availablePlugin.name,
             debug: availablePlugin.debug,
-            bypassEvalTypeError: availablePlugin.bypassEvalTypeError
+            bypassEvalTypeError: availablePlugin.bypassEvalTypeError,
           },
         });
       }
@@ -64,7 +63,7 @@ export function startPlugins(stage) {
   for (const name in plugins) {
     const plugin = plugins[name];
 
-    if ((plugin.startAt ?? "WebpackReady") == stage && plugin.start) {
+    if ((plugin.startAt ?? 'WebpackReady') == stage && plugin.start) {
       try {
         plugin.start();
       } catch (e) {

@@ -1,6 +1,6 @@
-import { logger } from ".";
-import { patchModule } from "../utils/patch";
-import { startPlugins } from "../plugins";
+import { logger } from '.';
+import { patchModule } from '../utils/patch';
+import { startPlugins } from '../plugins';
 
 let webpackRequire;
 
@@ -17,7 +17,7 @@ export function init() {
     Code derived from Vencord.
   */
 
-  Object.defineProperty(Function.prototype, "m", {
+  Object.defineProperty(Function.prototype, 'm', {
     configurable: true,
     set: function (modules) {
       const potentialWebpackRequire = this;
@@ -27,7 +27,7 @@ export function init() {
         Vencord's path finding and detecting based of filenames will not work for us here.
       */
 
-      if (!String(potentialWebpackRequire).includes("exports:{}")) {
+      if (!String(potentialWebpackRequire).includes('exports:{}')) {
         return;
       }
 
@@ -36,10 +36,10 @@ export function init() {
         /assets/ on .p, therefore the following code still works under Oldcord.
       */
 
-      Object.defineProperty(potentialWebpackRequire, "p", {
+      Object.defineProperty(potentialWebpackRequire, 'p', {
         configurable: true,
         set: function (bundlePath) {
-          Object.defineProperty(potentialWebpackRequire, "p", {
+          Object.defineProperty(potentialWebpackRequire, 'p', {
             value: bundlePath,
             writable: true,
             configurable: true,
@@ -47,15 +47,12 @@ export function init() {
 
           // The following code is from Vencord
 
-          if (
-            bundlePath !== "/assets/" ||
-            /(?:=>|{return)"[^"]/.exec(String(this.u))
-          ) {
+          if (bundlePath !== '/assets/' || /(?:=>|{return)"[^"]/.exec(String(this.u))) {
             return;
           }
 
           if (!webpackRequire && this.c != null) {
-            logger.log("Main Discord Webpack require found!");
+            logger.log('Main Discord Webpack require found!');
 
             // Now we can patch the code
 
@@ -82,12 +79,12 @@ export function init() {
 
             Object.setPrototypeOf(modules, proxy);
 
-            startPlugins("WebpackReady");
+            startPlugins('WebpackReady');
           }
         },
       });
 
-      Object.defineProperty(potentialWebpackRequire, "m", {
+      Object.defineProperty(potentialWebpackRequire, 'm', {
         value: modules,
         configurable: true,
         writable: true,

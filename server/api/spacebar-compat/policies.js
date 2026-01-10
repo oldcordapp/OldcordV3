@@ -1,20 +1,18 @@
-const express = require("express");
-const globalUtils = require("../../helpers/globalutils");
+const express = require('express');
+const globalUtils = require('../../helpers/globalutils');
 const config = globalUtils.config;
 const router = express.Router();
 
-router.get("/instance/domains", (req, res) => {
+router.get('/instance/domains', (req, res) => {
   res.json({
-    cdn: `${config.secure ? "https://" : "http://"}${global.full_url}`,
+    cdn: `${config.secure ? 'https://' : 'http://'}${global.full_url}`,
     gateway: globalUtils.generateGatewayURL(req),
-    defaultApiVersion: "6",
-    apiEndpoint: `${config.secure ? "https://" : "http://"}${
-      global.full_url
-    }/api`,
+    defaultApiVersion: '6',
+    apiEndpoint: `${config.secure ? 'https://' : 'http://'}${global.full_url}/api`,
   });
 });
 
-router.get("/instance/config", (req, res) => {
+router.get('/instance/config', (req, res) => {
   res.json({
     limits_user_maxGuilds: null,
     limits_user_maxBio: null,

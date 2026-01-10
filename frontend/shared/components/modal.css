@@ -58,12 +58,15 @@
   flex-direction: column;
   background-color: #36393f;
   border-radius: 5px;
-  box-shadow: 0 0 0 1px rgba(32, 34, 37, 0.6), 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(32, 34, 37, 0.6),
+    0 2px 10px 0 rgba(0, 0, 0, 0.2);
   max-height: 100%;
   opacity: 0;
   transform: scale(0.7);
   width: 490px;
-  transition: opacity 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
+  transition:
+    opacity 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315),
     transform 0.3s cubic-bezier(0.3625, -0.6105, 0, 1.7315);
   z-index: 110;
   pointer-events: auto;
@@ -130,7 +133,9 @@
   color: #f6f6f7;
   margin: 0;
   text-transform: uppercase;
-  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(
+    1.03
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 .modal-subtitle {
   font-size: 12px;
@@ -208,7 +213,7 @@
   line-height: 20px;
 }
 .modal-content .scroller li::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   top: 7px;

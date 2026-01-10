@@ -1,18 +1,14 @@
-import { Logger } from "../../utils/logger.js";
-import windowDiscordNative from "./windowDiscordNative.js";
-import windowRequire from "./windowRequire.js";
+import { Logger } from '../../utils/logger.js';
+import windowDiscordNative from './windowDiscordNative.js';
+import windowRequire from './windowRequire.js';
 
-export const logger = new Logger("Electron Patches");
+export const logger = new Logger('Electron Patches');
 
 export function createDeepMock(moduleName, logger) {
   const handler = {
     get(target, prop, receiver) {
       return (...args) => {
-        logger.log(
-          `[Mock: ${moduleName}] Method '${String(
-            prop
-          )}' was called. Doing nothing.`
-        );
+        logger.log(`[Mock: ${moduleName}] Method '${String(prop)}' was called. Doing nothing.`);
         return receiver;
       };
     },
@@ -20,22 +16,21 @@ export function createDeepMock(moduleName, logger) {
   return new Proxy({}, handler);
 }
 
-export let appName = "Oldcord";
+export let appName = 'Oldcord';
 
 export default {
-  target: "electron",
-  name: "Electron Patches",
-  description:
-    "Required for client functionality. Automatically enabled on desktop client.",
-  authors: ["Oldcord Team"],
+  target: 'electron',
+  name: 'Electron Patches',
+  description: 'Required for client functionality. Automatically enabled on desktop client.',
+  authors: ['Oldcord Team'],
   mandatory: false,
   configurable: false,
   defaultEnabled: false,
-  compatibleBuilds: "all",
+  compatibleBuilds: 'all',
   incompatiblePlugins: [],
   debug: true,
   bypassEvalTypeError: true,
-  startAt: "Init",
+  startAt: 'Init',
 
   patches: [
     {
@@ -45,31 +40,30 @@ export default {
           // Matches the new API one.
           match:
             /if\s*\([^)]+?\)\s*\{[\s\S]+?webContents[\s\S]+?\}\s*else\s*([\s\S]+?\.on\("changed"[\s\S]+?\);)/,
-          replace: "$1",
+          replace: '$1',
         },
         {
           // For window.require only builds
-          match:
-            /if\s*\(.*?\.isDesktop\(\)\)\s*\{[\s\S]+?\}\s*else\s*(\{[\s\S]+?\})/,
-          replace: "$1",
+          match: /if\s*\(.*?\.isDesktop\(\)\)\s*\{[\s\S]+?\}\s*else\s*(\{[\s\S]+?\})/,
+          replace: '$1',
         },
       ],
     },
     {
-      find: "window.DiscordNative",
+      find: 'window.DiscordNative',
       replacement: [
         {
-          match: "window.DiscordNative",
-          replace: "window._OldcordNative",
+          match: 'window.DiscordNative',
+          replace: 'window._OldcordNative',
         },
       ],
     },
     {
-      find: "electron.asar",
+      find: 'electron.asar',
       replacement: [
         {
-          match: "electron.asar",
-          replace: "app.asar",
+          match: 'electron.asar',
+          replace: 'app.asar',
         },
       ],
     },
@@ -81,17 +75,16 @@ export default {
     };
 
     try {
-      const moduleDataPath =
-        await window.DiscordNative.fileManager.getModulePath();
-      const pathParts = moduleDataPath.replace(/\\/g, "/").split("/");
+      const moduleDataPath = await window.DiscordNative.fileManager.getModulePath();
+      const pathParts = moduleDataPath.replace(/\\/g, '/').split('/');
       const lowercaseAppName = pathParts[pathParts.length - 2];
 
       const nameMap = {
-        oldcord: "Oldcord",
-        discord: "Discord",
-        discordcanary: "DiscordCanary",
-        discordptb: "DiscordPTB",
-        discorddevelopment: "DiscordDevelopment",
+        oldcord: 'Oldcord',
+        discord: 'Discord',
+        discordcanary: 'DiscordCanary',
+        discordptb: 'DiscordPTB',
+        discorddevelopment: 'DiscordDevelopment',
       };
 
       if (nameMap[lowercaseAppName]) {
@@ -99,14 +92,11 @@ export default {
         logger.info(`Detected app name: ${appName}`);
       } else {
         logger.warn(
-          `Could not map detected app name '${lowercaseAppName}'. Falling back to '${appName}'.`
+          `Could not map detected app name '${lowercaseAppName}'. Falling back to '${appName}'.`,
         );
       }
     } catch (err) {
-      logger.error(
-        `Failed to determine app name, falling back to '${appName}'.`,
-        err
-      );
+      logger.error(`Failed to determine app name, falling back to '${appName}'.`, err);
     }
 
     await windowDiscordNative();

@@ -1,20 +1,20 @@
 export default {
-  target: "all",
-  name: "Change URLs",
-  description: "Change Discord related URLs to instance URLs and Oldcord CDN",
-  authors: ["Oldcord Team"],
+  target: 'all',
+  name: 'Change URLs',
+  description: 'Change Discord related URLs to instance URLs and Oldcord CDN',
+  authors: ['Oldcord Team'],
   mandatory: true,
   configurable: false,
   defaultEnabled: false,
-  compatibleBuilds: "all",
+  compatibleBuilds: 'all',
   incompatiblePlugins: [],
   debug: false,
 
   patches() {
     const inviteLink = window.oldcord.config.custom_invite_url
-      .replace("https://", "")
-      .replace("http://", "");
-    const escapedLink = inviteLink.replace(/\./g, "\\.").replace(/\//g, "\\/");
+      .replace('https://', '')
+      .replace('http://', '');
+    const escapedLink = inviteLink.replace(/\./g, '\\.').replace(/\//g, '\\/');
 
     // We do not modify this part back to a simple array because we can try loading assets from OPFS instead of from CDN in the future which should be dynamic
 

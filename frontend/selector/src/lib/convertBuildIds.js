@@ -5,10 +5,10 @@ export function convertBuildIds(buildIds) {
 }
 
 export function convertBuildId(buildId) {
-  const date = buildId.split("_");
+  const date = buildId.split('_');
   date[0] = date[0].replace(
     /\w\S*/g,
-    (text) => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+    (text) => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase(),
   );
   const newBuildId = `${date[0]} ${date[1]}, ${date[2]}`;
   return newBuildId;

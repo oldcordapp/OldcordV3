@@ -3,7 +3,9 @@
   font-weight: 700;
   line-height: 44px;
   text-transform: uppercase;
-  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(
+    1.03
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .h2 {
@@ -11,7 +13,9 @@
   font-weight: 600;
   line-height: 30px;
   text-transform: uppercase;
-  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(
+    1.03
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .h3 {
@@ -19,7 +23,9 @@
   font-weight: 600;
   line-height: 28px;
   text-transform: uppercase;
-  transform: scaleY(1.03); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
+  transform: scaleY(
+    1.03
+  ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
 
 .h4 {
