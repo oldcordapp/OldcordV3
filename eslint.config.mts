@@ -23,7 +23,10 @@ export default defineConfig([
       sourceType: "module",
     },
   },
-  ...tseslint.configs.recommended,
+  {
+    files: ["**/*.{ts,mts,cts,tsx}"],
+    extends: [tseslint.configs.recommended]
+  },
   {
     files: ["frontend/**/*.{js,jsx,ts,tsx}"],
     extends: [pluginReact.configs.flat.recommended],
@@ -34,7 +37,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["www_static/assets/booloader/**/*.js"],
+    files: ["www_static/assets/bootloader/**/*.js"],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -93,5 +96,8 @@ export default defineConfig([
     plugins: { css },
     language: "css/css",
     extends: ["css/recommended"],
+    rules: {
+      "css/no-important": "off" // We need to override branding
+    }
   },
 ]);
