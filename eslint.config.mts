@@ -13,6 +13,7 @@ export default defineConfig([
     "www_static/assets/admin/**",
     "www_static/assets/oldplunger/**",
     "www_static/assets/selector/**",
+    "www_dynamic/**"
   ]),
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
