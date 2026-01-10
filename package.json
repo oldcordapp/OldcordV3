@@ -23,7 +23,7 @@
     "lint": "npm run prettier && npx eslint .",
     "lint:fix": "npm run prettier && npx eslint --fix .",
     "prettier": "npx prettier . --write",
-    "start": "npm run build:all && npm run start:server",
+    "start": "npm run build && npm run start:server",
     "start:server": "node dist_server/index.js",
     "type-check": "tsc --noEmit"
   },
