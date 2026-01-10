@@ -18,12 +18,12 @@ const Relationship = ({ avatarHash, username, discriminator, id, type }) => {
                         </div>
                 </td>
                 {discriminator === null ? <></> : <>
-                    <td class="mainPage-main-components-infoCard-table-td">
-                        <div class="mainPage-main-components-infoCard-table-discriminator">{discriminator}</div>
+                    <td className="mainPage-main-components-infoCard-table-td">
+                        <div className="mainPage-main-components-infoCard-table-discriminator">{discriminator}</div>
                     </td>
                 </>}
-                <td class="mainPage-main-components-infoCard-table-td">
-                    <div class="mainPage-main-components-infoCard-table-discriminator">{type}</div>
+                <td className="mainPage-main-components-infoCard-table-td">
+                    <div className="mainPage-main-components-infoCard-table-discriminator">{type}</div>
                 </td>
             </tr>
         </>

@@ -372,11 +372,11 @@ router.put("/:channelid/permissions/:id", instanceMiddleware("VERIFIED_EMAIL_REQ
         let keys = permissionKeys.map((key) => permissionValuesObject[key]);
 
         for (let permValue of keys) {
-            if (!!(req.body.allow & permValue)) {
+            if (req.body.allow & permValue) {
                 allow |= permValue;
             }
 
-            if (!!(req.body.deny & permValue)) {
+            if (req.body.deny & permValue) {
                 deny |= permValue;
             }
         }

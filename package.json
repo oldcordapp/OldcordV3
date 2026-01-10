@@ -15,7 +15,9 @@
     "start": "npm run build:all && npm run start:server",
     "dev:admin": "npm run dev --workspace=frontend/admin",
     "dev:selector": "npm run dev --workspace=frontend/selector",
-    "dev:oldplunger": "npm run dev --workspace=oldplunger"
+    "dev:oldplunger": "npm run dev --workspace=oldplunger",
+    "lint": "npx eslint .",
+    "lint:fix": "npx eslint --fix ."
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
@@ -46,8 +48,17 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
+    "@eslint/css": "^0.14.1",
+    "@eslint/js": "^9.39.2",
+    "@eslint/json": "^0.14.0",
+    "@eslint/markdown": "^7.5.1",
     "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.0.0",
+    "jiti": "^2.6.1",
+    "typescript-eslint": "^8.52.0"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.3.0"

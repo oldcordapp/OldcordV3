@@ -150,12 +150,12 @@ gateway.ready(gatewayServer, config.debug_logs['gateway'] ?? true);
 
 //https://stackoverflow.com/a/15075395
 function getIPAddress() {
-    var interfaces = os.networkInterfaces();
-    for (var devName in interfaces) {
-        var iface = interfaces[devName];
+    const interfaces = os.networkInterfaces();
+    for (const devName in interfaces) {
+        const iface = interfaces[devName];
 
-        for (var i = 0; i < iface.length; i++) {
-            var alias = iface[i];
+        for (let i = 0; i < iface.length; i++) {
+            const alias = iface[i];
 
             if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
                 return alias.address;
@@ -168,7 +168,7 @@ function getIPAddress() {
     let ip_address = getIPAddress();
 
     if (config.media_server_public_ip) {
-        let try_get_ip = await fetch("https://checkip.amazonaws.com");
+        const try_get_ip = await fetch("https://checkip.amazonaws.com");
 
         ip_address = await try_get_ip.text();
     }
@@ -260,26 +260,26 @@ app.get('/proxy/:url', async (req, res) => {
     }
 
     try {
-        let response = await fetch(requestUrl);
+        const response = await fetch(requestUrl);
 
         if (!response.ok) {
             return res.status(400).send('Invalid URL.');
         }
 
-        let contentType = response.headers.get('content-type').toLowerCase() || 'image/jpeg';
+        const contentType = response.headers.get('content-type').toLowerCase() || 'image/jpeg';
 
         if (!contentType.startsWith('image/')) {
             return res.status(400).send('Only images are supported via this route. Try harder.');
         }
 
-        let isAnimatedGif = contentType === 'image/gif';
+        const isAnimatedGif = contentType === 'image/gif';
 
         if (isAnimatedGif) {
             shouldResize = false;
         }
 
         if (shouldResize) {
-            let imageBuffer = await response.arrayBuffer();
+            const imageBuffer = await response.arrayBuffer();
             let image;
 
             try {
@@ -292,7 +292,7 @@ app.get('/proxy/:url', async (req, res) => {
 
             image.resize({ w: parseInt(width), h: parseInt(height)}); 
 
-            let finalBuffer = await image.getBuffer(contentType);
+            const finalBuffer = await image.getBuffer(contentType);
 
             res.setHeader('Content-Type', contentType);
             res.setHeader('Content-Length', finalBuffer.length);
@@ -301,7 +301,7 @@ app.get('/proxy/:url', async (req, res) => {
         } else {
             res.setHeader('Content-Type', contentType);
 
-            let contentLength = response.headers.get('content-length');
+            const contentLength = response.headers.get('content-length');
 
             if (contentLength) {
                 res.setHeader('Content-Length', contentLength);
@@ -330,10 +330,10 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
     //to-do make html, text, etc files render as plain text
 
     try {
-        let { format, width, height } = req.query;
+        const { format, width, height } = req.query;
 
         if (format === 'jpeg' && safeBabyModeExtensionsVideo.includes(ext)) {
-            let fixed_path = baseFilePath.replace(fileName, "thumbnail.png");
+            const fixed_path = baseFilePath.replace(fileName, "thumbnail.png");
 
             if (fs.existsSync(fixed_path)) {
                 return res.status(200).type("image/png").sendFile(fixed_path);
@@ -429,7 +429,7 @@ app.get("/app-assets/:applicationid/store/:file", async(req, res) => {
             return res.status(404).send("File not found");
         }
 
-        let files = fs.readdirSync(directoryPath);
+        const files = fs.readdirSync(directoryPath);
         let matchedFile = null;
 
         if (req.params.file.includes(".mp4")) {
@@ -458,7 +458,7 @@ app.get("/store-directory-assets/applications/:applicationId/:file", async(req, 
             return res.status(404).send("File not found");
         }
 
-        let files = fs.readdirSync(directoryPath);
+        const files = fs.readdirSync(directoryPath);
         let matchedFile = null;
 
         if (req.params.file.includes(".mp4")) {
