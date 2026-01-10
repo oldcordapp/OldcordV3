@@ -1,4 +1,5 @@
 const globalUtils = require('../helpers/globalutils');
+const dispatcher = require('./dispatcher');
 const murmur = require("murmurhash-js");
 
 const lazyRequest = {
@@ -322,7 +323,7 @@ const lazyRequest = {
         });
     },
     syncMemberList: async (guild, user_id) => {
-        await global.dispatcher.dispatchEventInGuildToThoseSubscribedTo(guild, "LIST_RELOAD", async function () {
+        await dispatcher.dispatchEventInGuildToThoseSubscribedTo(guild, "LIST_RELOAD", async function () {
             let otherSession = this;
             let guildSubs = otherSession.subscriptions[guild.id];
 

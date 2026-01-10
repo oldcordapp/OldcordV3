@@ -1,11 +1,13 @@
 const express = require('express');
 const { logText } = require('../../helpers/logger');
-const router = express.Router({ mergeParams: true });
 const applications = require('./applications');
 const tokens = require('./tokens');
 const globalUtils = require('../../helpers/globalutils');
 const errors = require('../../helpers/errors');
 const lazyRequest = require("../../helpers/lazyRequest");
+const dispatcher = require('../../helpers/dispatcher');
+
+const router = express.Router({ mergeParams: true });
 
 router.use("/applications", applications);
 router.use("/tokens", tokens);
@@ -219,33 +221,45 @@ router.post("/authorize", async (req, res) => {
                     nick: null
                 });
 
-                let activeSessions = global.dispatcher.getAllActiveSessions();
+                await dispatcher.dispatchEventTo(application.bot.id, "GUILD_CREATE", guild);
+
+                await dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
+                    roles: [],
+                    user: globalUtils.miniBotObject(application.bot),
+                    guild_id: guild.id,
+                    joined_at: new Date().toISOString(),
+                    deaf: false,
+                    mute: false,
+                    nick: null
+                });
+
+                let activeSessions = dispatcher.getAllActiveSessions();
 
                 for (let session of activeSessions) {
-                    if (session.subscriptions && session.subscriptions[guild.id]) {
-                        //if (session.user.id === application.bot.id) continue;
+                        if (session.subscriptions && session.subscriptions[guild.id]) {
+                            //if (session.user.id === application.bot.id) continue;
 
-                        await lazyRequest.handleMemberAdd(session, guild, {
-                            user: globalUtils.miniBotObject(application.bot),
-                            roles: [],
-                            joined_at: new Date().toISOString(),
-                            deaf: false,
-                            mute: false,
-                            nick: null
-                        });
+                            await lazyRequest.handleMemberAdd(session, guild, {
+                                user: globalUtils.miniBotObject(application.bot),
+                                roles: [],
+                                joined_at: new Date().toISOString(),
+                                deaf: false,
+                                mute: false,
+                                nick: null
+                            });
                     }
-                }
 
-                await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
-                    ...globalUtils.getUserPresence({
-                        user: globalUtils.miniUserObject(application.bot)
-                    }),
-                    roles: [],
-                    guild_id: guild.id
-                });
+                    await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
+                        ...globalUtils.getUserPresence({
+                            user: globalUtils.miniUserObject(application.bot)
+                        }),
+                        roles: [],
+                        guild_id: guild.id
+                    });
+                }
             }
             catch { }
-            
+
             return res.json({ location: `${req.protocol}://${req.get('host')}/oauth2/authorized` })
         } else {
             return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);

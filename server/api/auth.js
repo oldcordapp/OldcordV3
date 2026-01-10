@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const globalUtils = require('../helpers/globalutils');
+const dispatcher = require('../helpers/dispatcher');
 const Watchdog = require('../helpers/watchdog');
 const instanceMiddleware = require('../helpers/middlewares').instanceMiddleware;
 const rateLimitMiddleware = require("../helpers/middlewares").rateLimitMiddleware;
@@ -149,9 +150,9 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                 if (guild) {
                     await global.database.joinGuild(account.id, guild);
 
-                    await global.dispatcher.dispatchEventTo(account.id, "GUILD_CREATE", guild);
+                    await dispatcher.dispatchEventTo(account.id, "GUILD_CREATE", guild);
 
-                    await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
+                    await dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
                         roles: [],
                         user: globalUtils.miniUserObject(account),
                         guild_id: invite.guild.id,
@@ -161,7 +162,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                         nick: null
                     });
 
-                    let activeSessions = global.dispatcher.getAllActiveSessions();
+                    let activeSessions = dispatcher.getAllActiveSessions();
 
                     for (let session of activeSessions) {
                         if (session.subscriptions && session.subscriptions[guild.id]) {
@@ -178,7 +179,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                         }
                     }
 
-                    await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
+                    await dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
                         game_id: null,
                         status: "online",
                         activities: [],
@@ -190,7 +191,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                     if (guild.system_channel_id != null) {
                         let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [account]);
 
-                        await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
+                        await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
                     }
                 }
             }
@@ -206,9 +207,9 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
             if (guild != null) {
                 await global.database.joinGuild(account.id, guild);
 
-                await global.dispatcher.dispatchEventTo(account.id, "GUILD_CREATE", guild);
+                await dispatcher.dispatchEventTo(account.id, "GUILD_CREATE", guild);
 
-                await global.dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
+                await dispatcher.dispatchEventInGuild(guild, "GUILD_MEMBER_ADD", {
                     roles: [],
                     user: globalUtils.miniUserObject(account),
                     guild_id: guildId,
@@ -218,7 +219,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                     nick: null
                 });
 
-                let activeSessions = global.dispatcher.getAllActiveSessions();
+                let activeSessions = dispatcher.getAllActiveSessions();
 
                 for (let session of activeSessions) {
                     if (session.subscriptions && session.subscriptions[guild.id]) {
@@ -235,7 +236,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                     }
                 }
 
-                await global.dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
+                await dispatcher.dispatchEventInGuild(guild, "PRESENCE_UPDATE", {
                     game_id: null,
                     status: "online",
                     activities: [],
@@ -247,7 +248,7 @@ router.post("/register", instanceMiddleware("NO_REGISTRATION"), rateLimitMiddlew
                 if (guild.system_channel_id != null) {
                     let join_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, 7, [account]);
 
-                    await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
+                    await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", join_msg);
                 }
             }
         }

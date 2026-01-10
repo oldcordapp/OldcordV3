@@ -1,9 +1,11 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
 const { channelMiddleware } = require('../helpers/middlewares');
-const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
+
+const router = express.Router({ mergeParams: true });
 
 router.param('messageid', async (req, res, next, messageid) => {
     req.message = await global.database.getMessageById(messageid);
@@ -49,27 +51,27 @@ router.put("/:messageid", channelMiddleware, async (req, res) => {
 
         if (channel.type == 1 || channel.type == 3)
         {
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_UPDATE", message);
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_PINS_UPDATE", {
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_UPDATE", message);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "CHANNEL_PINS_UPDATE", {
                 channel_id: channel.id,
                 last_pin_timestamp: new Date().toISOString()
             });
 
             let pin_msg = await global.database.createSystemMessage(null, channel.id, 6, [req.account]);
 
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", pin_msg);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_CREATE", pin_msg);
         }
         else
         {
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_UPDATE", message);
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_PINS_UPDATE", {
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_UPDATE", message);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "CHANNEL_PINS_UPDATE", {
                 channel_id: channel.id,
                 last_pin_timestamp: new Date().toISOString()
             });
 
             let pin_msg = await global.database.createSystemMessage(req.guild.id, channel.id, 6, [req.account]);
 
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_CREATE", pin_msg);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_CREATE", pin_msg);
         }
 
         return res.status(204).send();
@@ -104,9 +106,9 @@ router.delete("/:messageid", channelMiddleware, async (req, res) => {
         message.pinned = false;
 
         if (channel.type == 1 || channel.type == 3)
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_UPDATE", message);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_UPDATE", message);
         else
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_UPDATE", message);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_UPDATE", message);
 
         return res.status(204).send();
     } catch(error) {
@@ -126,7 +128,7 @@ router.post("/ack", channelMiddleware, async (req, res) => {
             if (!tryAck)
                 throw "Message acknowledgement failed";
 
-            await global.dispatcher.dispatchEventTo(req.account.id, "MESSAGE_ACK", {
+            await dispatcher.dispatchEventTo(req.account.id, "MESSAGE_ACK", {
                 channel_id: req.channel.id,
                 message_id: latest_pin.id,
                 manual: true //They clicked on the channel pins to trigger this

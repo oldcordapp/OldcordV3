@@ -9,6 +9,7 @@ const path = require('path');
 const embedder = require('./embedder');
 const fsPromises = require('fs').promises;
 const speakeasy = require("speakeasy");
+const dispatcher = require('./dispatcher');
 
 let db_config = globalUtils.config.db_config;
 let config = globalUtils.config;
@@ -17,145 +18,155 @@ const pool = new Pool(db_config);
 
 let cache = {};
 
-const database = {
-    version: 0.2,
-    runQuery: async (queryString, values = []) => {
-        //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
+async function runQuery(queryString, values = []) {
+    //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
 
-        const query = {
-            text: queryString,
-            values: values
-        };
+    const query = {
+        text: queryString,
+        values: values
+    };
 
-        const cacheKey = JSON.stringify(query);
+    const cacheKey = JSON.stringify(query);
 
-        const client = await pool.connect();
+    const client = await pool.connect();
 
-        let isWriteQuery = false;
+    let isWriteQuery = false;
 
-        try {
-            isWriteQuery = /INSERT\s+INTO|UPDATE|DELETE\s+FROM/i.test(queryString);
+    try {
+        isWriteQuery = /INSERT\s+INTO|UPDATE|DELETE\s+FROM/i.test(queryString);
 
-            if (isWriteQuery)
-                await client.query('BEGIN');
+        if (isWriteQuery)
+            await client.query('BEGIN');
 
-            if (/SELECT\s+\*\s+FROM/i.test(queryString)) {
-                if (cache[cacheKey]) {
-                    return cache[cacheKey];
-                }
+        if (/SELECT\s+\*\s+FROM/i.test(queryString)) {
+            if (cache[cacheKey]) {
+                return cache[cacheKey];
             }
+        }
 
-            if (isWriteQuery) {
-                const tableNameMatch = queryString.match(/(?:FROM|INTO|UPDATE)\s+(\S+)/i);
-                const tableName = tableNameMatch ? tableNameMatch[1] : null;
+        if (isWriteQuery) {
+            const tableNameMatch = queryString.match(/(?:FROM|INTO|UPDATE)\s+(\S+)/i);
+            const tableName = tableNameMatch ? tableNameMatch[1] : null;
 
-                if (tableName) {
-                    for (const key in cache) {
-                        if (key.includes(tableName)) {
-                            delete cache[key];
-                        }
+            if (tableName) {
+                for (const key in cache) {
+                    if (key.includes(tableName)) {
+                        delete cache[key];
                     }
                 }
             }
-
-            const result = await client.query(query);
-            const rows = result.rows;
-
-            if (/SELECT\s+\*\s+FROM/i.test(queryString) && rows.length > 0) {
-                cache[cacheKey] = rows;
-            }
-
-            if (isWriteQuery) {
-                await client.query('COMMIT');
-            }
-
-            return rows.length === 0 ? null : rows;
-        } catch (error) {
-            if (isWriteQuery) {
-                await client.query('ROLLBACK');
-            }
-
-            logText(`Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`, "error");
-
-            return null;
-        } finally {
-            client.release();
         }
-    },
-    doescolumnExist: async (column, table) => {
-        let check = await database.runQuery(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2) AS column_exists;`, [table, column]);
 
-        return check[0].column_exists;
-    },
+        const result = await client.query(query);
+        const rows = result.rows;
+
+        if (/SELECT\s+\*\s+FROM/i.test(queryString) && rows.length > 0) {
+            cache[cacheKey] = rows;
+        }
+
+        if (isWriteQuery) {
+            await client.query('COMMIT');
+        }
+
+        return rows.length === 0 ? null : rows;
+    } catch (error) {
+        if (isWriteQuery) {
+            await client.query('ROLLBACK');
+        }
+
+        logText(`Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`, "error");
+
+        return null;
+    } finally {
+        client.release();
+    }
+}
+
+async function doescolumnExist(column, table) {
+    let check = await database.runQuery(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2) AS column_exists;`, [table, column]);
+
+    return check[0].column_exists;
+}
+
+async function performMigrations() {
+
+    v = await database.runQuery(`SELECT * FROM instance_info;`);
+
+    if (v[0].version != database.version) { //auto migrate for the time being
+        let value = await database.runQuery(`SELECT * FROM users;`, [], true);
+
+        if (value === null) {
+            return;
+        }
+
+        if (!value[0].relationships) {
+            await runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
+            await runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`, [0.2]); //safeguards, in case the script is run outside of the instance executing it
+            await runQuery(`UPDATE instance_info SET version = $1 WHERE version = 0.1`, [0.2]);
+
+            return;
+        }
+
+        logText(`Found outdated database setup, migrating to newer version... (${databaseVersion})`, "OLDCORD"); //im lazy
+
+        await runQuery(`CREATE TABLE IF NOT EXISTS relationships (user_id_1 TEXT, type SMALLINT, user_id_2 TEXT)`, []);
+
+        let relationships = value.map(i => {
+            return { id: i.id, rel: JSON.parse(i.relationships).filter(i => i.type != 3) };
+        }).filter(i => i.rel.length != 0);
+
+        let ignore = [];
+
+        relationships.map(i => {
+            i.rel.map(r => {
+                if (JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`) || JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`)) {
+                    r.type = 0;
+                    return r;
+                }
+
+                if (r.type != 2) {
+                    ignore.push([i.id, r.id]);
+                    if (r.type === 4) {
+                        r.type = 3;
+                    }
+                }
+                return r;
+            })
+
+            i.rel = i.rel.filter(r => r.type != 0);
+
+            return i;
+        })
+
+        relationships = relationships.filter(i => i.rel.length != 0);
+
+        let insert = [];
+
+        relationships.map(i => i.rel.map(r => insert.push([i.id, r.type, r.id])));
+
+        await runQuery(`ALTER TABLE users DROP COLUMN relationships;`, []);
+
+        insert.map(async i => {
+            await runQuery(`INSERT INTO relationships VALUES ($1, $2, $3);`, [i[0], i[1], i[2]]);
+        }); //TODO: Call a separate script to check how many versions out of date the current database is and run the required migration scripts
+
+        logText(`Migrated`, "OLDCORD"); //im lazy
+    }
+}
+
+// TODO: turn this into exports
+const database = {
+    version: 0.2,
+    runQuery,
+    doescolumnExist,
     setupDatabase: async () => {
         try {
             await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
 
             await database.runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`, [0.1]); //for the people who update their instance but do not manually run the relationships migration script
 
-            v = await database.runQuery(`SELECT * FROM instance_info;`);
+            await performMigrations();
 
-            if (v[0].version != database.version) { //auto migrate for the time being
-                let value = await database.runQuery(`SELECT * FROM users;`, [], true);
-
-                if (value === null) {
-                    return;
-                }
-
-                if (!value[0].relationships) {
-                    await runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`,[]);
-                    await runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,[0.2]); //safeguards, in case the script is run outside of the instance executing it
-                    await runQuery(`UPDATE instance_info SET version = $1 WHERE version = 0.1`,[0.2]);
-
-                    return;
-                }
-
-                logText(`Found outdated database setup, migrating to newer version... (${databaseVersion})`,"OLDCORD"); //im lazy
-
-                await runQuery(`CREATE TABLE IF NOT EXISTS relationships (user_id_1 TEXT, type SMALLINT, user_id_2 TEXT)`,[]);
-
-                let relationships = value.map(i => {
-                    return {id: i.id, rel:JSON.parse(i.relationships).filter(i => i.type != 3)};
-                }).filter(i => i.rel.length != 0);
-
-                let ignore = [];
-
-                relationships.map(i => {
-                    i.rel.map(r => {
-                        if (JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`) || JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`)) {
-                            r.type = 0;
-                            return r;
-                        }
-
-                        if (r.type != 2) {
-                            ignore.push([i.id,r.id]);
-                            if (r.type === 4) {
-                                r.type = 3;
-                            }
-                        }
-                        return r;
-                    })
-                    
-                    i.rel = i.rel.filter(r => r.type != 0);
-
-                    return i;
-                })
-                
-                relationships = relationships.filter(i => i.rel.length != 0);
-
-                let insert = [];
-
-                relationships.map(i => i.rel.map(r => insert.push([i.id,r.type,r.id])));
-
-                await runQuery(`ALTER TABLE users DROP COLUMN relationships;`,[]);
-
-                insert.map(async i => {
-                    await runQuery(`INSERT INTO relationships VALUES ($1, $2, $3);`,[i[0],i[1],i[2]]);
-                }); //TODO: Call a separate script to check how many versions out of date the current database is and run the required migration scripts
-
-                logText(`Migrated`,"OLDCORD"); //im lazy
-            }
- 
             await database.runQuery(`
                 CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -553,7 +564,7 @@ const database = {
                 WHERE connected_at = 'NULL' OR platform = 'NULL';
             `, []);
 
-             await database.runQuery(`
+            await database.runQuery(`
                 UPDATE channels
                 SET
                     parent_id = CASE WHEN parent_id = 'NULL' THEN NULL ELSE parent_id END,
@@ -573,7 +584,7 @@ const database = {
                     vanity_url = CASE WHEN vanity_url = 'NULL' THEN NULL ELSE vanity_url END,
                     afk_channel_id = CASE WHEN afk_channel_id = 'NULL' THEN NULL ELSE afk_channel_id END
                 WHERE icon = 'NULL' OR splash = 'NULL' OR banner = 'NULL' OR region = 'NULL' OR vanity_url = 'NULL' OR afk_channel_id = 'NULL';
-            `,[]);
+            `, []);
 
             await database.runQuery(`
                 UPDATE applications
@@ -883,7 +894,7 @@ const database = {
             return [];
         }
     },
-    getUserSubscriptions: async(user_id) => {
+    getUserSubscriptions: async (user_id) => {
         try {
             let query = `SELECT * FROM guild_subscriptions WHERE user_id = $1`;
             let params = [user_id];
@@ -965,12 +976,12 @@ const database = {
             guild.features = finalFeatures;
 
             await database.runQuery(
-                `UPDATE guilds SET premium_subscription_count = $1, premium_tier = $2, features = $3 WHERE id = $4`, 
+                `UPDATE guilds SET premium_subscription_count = $1, premium_tier = $2, features = $3 WHERE id = $4`,
                 [new_sub_count, new_level, JSON.stringify(finalFeatures), guild.id]
             );
 
-            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_UPDATE", guild);
-            
+            await dispatcher.dispatchEventInGuild(guild, "GUILD_UPDATE", guild);
+
             return true;
         } catch (error) {
             logText(error, "error");
@@ -1005,7 +1016,7 @@ const database = {
                 new_level = 2;
                 msg_type = 10;
 
-                addFeatures(["ANIMATED_ICON", "INVITE_SPLASH", "BANNER", "NEWS"]); 
+                addFeatures(["ANIMATED_ICON", "INVITE_SPLASH", "BANNER", "NEWS"]);
             } else if (new_sub_count >= 20 && new_level != 3) { //50 for august 2019 - 20 for september, odd
                 new_level = 3;
                 msg_type = 11;
@@ -1018,15 +1029,15 @@ const database = {
             guild.features = new_features;
 
             await database.runQuery(
-                `UPDATE guilds SET premium_subscription_count = $1, premium_tier = $2, features = $3 WHERE id = $4`, 
+                `UPDATE guilds SET premium_subscription_count = $1, premium_tier = $2, features = $3 WHERE id = $4`,
                 [new_sub_count, new_level, JSON.stringify(new_features), guild.id]
             );
 
             let system_msg = await global.database.createSystemMessage(guild.id, guild.system_channel_id, msg_type, [user]);
 
-            await global.dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", system_msg); //funny we're doing it here
-            
-            await global.dispatcher.dispatchEventInGuild(guild, "GUILD_UPDATE", guild);
+            await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, "MESSAGE_CREATE", system_msg); //funny we're doing it here
+
+            await dispatcher.dispatchEventInGuild(guild, "GUILD_UPDATE", guild);
 
             return {
                 id: subscription_id,
@@ -1039,7 +1050,7 @@ const database = {
             return [];
         }
     },
-    getGuildSubscriptions: async(guild) => {
+    getGuildSubscriptions: async (guild) => {
         try {
             let rows = await database.runQuery(`SELECT * FROM guild_subscriptions WHERE guild_id = $1`, [guild.id]);
 
@@ -1389,7 +1400,7 @@ const database = {
                 mention_count: rows[0].mention_count || 0,
                 last_message_id: rows[0].message_id,
                 last_pin_timestamp: rows[0].last_pin_timestamp || "0" //to-do last pin timestamp
-            }; 
+            };
         }
         catch (error) {
             logText(error, "error");
@@ -1537,7 +1548,7 @@ const database = {
             }
 
             let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
-            
+
             return globalUtils.prepareAccountObject(rows, relationships); //to-do fix
         } catch (error) {
             logText(error, "error");
@@ -2031,7 +2042,7 @@ const database = {
     generateMfaTicket: async (user_id) => {
         try {
             let ticket = globalUtils.generateString(40);
-            
+
             await database.runQuery(`INSERT INTO mfa_login_tickets (user_id, mfa_ticket) VALUES ($1, $2)`, [user_id, ticket]);
 
             return ticket;
@@ -2500,7 +2511,7 @@ const database = {
                     if (!fs.existsSync(dir)) {
                         fs.mkdirSync(dir, { recursive: true });
                     }
-                    
+
                     fs.writeFileSync(`${dir}/${iconHash}.${extension}`, imgData, "base64");
 
                     channel.icon = iconHash;
@@ -2596,13 +2607,13 @@ const database = {
                 const webhook = await database.getWebhookById(webhookId);
 
                 if (!webhook) {
-                    author = { 
-                        id: webhookId, 
-                        username: "Deleted Webhook", 
-                        discriminator: "0000", 
-                        avatar: null, 
-                        bot: true, 
-                        webhook: true 
+                    author = {
+                        id: webhookId,
+                        username: "Deleted Webhook",
+                        discriminator: "0000",
+                        avatar: null,
+                        bot: true,
+                        webhook: true
                     };
                 } else {
                     const override = await database.getWebhookOverrides(webhookId, overrideId);
@@ -3132,13 +3143,13 @@ const database = {
                             discriminator: "0000"
                         };
                     } else {
-                        author = { 
-                            id: webhookId, 
-                            username: "Deleted Webhook", 
-                            discriminator: "0000", 
-                            avatar: null, 
-                            bot: true, 
-                            webhook: true 
+                        author = {
+                            id: webhookId,
+                            username: "Deleted Webhook",
+                            discriminator: "0000",
+                            avatar: null,
+                            bot: true,
+                            webhook: true
                         };
                     }
                 } else {
@@ -3287,21 +3298,21 @@ const database = {
                             discriminator: "0000"
                         };
                     } else {
-                        author = { 
-                            id: webhookId, 
-                            username: "Deleted Webhook", 
-                            discriminator: "0000", 
-                            avatar: null, 
-                            bot: true, 
-                            webhook: true 
+                        author = {
+                            id: webhookId,
+                            username: "Deleted Webhook",
+                            discriminator: "0000",
+                            avatar: null,
+                            bot: true,
+                            webhook: true
                         }; //Should we check for this?
                     }
                 } else {
-                    author = accountMap.get(row.author_id) || { 
-                        id: "456226577798135808", 
-                        username: "Deleted User", 
-                        discriminator: "0000", 
-                        bot: false 
+                    author = accountMap.get(row.author_id) || {
+                        id: "456226577798135808",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        bot: false
                     };
                 }
 
@@ -3465,7 +3476,7 @@ const database = {
                         SELECT id, override_id, avatar_url, username 
                         FROM webhook_overrides 
                         WHERE id = ANY($1::text[])
-                    `, [[...uniqueWebhookIds]]) ?? []; 
+                    `, [[...uniqueWebhookIds]]) ?? [];
 
                     overridesMap = new Map(allOverrides.map(o => [`${o.id}_${o.override_id}`, o]));
                 }
@@ -3506,7 +3517,7 @@ const database = {
 
             return accounts;
         } catch (error) {
-            logText(error, "error"); 
+            logText(error, "error");
             return [];
         }
     },
@@ -3519,7 +3530,7 @@ const database = {
                     UNION ALL
                     (SELECT * FROM messages WHERE channel_id = $1 AND message_id > $2 ORDER BY message_id ASC LIMIT $4)
                 ) AS combined_messages
-                ORDER BY message_id ASC`, 
+                ORDER BY message_id ASC`,
                 [channel_id, message_id, actualLimit + 1, actualLimit]
             ); //So select all messages before the around id descending limited by half the sandwich limit, then add it on with the other query to select where its above the 2nd id ascending, then sort the final msgs by ascending order (oldest -> newest)
 
@@ -3529,7 +3540,7 @@ const database = {
 
             const messageIds = messageRows.map(row => row.message_id);
             const uniqueUserIds = new Set();
-            
+
             messageRows.forEach(row => {
                 uniqueUserIds.add(row.author_id.includes("WEBHOOK_") ? row.author_id.split('_')[1] : row.author_id);
                 const mentionsData = globalUtils.parseMentions(row.content);
@@ -3560,7 +3571,8 @@ const database = {
                 });
             });
 
-            return await Promise.all(messageRows.map(async(row) => {;
+            return await Promise.all(messageRows.map(async (row) => {
+                ;
                 let isWebhook = row.author_id.includes("WEBHOOK_");
 
                 if (isWebhook) {
@@ -3580,21 +3592,21 @@ const database = {
                             discriminator: "0000"
                         };
                     } else {
-                        author = { 
-                            id: webhookId, 
-                            username: "Deleted Webhook", 
-                            discriminator: "0000", 
-                            avatar: null, 
-                            bot: true, 
-                            webhook: true 
+                        author = {
+                            id: webhookId,
+                            username: "Deleted Webhook",
+                            discriminator: "0000",
+                            avatar: null,
+                            bot: true,
+                            webhook: true
                         }; //Should we check for this?
                     }
                 } else {
-                    author = accountMap.get(row.author_id) || { 
-                        id: "456226577798135808", 
-                        username: "Deleted User", 
-                        discriminator: "0000", 
-                        bot: false 
+                    author = accountMap.get(row.author_id) || {
+                        id: "456226577798135808",
+                        username: "Deleted User",
+                        discriminator: "0000",
+                        bot: false
                     };
                 }
 
@@ -3602,17 +3614,17 @@ const database = {
                 const mentions = (mentionsData.mentions || []).map(id => accountMap.get(id)).filter(Boolean);
 
                 return globalUtils.formatMessage(
-                    row, 
-                    author, 
-                    attachmentsMap.get(row.message_id) || [], 
-                    mentions, 
-                    mentionsData.mention_roles || [], 
-                    [], 
+                    row,
+                    author,
+                    attachmentsMap.get(row.message_id) || [],
+                    mentions,
+                    mentionsData.mention_roles || [],
+                    [],
                     isWebhook
                 );
             }));
         } catch (error) {
-            logText(error, "error"); 
+            logText(error, "error");
             return [];
         }
     }, //to-do move the hydration of author, etc objects to its own function PLEASE.
@@ -3883,7 +3895,7 @@ const database = {
                 name: row.name,
                 ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5 || parseInt(row.type) === 4) && {
                     guild_id: row.guild_id,
-                }), 
+                }),
                 ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5) && {
                     parent_id: row.parent_id,
                 }),
@@ -4049,7 +4061,7 @@ const database = {
                         name: row.name,
                         ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5 || parseInt(row.type) === 4) && {
                             guild_id: row.guild_id,
-                        }), 
+                        }),
                         ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5) && {
                             parent_id: row.parent_id,
                         }),
@@ -4111,12 +4123,12 @@ const database = {
             }
 
             return {
-                id: guildRow.id, 
+                id: guildRow.id,
                 name: guildRow.name,
                 icon: guildRow.icon,
                 splash: guildRow.splash,
                 banner: guildRow.banner,
-                region: guildRow.region, 
+                region: guildRow.region,
                 owner_id: guildRow.owner_id,
                 afk_channel_id: guildRow.afk_channel_id,
                 afk_timeout: guildRow.afk_timeout,
@@ -4305,8 +4317,8 @@ const database = {
                         name: row.name,
                         ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5 || parseInt(row.type) === 4) && {
                             guild_id: guildId,
-                        }), 
-                       ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5) && {
+                        }),
+                        ...((parseInt(row.type) === 0 || parseInt(row.type) === 2 || parseInt(row.type) === 5) && {
                             parent_id: row.parent_id,
                         }),
                         type: parseInt(row.type),
@@ -4531,7 +4543,7 @@ const database = {
             const data = rows[0];
 
             let expiration_date = null;
-            
+
             //Since we forced vanity urls to force back at max age 0, check if its above before doing any further logic
             if (data.maxage > 0) {
                 let expiryTime = new Date(data.createdat).getTime() + (data.maxage * 1000);
@@ -4779,7 +4791,7 @@ const database = {
             const date = new Date().toISOString();
 
             if (!force_regenerate) {
-                const existingInvites = await database.runQuery(`SELECT * FROM invites WHERE guild_id = $1 AND channel_id = $2 AND revoked = $3 AND inviter_id = $4 AND maxuses = $5 AND xkcdpass = $6 AND maxage = $7`, [guild.id, channel.id, temporary , inviter.id, maxUses, xkcdpass, maxAge]);
+                const existingInvites = await database.runQuery(`SELECT * FROM invites WHERE guild_id = $1 AND channel_id = $2 AND revoked = $3 AND inviter_id = $4 AND maxuses = $5 AND xkcdpass = $6 AND maxage = $7`, [guild.id, channel.id, temporary, inviter.id, maxUses, xkcdpass, maxAge]);
 
                 if (existingInvites && existingInvites.length > 0) {
                     const invite = await database.getInvite(existingInvites[0].code); //really work on reducing the amount of shit like this
@@ -5023,9 +5035,10 @@ const database = {
                 let dirPath = path.join('./www_dynamic', type, guild_id.toString());
 
                 try {
-                    await fsPromises.rm(dirPath, { 
-                        recursive: true, 
-                        force: true }
+                    await fsPromises.rm(dirPath, {
+                        recursive: true,
+                        force: true
+                    }
                     );
                 } catch (err) {
                     logText(`Failed to delete www_dynamic/${type} for guild ${guild_id}: ${err.message}`, "error");
@@ -5200,7 +5213,7 @@ const database = {
             const nonce = Snowflake.generate();
             const author_id = props[0].id || Snowflake.generate();
             const date = Snowflake.deconstruct(id).date.toISOString();
-            
+
             let mention_id = Snowflake.generate();
 
             if (type === 1) {
@@ -5234,7 +5247,7 @@ const database = {
 
             return msg;
         }
-        catch(error) {
+        catch (error) {
             logText(error, "error");
 
             return null;
@@ -5281,7 +5294,7 @@ const database = {
             await database.runQuery(`UPDATE channels SET last_message_id = $1 WHERE id = $2`, [id, channel_id]);
 
             if (attachments && Array.isArray(attachments)) {
-                for(var attachment of attachments) {
+                for (var attachment of attachments) {
                     await database.runQuery(`INSERT INTO attachments (attachment_id, message_id, filename, height, width, size, url) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [
                         attachment.id,
                         id,
@@ -5454,8 +5467,8 @@ const database = {
     createGuild: async (owner, icon, name, region, exclusions, client_date) => {
         try {
             const id = Snowflake.generate();
-             const deconstructed = Snowflake.deconstruct(id);
-            const date = deconstructed.date.toISOString(); 
+            const deconstructed = Snowflake.deconstruct(id);
+            const date = deconstructed.date.toISOString();
 
             if (icon != null) {
                 var extension = icon.split('/')[1].split(';')[0];
@@ -5486,7 +5499,7 @@ const database = {
 
             await database.runQuery(
                 `INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
                 [id, name, icon, region, owner.id, null, 300, date, JSON.stringify(exclusions)]
             );
 
@@ -5517,10 +5530,10 @@ const database = {
                 await database.runQuery(`INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 0, $2, $3, 0)`, [id, id, 'general']);
 
                 await database
-                .runQuery(
-                    `INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 2, $2, $3, 1)`, 
-                    [voiceId, id, 'General']
-                );
+                    .runQuery(
+                        `INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 2, $2, $3, 1)`,
+                        [voiceId, id, 'General']
+                    );
 
                 channelsResponse = [
                     {
@@ -5721,7 +5734,7 @@ const database = {
             await database.runQuery(`UPDATE users SET flags = $1 WHERE id = $2`, [user.flags | 1, user.id]); // Maybe repurpose COLLABORATOR or RESTRICTED_COLLABORATOR for either Admin and Janitor/Moderator respectively
 
             return true;
-        }  catch (error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -5732,7 +5745,7 @@ const database = {
             await database.runQuery(`UPDATE staff SET privilege = $1 WHERE user_id = $2`, [privilege, user.id]);
 
             return true;
-        }  catch (error) {
+        } catch (error) {
             logText(error, "error");
 
             return false;
@@ -5776,12 +5789,12 @@ const database = {
         try {
             let rows = await database.runQuery(`SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id`, []);
             let ret = [];
-            
+
             if (!rows || rows.length === 0) {
                 return [];
             }
 
-            for(var row of rows) {
+            for (var row of rows) {
                 ret.push({
                     avatar: row.avatar,
                     username: row.username,
@@ -5798,7 +5811,7 @@ const database = {
         }
         catch (error) {
             logText(error, "error");
-            
+
             return [];
         }
     },
@@ -5806,7 +5819,7 @@ const database = {
         try {
             await database.runQuery(`DELETE FROM staff WHERE user_id = $1`, [user.id]);
 
-            await database.runQuery(`UPDATE users SET flags = $1 WHERE id = $2`, [user.flags &~ 1, user.id]); // Maybe repurpose COLLABORATOR or RESTRICTED_COLLABORATOR for either Admin and Janitor/Moderator respectively
+            await database.runQuery(`UPDATE users SET flags = $1 WHERE id = $2`, [user.flags & ~1, user.id]); // Maybe repurpose COLLABORATOR or RESTRICTED_COLLABORATOR for either Admin and Janitor/Moderator respectively
 
             return true;
         } catch (error) {

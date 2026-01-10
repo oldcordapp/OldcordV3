@@ -7,6 +7,7 @@ const fs = require('fs');
 const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
 
 router.get("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), quickcache.cacheFor(60 * 5, true), async (req, res) => {
     try {
@@ -78,7 +79,7 @@ router.post("/", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJIS"), a
             emoji.allNamesString = `:${emoji.name}:`
         }
 
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
+        await dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
             guild_id: guild.id,
             emojis: currentEmojis,
             guild_hashes: {
@@ -154,7 +155,7 @@ router.patch("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMOJ
             emoji2.allNamesString = `:${emoji.name}:`
         }
 
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
+        await dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
             guild_id: guild.id,
             emojis: currentEmojis,
             guild_hashes: {
@@ -207,7 +208,7 @@ router.delete("/:emoji", guildMiddleware, guildPermissionsMiddleware("MANAGE_EMO
             emoji2.allNamesString = `:${emoji.name}:`
         }
 
-        await global.dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
+        await dispatcher.dispatchEventInGuild(guild, "GUILD_EMOJIS_UPDATE", {
             guild_id: guild.id,
             emojis: currentEmojis,
             guild_hashes: {

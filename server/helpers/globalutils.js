@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const encode = require('./base64url');
+const dispatcher = require('./dispatcher');
 const fs = require('fs');
 const { logText } = require('./logger');
 
@@ -23,6 +24,7 @@ const globalUtils = {
         let host = req.headers['host'];
         if (host) host = host.split(':', 2)[0];
         let baseUrl = config.gateway_url == "" ? (host ?? config.base_url) : config.gateway_url;
+        // TODO: this can be constructed using the WHATWG URL API - it will also handle stripping the default port, IPv6 literals, and other bullshit we don't need to deal with
         return `${config.secure ? 'wss' : 'ws'}://${baseUrl}${(config.includePortInWsUrl && (config.secure ? config.ws_port != 443 : config.ws_port != 80)) ? `:${config.ws_port}` : ""}`;
     },
     generateRTCServerURL: () => {
@@ -33,10 +35,11 @@ const globalUtils = {
         let result = '';
         let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let charactersLength = characters.length;
-        let randomBytes = crypto.randomBytes(length);
+
+        const secureRandom = crypto.randomBytes(length);
     
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(randomBytes[i] % charactersLength);
+        for (var i = 0; i < length; i++) {
+            result += characters.charAt((secureRandom[i] * charactersLength) >> 8);
         }
         
         return result;
@@ -372,7 +375,8 @@ const globalUtils = {
         }
     },
     badEmail: async (email) => {
-        try {   
+        try {
+            // TODO: refresh it from the source periodically?
             if (!globalUtils.badEmails) {
                 let response = await fetch("https://raw.githubusercontent.com/unkn0w/disposable-email-domain-list/main/domains.txt");
     
@@ -658,7 +662,7 @@ const globalUtils = {
         await database.setPrivateChannels(recipient_id, userPrivChannels);
         
         if (sendCreate) {
-            await global.dispatcher.dispatchEventTo(recipient_id, "CHANNEL_CREATE", function() {
+            await dispatcher.dispatchEventTo(recipient_id, "CHANNEL_CREATE", function() {
                 return globalUtils.personalizeChannelObject(this.socket, private_channel);
             });
         }

@@ -1,13 +1,13 @@
 const express = require('express');
 const { logText } = require('../helpers/logger');
-const { guildPermissionsMiddleware, guildMiddleware, channelMiddleware, channelPermissionsMiddleware, authMiddleware } = require('../helpers/middlewares');
-const globalUtils = require('../helpers/globalutils');
+const { guildPermissionsMiddleware, authMiddleware } = require('../helpers/middlewares');
 const Snowflake = require('../helpers/snowflake');
 const fs = require('fs');
-const router = express.Router({ mergeParams: true });
-const path = require("path");
 const md5 = require('../helpers/md5');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
+
+const router = express.Router({ mergeParams: true });
 
 router.param('webhookid', async (req, res, next, webhookid) => {
     req.webhook = await global.database.getWebhookById(webhookid);
@@ -250,7 +250,7 @@ router.post("/:webhookid/:webhooktoken", async (req, res) => {
             createMessage.author.avatar = override.avatar_url;
         }
 
-        await global.dispatcher.dispatchEventInChannel(guild, channel.id, "MESSAGE_CREATE", createMessage);
+        await dispatcher.dispatchEventInChannel(guild, channel.id, "MESSAGE_CREATE", createMessage);
 
         return res.status(204).send();
     } catch (error) {
@@ -345,7 +345,7 @@ router.post("/:webhookid/:webhooktoken/github", async (req, res) => {
         createMessage.author.username = override.username;
         createMessage.author.avatar = override.avatar_url;
 
-        await global.dispatcher.dispatchEventInChannel(guild, channel.id, "MESSAGE_CREATE", createMessage);
+        await dispatcher.dispatchEventInChannel(guild, channel.id, "MESSAGE_CREATE", createMessage);
 
         return res.status(204).send();
     } catch (error) {

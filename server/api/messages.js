@@ -8,12 +8,14 @@ const { Jimp } = require('jimp');
 const Snowflake = require('../helpers/snowflake');
 const reactions = require('./reactions');
 const path = require('path');
-const upload = multer();
-const router = express.Router({ mergeParams: true });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const ffmpeg = require('fluent-ffmpeg');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
+
+const upload = multer();
+const router = express.Router({ mergeParams: true });
 
 router.param('messageid', async (req, res, next, messageid) => {
     req.message = await global.database.getMessageById(messageid);
@@ -438,9 +440,9 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
         //Dispatch to correct recipients(s) in DM, group, or guild
         if (req.channel.recipients) {
             await globalUtils.pingPrivateChannel(req.channel);
-            await global.dispatcher.dispatchEventInPrivateChannel(req.channel, "MESSAGE_CREATE", message);
+            await dispatcher.dispatchEventInPrivateChannel(req.channel, "MESSAGE_CREATE", message);
         } else {
-            await global.dispatcher.dispatchEventInChannel(req.guild, req.channel.id, "MESSAGE_CREATE", message);
+            await dispatcher.dispatchEventInChannel(req.guild, req.channel.id, "MESSAGE_CREATE", message);
         }
 
         //Acknowledge immediately to author
@@ -449,7 +451,7 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
         if (!tryAck)
             throw "Message acknowledgement failed";
 
-        await global.dispatcher.dispatchEventTo(author.id, "MESSAGE_ACK", {
+        await dispatcher.dispatchEventTo(author.id, "MESSAGE_ACK", {
             channel_id: req.channel.id,
             message_id: message.id,
             manual: false //This is for if someone clicks mark as read
@@ -493,9 +495,9 @@ router.delete("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), chan
         };
 
         if (channel.recipients)
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_DELETE", payload);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_DELETE", payload);
         else
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_DELETE", payload);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_DELETE", payload);
     
         return res.status(204).send();
         
@@ -552,9 +554,9 @@ router.patch("/:messageid", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), rateL
         }
 
         if (channel.recipients)
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_UPDATE", message);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_UPDATE", message);
         else
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_UPDATE", message);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_UPDATE", message);
 
         return res.status(204).send();
         
@@ -589,7 +591,7 @@ router.post("/:messageid/ack", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), ra
         if (!tryAck)
             throw "Message acknowledgement failed";
 
-        await global.dispatcher.dispatchEventTo(guy.id, "MESSAGE_ACK", {
+        await dispatcher.dispatchEventTo(guy.id, "MESSAGE_ACK", {
             channel_id: channel.id,
             message_id: message.id,
             manual: false //This is for if someone clicks mark as read

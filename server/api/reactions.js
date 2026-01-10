@@ -2,10 +2,12 @@ const express = require('express');
 const globalUtils = require('../helpers/globalutils');
 const { logText } = require('../helpers/logger');
 const { channelPermissionsMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
-const router = express.Router({ mergeParams: false });
 const quickcache = require('../helpers/quickcache');
 const Watchdog = require('../helpers/watchdog');
 const errors = require('../helpers/errors');
+const dispatcher = require('../helpers/dispatcher');
+
+const router = express.Router({ mergeParams: false });
 
 router.param('userid', async (req, res, next, userid) => {
     req.user = await global.database.getAccountByUserId(userid);
@@ -68,9 +70,9 @@ router.delete(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(gl
         };
 
         if (guild)
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_REMOVE", payload);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_REMOVE", payload);
         else
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_REMOVE", payload);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_REMOVE", payload);
 
         return res.status(204).send();
     } catch (error) {
@@ -140,9 +142,9 @@ router.delete("/:urlencoded/:userid", channelPermissionsMiddleware("MANAGE_MESSA
         };
         
         if (guild)
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_REMOVE", payload);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_REMOVE", payload);
         else
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_REMOVE", payload);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_REMOVE", payload);
 
         return res.status(204).send();
     } catch (error) {
@@ -226,9 +228,9 @@ router.put(["/:urlencoded/@me", "/:urlencoded/%40me"], rateLimitMiddleware(globa
         };
 
         if (guild)
-            await global.dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_ADD", payload);
+            await dispatcher.dispatchEventInChannel(req.guild, channel.id, "MESSAGE_REACTION_ADD", payload);
         else
-            await global.dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_ADD", payload);
+            await dispatcher.dispatchEventInPrivateChannel(channel, "MESSAGE_REACTION_ADD", payload);
 
         return res.status(204).send();
     } catch (error) {

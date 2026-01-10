@@ -6,6 +6,8 @@ const { rateLimitMiddleware, userMiddleware } = require('../../helpers/middlewar
 const quickcache = require('../../helpers/quickcache');
 const Watchdog = require('../../helpers/watchdog');
 const errors = require('../../helpers/errors');
+const dispatcher = require('../../helpers/dispatcher');
+
 const router = express.Router();
 
 router.param('userid', async (req, res, next, userid) => {
@@ -98,7 +100,7 @@ router.post("/:userid/channels", rateLimitMiddleware(global.config.ratelimit_con
         if (type == 3)
             await globalUtils.pingPrivateChannel(channel);
         else
-            await global.dispatcher.dispatchEventTo(account, "CHANNEL_CREATE", pChannel);
+            await dispatcher.dispatchEventTo(account, "CHANNEL_CREATE", pChannel);
         
         return res.status(200).json(pChannel);
 
