@@ -1,6 +1,8 @@
-import React from 'react';
 import './changelog.css';
+
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import React from 'react';
+
 import changlogImage from '../../assets/changelogImage.png';
 
 const headerTypeClasses = {

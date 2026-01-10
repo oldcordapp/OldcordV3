@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import Dropdown from './dropdown';
+import { useEffect,useRef, useState } from 'react';
+
 import { useAuthUser } from '../context/AuthContext';
+import Dropdown from './dropdown';
 
 const Avatar = ({ path, style }) => {
   const [popoutContextMenu, setPopoutContextMenu] = useState(null);

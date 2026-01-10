@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
+
+import DefaultAvatar from '../../assets/default-avatar.png';
+import NoResults from '../../assets/img_noresults.svg';
 import { useAuthUser } from '../context/AuthContext';
-import Sidebar from './sidebar';
+import AuditLog from './auditlog';
 import Avatar from './avatar';
 import Paginator from './paginator';
-import NoResults from '../../assets/img_noresults.svg';
-import DefaultAvatar from '../../assets/default-avatar.png';
-import AuditLog from './auditlog';
 import ResultsCard from './resultscard';
+import Sidebar from './sidebar';
 const AuditLogs = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);

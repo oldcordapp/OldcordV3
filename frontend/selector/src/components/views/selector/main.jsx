@@ -1,23 +1,25 @@
-import Card from '@oldcord/frontend-shared/components/card';
-import Background from './background';
-import Logo from './logo';
 import './main.css';
-import SettingsButton from './settingsButton';
-import { Text } from '@oldcord/frontend-shared/components/textComponent';
-import DropdownList from '@oldcord/frontend-shared/components/dropdownList';
-import { builds } from '../../../constants/builds';
+
 import Button from '@oldcord/frontend-shared/components/button';
-import Download from '../../../assets/download.svg?react';
+import Card from '@oldcord/frontend-shared/components/card';
+import DropdownList from '@oldcord/frontend-shared/components/dropdownList';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
 import { useEffect, useState } from 'react';
-import { convertBuildIds, convertBuildId } from '../../../lib/convertBuildIds';
-import cookieManager from '../../../lib/cookieManager';
+
+import Download from '../../../assets/download.svg?react';
+import { builds } from '../../../constants/builds';
 import { useLayer } from '../../../hooks/layerHandler';
+import { convertBuildId,convertBuildIds } from '../../../lib/convertBuildIds';
+import cookieManager from '../../../lib/cookieManager';
 import localStorageManager from '../../../lib/localStorageManager';
+import Background from './background';
 import BuildChangelogCard from './buildChangelogCard';
+import Logo from './logo';
 import BuildConfirmation from './modals/buildConfirmation';
 import EnvironmentWarning from './modals/environmentWarning';
 import LegalAgreement from './modals/legalAgreement';
 import OpfsComingSoon from './modals/opfsComingSoon';
+import SettingsButton from './settingsButton';
 
 export default function () {
   const [instance, setInstance] = useState(null);

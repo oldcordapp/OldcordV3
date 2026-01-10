@@ -1,7 +1,9 @@
 import './primaryLayer.css';
+
+import { useEffect, useRef } from 'react';
+
 import { useLayer } from '../../hooks/layerHandler';
 import Selector from '../views/selector/main';
-import { useEffect, useRef } from 'react';
 
 export default function () {
   const { activeLayer } = useLayer();

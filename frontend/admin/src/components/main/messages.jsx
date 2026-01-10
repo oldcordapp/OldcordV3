@@ -1,18 +1,18 @@
-import { useEffect, useState, useRef } from 'react';
+import Button from '@oldcord/frontend-shared/components/button';
+import { useEffect, useRef,useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import Sidebar from './sidebar';
-import Avatar from './avatar';
-import Paginator from './paginator';
 import DefaultAvatar from '../../assets/default-avatar.png';
-import NoResults from '../../assets/img_noresults.svg';
 import Ic_dots from '../../assets/ic_dots.svg?react';
 import Ic_paperclip from '../../assets/ic_paperclip.svg?react';
-import Button from '@oldcord/frontend-shared/components/button';
+import NoResults from '../../assets/img_noresults.svg';
 import { useAuthUser } from '../context/AuthContext';
-import ExpandableComponent from './expandablecomponent';
-import ResultsCard from './resultscard';
+import Avatar from './avatar';
 import Dropdown from './dropdown';
+import ExpandableComponent from './expandablecomponent';
+import Paginator from './paginator';
+import ResultsCard from './resultscard';
+import Sidebar from './sidebar';
 
 const Messages = () => {
   const location = useLocation();

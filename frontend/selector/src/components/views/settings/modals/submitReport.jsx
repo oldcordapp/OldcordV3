@@ -1,5 +1,5 @@
-import Modal from '@oldcord/frontend-shared/components/modal';
 import Button from '@oldcord/frontend-shared/components/button';
+import Modal from '@oldcord/frontend-shared/components/modal';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
 
 export default function ({ isOpen, onClose, onConfirm }) {

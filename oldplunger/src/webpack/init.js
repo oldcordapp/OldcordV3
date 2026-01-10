@@ -1,6 +1,6 @@
-import { logger } from '.';
-import { patchModule } from '../utils/patch';
 import { startPlugins } from '../plugins';
+import { patchModule } from '../utils/patch';
+import { logger } from '.';
 
 let webpackRequire;
 

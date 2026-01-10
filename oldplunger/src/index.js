@@ -2,9 +2,9 @@
 
 // Following Vencord's src/Vencord.ts
 
+import { initializePlugins, startPlugins } from './plugins';
 import { Logger } from './utils/logger';
 import * as Webpack from './webpack';
-import { initializePlugins, startPlugins } from './plugins';
 
 export { startPlugins } from './plugins';
 

@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import Sidebar from './sidebar';
-import Avatar from './avatar';
-import Searchbar from './searchbar';
-
 import DefaultAvatar from '../../assets/default-avatar.png';
 import NoResults from '../../assets/img_noresults.svg';
-import User from './user';
 import { useAuthUser } from '../context/AuthContext';
+import Avatar from './avatar';
+import Searchbar from './searchbar';
+import Sidebar from './sidebar';
+import User from './user';
 
 const Users = () => {
   const location = useLocation();

@@ -1,5 +1,5 @@
-import { Text } from '@oldcord/frontend-shared/components/textComponent';
 import InfoCard from '@oldcord/frontend-shared/components/infoCard';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
 
 export default function () {
   return (

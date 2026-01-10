@@ -1,4 +1,5 @@
 import './navigationList.css';
+
 import { useState } from 'react';
 
 export default function ({ navItems, activeView, onItemClick }) {

@@ -1,21 +1,20 @@
 import { Link } from 'react-router-dom';
-import SidebarMenuList from './sidebarMenuList';
-import SidebarMenuItem from './sidebarMenuItem';
 
-import ic_servers from '../../assets/ic_servers.svg?react';
-import ic_staff from '../../assets/ic_staff.svg?react';
-import ic_users from '../../assets/ic_users.svg?react';
-import ic_experiments from '../../assets/ic_experiments.svg?react';
 import ic_applications from '../../assets/ic_applications.svg?react';
 import ic_archived from '../../assets/ic_archived.svg?react';
-import ic_reports from '../../assets/ic_reports.svg?react';
-import ic_messages from '../../assets/ic_messages.svg?react';
 import ic_bots from '../../assets/ic_bots.svg?react';
-import ic_updates from '../../assets/ic_updates.svg?react';
+import ic_experiments from '../../assets/ic_experiments.svg?react';
+import ic_messages from '../../assets/ic_messages.svg?react';
+import ic_reports from '../../assets/ic_reports.svg?react';
+import ic_servers from '../../assets/ic_servers.svg?react';
 import ic_settings from '../../assets/ic_settings.svg?react';
-
+import ic_staff from '../../assets/ic_staff.svg?react';
+import ic_updates from '../../assets/ic_updates.svg?react';
+import ic_users from '../../assets/ic_users.svg?react';
 import OldcordAdmin from '../../assets/oldcordAdmin.svg';
 import PRIVILEGE from './privilege';
+import SidebarMenuItem from './sidebarMenuItem';
+import SidebarMenuList from './sidebarMenuList';
 
 const Sidebar = ({ active }) => {
   let user_data = JSON.parse(localStorage.getItem('user_data'));

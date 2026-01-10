@@ -1,6 +1,8 @@
-import { useRef } from 'react';
-import Logo from '../../../assets/logo.svg?react';
 import './logo.css';
+
+import { useRef } from 'react';
+
+import Logo from '../../../assets/logo.svg?react';
 
 export default function () {
   const ref = useRef(null);

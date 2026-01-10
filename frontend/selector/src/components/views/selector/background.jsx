@@ -1,5 +1,6 @@
-import { useRef } from 'react';
 import './background.css';
+
+import { useRef } from 'react';
 
 export default function () {
   const ref = useRef(null);

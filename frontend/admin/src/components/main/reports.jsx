@@ -1,15 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
+import Button from '@oldcord/frontend-shared/components/button';
+import { useEffect, useRef,useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import Sidebar from './sidebar';
-import Avatar from './avatar';
-import Paginator from './paginator';
 import DefaultAvatar from '../../assets/default-avatar.png';
 import IcReports from '../../assets/ic_reports.svg?react';
-
-import Report from './report';
-import Button from '@oldcord/frontend-shared/components/button';
 import { useAuthUser } from '../context/AuthContext';
+import Avatar from './avatar';
+import Paginator from './paginator';
+import Report from './report';
+import Sidebar from './sidebar';
 
 const Reports = () => {
   const location = useLocation();

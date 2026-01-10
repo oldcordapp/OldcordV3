@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 
-import LoginSplash from '../assets/login_splash.png';
 import DefaultAvatar from '../assets/default-avatar.png';
 import OldcordLogo from '../assets/img_oldcord_logo.svg';
+import LoginSplash from '../assets/login_splash.png';
 
 const MfaNotice = () => {
   const navigate = useNavigate();

@@ -1,4 +1,5 @@
-import { LayerHandler, useLayer } from './hooks/layerHandler';
+import './App.css';
+
 import {
   UnsavedChangesHandler,
   useUnsavedChanges,
@@ -6,14 +7,12 @@ import {
 import { useEffect, useRef } from 'react';
 
 import layerConfig from './components/layerConfig';
-
 import PrimaryLayer from './components/layers/primaryLayer';
-import './App.css';
-
-import localStorageManager from './lib/localStorageManager';
-import { PATCHES } from './constants/patches';
 import { builds } from './constants/builds';
+import { PATCHES } from './constants/patches';
+import { LayerHandler, useLayer } from './hooks/layerHandler';
 import { OldplungerPluginsHandler, useOldplugerPlugins } from './hooks/oldplungerPluginsHandler';
+import localStorageManager from './lib/localStorageManager';
 
 function initializeLocalStorageKeys(plugins) {
   const localStorageKey = 'oldcord_settings';

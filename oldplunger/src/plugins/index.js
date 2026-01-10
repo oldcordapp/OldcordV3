@@ -1,7 +1,6 @@
 import cookieManager from '../utils/cookieManager.js';
 import { Logger } from '../utils/logger';
 import { patches as patchesToDo } from '../utils/patch';
-
 // We just import all the plugins that are valid from esbuild
 import * as availablePlugins from './plugins.js';
 

@@ -1,8 +1,9 @@
-import Modal from '@oldcord/frontend-shared/components/modal';
-import localStorageManager from '../../../../lib/localStorageManager';
-import { Text } from '@oldcord/frontend-shared/components/textComponent';
-import InfoCard from '@oldcord/frontend-shared/components/infoCard';
 import Button from '@oldcord/frontend-shared/components/button';
+import InfoCard from '@oldcord/frontend-shared/components/infoCard';
+import Modal from '@oldcord/frontend-shared/components/modal';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
+
+import localStorageManager from '../../../../lib/localStorageManager';
 
 const failedCacheKey = 'oldcord_failed_urls';
 

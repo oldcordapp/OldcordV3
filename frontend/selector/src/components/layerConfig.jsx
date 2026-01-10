@@ -1,8 +1,8 @@
 import SecondaryLayer from './layers/secondaryLayer';
+import SettingsView from './views/settings/main';
 import SettingsNavigationList, {
   SettingsViewHandler,
 } from './views/settings/settingsNavigationList';
-import SettingsView from './views/settings/main';
 
 export default {
   settings: {

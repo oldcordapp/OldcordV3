@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import Sidebar from './sidebar';
-import Avatar from './avatar';
-import { useAuthUser } from '../context/AuthContext';
-import Update from './update';
+import { useEffect,useState } from 'react';
 
 import DefaultAvatar from '../../assets/default-avatar.png';
+import { useAuthUser } from '../context/AuthContext';
+import Avatar from './avatar';
+import Sidebar from './sidebar';
+import Update from './update';
 
 const Updates = () => {
   const { user } = useAuthUser();

@@ -1,10 +1,11 @@
 import NavigationList from '@oldcord/frontend-shared/components/navigationList';
-import ViewHandler from '../../../hooks/viewHandler';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
 import { useUnsavedChanges } from '@oldcord/frontend-shared/hooks/unsavedChangesHandler';
 import { useState } from 'react';
-import Changelog from './modals/changelog';
-import { Text } from '@oldcord/frontend-shared/components/textComponent';
+
+import ViewHandler from '../../../hooks/viewHandler';
 import getUserAgent from '../../../lib/getUserAgent';
+import Changelog from './modals/changelog';
 
 export const SETTINGS_VIEWS = {
   INFO: 'info',

@@ -1,9 +1,10 @@
-import { Text } from '@oldcord/frontend-shared/components/textComponent';
 import Button from '@oldcord/frontend-shared/components/button';
-import { useState } from 'react';
-import InfoCard from '@oldcord/frontend-shared/components/infoCard';
 import DropdownList from '@oldcord/frontend-shared/components/dropdownList';
+import InfoCard from '@oldcord/frontend-shared/components/infoCard';
 import InputField from '@oldcord/frontend-shared/components/inputField';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import { useState } from 'react';
+
 import SubmitReport from '../modals/submitReport';
 
 export default function () {

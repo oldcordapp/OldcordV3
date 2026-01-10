@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import './modal.css';
+
+import { useCallback,useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { CSSTransition } from 'react-transition-group';
-import './modal.css';
+
 import Xmark from '../assets/xmark.svg?react';
 
 export default function ({

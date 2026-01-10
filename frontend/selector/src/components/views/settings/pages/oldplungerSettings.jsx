@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import InfoCard from '@oldcord/frontend-shared/components/infoCard';
-import ToggleSetting from '../../../../components/shared/toggleSetting';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import { useState } from 'react';
 
+import ToggleSetting from '../../../../components/shared/toggleSetting';
 import cookieManager from '../../../../lib/cookieManager';
 
 const oldplungerEnabledKey = 'oldplunger_enabled';

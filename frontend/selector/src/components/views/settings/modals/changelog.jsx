@@ -1,6 +1,7 @@
 import Modal from '@oldcord/frontend-shared/components/modal';
-import Changelog from '../../../shared/changelog';
+
 import { oldcordChangelog } from '../../../../constants/oldcordChangelog';
+import Changelog from '../../../shared/changelog';
 
 export default function ({ isOpen, onClose }) {
   return (

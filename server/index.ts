@@ -68,7 +68,7 @@ global.slowmodeCache = new Map();
 global.gatewayIntentMap = new Map();
 global.udpServer = udpServer;
 global.rtcServer = rtcServer;
-global.using_media_relay = globalUtils.config && globalUtils.config.mr_server.enabled;
+global.using_media_relay = globalUtils.config?.mr_server.enabled;
 
 if (!global.using_media_relay) {
   global.mediaserver = new MediasoupSignalingDelegate();
@@ -156,7 +156,7 @@ if (config.port == config.ws_port) {
   });
 }
 
-gateway.ready(gatewayServer, config.debug_logs['gateway'] ?? true);
+gateway.ready(gatewayServer, config.debug_logs.gateway ?? true);
 
 //https://stackoverflow.com/a/15075395
 function getIPAddress() {
@@ -197,20 +197,20 @@ function getIPAddress() {
   rtcHttpServer.listen(config.signaling_server_port);
   mrHttpServer.listen(config.mr_server.port);
 
-  global.udpServer.start(config.udp_server_port, config.debug_logs['udp'] ?? true);
+  global.udpServer.start(config.udp_server_port, config.debug_logs.udp ?? true);
   global.rtcServer.start(
     rtcHttpServer,
     config.signaling_server_port,
-    config.debug_logs['rtc'] ?? true,
+    config.debug_logs.rtc ?? true,
   );
 
   if (global.using_media_relay) {
     global.mrServer = mrServer;
-    global.mrServer.start(mrHttpServer, config.mr_server.port, config.debug_logs['mr'] ?? true);
+    global.mrServer.start(mrHttpServer, config.mr_server.port, config.debug_logs.mr ?? true);
   }
 
   if (!global.using_media_relay) {
-    await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs['media'] ?? true);
+    await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs.media ?? true);
   }
 })();
 
@@ -723,7 +723,7 @@ if (config.serve_selector) {
       maxAge: 100 * 365 * 24 * 60 * 60 * 1000,
     });
 
-    if (!config.require_release_date_cookie && !req.cookies['release_date']) {
+    if (!config.require_release_date_cookie && !req.cookies.release_date) {
       res.cookie('release_date', config.default_client_build || 'october_5_2017', {
         maxAge: 100 * 365 * 24 * 60 * 60 * 1000,
       });
@@ -787,8 +787,8 @@ app.get(/.*/, (req, res) => {
     }
 
     if (
-      !req.cookies['default_client_build'] ||
-      req.cookies['default_client_build'] !== (config.default_client_build || 'october_5_2017')
+      !req.cookies.default_client_build ||
+      req.cookies.default_client_build !== (config.default_client_build || 'october_5_2017')
     ) {
       res.cookie('default_client_build', config.default_client_build || 'october_5_2017', {
         maxAge: 100 * 365 * 24 * 60 * 60 * 1000,

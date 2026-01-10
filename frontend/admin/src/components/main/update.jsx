@@ -1,7 +1,7 @@
-import ic_satisfied from '../../assets/ic_satisfied.svg';
-import ic_update from '../../assets/ic_update.svg';
 import ic_error from '../../assets/ic_error.svg';
 import IcError from '../../assets/ic_error.svg?react';
+import ic_satisfied from '../../assets/ic_satisfied.svg';
+import ic_update from '../../assets/ic_update.svg';
 
 const Update = ({ status, error, latestCommit }) => {
   switch (status) {

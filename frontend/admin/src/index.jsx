@@ -1,22 +1,23 @@
 import './index.css';
 import '@oldcord/frontend-shared/fonts.css';
+
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import React from 'react';
 
+import AuthCheck from './components/authcheck';
 import { AuthUserProvider } from './components/context/AuthContext';
 import Login from './components/login';
-import Servers from './components/main/servers';
-import AuthCheck from './components/authcheck';
-import Users from './components/main/users';
-import Reports from './components/main/reports';
-import Messages from './components/main/messages';
-import Updates from './components/main/updates';
-import PRIVILEGE from './components/main/privilege';
-import Bots from './components/main/bots';
-import Staff from './components/main/staff';
 import AuditLogs from './components/main/auditlogs';
+import Bots from './components/main/bots';
+import Messages from './components/main/messages';
+import PRIVILEGE from './components/main/privilege';
+import Reports from './components/main/reports';
+import Servers from './components/main/servers';
 import Settings from './components/main/settings';
+import Staff from './components/main/staff';
+import Updates from './components/main/updates';
+import Users from './components/main/users';
 import MfaNotice from './components/mfanotice';
 
 const root = ReactDOM.createRoot(document.getElementById('app-mount'));

@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Sidebar from './sidebar';
-import Avatar from './avatar';
-import { useAuthUser } from '../context/AuthContext';
 
 import DefaultAvatar from '../../assets/default-avatar.png';
-import Update from './update';
+import { useAuthUser } from '../context/AuthContext';
 import InputSingle from '../modals/inputsingle';
+import Avatar from './avatar';
+import Sidebar from './sidebar';
+import Update from './update';
 
 const Settings = () => {
   const location = useLocation();

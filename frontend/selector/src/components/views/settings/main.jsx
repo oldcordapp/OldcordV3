@@ -1,14 +1,14 @@
 import './main.css';
-import { useSettings, SETTINGS_VIEWS } from './settingsNavigationList';
 
+import AdvancedSettings from './pages/advancedSettings';
+import DownloadQueue from './pages/downloadQueue';
 import OldplungerInfo from './pages/oldplungerInfo';
 import OldplungerSettings from './pages/oldplungerSettings';
-import PluginsAndPatches from './pages/pluginsAndPatches';
-import Themes from './pages/themes';
-import DownloadQueue from './pages/downloadQueue';
 import OpfsSettings from './pages/opfsSettings';
-import AdvancedSettings from './pages/advancedSettings';
+import PluginsAndPatches from './pages/pluginsAndPatches';
 import ReportContent from './pages/reportContent';
+import Themes from './pages/themes';
+import { SETTINGS_VIEWS,useSettings } from './settingsNavigationList';
 
 export default function () {
   const { activeView } = useSettings();

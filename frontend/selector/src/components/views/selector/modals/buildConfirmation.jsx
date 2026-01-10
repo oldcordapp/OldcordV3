@@ -1,12 +1,12 @@
-import Modal from '@oldcord/frontend-shared/components/modal';
 import Button from '@oldcord/frontend-shared/components/button';
-import { Text } from '@oldcord/frontend-shared/components/textComponent';
-import { useState, useEffect } from 'react';
-import { useOldplugerPlugins } from '../../../../hooks/oldplungerPluginsHandler';
-import cookieManager from '../../../../lib/cookieManager';
 import InfoCard from '@oldcord/frontend-shared/components/infoCard';
+import Modal from '@oldcord/frontend-shared/components/modal';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import { useEffect,useState } from 'react';
 
 import { PATCHES } from '../../../../constants/patches';
+import { useOldplugerPlugins } from '../../../../hooks/oldplungerPluginsHandler';
+import cookieManager from '../../../../lib/cookieManager';
 
 export default function ({ isOpen, onClose, onConfirm, selectedBuild, enabledPlugins }) {
   const [displayedBuild, setDisplayedBuild] = useState(selectedBuild);

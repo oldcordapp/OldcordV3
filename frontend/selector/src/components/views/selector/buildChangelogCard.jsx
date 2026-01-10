@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import './buildChangelogCard.css';
+
 import Card from '@oldcord/frontend-shared/components/card';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
-import Changelog from '../../shared/changelog';
+import { useEffect, useState } from 'react';
+
 import { CHANGELOGS, videos } from '../../../constants/buildChangelogs';
 import { convertBuildId } from '../../../lib/convertBuildIds';
-import './buildChangelogCard.css';
+import Changelog from '../../shared/changelog';
 
 function markdownToHtml(text) {
   let html = text;

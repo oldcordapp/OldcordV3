@@ -1,18 +1,18 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef,useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import Sidebar from './sidebar';
-import Avatar from './avatar';
-import Paginator from './paginator';
 import DefaultAvatar from '../../assets/default-avatar.png';
 import Ic_dots from '../../assets/ic_dots.svg?react';
 import { useAuthUser } from '../context/AuthContext';
-import ResultsCard from './resultscard';
-import Dropdown from './dropdown';
-import InputMultiple from '../modals/inputmultiple';
 import Confirmation from '../modals/confirmation';
+import InputMultiple from '../modals/inputmultiple';
 import AuditLog from './auditlog';
+import Avatar from './avatar';
+import Dropdown from './dropdown';
+import Paginator from './paginator';
 import { priviledgeFriendlyLabel } from './privilege';
+import ResultsCard from './resultscard';
+import Sidebar from './sidebar';
 
 const Staff = () => {
   const location = useLocation();

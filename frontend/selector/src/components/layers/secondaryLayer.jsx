@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { useLayer } from '../../hooks/layerHandler';
 import './secondaryLayer.css';
-import SidebarPart from './sidebarPart';
-import ClosePart from './closePart';
+
 import UnsavedChangesNotice from '@oldcord/frontend-shared/components/unsavedChangesNotice';
 import { useUnsavedChanges } from '@oldcord/frontend-shared/hooks/unsavedChangesHandler';
+import { useEffect, useRef } from 'react';
+
+import { useLayer } from '../../hooks/layerHandler';
+import ClosePart from './closePart';
+import SidebarPart from './sidebarPart';
 
 export default function SecondaryLayer({ sidebarComponent, contentComponent }) {
   const { activeLayer, changeLayer } = useLayer();
