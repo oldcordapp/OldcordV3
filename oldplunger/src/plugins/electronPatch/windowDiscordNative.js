@@ -1,4 +1,4 @@
-import { createDeepMock,logger } from './index.js';
+import { createDeepMock, logger } from './index.js';
 
 export default async () => {
   const DiscordNative = window.DiscordNative;

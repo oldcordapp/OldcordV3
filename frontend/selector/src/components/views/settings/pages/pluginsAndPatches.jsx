@@ -2,7 +2,7 @@ import DropdownList from '@oldcord/frontend-shared/components/dropdownList';
 import InfoCard from '@oldcord/frontend-shared/components/infoCard';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
 import { useUnsavedChanges } from '@oldcord/frontend-shared/hooks/unsavedChangesHandler';
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import OptionsCard from '../../../../components/shared/optionsCard';
 import { builds } from '../../../../constants/builds';

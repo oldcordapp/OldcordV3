@@ -8,7 +8,7 @@ import OpfsSettings from './pages/opfsSettings';
 import PluginsAndPatches from './pages/pluginsAndPatches';
 import ReportContent from './pages/reportContent';
 import Themes from './pages/themes';
-import { SETTINGS_VIEWS,useSettings } from './settingsNavigationList';
+import { SETTINGS_VIEWS, useSettings } from './settingsNavigationList';
 
 export default function () {
   const { activeView } = useSettings();

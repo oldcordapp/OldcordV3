@@ -1,4 +1,4 @@
-import { useEffect,useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import DefaultAvatar from '../../assets/default-avatar.png';
 import Ic_dots from '../../assets/ic_dots.svg?react';

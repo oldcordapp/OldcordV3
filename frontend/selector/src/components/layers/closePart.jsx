@@ -1,7 +1,7 @@
 import './closePart.css';
 
 import Xmark from '@oldcord/frontend-shared/assets/xmark.svg?react';
-import { useCallback,useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 export default function ({ onClose }) {
   const handleClose = useCallback(() => {

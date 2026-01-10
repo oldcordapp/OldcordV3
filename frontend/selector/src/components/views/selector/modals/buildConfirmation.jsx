@@ -2,7 +2,7 @@ import Button from '@oldcord/frontend-shared/components/button';
 import InfoCard from '@oldcord/frontend-shared/components/infoCard';
 import Modal from '@oldcord/frontend-shared/components/modal';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { PATCHES } from '../../../../constants/patches';
 import { useOldplugerPlugins } from '../../../../hooks/oldplungerPluginsHandler';

@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import Download from '../../../assets/download.svg?react';
 import { builds } from '../../../constants/builds';
 import { useLayer } from '../../../hooks/layerHandler';
-import { convertBuildId,convertBuildIds } from '../../../lib/convertBuildIds';
+import { convertBuildId, convertBuildIds } from '../../../lib/convertBuildIds';
 import cookieManager from '../../../lib/cookieManager';
 import localStorageManager from '../../../lib/localStorageManager';
 import Background from './background';

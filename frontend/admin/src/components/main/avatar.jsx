@@ -1,4 +1,4 @@
-import { useEffect,useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useAuthUser } from '../context/AuthContext';
 import Dropdown from './dropdown';

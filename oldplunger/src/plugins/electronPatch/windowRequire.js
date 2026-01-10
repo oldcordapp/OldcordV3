@@ -1,4 +1,4 @@
-import { appName,createDeepMock, logger } from './index.js';
+import { appName, createDeepMock, logger } from './index.js';
 
 function getNodeModulePaths(startPath, joiner) {
   if (!startPath || !joiner) return [];

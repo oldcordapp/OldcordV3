@@ -1,4 +1,4 @@
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import DefaultAvatar from '../../assets/default-avatar.png';
 import { useAuthUser } from '../context/AuthContext';
