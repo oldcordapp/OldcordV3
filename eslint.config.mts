@@ -13,7 +13,7 @@ export default defineConfig([
     "www_static/assets/admin/**",
     "www_static/assets/oldplunger/**",
     "www_static/assets/selector/**",
-    "www_dynamic/**"
+    "www_dynamic/**",
   ]),
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
@@ -25,11 +25,16 @@ export default defineConfig([
   },
   {
     files: ["**/*.{ts,mts,cts,tsx}"],
-    extends: [tseslint.configs.recommended]
+    extends: [tseslint.configs.recommended],
   },
   {
     files: ["frontend/**/*.{js,jsx,ts,tsx}"],
     extends: [pluginReact.configs.flat.recommended],
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -37,7 +42,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["www_static/assets/bootloader/**/*.js"],
+    files: ["www_static/assets/bootloader/**/*.js", "oldplunger/**/*.{js,ts}"],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -45,7 +50,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["oldplunger/**/*.{js,ts}", "server/**/*.{js,ts}"],
+    files: ["server/**/*.{js,ts}"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -97,7 +102,14 @@ export default defineConfig([
     language: "css/css",
     extends: ["css/recommended"],
     rules: {
-      "css/no-important": "off" // We need to override branding
-    }
+      "css/no-important": "off", // We need to override branding
+    },
+  },
+  // Keep original changelogs for archival sake
+  {
+    files: ["frontend/selector/src/constants/buildChangelogs.js"],
+    rules: {
+      "no-useless-escape": "off",
+    },
   },
 ]);
