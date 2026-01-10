@@ -1,4 +1,8 @@
 {
+  "name": "oldcord",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -7,18 +11,19 @@
     "oldplunger"
   ],
   "scripts": {
-    "build:oldplunger": "npm run build --workspace=oldplunger",
-    "build:selector": "npm run build --workspace=frontend/selector",
     "build:admin": "npm run build --workspace=frontend/admin",
     "build:all": "npm run build:selector && npm run build:admin && npm run build:oldplunger",
-    "start:server": "node server/index.ts",
-    "start": "npm run build:all && npm run start:server",
+    "build:oldplunger": "npm run build --workspace=oldplunger",
+    "build:selector": "npm run build --workspace=frontend/selector",
     "dev:admin": "npm run dev --workspace=frontend/admin",
-    "dev:selector": "npm run dev --workspace=frontend/selector",
     "dev:oldplunger": "npm run dev --workspace=oldplunger",
-    "prettier": "npx prettier . --write",
+    "dev:selector": "npm run dev --workspace=frontend/selector",
     "lint": "npm run prettier && npx eslint .",
-    "lint:fix": "npm run prettier && npx eslint --fix ."
+    "lint:fix": "npm run prettier && npx eslint --fix .",
+    "prettier": "npx prettier . --write",
+    "start": "npm run build:all && npm run start:server",
+    "start:server": "tsx server/index.ts",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
@@ -40,11 +45,13 @@
     "pg": "^8.16.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.12.0",
     "react-transition-group": "^4.4.5",
     "semantic-sdp": "^3.31.1",
     "speakeasy": "^2.0.0",
-    "vite": "npm:rolldown-vite@7.3.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "npm:rolldown-vite@7.3.1",
     "vite-plugin-svgr": "^4.5.0",
     "ws": "^8.19.0"
   },
@@ -53,8 +60,14 @@
     "@eslint/js": "^9.39.2",
     "@eslint/json": "^0.14.0",
     "@eslint/markdown": "^7.5.1",
-    "@types/react": "^19.2.7",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/fluent-ffmpeg": "^2.1.28",
+    "@types/node": "^25.0.5",
+    "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
+    "@types/ws": "^8.18.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -67,7 +80,7 @@
     "typescript-eslint": "^8.52.0"
   },
   "overrides": {
-    "vite": "npm:rolldown-vite@7.3.0"
+    "vite": "npm:rolldown-vite@7.3.1"
   },
   "optionalDependencies": {
     "@spacebarchat/erlpack": "^1.0.1"
