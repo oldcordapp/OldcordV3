@@ -451,7 +451,7 @@ router.post("/forgot", rateLimitMiddleware(global.config.ratelimit_config.regist
     }
 });
 
-router.post("/fingerprint", (_, res) => {
+router.post("/fingerprint", (req, res) => {
     let fingerprint = Watchdog.getFingerprint(req.originalUrl, req.baseUrl, req.headers['x-forwarded-proto'] || req.protocol, req.headers, req.account, null);
 
     return res.status(200).json({

@@ -336,6 +336,8 @@ router.patch("/settings", async (req, res) => {
     let new_settings = account.settings;
 
     if (new_settings == null) {
+      console.log("new settings null");
+
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
@@ -360,11 +362,11 @@ router.patch("/settings", async (req, res) => {
 
           await userSessions[0].dispatchPresenceUpdate(userSessions[0].presence.status);
         }
-
-        return res.status(204).send();
-      } else {
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR)
       }
+
+      return res.status(204).send();
+    } else {
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
   } catch (error) {
     logText(error, "error");
