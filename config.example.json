@@ -3,6 +3,7 @@
     "secure": false,
     "base_url": "127.0.0.1",
     "gateway_url": "",
+    "cdn_url" : "https://cdn.oldcordapp.com",
     "media_server_public_ip" : false,
     "signaling_server_url": "",
     "signaling_server_port": 5000,
@@ -16,12 +17,10 @@
     "serve_selector": true,
     "intents_required" : false,
     "default_bot_intents" : {
-        "value" : 46847,
-        "equation" : "0xFFFF & ~(1 << 8) & ~(1 << 11) & ~(1 << 14)"
+        "value" : 46847
     },
     "default_user_intents" : {
-        "value" : 67108863,
-        "equation" : "(1 << 26) - 1"
+        "value" : 67108863
     },
     "require_release_date_cookie": true,
     "cache_authenticated_get_requests" : true,

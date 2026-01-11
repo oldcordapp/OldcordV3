@@ -727,6 +727,7 @@ app.get("/instance", (req, res) => {
         custom_invite_url: config.custom_invite_url == "" ? base_url + "/invite" : config.custom_invite_url,
         gateway: globalUtils.generateGatewayURL(req),
         captcha_options: config.captcha_config ? { ...config.captcha_config, secret_key: undefined } : {},
+        cdn_url: config.cdn_url ?? "https://cdn.oldcordapp.com"
     });
 });
 
