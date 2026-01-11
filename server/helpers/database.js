@@ -437,7 +437,7 @@ const database = {
             );`, []);
 
             await database.runQuery(`CREATE TABLE IF NOT EXISTS mfa_login_tickets (
-                user_id TEXT PRIMARY KEY,
+                user_id TEXT,
                 mfa_ticket TEXT DEFAULT NULL
             );`, []);
 
@@ -637,6 +637,17 @@ const database = {
                 ALTER TABLE user_notes
                 ALTER COLUMN note SET DEFAULT NULL;
             `, []);
+
+            const checkRes = await database.runQuery(`
+                    SELECT constraint_name
+                    FROM information_schema.table_constraints
+                    WHERE table_name = 'mfa_login_tickets'
+                        AND constraint_name = 'mfa_login_tickets_pkey';
+                    `);
+
+            if (checkRes || Array.isArray(checkRes) && checkRes.length > 0) {
+                await database.runQuery(`ALTER TABLE mfa_login_tickets DROP CONSTRAINT mfa_login_tickets_pkey;`);
+            } //fix pkey issue with mfa login tickets
 
             await database.runQuery(`
                 ALTER TABLE group_channels
