@@ -1,8 +1,8 @@
-import { ResourceLoader } from './modules/resource_loader.js';
-import { utils } from './modules/utils.js';
 import { Config } from './modules/config.js';
 import { LOADING_QUOTES } from './modules/quotes.js';
+import { ResourceLoader } from './modules/resource_loader.js';
 import { shim } from './modules/shim.js';
+import { utils } from './modules/utils.js';
 
 class Bootloader {
   constructor() {

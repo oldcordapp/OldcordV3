@@ -1,6 +1,6 @@
+import { Config } from './config.js';
 import { patcher } from './patcher.js';
 import { utils } from './utils.js';
-import { Config } from './config.js';
 
 export class ResourceLoader {
   constructor() {
