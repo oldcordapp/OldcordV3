@@ -105,47 +105,26 @@ const globalUtils = {
         return Array.from(user_ids);
     },
     generateMemorableInviteCode: () => {
-        let code = "";
-
-        var words = [
-            "karthus",
-            "terrorblade",
-            "remora",
-            "archon",
-            "phantom",
-            "charmander",
-            "azmodan",
-            "landslide",
-            "anivia",
-            "biggs",
-            "rosalina",
-            "overlord",
-            "sephiroth",
-            "cloud",
-            "tifa",
-            "illidan",
-            "jaina",
-            "arthas",
-            "sylvanas",
-            "thrall",
-            "invoker",
-            "pudge",
-            "crystal",
-            "anti",
-            "jinx",
-            "lux",
-            "zed",
-            "yasuo",
-            "ahri"
+        const words = [
+            "biggs", "rosalina", "overlord", "karthus", "terrorblade", 
+            "archon", "phantom", "charmander", "azmodan", "anivia", 
+            "sephiroth", "cloud", "illidan", "jaina", "arthas", 
+            "sylvanas", "thrall", "invoker", "pudge", "crystal", 
+            "jinx", "lux", "zed", "yasuo", "ahri", "teemo", 
+            "moogle", "chocobo", "tidehunter", "meepo"
         ];
 
-        for(var i = 0; i < 3; i++) {
-            code += words[Math.floor(Math.random() * words.length)] + '-'
-        };
+        let selected = [];
 
-        code = code.substring(code.lastIndexOf('-'), -1);
+        while (selected.length < 3) {
+            let word = words[Math.floor(Math.random() * words.length)];
 
-        return code;
+            if (!selected.includes(word)) {
+                selected.push(word);
+            }
+        }
+
+        return selected.join('-');
     },
     addClientCapabilities: (client_build, obj) => {
         if (client_build === "thirdPartyOrMobile") {
