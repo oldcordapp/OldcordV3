@@ -167,10 +167,8 @@ async function guildDeleteRequest(req, res) {
         const guild = req.guild;
 
         if (guild.owner_id == user.id) {
-            let code = req.body.code;
-
-            if (code) {
-                let valid = await global.database.validateTotpCode(req.account.id, code);
+            if (req && req.body && req.body.code) {
+                let valid = await global.database.validateTotpCode(req.account.id, req.body.code);
 
                 if (!valid) {
                     return res.status(400).json({
