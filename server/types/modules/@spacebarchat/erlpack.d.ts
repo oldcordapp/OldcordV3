@@ -1,4 +1,7 @@
 declare module '@spacebarchat/erlpack' {
-  export function pack(...args: unknown[]): unknown;
-  export function unpack(...args: unknown[]): unknown;
+  export function pack(data: any): Buffer;
+  export function unpack<T = any>(
+    data: Uint8Array | Uint8ClampedArray | Buffer,
+    decodeBigint = false,
+  ): T;
 }
