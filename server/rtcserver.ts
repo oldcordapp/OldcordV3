@@ -1,15 +1,15 @@
-const sodium = require('libsodium-wrappers');
-const { logText } = require('./helpers/logger');
-const WebSocket = require('ws');
-const { EventEmitter } = require('node:events');
-const { OPCODES, rtcHandlers } = require('./handlers/rtc');
+import sodium from 'libsodium-wrappers';
+import { logText } from './helpers/logger.js';
+import { WebSocketServer } from 'ws';
+import { EventEmitter } from 'node:events';
+import { OPCODES, rtcHandlers } from './handlers/rtc.js';
 
 const rtcServer = {
-  port: null,
-  signalingServer: null,
+  port: null as number | null,
+  signalingServer: null as WebSocketServer | null,
   debug_logs: false,
   clients: new Map(),
-  emitter: null,
+  emitter: null as EventEmitter | null,
   protocolsMap: new Map(),
   debug(message) {
     if (!this.debug_logs) {
@@ -53,7 +53,7 @@ const rtcServer = {
           clearInterval(socket.hb.timeout);
         }
 
-        socket.hb.timeout = new setTimeout(
+        socket.hb.timeout = setTimeout(
           async () => {
             socket.close(4009, 'Session timed out');
           },
@@ -95,7 +95,7 @@ const rtcServer = {
   async handleClientMessage(socket, data) {
     try {
       let raw_data = Buffer.from(data).toString('utf-8');
-      let packet = JSON.parse(raw_data);
+      let packet: GatewayPayload = JSON.parse(raw_data) as GatewayPayload;
 
       this.debug(`Incoming -> ${raw_data}`);
 
@@ -110,7 +110,7 @@ const rtcServer = {
     this.emitter = new EventEmitter();
     this.port = port;
     this.debug_logs = debug_logs;
-    this.signalingServer = new WebSocket.Server({
+    this.signalingServer = new WebSocketServer({
       server: server,
     });
 
@@ -124,4 +124,4 @@ const rtcServer = {
   },
 };
 
-module.exports = rtcServer;
+export default rtcServer;

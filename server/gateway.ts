@@ -1,19 +1,24 @@
-const { logText } = require('./helpers/logger');
-const globalUtils = require('./helpers/globalutils');
-const WebSocket = require('ws').WebSocket;
-const zlib = require('zlib');
-const { OPCODES, gatewayHandlers } = require('./handlers/gateway');
-const lazyRequest = require('./helpers/lazyRequest');
+import { logText } from './helpers/logger.js';
+import globalUtils from './helpers/globalutils.js';
+import dispatcher from './helpers/dispatcher.js';
+import { WebSocketServer } from 'ws';
+import zlib from 'zlib';
+import { OPCODES, gatewayHandlers } from './handlers/gateway.js';
 
-let erlpack = null;
+let erlpack: typeof import('@spacebarchat/erlpack') | null = null;
 
 if (globalUtils.config.gateway_erlpack) {
-  erlpack = require('@spacebarchat/erlpack');
+  try {
+    const erlpackModule = await import('@spacebarchat/erlpack');
+    erlpack = erlpackModule.default || erlpackModule;
+  } catch (e) {
+    logText('erlpack is enabled in config but the package is not installed.', 'warning');
+    erlpack = null;
+  }
 }
 
 const gateway = {
-  server: null,
-  port: null,
+  server: null as WebSocketServer | null,
   debug_logs: false,
   debug(message) {
     if (!this.debug_logs) {
@@ -156,7 +161,7 @@ const gateway = {
 
     socket.on('close', (code) => this.handleClientClose(socket, code));
 
-    let heartbeat_payload = {
+    let heartbeat_payload: GatewayPayload | unknown = {
       op: OPCODES.HEARTBEAT_INFO,
       s: null,
       d: {
@@ -166,13 +171,13 @@ const gateway = {
     };
 
     heartbeat_payload = socket.wantsEtf
-      ? erlpack.pack(heartbeat_payload)
+      ? erlpack?.pack(heartbeat_payload)
       : JSON.stringify(heartbeat_payload);
 
     if (socket.wantsZlib) {
       let buffer;
 
-      buffer = zlib.deflateSync(heartbeat_payload, {
+      buffer = zlib.deflateSync(heartbeat_payload as zlib.InputType, {
         chunkSize: 65535,
         flush: zlib.constants.Z_SYNC_FLUSH,
         finishFlush: zlib.constants.Z_SYNC_FLUSH,
@@ -216,7 +221,9 @@ const gateway = {
   handleClientMessage: async function (socket, data) {
     try {
       const msg = socket.wantsEtf ? data : data.toString('utf-8');
-      const packet = socket.wantsEtf && erlpack !== null ? erlpack.unpack(msg) : JSON.parse(msg);
+      const packet: GatewayPayload = (
+        socket.wantsEtf && erlpack !== null ? erlpack.unpack(msg) : JSON.parse(msg)
+      ) as GatewayPayload;
 
       if (packet.op !== 1) {
         this.debug(`Incoming -> ${socket.wantsEtf ? JSON.stringify(packet) : msg}`);
@@ -255,15 +262,15 @@ const gateway = {
   handleEvents: function () {
     const server = gateway.server;
 
-    server.on('listening', () => {
+    server?.on('listening', () => {
       this.debug('Listening for connections');
     });
 
-    server.on('connection', this.handleClientConnect.bind(this));
+    server?.on('connection', this.handleClientConnect.bind(this));
   },
   ready: function (server, debug_logs = false) {
     gateway.debug_logs = debug_logs;
-    gateway.server = new WebSocket.Server({
+    gateway.server = new WebSocketServer({
       perMessageDeflate: false,
       server: server,
     });
@@ -272,4 +279,4 @@ const gateway = {
   },
 };
 
-module.exports = gateway;
+export default gateway;

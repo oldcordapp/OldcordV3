@@ -3,9 +3,9 @@ import Snowflake from './helpers/snowflake.js';
 // this is needed because of discord kotlin sending in id as Number and not string, and it messes precision
 const originalJsonParse = JSON.parse;
 
-JSON.parse = (text, reviver) => {
+JSON.parse = (text: string, reviver?: JSONReviver): unknown => {
   try {
-    return originalJsonParse(text, (key: string, value: unknown, context: { source: any }) => {
+    return originalJsonParse(text, function (key: string, value: any, context: JSONReviverContext) {
       let result = value;
 
       if (typeof value === 'number' && context?.source) {
@@ -21,7 +21,7 @@ JSON.parse = (text, reviver) => {
         }
       }
 
-      return reviver ? reviver(key, result, context) : result;
+      return reviver ? reviver.call(this, key, result, context) : result;
     });
   } catch (e) {
     return originalJsonParse(text, reviver);
@@ -37,7 +37,7 @@ import { Jimp, ResizeStrategy } from 'jimp';
 import path from 'path';
 
 import router from './api/index.js';
-import gateway from './gateway.js';
+import gateway from './gateway.ts';
 import database from './helpers/database.js';
 import errors from './helpers/errors.js';
 import globalUtils from './helpers/globalutils.js';
@@ -56,9 +56,9 @@ import { Readable } from 'stream';
 
 import emailer from './helpers/emailer.js';
 import MediasoupSignalingDelegate from './helpers/webrtc/MediasoupSignalingDelegate.js';
-import mrServer from './mrserver.js';
-import rtcServer from './rtcserver.js';
-import udpServer from './udpserver.js';
+import mrServer from './mrserver.ts';
+import rtcServer from './rtcserver.ts';
+import udpServer from './udpserver.ts';
 
 app.set('trust proxy', 1);
 
@@ -251,8 +251,8 @@ app.use(corsMiddleware);
 
 app.get('/proxy/:url', async (req, res) => {
   let requestUrl: string | URL | Request;
-  let width = parseInt(req.query.width);
-  let height = parseInt(req.query.height);
+  let width = parseInt(req.query.width as string);
+  let height = parseInt(req.query.height as string);
 
   if (width > 800) {
     width = 800;
@@ -288,7 +288,7 @@ app.get('/proxy/:url', async (req, res) => {
       return;
     }
 
-    const contentType = response.headers.get('content-type').toLowerCase() || 'image/jpeg';
+    const contentType = response.headers.get('content-type')?.toLowerCase() || 'image/jpeg';
 
     if (!contentType.startsWith('image/')) {
       res.status(400).send('Only images are supported via this route. Try harder.');
@@ -303,10 +303,7 @@ app.get('/proxy/:url', async (req, res) => {
 
     if (shouldResize) {
       const imageBuffer = await response.arrayBuffer();
-      let image: {
-        resize: (arg0: { w: number; h: number }) => void;
-        getBuffer: (arg0: string) => any;
-      };
+      let image;
 
       try {
         image = await Jimp.read(imageBuffer);
@@ -317,7 +314,7 @@ app.get('/proxy/:url', async (req, res) => {
         return;
       }
 
-      image.resize({ w: parseInt(width), h: parseInt(height) });
+      image.resize({ w: width, h: height });
 
       const finalBuffer = await image.getBuffer(contentType);
 
@@ -333,7 +330,7 @@ app.get('/proxy/:url', async (req, res) => {
         res.setHeader('Content-Length', contentLength);
       }
 
-      Readable.fromWeb(response.body).pipe(res);
+      Readable.fromWeb(response.body!).pipe(res);
     }
   } catch (error) {
     logText(error, 'error');
@@ -411,8 +408,8 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
     const imageBuffer = fs.readFileSync(baseFilePath);
     const image = await Jimp.read(imageBuffer);
 
-    let w = parseInt(width);
-    let h = parseInt(height);
+    let w = parseInt(width as string);
+    let h = parseInt(height as string);
 
     if (isNaN(w) || w > 2560 || w < 0) {
       w = 800;
@@ -424,7 +421,7 @@ app.get('/attachments/:guildid/:channelid/:filename', async (req, res) => {
       w = Math.round(image.bitmap.width * (800 / image.bitmap.height));
     }
 
-    image.resize(w, h);
+    image.resize({ w, h });
 
     const resizedImage = await image.getBuffer(mime);
 
@@ -481,7 +478,7 @@ app.get('/app-assets/:applicationid/store/:file', async (req, res) => {
     }
 
     const files = fs.readdirSync(directoryPath);
-    let matchedFile = null;
+    let matchedFile: string | null = null;
 
     if (req.params.file.includes('.mp4')) {
       matchedFile = files[1];
@@ -511,7 +508,7 @@ app.get('/store-directory-assets/applications/:applicationId/:file', async (req,
     }
 
     const files = fs.readdirSync(directoryPath);
-    let matchedFile = null;
+    let matchedFile: string | null = null;
 
     if (req.params.file.includes('.mp4')) {
       matchedFile = files[1];

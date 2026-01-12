@@ -1,13 +1,13 @@
-const { logText } = require('./helpers/logger');
-const WebSocket = require('ws');
-const { mrHandlers, OPCODES } = require('./handlers/mr');
+import { logText } from './helpers/logger.js';
+import { WebSocketServer } from 'ws';
+import { mrHandlers, OPCODES } from './handlers/mr.js';
 
 const mrServer = {
-  port: null,
+  port: null as number | null,
   debug_logs: false,
   servers: new Map(),
   emitter: null,
-  signalingServer: null,
+  signalingServer: null as WebSocketServer | null,
   debug(message) {
     if (!this.debug_logs) {
       return;
@@ -57,7 +57,7 @@ const mrServer = {
           clearInterval(socket.hb.timeout);
         }
 
-        socket.hb.timeout = new setTimeout(
+        socket.hb.timeout = setTimeout(
           async () => {
             this.handleClientClose(socket, true);
           },
@@ -94,7 +94,7 @@ const mrServer = {
   async handleClientMessage(socket, data) {
     try {
       let raw_data = Buffer.from(data).toString('utf-8');
-      let packet = JSON.parse(raw_data);
+      let packet: GatewayPayload = JSON.parse(raw_data) as GatewayPayload;
 
       this.debug(`Incoming -> ${raw_data}`);
 
@@ -108,7 +108,7 @@ const mrServer = {
   start(server, port, debug_logs) {
     this.port = port;
     this.debug_logs = debug_logs;
-    this.signalingServer = new WebSocket.Server({
+    this.signalingServer = new WebSocketServer({
       server: server,
     });
 
@@ -120,4 +120,4 @@ const mrServer = {
   },
 };
 
-module.exports = mrServer;
+export default mrServer;

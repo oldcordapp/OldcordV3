@@ -1,11 +1,13 @@
-const udp = require('dgram');
-const { logText } = require('./helpers/logger');
-const { OPCODES } = require('./handlers/rtc');
+import udp from 'dgram';
+import { logText } from './helpers/logger.js';
+import { OPCODES } from './handlers/rtc.js';
+import sodium from 'libsodium-wrappers';
+
 const server = udp.createSocket('udp4');
 
 const udpServer = {
-  server: null,
-  port: null,
+  server: null as udp.Socket | null,
+  port: null as number | null,
   debug_logs: false,
   clients: new Map(),
   encryptionsMap: new Map(),
@@ -171,4 +173,4 @@ const udpServer = {
   },
 };
 
-module.exports = udpServer;
+export default udpServer;

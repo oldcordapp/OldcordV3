@@ -12,6 +12,10 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
 
+    "paths": {
+      "@types/*": ["./types/*"]
+    },
+
     // TODO: remove those whenever we migrate to TypeScript fully
     "noImplicitAny": false
   },
