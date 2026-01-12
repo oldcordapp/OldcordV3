@@ -1,7 +1,8 @@
 import udp from 'dgram';
-import { logText } from './helpers/logger.js';
-import { OPCODES } from './handlers/rtc.js';
 import sodium from 'libsodium-wrappers';
+
+import { OPCODES } from './handlers/rtc.js';
+import { logText } from './helpers/logger.js';
 
 const server = udp.createSocket('udp4');
 
@@ -34,8 +35,8 @@ const udpServer = {
     this.debug_logs = debug_logs;
 
     server.on('listening', () => {
-      var address = server.address();
-      var ipaddr = address.address;
+      const address = server.address();
+      const ipaddr = address.address;
 
       this.debug(`Ready on ${ipaddr}:${this.port}`);
     });
@@ -52,7 +53,7 @@ const udpServer = {
         return;
       }
 
-      let ssrc = msg.readUInt32BE(0);
+      const ssrc = msg.readUInt32BE(0);
 
       let session = this.clients.get(ssrc);
 
@@ -69,7 +70,7 @@ const udpServer = {
           };
         }
 
-        let sesh = {
+        const sesh = {
           ip_addr: info.address,
           ip_port: info.port,
           encryption_mode: encryption.mode,
@@ -93,7 +94,7 @@ const udpServer = {
 
         this.debug(`Received SSRC: ${ssrc}`);
 
-        let ipDiscoveryResponse = Buffer.alloc(70);
+        const ipDiscoveryResponse = Buffer.alloc(70);
 
         ipDiscoveryResponse.writeUInt32LE(ssrc, 0);
         ipDiscoveryResponse.write(info.address, 4, 'utf8');

@@ -1,6 +1,7 @@
-import { logText } from './helpers/logger.js';
 import { WebSocketServer } from 'ws';
+
 import { mrHandlers, OPCODES } from './handlers/mr.js';
+import { logText } from './helpers/logger.js';
 
 const mrServer = {
   port: null as number | null,
@@ -93,8 +94,8 @@ const mrServer = {
   },
   async handleClientMessage(socket, data) {
     try {
-      let raw_data = Buffer.from(data).toString('utf-8');
-      let packet: GatewayPayload = JSON.parse(raw_data) as GatewayPayload;
+      const raw_data = Buffer.from(data).toString('utf-8');
+      const packet: GatewayPayload = JSON.parse(raw_data) as GatewayPayload;
 
       this.debug(`Incoming -> ${raw_data}`);
 

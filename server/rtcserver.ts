@@ -1,8 +1,10 @@
-import sodium from 'libsodium-wrappers';
-import { logText } from './helpers/logger.js';
-import { WebSocketServer } from 'ws';
 import { EventEmitter } from 'node:events';
+
+import sodium from 'libsodium-wrappers';
+import { WebSocketServer } from 'ws';
+
 import { OPCODES, rtcHandlers } from './handlers/rtc.js';
+import { logText } from './helpers/logger.js';
 
 const rtcServer = {
   port: null as number | null,
@@ -61,12 +63,12 @@ const rtcServer = {
         );
       },
       acknowledge: (d) => {
-        let session = socket.session;
-        let base = {
+        const session = socket.session;
+        const base = {
           op: OPCODES.HEARTBEAT_ACK,
           d: d,
         };
-        let payload = session ? base : JSON.stringify(base);
+        const payload = session ? base : JSON.stringify(base);
         (session || socket).send(payload);
       },
     };
@@ -94,8 +96,8 @@ const rtcServer = {
   },
   async handleClientMessage(socket, data) {
     try {
-      let raw_data = Buffer.from(data).toString('utf-8');
-      let packet: GatewayPayload = JSON.parse(raw_data) as GatewayPayload;
+      const raw_data = Buffer.from(data).toString('utf-8');
+      const packet: GatewayPayload = JSON.parse(raw_data) as GatewayPayload;
 
       this.debug(`Incoming -> ${raw_data}`);
 

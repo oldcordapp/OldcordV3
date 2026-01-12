@@ -1,9 +1,10 @@
-import { logText } from './helpers/logger.js';
-import globalUtils from './helpers/globalutils.js';
-import dispatcher from './helpers/dispatcher.js';
 import { WebSocketServer } from 'ws';
 import zlib from 'zlib';
-import { OPCODES, gatewayHandlers } from './handlers/gateway.js';
+
+import { gatewayHandlers,OPCODES } from './handlers/gateway.js';
+import dispatcher from './helpers/dispatcher.js';
+import globalUtils from './helpers/globalutils.js';
+import { logText } from './helpers/logger.js';
 
 let erlpack: typeof import('@spacebarchat/erlpack') | null = null;
 
@@ -28,7 +29,7 @@ const gateway = {
     logText(message, 'GATEWAY');
   },
   syncPresence: async function (socket, packet) {
-    let allSessions = global.userSessions.get(socket.user.id);
+    const allSessions = global.userSessions.get(socket.user.id);
 
     if (!allSessions || allSessions.size === 0) return;
 
@@ -69,7 +70,7 @@ const gateway = {
       }
     }
 
-    for (let session of allSessions) {
+    for (const session of allSessions) {
       if (session.id !== socket.session.id) {
         session.presence.status = setStatusTo;
         session.presence.game_id = gameField;
@@ -127,15 +128,15 @@ const gateway = {
       !cookies?.includes('release_date') &&
       !globalUtils.config.require_release_date_cookie
     ) {
-      cookieStore['release_date'] = globalUtils.config.default_client_build || 'october_5_2017';
+      cookieStore.release_date = globalUtils.config.default_client_build || 'october_5_2017';
     }
 
-    if (!cookieStore['release_date']) {
+    if (!cookieStore.release_date) {
       cookies += `release_date=thirdPartyOrMobile;`;
-      cookieStore['release_date'] = 'thirdPartyOrMobile';
+      cookieStore.release_date = 'thirdPartyOrMobile';
     }
 
-    if (!globalUtils.addClientCapabilities(cookieStore['release_date'], socket)) {
+    if (!globalUtils.addClientCapabilities(cookieStore.release_date, socket)) {
       socket.close(1000, 'The release_date cookie is in an invalid format.');
       return;
     }
@@ -151,7 +152,7 @@ const gateway = {
 
     const match = req.url.match(/[?&]v=([^&]*)/);
 
-    if (match && match[1] !== undefined) {
+    if (match?.[1] !== undefined) {
       socket.apiVersion = Number(match[1]);
     }
 
@@ -239,9 +240,9 @@ const gateway = {
   handleClientClose: async function (socket, code) {
     if (socket.session) {
       if (socket.current_guild) {
-        let voiceStates = global.guild_voice_states.get(socket.current_guild.id);
-        let possibleIndex = voiceStates.findIndex((x) => x.user_id === socket.user.id);
-        let myVoiceState = voiceStates[possibleIndex];
+        const voiceStates = global.guild_voice_states.get(socket.current_guild.id);
+        const possibleIndex = voiceStates.findIndex((x) => x.user_id === socket.user.id);
+        const myVoiceState = voiceStates[possibleIndex];
 
         if (myVoiceState) {
           myVoiceState.channel_id = null;
