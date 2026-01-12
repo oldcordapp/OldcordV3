@@ -96,8 +96,8 @@ class emailer {
       );
       htmlContent = globalUtils.replaceAll(
         htmlContent,
-        '[cdn_url]',
-        global.config.cdn_url === '' ? 'cdn.oldcordapp.com' : global.config.cdn_url,
+        '[assets_cdn_url]',
+        global.config.assets_cdn_url === '' ? 'cdn.oldcordapp.com' : global.config.assets_cdn_url,
       );
       htmlContent = globalUtils.replaceAll(htmlContent, '[domain]', global.full_url);
       htmlContent = globalUtils.replaceAll(htmlContent, '[ffnum]', '2');
@@ -139,8 +139,8 @@ class emailer {
       );
       htmlContent = globalUtils.replaceAll(
         htmlContent,
-        '[cdn_url]',
-        global.config.cdn_url === '' ? 'cdn.oldcordapp.com' : global.config.cdn_url,
+        '[assets_cdn_url]',
+        global.config.assets_cdn_url === '' ? 'cdn.oldcordapp.com' : global.config.assets_cdn_url,
       );
       htmlContent = globalUtils.replaceAll(htmlContent, '[domain]', global.full_url);
       htmlContent = globalUtils.replaceAll(htmlContent, '[ffnum]', '2');

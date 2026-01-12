@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/instance/domains', (req, res) => {
   res.json({
-    cdn: `${config.secure ? 'https://' : 'http://'}${global.full_url}`,
+    cdn: `${config.secure ? 'https://' : 'http://'}${global.full_url}`, //for user uploaded attachments
     gateway: globalUtils.generateGatewayURL(req),
     defaultApiVersion: '6',
     apiEndpoint: `${config.secure ? 'https://' : 'http://'}${global.full_url}/api`,

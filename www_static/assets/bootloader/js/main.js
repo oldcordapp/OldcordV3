@@ -1,15 +1,15 @@
+import { ResourceLoader } from './modules/resource_loader.js';
+import { utils } from './modules/utils.js';
 import { Config } from './modules/config.js';
 import { LOADING_QUOTES } from './modules/quotes.js';
-import { ResourceLoader } from './modules/resource_loader.js';
 import { shim } from './modules/shim.js';
-import { utils } from './modules/utils.js';
 
 class Bootloader {
   constructor() {
     this.loader = new ResourceLoader();
     window.__require = window.require;
     window.__OVERLAY__ = window.overlay != null;
-    window.cdn_url = Config.cdn_url;
+    window.assets_cdn_url = Config.assets_cdn_url;
     window.release_date = utils.getReleaseDate();
     this.release_date = window.release_date;
     this.originalBuild = null;
@@ -362,11 +362,11 @@ class Bootloader {
         }
 
         html = await (
-          await fetch(`${cdn_url}/assets/clients/developers_${dev_year}/app.html`)
+          await fetch(`${assets_cdn_url}/assets/clients/developers_${dev_year}/app.html`)
         ).text();
       } else
         html = await (
-          await fetch(`${cdn_url}/assets/clients/${this.release_date}/app.html`)
+          await fetch(`${assets_cdn_url}/assets/clients/${this.release_date}/app.html`)
         ).text();
     } catch (e) {
       utils.loadLog('Fatal error occurred. Please check the console.', 'error');

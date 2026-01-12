@@ -1,5 +1,5 @@
 export const Config = {
-  cdn_url: 'https://cdn.oldcordapp.com',
+  assets_cdn_url: 'https://cdn.oldcordapp.com',
 
   async load() {
     const config = await fetch('/instance').then((r) => r.json());
@@ -9,9 +9,9 @@ export const Config = {
         API_ENDPOINT: `//${location.host}/api`,
         API_VERSION: 6,
         GATEWAY_ENDPOINT: config.gateway,
-        WEBAPP_ENDPOINT: this.cdn_url,
+        WEBAPP_ENDPOINT: `//${location.host}`,
         CDN_HOST: `//${location.host}`,
-        ASSET_ENDPOINT: this.cdn_url,
+        ASSET_ENDPOINT: config.assets_cdn_url,
         MEDIA_PROXY_ENDPOINT: `//${location.host}`,
         WIDGET_ENDPOINT: '',
         INVITE_HOST: config.custom_invite_url,

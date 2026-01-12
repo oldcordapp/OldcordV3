@@ -14,7 +14,7 @@ const patcher = {
   css(css) {
     css = css
       .replaceAll(/d3dsisomax34re.cloudfront.net/g, location.host)
-      .replaceAll(/url\(\/assets\//g, `url(${cdn_url}/assets/`);
+      .replaceAll(/url\(\/assets\//g, `url(${assets_cdn_url}/assets/`);
 
     // User select patch for 2015 if enabled
     if (getEnabledPatches().includes('userSelect') && release_date.endsWith('_2015')) {
@@ -561,7 +561,7 @@ const patcher = {
       script = script.replaceAll(/discordapp.com/g, location.host);
       script = script.replaceAll(/([a-z]+\.)?discord.media/g, location.host);
 
-      script = script.replaceAll(/e\.exports=n\.p/g, `e.exports="${cdn_url}/assets/"`);
+      script = script.replaceAll(/e\.exports=n\.p/g, `e.exports="${assets_cdn_url}/assets/"`);
 
       // Disable HTTPS in insecure mode (for local testing)
       if (location.protocol != 'https')
@@ -576,7 +576,7 @@ const patcher = {
 
     // Use unified UserSearch worker script
     window.userSearchWorker = function (url) {
-      const wwScript = `importScripts("${cdn_url}/assets/UserSearch.worker.js");`;
+      const wwScript = `importScripts("${assets_cdn_url}/assets/UserSearch.worker.js");`;
       return URL.createObjectURL(new Blob([wwScript], { type: 'text/javascript' }));
     };
     script = script.replace(/n\.p\+"[a-z0-9]+\.worker\.js"/, `window.userSearchWorker()`);
@@ -603,7 +603,7 @@ const patcher = {
     if (!release_date.endsWith('_2015')) {
       script = script.replace(
         /("\.\/sydney\.png".*?e\.exports=)\w/,
-        '$1(f)=>`${window.cdn_url}/flags/${f.substring(2)}`',
+        '$1(f)=>`${window.assets_cdn_url}/flags/${f.substring(2)}`',
       );
     }
 

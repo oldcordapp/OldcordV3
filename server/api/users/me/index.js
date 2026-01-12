@@ -1,7 +1,8 @@
 const express = require('express');
 const globalUtils = require('../../../helpers/globalutils');
-const { rateLimitMiddleware } = require('../../../helpers/middlewares');
+const { rateLimitMiddleware, guildMiddleware } = require('../../../helpers/middlewares');
 const { logText } = require('../../../helpers/logger');
+const router = express.Router();
 const relationships = require('../relationships');
 const quickcache = require('../../../helpers/quickcache');
 const Watchdog = require('../../../helpers/watchdog');
@@ -9,9 +10,6 @@ const connections = require('./connections');
 const guilds = require('./guilds');
 const billing = require('./billing');
 const errors = require('../../../helpers/errors');
-const dispatcher = require('../../../helpers/dispatcher');
-
-const router = express.Router();
 
 router.use('/relationships', relationships);
 
@@ -189,7 +187,7 @@ router.patch(
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await dispatcher.dispatchEventTo(retAccount.id, 'USER_UPDATE', {
+        await global.dispatcher.dispatchEventTo(retAccount.id, 'USER_UPDATE', {
           avatar: retAccount.avatar,
           discriminator: retAccount.discriminator,
           email: retAccount.email,
@@ -202,7 +200,10 @@ router.patch(
           claimed: true,
         });
 
-        await dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(retAccount.id, retAccount);
+        await global.dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(
+          retAccount.id,
+          retAccount,
+        );
 
         return res.status(200).json({
           avatar: retAccount.avatar,
@@ -349,7 +350,7 @@ router.patch(
         await global.database.unverifyEmail(account.id);
       } //unverify them as they need to uh verify with their new email thingimajig
 
-      await dispatcher.dispatchEventTo(account.id, 'USER_UPDATE', {
+      await global.dispatcher.dispatchEventTo(account.id, 'USER_UPDATE', {
         avatar: account.avatar,
         discriminator: account.discriminator,
         email: account.email,
@@ -399,6 +400,8 @@ router.patch('/settings', async (req, res) => {
     let new_settings = account.settings;
 
     if (new_settings == null) {
+      console.log('new settings null');
+
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
@@ -411,7 +414,7 @@ router.patch('/settings', async (req, res) => {
     if (attempt) {
       const settings = new_settings;
 
-      await dispatcher.dispatchEventTo(account.id, 'USER_SETTINGS_UPDATE', settings);
+      await global.dispatcher.dispatchEventTo(account.id, 'USER_SETTINGS_UPDATE', settings);
 
       if (req.body.status) {
         const userSessions = global.userSessions.get(account.id);
@@ -423,11 +426,11 @@ router.patch('/settings', async (req, res) => {
 
           await userSessions[0].dispatchPresenceUpdate(userSessions[0].presence.status);
         }
-
-        return res.status(204).send();
-      } else {
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       }
+
+      return res.status(204).send();
+    } else {
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
   } catch (error) {
     logText(error, 'error');
@@ -525,7 +528,7 @@ router.put('/notes/:userid', async (req, res) => {
       });
     }
 
-    await dispatcher.dispatchEventTo(account.id, 'USER_NOTE_UPDATE', {
+    await global.dispatcher.dispatchEventTo(account.id, 'USER_NOTE_UPDATE', {
       id: user.id,
       note: new_notes,
     });
@@ -671,7 +674,7 @@ router.post(
 
       returnedObj.mfa_enabled = true;
 
-      await dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
+      await global.dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
 
       return res.status(200).json({
         token: req.headers['authorization'],
@@ -741,7 +744,7 @@ router.post(
 
       returnedObj.mfa_enabled = false;
 
-      await dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
+      await global.dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
 
       return res.status(200).json(returnedObj);
     } catch (error) {

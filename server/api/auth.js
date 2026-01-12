@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const globalUtils = require('../helpers/globalutils');
-const dispatcher = require('../helpers/dispatcher');
 const Watchdog = require('../helpers/watchdog');
 const instanceMiddleware = require('../helpers/middlewares').instanceMiddleware;
 const rateLimitMiddleware = require('../helpers/middlewares').rateLimitMiddleware;
@@ -178,9 +177,9 @@ router.post(
           if (guild) {
             await global.database.joinGuild(account.id, guild);
 
-            await dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
+            await global.dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
 
-            await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
+            await global.dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
               roles: [],
               user: globalUtils.miniUserObject(account),
               guild_id: invite.guild.id,
@@ -190,7 +189,7 @@ router.post(
               nick: null,
             });
 
-            let activeSessions = dispatcher.getAllActiveSessions();
+            let activeSessions = global.dispatcher.getAllActiveSessions();
 
             for (let session of activeSessions) {
               if (session.subscriptions && session.subscriptions[guild.id]) {
@@ -207,7 +206,7 @@ router.post(
               }
             }
 
-            await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
+            await global.dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
               game_id: null,
               status: 'online',
               activities: [],
@@ -224,7 +223,7 @@ router.post(
                 [account],
               );
 
-              await dispatcher.dispatchEventInChannel(
+              await global.dispatcher.dispatchEventInChannel(
                 guild,
                 guild.system_channel_id,
                 'MESSAGE_CREATE',
@@ -247,9 +246,9 @@ router.post(
         if (guild != null) {
           await global.database.joinGuild(account.id, guild);
 
-          await dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
+          await global.dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
 
-          await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
+          await global.dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
             roles: [],
             user: globalUtils.miniUserObject(account),
             guild_id: guildId,
@@ -259,7 +258,7 @@ router.post(
             nick: null,
           });
 
-          let activeSessions = dispatcher.getAllActiveSessions();
+          let activeSessions = global.dispatcher.getAllActiveSessions();
 
           for (let session of activeSessions) {
             if (session.subscriptions && session.subscriptions[guild.id]) {
@@ -276,7 +275,7 @@ router.post(
             }
           }
 
-          await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
+          await global.dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
             game_id: null,
             status: 'online',
             activities: [],
@@ -293,7 +292,7 @@ router.post(
               [account],
             );
 
-            await dispatcher.dispatchEventInChannel(
+            await global.dispatcher.dispatchEventInChannel(
               guild,
               guild.system_channel_id,
               'MESSAGE_CREATE',
@@ -555,7 +554,7 @@ router.post(
   },
 );
 
-router.post('/fingerprint', (_, res) => {
+router.post('/fingerprint', (req, res) => {
   let fingerprint = Watchdog.getFingerprint(
     req.originalUrl,
     req.baseUrl,
