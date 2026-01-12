@@ -1,6 +1,6 @@
 interface GatewayPayload {
   op: number;
   d: T;
-  s?: number;
+  s?: number | null;
   t?: string;
 }

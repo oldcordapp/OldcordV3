@@ -161,7 +161,7 @@ const gateway = {
 
     socket.on('close', (code) => this.handleClientClose(socket, code));
 
-    let heartbeat_payload: GatewayPayload | unknown = {
+    let heartbeat_payload: GatewayPayload | Buffer | string | undefined = {
       op: OPCODES.HEARTBEAT_INFO,
       s: null,
       d: {
