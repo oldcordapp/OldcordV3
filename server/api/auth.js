@@ -8,6 +8,7 @@ const { logText } = require('../helpers/logger');
 const recaptcha = require('../helpers/recaptcha');
 const errors = require('../helpers/errors');
 const lazyRequest = require('../helpers/lazyRequest');
+const dispatcher = require('../helpers/dispatcher');
 
 global.config = globalUtils.config;
 
@@ -177,9 +178,9 @@ router.post(
           if (guild) {
             await global.database.joinGuild(account.id, guild);
 
-            await global.dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
+            await dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
 
-            await global.dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
+            await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
               roles: [],
               user: globalUtils.miniUserObject(account),
               guild_id: invite.guild.id,
@@ -189,7 +190,7 @@ router.post(
               nick: null,
             });
 
-            let activeSessions = global.dispatcher.getAllActiveSessions();
+            let activeSessions = dispatcher.getAllActiveSessions();
 
             for (let session of activeSessions) {
               if (session.subscriptions && session.subscriptions[guild.id]) {
@@ -206,7 +207,7 @@ router.post(
               }
             }
 
-            await global.dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
+            await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
               game_id: null,
               status: 'online',
               activities: [],
@@ -223,7 +224,7 @@ router.post(
                 [account],
               );
 
-              await global.dispatcher.dispatchEventInChannel(
+              await dispatcher.dispatchEventInChannel(
                 guild,
                 guild.system_channel_id,
                 'MESSAGE_CREATE',
@@ -246,9 +247,9 @@ router.post(
         if (guild != null) {
           await global.database.joinGuild(account.id, guild);
 
-          await global.dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
+          await dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
 
-          await global.dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
+          await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
             roles: [],
             user: globalUtils.miniUserObject(account),
             guild_id: guildId,
@@ -258,7 +259,7 @@ router.post(
             nick: null,
           });
 
-          let activeSessions = global.dispatcher.getAllActiveSessions();
+          let activeSessions = dispatcher.getAllActiveSessions();
 
           for (let session of activeSessions) {
             if (session.subscriptions && session.subscriptions[guild.id]) {
@@ -275,7 +276,7 @@ router.post(
             }
           }
 
-          await global.dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
+          await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
             game_id: null,
             status: 'online',
             activities: [],
@@ -292,7 +293,7 @@ router.post(
               [account],
             );
 
-            await global.dispatcher.dispatchEventInChannel(
+            await dispatcher.dispatchEventInChannel(
               guild,
               guild.system_channel_id,
               'MESSAGE_CREATE',

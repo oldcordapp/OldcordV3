@@ -9,6 +9,7 @@ const path = require('path');
 const embedder = require('./embedder');
 const fsPromises = require('fs').promises;
 const speakeasy = require('speakeasy');
+const dispatcher = require('./dispatcher');
 
 let db_config = globalUtils.config.db_config;
 let config = globalUtils.config;
@@ -17,81 +18,166 @@ const pool = new Pool(db_config);
 
 let cache = {};
 
-const database = {
-  version: 0.2,
-  runQuery: async (queryString, values = []) => {
-    //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
+async function runQuery(queryString, values = []) {
+  //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
 
-    const query = {
-      text: queryString,
-      values: values,
-    };
+  const query = {
+    text: queryString,
+    values: values,
+  };
 
-    const cacheKey = JSON.stringify(query);
+  const cacheKey = JSON.stringify(query);
 
-    const client = await pool.connect();
+  const client = await pool.connect();
 
-    let isWriteQuery = false;
+  let isWriteQuery = false;
 
-    try {
-      isWriteQuery = /INSERT\s+INTO|UPDATE|DELETE\s+FROM/i.test(queryString);
+  try {
+    isWriteQuery = /INSERT\s+INTO|UPDATE|DELETE\s+FROM/i.test(queryString);
 
-      if (isWriteQuery) await client.query('BEGIN');
+    if (isWriteQuery) await client.query('BEGIN');
 
-      if (/SELECT\s+\*\s+FROM/i.test(queryString)) {
-        if (cache[cacheKey]) {
-          return cache[cacheKey];
-        }
+    if (/SELECT\s+\*\s+FROM/i.test(queryString)) {
+      if (cache[cacheKey]) {
+        return cache[cacheKey];
       }
+    }
 
-      if (isWriteQuery) {
-        const tableNameMatch = queryString.match(/(?:FROM|INTO|UPDATE)\s+(\S+)/i);
-        const tableName = tableNameMatch ? tableNameMatch[1] : null;
+    if (isWriteQuery) {
+      const tableNameMatch = queryString.match(/(?:FROM|INTO|UPDATE)\s+(\S+)/i);
+      const tableName = tableNameMatch ? tableNameMatch[1] : null;
 
-        if (tableName) {
-          for (const key in cache) {
-            if (key.includes(tableName)) {
-              delete cache[key];
-            }
+      if (tableName) {
+        for (const key in cache) {
+          if (key.includes(tableName)) {
+            delete cache[key];
           }
         }
       }
-
-      const result = await client.query(query);
-      const rows = result.rows;
-
-      if (/SELECT\s+\*\s+FROM/i.test(queryString) && rows.length > 0) {
-        cache[cacheKey] = rows;
-      }
-
-      if (isWriteQuery) {
-        await client.query('COMMIT');
-      }
-
-      return rows.length === 0 ? null : rows;
-    } catch (error) {
-      if (isWriteQuery) {
-        await client.query('ROLLBACK');
-      }
-
-      logText(
-        `Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`,
-        'error',
-      );
-
-      return null;
-    } finally {
-      client.release();
     }
-  },
-  doescolumnExist: async (column, table) => {
-    let check = await database.runQuery(
-      `SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2) AS column_exists;`,
-      [table, column],
+
+    const result = await client.query(query);
+    const rows = result.rows;
+
+    if (/SELECT\s+\*\s+FROM/i.test(queryString) && rows.length > 0) {
+      cache[cacheKey] = rows;
+    }
+
+    if (isWriteQuery) {
+      await client.query('COMMIT');
+    }
+
+    return rows.length === 0 ? null : rows;
+  } catch (error) {
+    if (isWriteQuery) {
+      await client.query('ROLLBACK');
+    }
+
+    logText(
+      `Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`,
+      'error',
     );
 
-    return check[0].column_exists;
-  },
+    return null;
+  } finally {
+    client.release();
+  }
+}
+
+async function doescolumnExist(column, table) {
+  let check = await database.runQuery(
+    `SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2) AS column_exists;`,
+    [table, column],
+  );
+
+  return check[0].column_exists;
+}
+
+async function performMigrations() {
+  v = await database.runQuery(`SELECT * FROM instance_info;`);
+
+  if (v[0].version != database.version) {
+    //auto migrate for the time being
+    let value = await database.runQuery(`SELECT * FROM users;`, [], true);
+
+    if (value === null) {
+      return;
+    }
+
+    if (!value[0].relationships) {
+      await runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
+      await runQuery(
+        `INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,
+        [0.2],
+      ); //safeguards, in case the script is run outside of the instance executing it
+      await runQuery(`UPDATE instance_info SET version = $1 WHERE version = 0.1`, [0.2]);
+
+      return;
+    }
+
+    logText(
+      `Found outdated database setup, migrating to newer version... (${databaseVersion})`,
+      'OLDCORD',
+    ); //im lazy
+
+    await runQuery(
+      `CREATE TABLE IF NOT EXISTS relationships (user_id_1 TEXT, type SMALLINT, user_id_2 TEXT)`,
+      [],
+    );
+
+    let relationships = value
+      .map((i) => {
+        return { id: i.id, rel: JSON.parse(i.relationships).filter((i) => i.type != 3) };
+      })
+      .filter((i) => i.rel.length != 0);
+
+    let ignore = [];
+
+    relationships.map((i) => {
+      i.rel.map((r) => {
+        if (
+          JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`) ||
+          JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`)
+        ) {
+          r.type = 0;
+          return r;
+        }
+
+        if (r.type != 2) {
+          ignore.push([i.id, r.id]);
+          if (r.type === 4) {
+            r.type = 3;
+          }
+        }
+        return r;
+      });
+
+      i.rel = i.rel.filter((r) => r.type != 0);
+
+      return i;
+    });
+
+    relationships = relationships.filter((i) => i.rel.length != 0);
+
+    let insert = [];
+
+    relationships.map((i) => i.rel.map((r) => insert.push([i.id, r.type, r.id])));
+
+    await runQuery(`ALTER TABLE users DROP COLUMN relationships;`, []);
+
+    insert.map(async (i) => {
+      await runQuery(`INSERT INTO relationships VALUES ($1, $2, $3);`, [i[0], i[1], i[2]]);
+    }); //TODO: Call a separate script to check how many versions out of date the current database is and run the required migration scripts
+
+    logText(`Migrated`, 'OLDCORD'); //im lazy
+  }
+}
+
+// TODO: turn this into exports
+const database = {
+  version: 0.2,
+  runQuery,
+  doescolumnExist,
   setupDatabase: async () => {
     try {
       await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
@@ -101,83 +187,7 @@ const database = {
         [0.1],
       ); //for the people who update their instance but do not manually run the relationships migration script
 
-      v = await database.runQuery(`SELECT * FROM instance_info;`);
-
-      if (v[0].version != database.version) {
-        //auto migrate for the time being
-        let value = await database.runQuery(`SELECT * FROM users;`, [], true);
-
-        if (value === null) {
-          return;
-        }
-
-        if (!value[0].relationships) {
-          await runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
-          await runQuery(
-            `INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,
-            [0.2],
-          ); //safeguards, in case the script is run outside of the instance executing it
-          await runQuery(`UPDATE instance_info SET version = $1 WHERE version = 0.1`, [0.2]);
-
-          return;
-        }
-
-        logText(
-          `Found outdated database setup, migrating to newer version... (${databaseVersion})`,
-          'OLDCORD',
-        ); //im lazy
-
-        await runQuery(
-          `CREATE TABLE IF NOT EXISTS relationships (user_id_1 TEXT, type SMALLINT, user_id_2 TEXT)`,
-          [],
-        );
-
-        let relationships = value
-          .map((i) => {
-            return { id: i.id, rel: JSON.parse(i.relationships).filter((i) => i.type != 3) };
-          })
-          .filter((i) => i.rel.length != 0);
-
-        let ignore = [];
-
-        relationships.map((i) => {
-          i.rel.map((r) => {
-            if (
-              JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`) ||
-              JSON.stringify(ignore).includes(`["${r.id}","${i.id}"]`)
-            ) {
-              r.type = 0;
-              return r;
-            }
-
-            if (r.type != 2) {
-              ignore.push([i.id, r.id]);
-              if (r.type === 4) {
-                r.type = 3;
-              }
-            }
-            return r;
-          });
-
-          i.rel = i.rel.filter((r) => r.type != 0);
-
-          return i;
-        });
-
-        relationships = relationships.filter((i) => i.rel.length != 0);
-
-        let insert = [];
-
-        relationships.map((i) => i.rel.map((r) => insert.push([i.id, r.type, r.id])));
-
-        await runQuery(`ALTER TABLE users DROP COLUMN relationships;`, []);
-
-        insert.map(async (i) => {
-          await runQuery(`INSERT INTO relationships VALUES ($1, $2, $3);`, [i[0], i[1], i[2]]);
-        }); //TODO: Call a separate script to check how many versions out of date the current database is and run the required migration scripts
-
-        logText(`Migrated`, 'OLDCORD'); //im lazy
-      }
+      await performMigrations();
 
       await database.runQuery(
         `
@@ -1240,7 +1250,7 @@ const database = {
         [new_sub_count, new_level, JSON.stringify(finalFeatures), guild.id],
       );
 
-      await global.dispatcher.dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
+      await dispatcher.dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
 
       return true;
     } catch (error) {
@@ -1304,14 +1314,14 @@ const database = {
         [user],
       );
 
-      await global.dispatcher.dispatchEventInChannel(
+      await dispatcher.dispatchEventInChannel(
         guild,
         guild.system_channel_id,
         'MESSAGE_CREATE',
         system_msg,
       ); //funny we're doing it here
 
-      await global.dispatcher.dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
+      await dispatcher.dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
 
       return {
         id: subscription_id,

@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const encode = require('./base64url');
 const fs = require('fs');
 const { logText } = require('./logger');
+const dispatcher = require('./dispatcher');
 
 const configPath = './config.json';
 
@@ -704,7 +705,7 @@ const globalUtils = {
     await database.setPrivateChannels(recipient_id, userPrivChannels);
 
     if (sendCreate) {
-      await global.dispatcher.dispatchEventTo(recipient_id, 'CHANNEL_CREATE', function () {
+      await dispatcher.dispatchEventTo(recipient_id, 'CHANNEL_CREATE', function () {
         return globalUtils.personalizeChannelObject(this.socket, private_channel);
       });
     }

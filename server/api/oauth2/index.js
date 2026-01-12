@@ -217,9 +217,9 @@ router.post('/authorize', async (req, res) => {
       try {
         await global.database.joinGuild(application.bot.id, guild);
 
-        await global.dispatcher.dispatchEventTo(application.bot.id, 'GUILD_CREATE', guild);
+        await dispatcher.dispatchEventTo(application.bot.id, 'GUILD_CREATE', guild);
 
-        await global.dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
+        await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
           roles: [],
           user: globalUtils.miniBotObject(application.bot),
           guild_id: guild.id,
@@ -257,7 +257,7 @@ router.post('/authorize', async (req, res) => {
             });
           }
 
-          await global.dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
+          await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
             ...globalUtils.getUserPresence({
               user: globalUtils.miniUserObject(application.bot),
             }),

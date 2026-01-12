@@ -47,7 +47,6 @@ const {
 } = require('./helpers/middlewares');
 const router = require('./api/index');
 const { Jimp, ResizeStrategy } = require('jimp');
-const dispatcher = require('./helpers/dispatcher');
 const permissions = require('./helpers/permissions');
 const config = globalUtils.config;
 const app = express();
@@ -63,7 +62,6 @@ app.set('trust proxy', 1);
 
 database.setupDatabase();
 
-global.dispatcher = dispatcher;
 global.gateway = gateway;
 global.slowmodeCache = new Map();
 global.gatewayIntentMap = new Map();

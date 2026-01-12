@@ -200,10 +200,7 @@ router.patch(
           claimed: true,
         });
 
-        await global.dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(
-          retAccount.id,
-          retAccount,
-        );
+        await dispatcher.dispatchGuildMemberUpdateToAllTheirGuilds(retAccount.id, retAccount);
 
         return res.status(200).json({
           avatar: retAccount.avatar,
@@ -350,7 +347,7 @@ router.patch(
         await global.database.unverifyEmail(account.id);
       } //unverify them as they need to uh verify with their new email thingimajig
 
-      await global.dispatcher.dispatchEventTo(account.id, 'USER_UPDATE', {
+      await dispatcher.dispatchEventTo(account.id, 'USER_UPDATE', {
         avatar: account.avatar,
         discriminator: account.discriminator,
         email: account.email,
@@ -414,7 +411,7 @@ router.patch('/settings', async (req, res) => {
     if (attempt) {
       const settings = new_settings;
 
-      await global.dispatcher.dispatchEventTo(account.id, 'USER_SETTINGS_UPDATE', settings);
+      await dispatcher.dispatchEventTo(account.id, 'USER_SETTINGS_UPDATE', settings);
 
       if (req.body.status) {
         const userSessions = global.userSessions.get(account.id);
@@ -528,7 +525,7 @@ router.put('/notes/:userid', async (req, res) => {
       });
     }
 
-    await global.dispatcher.dispatchEventTo(account.id, 'USER_NOTE_UPDATE', {
+    await dispatcher.dispatchEventTo(account.id, 'USER_NOTE_UPDATE', {
       id: user.id,
       note: new_notes,
     });
@@ -674,7 +671,7 @@ router.post(
 
       returnedObj.mfa_enabled = true;
 
-      await global.dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
+      await dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
 
       return res.status(200).json({
         token: req.headers['authorization'],
@@ -744,7 +741,7 @@ router.post(
 
       returnedObj.mfa_enabled = false;
 
-      await global.dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
+      await dispatcher.dispatchEventTo(req.account.id, 'USER_UPDATE', returnedObj);
 
       return res.status(200).json(returnedObj);
     } catch (error) {
