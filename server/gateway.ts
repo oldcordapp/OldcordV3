@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import zlib from 'zlib';
 
-import { gatewayHandlers,OPCODES } from './handlers/gateway.js';
+import { gatewayHandlers, OPCODES } from './handlers/gateway.js';
 import dispatcher from './helpers/dispatcher.js';
 import globalUtils from './helpers/globalutils.js';
 import { logText } from './helpers/logger.js';
