@@ -119,9 +119,13 @@ router.post(
       }
 
       if (req.body.payload_json) {
-        const originalJson = req.body.payload_json;
+        try {
+          const payload = JSON.parse(req.body.payload_json);
 
-        req.body = JSON.parse(originalJson);
+          req.body = { ...req.body, ...payload };
+        } catch (e) {
+          return res.status(400).json({ message: 'Invalid payload_json format' });
+        }
       }
 
       if (req.body.content && typeof req.body.content === 'string') {
@@ -150,7 +154,11 @@ router.post(
 
       let embeds = []; //So... discord removed the ability for users to create embeds in their messages way back in like 2020, killing the whole motive of self bots, but here at Oldcord, we don't care - just don't abuse our API.
 
-      if (req.body.embeds && (!Array.isArray(req.body.embeds) || req.body.embeds.length === 0)) {
+      if (
+        req.body.embeds &&
+        !req.files &&
+        (!Array.isArray(req.body.embeds) || req.body.embeds.length === 0)
+      ) {
         return res.status(400).json(errors.response_400.CANNOT_SEND_EMPTY_MESSAGE);
       }
 
@@ -407,33 +415,27 @@ router.post(
         } //Slowmode implementation
       }
 
-      let file_details = null;
+      let file_details = [];
 
-      if (req.files) {
-        req.file = req.files[0];
-      }
-
-      if (req.file) {
-        if (req.file.size >= global.config.limits['attachments'].max_size) {
+      for (var file of req.files) {
+        if (file.size >= global.config.limits['attachments'].max_size) {
           return res.status(400).json({
             code: 400,
             message: `Message attachments cannot be larger than ${global.config.limits['attachments'].max_size} bytes.`,
           });
         }
 
-        file_details = [
-          {
-            id: Snowflake.generate(),
-            size: req.file.size,
-          },
-        ];
+        let file_detail = {
+          id: Snowflake.generate(),
+          size: file.size,
+        };
 
-        file_details[0].name = globalUtils
-          .replaceAll(req.file.originalname, ' ', '_')
+        file_detail.name = globalUtils
+          .replaceAll(file.originalname, ' ', '_')
           .replace(/[^A-Za-z0-9_\-.()\[\]]/g, '');
-        file_details[0].filename = file_details[0].name;
+        file_detail.filename = file_detail.name;
 
-        if (!file_details[0].name || file_details[0].name == '') {
+        if (!file_detail.name || file_detail.name == '') {
           return res.status(403).json({
             code: 403,
             message: 'Invalid filename',
@@ -441,16 +443,16 @@ router.post(
         }
 
         const channelDir = path.join('.', 'www_dynamic', 'attachments', req.channel.id);
-        const attachmentDir = path.join(channelDir, file_details[0].id);
-        const file_path = path.join(attachmentDir, file_details[0].name);
+        const attachmentDir = path.join(channelDir, file_detail.id);
+        const file_path = path.join(attachmentDir, file_detail.name);
 
-        file_details[0].url = `${globalUtils.config.secure ? 'https' : 'http'}://${globalUtils.config.base_url}${globalUtils.nonStandardPort ? `:${globalUtils.config.port}` : ''}/attachments/${req.channel.id}/${file_details[0].id}/${file_details[0].name}`;
+        file_detail.url = `${globalUtils.config.secure ? 'https' : 'http'}://${globalUtils.config.base_url}${globalUtils.nonStandardPort ? `:${globalUtils.config.port}` : ''}/attachments/${req.channel.id}/${file_detail.id}/${file_detail.name}`;
 
         if (!fs.existsSync(attachmentDir)) {
           fs.mkdirSync(attachmentDir, { recursive: true });
         }
 
-        fs.writeFileSync(file_path, req.file.buffer);
+        fs.writeFileSync(file_path, file.buffer);
 
         const isVideo = file_path.endsWith('.mp4') || file_path.endsWith('.webm');
 
@@ -463,8 +465,8 @@ router.post(
                     let vid_metadata = metadata.streams.find((x) => x.codec_type === 'video');
 
                     if (!err && vid_metadata) {
-                      file_details[0].width = vid_metadata.width;
-                      file_details[0].height = vid_metadata.height;
+                      file_detail.width = vid_metadata.width;
+                      file_detail.height = vid_metadata.height;
                     }
 
                     resolve();
@@ -482,31 +484,33 @@ router.post(
                 });
             });
           } catch (error) {
-            file_details[0].width = 500;
-            file_details[0].height = 500;
+            file_detail.width = 500;
+            file_detail.height = 500;
           }
         } else {
           const imageExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif'];
-          const fileExt = path.extname(file_details[0].name).toLowerCase();
+          const fileExt = path.extname(file_detail.name).toLowerCase();
 
           if (imageExtensions.includes(fileExt)) {
             try {
-              const image = await Jimp.read(req.file.buffer);
+              const image = await Jimp.read(file.buffer);
               if (image) {
-                file_details[0].width = image.bitmap.width;
-                file_details[0].height = image.bitmap.height;
+                file_detail.width = image.bitmap.width;
+                file_detail.height = image.bitmap.height;
               }
             } catch (error) {
-              file_details[0].width = 500;
-              file_details[0].height = 500;
+              file_detail.width = 500;
+              file_detail.height = 500;
 
               logText('Failed to parse image dimension - possible vulnerability attempt?', 'warn');
             }
           } else {
-            file_details[0].width = 0;
-            file_details[0].height = 0;
+            file_detail.width = 0;
+            file_detail.height = 0;
           }
         }
+
+        file_details.push(file_detail);
       }
 
       //Write message

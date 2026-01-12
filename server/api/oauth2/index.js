@@ -229,18 +229,6 @@ router.post('/authorize', async (req, res) => {
           nick: null,
         });
 
-        await dispatcher.dispatchEventTo(application.bot.id, 'GUILD_CREATE', guild);
-
-        await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
-          roles: [],
-          user: globalUtils.miniBotObject(application.bot),
-          guild_id: guild.id,
-          joined_at: new Date().toISOString(),
-          deaf: false,
-          mute: false,
-          nick: null,
-        });
-
         let activeSessions = dispatcher.getAllActiveSessions();
 
         for (let session of activeSessions) {
