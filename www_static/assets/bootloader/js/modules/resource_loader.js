@@ -24,11 +24,11 @@ export class ResourceLoader {
       if (type === "ico") {
         const fullUrl = normalizedPath.startsWith("http")
           ? normalizedPath
-          : `${Config.cdn_url}${normalizedPath}`;
+          : `${Config.assets_cdn_url}${normalizedPath}`;
         return fullUrl;
       }
 
-      const fullUrl = `${Config.cdn_url}${normalizedPath}`;
+      const fullUrl = `${Config.assets_cdn_url}${normalizedPath}`;
       try {
         const response = await fetch(fullUrl);
 
@@ -169,7 +169,7 @@ export class ResourceLoader {
     } else {
       utils.loadLog(`Intercepted un-cached chunk: ${normalizedUrl}`, "warning");
       this.loadScript(normalizedUrl); 
-      let fallback = `${Config.cdn_url}${normalizedUrl}`;
+      let fallback = `${Config.assets_cdn_url}${normalizedUrl}`;
 
       element.setAttribute("src", fallback);
       return fallback;
@@ -233,7 +233,7 @@ export class ResourceLoader {
       }
 
       try {
-        const fullUrl = `${Config.cdn_url}${normalizedUrl}`;
+        const fullUrl = `${Config.assets_cdn_url}${normalizedUrl}`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -264,7 +264,7 @@ export class ResourceLoader {
     const normalizedUrl = this.normalizeScriptPath(url);
 
     try {
-      const fullUrl = `${Config.cdn_url}${normalizedUrl}`;
+      const fullUrl = `${Config.assets_cdn_url}${normalizedUrl}`;
       utils.loadLog(`Loading chunk ${hash}: ${normalizedUrl}`);
 
       const response = await fetch(fullUrl);

@@ -5,8 +5,7 @@ const router = express.Router();
 
 router.get("/instance/domains", (req, res) => {
   res.json({
-    cdn: `${config.cdn_url ?? "https://cdn.oldcordapp.com"}`, //spacebar clients want this for the default assets, but use a custom assets url for user uploaded ones
-    assets: `${config.secure ? "https://" : "http://"}${global.full_url}`, //for user uploaded assets
+    cdn: `${config.secure ? "https://" : "http://"}${global.full_url}`, //for user uploaded assets
     gateway: globalUtils.generateGatewayURL(req),
     defaultApiVersion: "6",
     apiEndpoint: `${config.secure ? "https://" : "http://"}${

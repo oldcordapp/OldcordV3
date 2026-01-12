@@ -52,7 +52,7 @@ export default {
           },
           {
             match: /(.)\.exports=.\.p/g,
-            replace: `$1.exports="${window.cdn_url}/assets/"`,
+            replace: `$1.exports="${window.assets_cdn_url}/assets/"`,
           },
         ],
       },

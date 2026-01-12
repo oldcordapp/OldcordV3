@@ -85,7 +85,7 @@ class emailer {
             htmlContent = globalUtils.replaceAll(htmlContent, "[discriminator]", account.discriminator);
             htmlContent = globalUtils.replaceAll(htmlContent, "[instance]", global.config.instance.name);
             htmlContent = globalUtils.replaceAll(htmlContent, "[protocol]", global.config.secure ? "https" : "http");
-            htmlContent = globalUtils.replaceAll(htmlContent, "[cdn_url]", global.config.cdn_url === "" ? "cdn.oldcordapp.com" : global.config.cdn_url);
+            htmlContent = globalUtils.replaceAll(htmlContent, "[assets_cdn_url]", global.config.assets_cdn_url === "" ? "cdn.oldcordapp.com" : global.config.assets_cdn_url);
             htmlContent = globalUtils.replaceAll(htmlContent, "[domain]", global.full_url);
             htmlContent = globalUtils.replaceAll(htmlContent, "[ffnum]", "2");
             htmlContent = globalUtils.replaceAll(htmlContent, "[email_token]", emailToken);
@@ -109,7 +109,7 @@ class emailer {
             htmlContent = globalUtils.replaceAll(htmlContent, "[discriminator]", account.discriminator);
             htmlContent = globalUtils.replaceAll(htmlContent, "[instance]", global.config.instance.name);
             htmlContent = globalUtils.replaceAll(htmlContent, "[protocol]", global.config.secure ? "https" : "http");
-            htmlContent = globalUtils.replaceAll(htmlContent, "[cdn_url]", global.config.cdn_url === "" ? "cdn.oldcordapp.com" : global.config.cdn_url);
+            htmlContent = globalUtils.replaceAll(htmlContent, "[assets_cdn_url]", global.config.assets_cdn_url === "" ? "cdn.oldcordapp.com" : global.config.assets_cdn_url);
             htmlContent = globalUtils.replaceAll(htmlContent, "[domain]", global.full_url);
             htmlContent = globalUtils.replaceAll(htmlContent, "[ffnum]", "2");
             htmlContent = globalUtils.replaceAll(htmlContent, "[email_token]", emailToken);
