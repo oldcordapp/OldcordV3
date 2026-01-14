@@ -333,99 +333,102 @@ router.post("/", instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), handleJsonAndMul
         
         let file_details = [];
 
-        for(var file of req.files) {
-            if (file.size >= global.config.limits['attachments'].max_size) {
-                return res.status(400).json({
-                    code: 400,
-                    message: `Message attachments cannot be larger than ${global.config.limits['attachments'].max_size} bytes.`
-                }); 
-            }
-
-            let file_detail = {
-                id: Snowflake.generate(),
-                size: file.size,
-            }
-
-            file_detail.name = globalUtils.replaceAll(file.originalname, ' ', '_').replace(/[^A-Za-z0-9_\-.()\[\]]/g, '');
-            file_detail.filename = file_detail.name;
-
-            if (!file_detail.name || file_detail.name == "") {
-                return res.status(403).json({
-                    code: 403,
-                    message: "Invalid filename"
-                });
-            }
-
-            const channelDir = path.join('.', 'www_dynamic', 'attachments', req.channel.id);
-            const attachmentDir = path.join(channelDir, file_detail.id);
-            const file_path = path.join(attachmentDir, file_detail.name);
-            
-            file_detail.url = `${globalUtils.config.secure ? 'https' : 'http'}://${globalUtils.config.base_url}${globalUtils.nonStandardPort ? `:${globalUtils.config.port}` : ''}/attachments/${req.channel.id}/${file_detail.id}/${file_detail.name}`;
-
-            if (!fs.existsSync(attachmentDir)) {
-                fs.mkdirSync(attachmentDir, { recursive: true });
-            }
-
-            fs.writeFileSync(file_path, file.buffer);
-
-            const isVideo = file_path.endsWith(".mp4") || file_path.endsWith(".webm");
-
-            if (isVideo) {
-                try {
-                    await new Promise((resolve, reject) => {
-                        ffmpeg(file_path)
-                            .on('end', () => {
-                                ffmpeg.ffprobe(file_path, (err, metadata) => {
-                                    let vid_metadata = metadata.streams.find(x => x.codec_type === 'video');
-
-                                    if (!err && vid_metadata) {
-                                        file_detail.width = vid_metadata.width;
-                                        file_detail.height = vid_metadata.height;
-                                    }
-
-                                    resolve();
-                                });
-                            })
-                            .on('error', (err) => {
-                                logText(err, "error");
-                                reject(err);
-                            })
-                            .screenshots({
-                                count: 1,
-                                timemarks: ['1'],
-                                filename: 'thumbnail.png',
-                                folder: attachmentDir,
-                            });
+        if (req.files) {
+            for (var file of req.files) {
+                if (file.size >= global.config.limits['attachments'].max_size) {
+                    return res.status(400).json({
+                        code: 400,
+                        message: `Message attachments cannot be larger than ${global.config.limits['attachments'].max_size} bytes.`
                     });
-                } catch (error) {
-                    file_detail.width = 500;
-                    file_detail.height = 500;
                 }
-            } else {
-                const imageExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif'];
-                const fileExt = path.extname(file_detail.name).toLowerCase();
 
-                if (imageExtensions.includes(fileExt)) {
+                let file_detail = {
+                    id: Snowflake.generate(),
+                    size: file.size,
+                }
+
+                file_detail.name = globalUtils.replaceAll(file.originalname, ' ', '_').replace(/[^A-Za-z0-9_\-.()\[\]]/g, '');
+                file_detail.filename = file_detail.name;
+
+                if (!file_detail.name || file_detail.name == "") {
+                    return res.status(403).json({
+                        code: 403,
+                        message: "Invalid filename"
+                    });
+                }
+
+                const channelDir = path.join('.', 'www_dynamic', 'attachments', req.channel.id);
+                const attachmentDir = path.join(channelDir, file_detail.id);
+                const file_path = path.join(attachmentDir, file_detail.name);
+
+                file_detail.url = `${globalUtils.config.secure ? 'https' : 'http'}://${globalUtils.config.base_url}${globalUtils.nonStandardPort ? `:${globalUtils.config.port}` : ''}/attachments/${req.channel.id}/${file_detail.id}/${file_detail.name}`;
+
+                if (!fs.existsSync(attachmentDir)) {
+                    fs.mkdirSync(attachmentDir, { recursive: true });
+                }
+
+                fs.writeFileSync(file_path, file.buffer);
+
+                const isVideo = file_path.endsWith(".mp4") || file_path.endsWith(".webm");
+
+                if (isVideo) {
                     try {
-                        const image = await Jimp.read(file.buffer);
-                        if (image) {
-                            file_detail.width = image.bitmap.width;
-                            file_detail.height = image.bitmap.height;
-                        }
+                        await new Promise((resolve, reject) => {
+                            ffmpeg(file_path)
+                                .on('end', () => {
+                                    ffmpeg.ffprobe(file_path, (err, metadata) => {
+                                        let vid_metadata = metadata.streams.find(x => x.codec_type === 'video');
+
+                                        if (!err && vid_metadata) {
+                                            file_detail.width = vid_metadata.width;
+                                            file_detail.height = vid_metadata.height;
+                                        }
+
+                                        resolve();
+                                    });
+                                })
+                                .on('error', (err) => {
+                                    logText(err, "error");
+                                    reject(err);
+                                })
+                                .screenshots({
+                                    count: 1,
+                                    timemarks: ['1'],
+                                    filename: 'thumbnail.png',
+                                    folder: attachmentDir,
+                                });
+                        });
                     } catch (error) {
                         file_detail.width = 500;
                         file_detail.height = 500;
-
-                        logText("Failed to parse image dimension - possible vulnerability attempt?", "warn");
                     }
                 } else {
-                    file_detail.width = 0;
-                    file_detail.height = 0;
-                }
-            }
+                    const imageExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif'];
+                    const fileExt = path.extname(file_detail.name).toLowerCase();
 
-            file_details.push(file_detail);
+                    if (imageExtensions.includes(fileExt)) {
+                        try {
+                            const image = await Jimp.read(file.buffer);
+                            if (image) {
+                                file_detail.width = image.bitmap.width;
+                                file_detail.height = image.bitmap.height;
+                            }
+                        } catch (error) {
+                            file_detail.width = 500;
+                            file_detail.height = 500;
+
+                            logText("Failed to parse image dimension - possible vulnerability attempt?", "warn");
+                        }
+                    } else {
+                        file_detail.width = 0;
+                        file_detail.height = 0;
+                    }
+                }
+
+                file_details.push(file_detail);
+            }
         }
+        
 
         //Write message
         const message = await global.database.createMessage(req.guild ? req.guild.id : null, req.channel.id, author.id, req.body.content, req.body.nonce, file_details, req.body.tts, mentions_data, embeds);
