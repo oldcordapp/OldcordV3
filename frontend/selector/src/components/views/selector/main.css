@@ -58,61 +58,61 @@
     45deg,
     transparent 0px,
     transparent 2px,
-    #5a5e68 2px,
+    #5a5e68 2px, 
     #5a5e68 4px
   ) !important;
   opacity: 0.3;
 }
 
 .version-three-text {
-  -webkit-text-stroke: 0.5px gray;
-  color: #1c191c21;
-  text-align: center;
-  font-family: Nebula Sans;
-  font-size: 160px;
-  font-weight: 700;
-  text-shadow: -5px 5px #4b4b4b70;
-  filter: contrast(0.4) drop-shadow(5px -6px 0px gray);
-  opacity: 0.8; /* a bit darker for readibility*/
-  letter-spacing: 5px;
-  margin-top: -10px;
-  line-height: 180px;
-  margin-bottom: 20px;
-  animation: floatv3 10s infinite alternate ease-in-out;
+    -webkit-text-stroke: .5px gray;
+    color: #1c191c21;
+    text-align: center;
+    font-family: Nebula Sans;
+    font-size: 160px;
+    font-weight: 700;
+    text-shadow: -5px 5px #4b4b4b70;
+    filter: contrast(.4) drop-shadow(5px -6px 0px gray);
+    opacity: 0.8; /* a bit darker for readibility*/
+    letter-spacing: 5px;
+    margin-top: -10px;
+    line-height: 180px;
+    margin-bottom: 20px;
+    animation: floatv3 10s infinite alternate ease-in-out;
 }
 
 @keyframes floatv3 {
   0% {
     transform: rotate(-0.5deg) translateY(-12px);
-    text-shadow:
+    text-shadow: 
       -5px 5px 0px #4b4b4b70,
       -10px 10px 0px #4b4b4b40;
   }
 
   25% {
     transform: rotate(0.5deg) translateY(0px);
-    text-shadow:
+    text-shadow: 
       -2px 5px 0px #4b4b4b70,
       -5px 8px 0px #4b4b4b40;
   }
 
   50% {
     transform: rotate(-0.5deg) translateY(12px);
-    text-shadow:
+    text-shadow: 
       5px 5px 0px #4b4b4b70,
       10px 10px 0px #4b4b4b40;
   }
 
   75% {
     transform: rotate(0.5deg) translateY(0px);
-    text-shadow:
+    text-shadow: 
       4px 5px 0px #4b4b4b70,
       7px 8px 0px #4b4b4b40;
   }
 
   100% {
     transform: rotate(-0.5deg) translateY(-12px);
-    text-shadow:
+    text-shadow: 
       -5px 5px 0px #4b4b4b70,
       -10px 10px 0px #4b4b4b40;
   }
@@ -132,6 +132,8 @@
 .important-information {
   margin-top: 20px;
 }
+
+
 
 .instance-section .legal {
   display: flex;
@@ -160,3 +162,4 @@
   color: white;
   opacity: 0.5;
 }
+

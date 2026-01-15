@@ -1,9 +1,7 @@
 ![Herple...](/.assets/hurple.png)
-
 <!-- Oldcord: bring back the past -->
 
 # Oldcord Selector V3
-
 A selector for old Discord builds. UI design inspired by Discord.
 
 ## Why a rewrite?

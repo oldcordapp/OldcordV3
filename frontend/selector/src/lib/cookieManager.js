@@ -1,20 +1,24 @@
 export default {
   set(name, value, options = {}) {
-    if (typeof name !== 'string' || name.length === 0) {
-      throw new Error('Cookie name must be a non-empty string.');
+    if (typeof name !== "string" || name.length === 0) {
+      throw new Error("Cookie name must be a non-empty string.");
     }
 
     if (!options.samesite) {
-      options.samesite = 'Lax';
+      options.samesite = "Lax";
     }
 
-    let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+    let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(
+      value
+    )}`;
 
     if (options.expires) {
       let expiresDate;
-      if (typeof options.expires === 'number') {
+      if (typeof options.expires === "number") {
         expiresDate = new Date();
-        expiresDate.setTime(expiresDate.getTime() + options.expires * 24 * 60 * 60 * 1000);
+        expiresDate.setTime(
+          expiresDate.getTime() + options.expires * 24 * 60 * 60 * 1000
+        );
       } else if (options.expires instanceof Date) {
         expiresDate = options.expires;
       }
@@ -23,24 +27,24 @@ export default {
       }
     }
 
-    cookieString += `; path=${options.path || '/'}`;
+    cookieString += `; path=${options.path || "/"}`;
     if (options.domain) {
       cookieString += `; domain=${options.domain}`;
     }
-    if (options.samesite === 'None') {
+    if (options.samesite === "None") {
       options.secure = true;
     }
     if (options.secure) {
-      cookieString += '; secure';
+      cookieString += "; secure";
     }
     cookieString += `; samesite=${options.samesite}`;
 
     document.cookie = cookieString;
   },
   get(name) {
-    if (typeof name !== 'string' || name.length === 0) return null;
+    if (typeof name !== "string" || name.length === 0) return null;
 
-    const cookies = document.cookie.split(';').map((c) => c.trim());
+    const cookies = document.cookie.split(";").map((c) => c.trim());
     const targetCookie = `${encodeURIComponent(name)}=`;
 
     for (const cookie of cookies) {
@@ -52,16 +56,16 @@ export default {
   },
 
   getAll() {
-    if (document.cookie === '') return {};
+    if (document.cookie === "") return {};
 
-    return document.cookie.split(';').reduce((acc, cookie) => {
-      const [key, ...value] = cookie.trim().split('=');
-      acc[decodeURIComponent(key)] = decodeURIComponent(value.join('='));
+    return document.cookie.split(";").reduce((acc, cookie) => {
+      const [key, ...value] = cookie.trim().split("=");
+      acc[decodeURIComponent(key)] = decodeURIComponent(value.join("="));
       return acc;
     }, {});
   },
   remove(name, options = {}) {
-    this.set(name, '', {
+    this.set(name, "", {
       ...options,
       expires: -1,
     });

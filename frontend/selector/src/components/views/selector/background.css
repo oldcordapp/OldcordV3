@@ -14,10 +14,10 @@
 }
 
 .background-img {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background-image: url('../../../assets/background.png');
+  background-image: url("../../../assets/background.png");
   background-repeat: repeat;
   background-position: center;
   opacity: 0;

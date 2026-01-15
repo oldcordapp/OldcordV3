@@ -1,41 +1,41 @@
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
-import svgrPlugin from 'vite-plugin-svgr';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import svgrPlugin from "vite-plugin-svgr";
 
 export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: ['babel-plugin-react-compiler'],
+        plugins: ["babel-plugin-react-compiler"],
       },
     }),
     svgrPlugin(),
   ],
 
   build: {
-    outDir: '../../www_static/assets/selector',
+    outDir: "../../www_static/assets/selector",
 
     emptyOutDir: true,
 
-    assetsDir: '',
+    assetsDir: "",
   },
 
-  base: '/assets/selector/',
+  base: "/assets/selector/",
 
   server: {
     proxy: {
-      '^/assets/(?!selector(/|$)).*': {
-        target: 'http://localhost:1337', // Assuming that dev express server port is 1337
+      "^/assets/(?!selector(/|$)).*": {
+        target: "http://localhost:1337", // Assuming that dev express server port is 1337
         changeOrigin: true,
       },
-      '/instance': {
-        target: 'http://localhost:1337', // Assuming that dev express server port is 1337
+      "/instance": {
+        target: "http://localhost:1337", // Assuming that dev express server port is 1337
         changeOrigin: true,
       },
-      '/api': {
-        target: 'http://localhost:1337', // Assuming that dev express server port is 1337
+      "/api": {
+        target: "http://localhost:1337", // Assuming that dev express server port is 1337
         changeOrigin: true,
-      },
+      }
     },
   },
 });

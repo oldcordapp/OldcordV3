@@ -51,7 +51,8 @@
 }
 
 .logo-container.enter {
-  animation: logoEntrance 0.6s cubic-bezier(0.3284, 1.4241, 0.0486, 0.9329) 0.2s forwards;
+  animation: logoEntrance 0.6s cubic-bezier(0.3284, 1.4241, 0.0486, 0.9329) 0.2s
+    forwards;
 }
 
 .logo-container.exit {

@@ -1,17 +1,17 @@
-import Button from '@oldcord/frontend-shared/components/button';
-import { Text } from '@oldcord/frontend-shared/components/textComponent';
-import { useState } from 'react';
+import { Text } from "@oldcord/frontend-shared/components/textComponent";
+import Button from "@oldcord/frontend-shared/components/button";
+import ToggleSetting from "../../../../components/shared/toggleSetting";
+import cookieManager from "../../../../lib/cookieManager";
+import { useState } from "react";
+import RemoveChunkCache from "../modals/removeChunkCache";
 
-import ToggleSetting from '../../../../components/shared/toggleSetting';
-import cookieManager from '../../../../lib/cookieManager';
-import RemoveChunkCache from '../modals/removeChunkCache';
-
-const verboseModeKey = 'debug_mode';
+const verboseModeKey = "debug_mode";
 
 export default function () {
-  const [isRemoveChunkCacheModalOpen, setIsRemoveChunkCacheModalOpen] = useState(false);
+  const [isRemoveChunkCacheModalOpen, setIsRemoveChunkCacheModalOpen] =
+    useState(false);
   const [verboseMode, setVerboseMode] = useState(
-    cookieManager.get(verboseModeKey) === 'true' ? true : false,
+    cookieManager.get(verboseModeKey) === "true" ? true : false
   );
 
   function enableVerboseMode() {
@@ -24,9 +24,9 @@ export default function () {
     <>
       <Text variant="h2">Advanced Settings</Text>
       <ToggleSetting
-        title={'Debug Mode'}
+        title={"Debug Mode"}
         description={
-          'Allows easier debugging. Bootloader becomes more verbose, and Oldplunger plugins can be debugged more easily.'
+          "Allows easier debugging. Bootloader becomes more verbose, and Oldplunger plugins can be debugged more easily."
         }
         isChecked={verboseMode}
         onChange={enableVerboseMode}
@@ -34,7 +34,7 @@ export default function () {
       <div className="divider" />
       <Text variant="h2">Deprecated</Text>
       <Button
-        style={{ width: '100%' }}
+        style={{ width: "100%" }}
         onClick={() => {
           setIsRemoveChunkCacheModalOpen(true);
         }}

@@ -1,16 +1,14 @@
-import './logo.css';
-
-import { useRef } from 'react';
-
-import Logo from '../../../assets/logo.svg?react';
+import { useRef } from "react";
+import Logo from "../../../assets/logo.svg?react";
+import "./logo.css";
 
 export default function () {
   const ref = useRef(null);
 
   function handleEntered() {
     if (ref.current) {
-      ref.current.classList.remove('enter');
-      ref.current.classList.remove('mounted');
+      ref.current.classList.remove("enter");
+      ref.current.classList.remove("mounted");
     }
   }
 

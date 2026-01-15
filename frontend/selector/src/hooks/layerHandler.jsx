@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useState, useContext, useEffect } from "react";
 
 const Context = createContext();
 
@@ -24,12 +24,13 @@ export function LayerHandler({ children }) {
     setExitingLayer(activeLayer);
     setExitDuration(exitDuration);
 
-    if (layer == 'primary') {
+    if (layer == "primary") {
       setActiveLayer(null);
     } else {
       setActiveLayer(layer);
     }
   }
+
 
   const value = {
     activeLayer,
