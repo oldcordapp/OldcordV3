@@ -1,6 +1,6 @@
-const { EventEmitter } = require('ws');
-const globalUtils = require('../helpers/globalutils');
-const session = require('../helpers/session');
+import { EventEmitter } from 'ws';
+import globalUtils from '../helpers/globalutils';
+import session from '../helpers/session';
 
 const OPCODES = {
   IDENTIFY: 'IDENTIFY',
@@ -70,7 +70,7 @@ const mrHandlers = {
   [OPCODES.SPEAKING_BATCH]: handleSpeakingBatch,
 };
 
-module.exports = {
+export default {
   mrHandlers,
   OPCODES,
 };

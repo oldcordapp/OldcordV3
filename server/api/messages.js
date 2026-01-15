@@ -1,25 +1,25 @@
-const express = require('express');
-const globalUtils = require('../helpers/globalutils');
-const { logText } = require('../helpers/logger');
-const {
+import { Router, json } from 'express';
+import globalUtils from '../helpers/globalutils';
+import { logText } from '../helpers/logger';
+import {
   channelPermissionsMiddleware,
   rateLimitMiddleware,
   instanceMiddleware,
-} = require('../helpers/middlewares');
-const fs = require('fs');
-const multer = require('multer');
-const { Jimp } = require('jimp');
-const Snowflake = require('../helpers/snowflake');
-const reactions = require('./reactions');
-const path = require('path');
-const quickcache = require('../helpers/quickcache');
-const Watchdog = require('../helpers/watchdog');
-const ffmpeg = require('fluent-ffmpeg');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+} from '../helpers/middlewares';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import multer from 'multer';
+import { Jimp } from 'jimp';
+import Snowflake from '../helpers/snowflake';
+import reactions from './reactions';
+import { join, extname } from 'path';
+import quickcache from '../helpers/quickcache';
+import Watchdog from '../helpers/watchdog';
+import ffmpeg, { ffprobe } from 'fluent-ffmpeg';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
 const upload = multer();
-const router = express.Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 
 router.param('messageid', async (req, res, next, messageid) => {
   req.message = await global.database.getMessageById(messageid);
@@ -33,7 +33,7 @@ function handleJsonAndMultipart(req, res, next) {
   if (contentType && contentType.startsWith('multipart/form-data')) {
     upload.any()(req, res, next);
   } else {
-    express.json()(req, res, next);
+    json()(req, res, next);
   }
 }
 
@@ -443,17 +443,17 @@ router.post(
             });
           }
 
-          const channelDir = path.join('.', 'www_dynamic', 'attachments', req.channel.id);
-          const attachmentDir = path.join(channelDir, file_detail.id);
-          const file_path = path.join(attachmentDir, file_detail.name);
+          const channelDir = join('.', 'www_dynamic', 'attachments', req.channel.id);
+          const attachmentDir = join(channelDir, file_detail.id);
+          const file_path = join(attachmentDir, file_detail.name);
 
           file_detail.url = `${globalUtils.config.secure ? 'https' : 'http'}://${globalUtils.config.base_url}${globalUtils.nonStandardPort ? `:${globalUtils.config.port}` : ''}/attachments/${req.channel.id}/${file_detail.id}/${file_detail.name}`;
 
-          if (!fs.existsSync(attachmentDir)) {
-            fs.mkdirSync(attachmentDir, { recursive: true });
+          if (!existsSync(attachmentDir)) {
+            mkdirSync(attachmentDir, { recursive: true });
           }
 
-          fs.writeFileSync(file_path, file.buffer);
+          writeFileSync(file_path, file.buffer);
 
           const isVideo = file_path.endsWith('.mp4') || file_path.endsWith('.webm');
 
@@ -462,7 +462,7 @@ router.post(
               await new Promise((resolve, reject) => {
                 ffmpeg(file_path)
                   .on('end', () => {
-                    ffmpeg.ffprobe(file_path, (err, metadata) => {
+                    ffprobe(file_path, (err, metadata) => {
                       let vid_metadata = metadata.streams.find((x) => x.codec_type === 'video');
 
                       if (!err && vid_metadata) {
@@ -490,7 +490,7 @@ router.post(
             }
           } else {
             const imageExtensions = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif'];
-            const fileExt = path.extname(file_detail.name).toLowerCase();
+            const fileExt = extname(file_detail.name).toLowerCase();
 
             if (imageExtensions.includes(fileExt)) {
               try {
@@ -763,4 +763,4 @@ router.post(
   },
 );
 
-module.exports = router;
+export default router;

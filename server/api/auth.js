@@ -1,14 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const globalUtils = require('../helpers/globalutils');
-const Watchdog = require('../helpers/watchdog');
-const instanceMiddleware = require('../helpers/middlewares').instanceMiddleware;
-const rateLimitMiddleware = require('../helpers/middlewares').rateLimitMiddleware;
-const { logText } = require('../helpers/logger');
-const recaptcha = require('../helpers/recaptcha');
-const errors = require('../helpers/errors');
-const lazyRequest = require('../helpers/lazyRequest');
-const dispatcher = require('../helpers/dispatcher');
+import { Router } from 'express';
+const router = Router();
+import globalUtils from '../helpers/globalutils';
+import Watchdog from '../helpers/watchdog';
+import { instanceMiddleware, rateLimitMiddleware } from '../helpers/middlewares';
+import { logText } from '../helpers/logger';
+import { verify } from '../helpers/recaptcha';
+import errors from '../helpers/errors';
+import lazyRequest from '../helpers/lazyRequest';
+import dispatcher from '../helpers/dispatcher';
 
 global.config = globalUtils.config;
 
@@ -127,7 +126,7 @@ router.post(
           });
         }
 
-        let verifyAnswer = await recaptcha.verify(req.body.captcha_key);
+        let verifyAnswer = await verify(req.body.captcha_key);
 
         if (!verifyAnswer) {
           return res.status(400).json({
@@ -611,7 +610,7 @@ router.post(
           });
         }
 
-        let verifyAnswer = await recaptcha.verify(req.body.captcha_key);
+        let verifyAnswer = await verify(req.body.captcha_key);
 
         if (!verifyAnswer) {
           return res.status(400).json({
@@ -707,4 +706,4 @@ router.post(
   },
 );
 
-module.exports = router;
+export default router;

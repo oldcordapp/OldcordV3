@@ -1,9 +1,9 @@
-const rateLimit = require('express-rate-limit');
-const { logText } = require('./logger');
-const globalUtils = require('./globalutils');
-const wayback = require('./wayback');
-const fs = require('fs');
-const errors = require('./errors');
+import rateLimit from 'express-rate-limit';
+import { logText } from './logger';
+import globalUtils from './globalutils';
+import { getTimestamps } from './wayback';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import errors from './errors';
 
 const config = globalUtils.config;
 
@@ -168,7 +168,7 @@ async function assetsMiddleware(req, res) {
 
     const filePath = `./www_dynamic/assets/${req.params.asset}`;
 
-    if (fs.existsSync(filePath)) {
+    if (existsSync(filePath)) {
       return res.sendFile(filePath);
     }
 
@@ -187,16 +187,14 @@ async function assetsMiddleware(req, res) {
       let snapshot_url = `https://cdn.oldcordapp.com/assets/${req.params.asset}`; //try download from oldcord cdn first
 
       if (doWayback) {
-        let timestamps = await wayback.getTimestamps(
-          `https://discordapp.com/assets/${req.params.asset}`,
-        );
+        let timestamps = await getTimestamps(`https://discordapp.com/assets/${req.params.asset}`);
 
         if (
           timestamps == null ||
           timestamps.first_ts.includes('1999') ||
           timestamps.first_ts.includes('2000')
         ) {
-          timestamps = await wayback.getTimestamps(
+          timestamps = await getTimestamps(
             `https://d3dsisomax34re.cloudfront.net/assets/${req.params.asset}`,
           );
 
@@ -249,11 +247,11 @@ async function assetsMiddleware(req, res) {
       const arrayBuffer = await r.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      if (!fs.existsSync('./www_dynamic/assets')) {
-        fs.mkdirSync('./www_dynamic/assets', { recursive: true });
+      if (!existsSync('./www_dynamic/assets')) {
+        mkdirSync('./www_dynamic/assets', { recursive: true });
       }
 
-      fs.writeFileSync(filePath, buffer);
+      writeFileSync(filePath, buffer);
 
       logText(`[LOG] Saved ${req.params.asset} from ${snapshot_url} successfully.`, 'debug');
 
@@ -678,7 +676,7 @@ function channelPermissionsMiddleware(permission) {
   };
 }
 
-module.exports = {
+export {
   corsMiddleware,
   apiVersionMiddleware,
   clientMiddleware,

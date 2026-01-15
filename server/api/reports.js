@@ -1,9 +1,9 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const router = express.Router({ mergeParams: true });
-const { rateLimitMiddleware } = require('../helpers/middlewares');
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+const router = Router({ mergeParams: true });
+import { rateLimitMiddleware } from '../helpers/middlewares';
+import { middleware } from '../helpers/watchdog';
+import { response_500 } from '../helpers/errors';
 
 router.post(
   '/',
@@ -11,7 +11,7 @@ router.post(
     global.config.ratelimit_config.reports.maxPerTimeFrame,
     global.config.ratelimit_config.reports.timeFrame,
   ),
-  Watchdog.middleware(
+  middleware(
     global.config.ratelimit_config.reports.maxPerTimeFrame,
     global.config.ratelimit_config.reports.timeFrame,
     0.5,
@@ -85,9 +85,9 @@ router.post(
     } catch (error) {
       logText(error, 'error');
 
-      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
     }
   },
 );
 
-module.exports = router;
+export default router;

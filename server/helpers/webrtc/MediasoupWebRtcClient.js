@@ -1,4 +1,4 @@
-const { EventEmitter } = require('node:events');
+import { EventEmitter } from 'node:events';
 
 class MediasoupWebRtcClient {
   constructor(userId, roomId, websocket, room) {
@@ -332,4 +332,4 @@ class MediasoupWebRtcClient {
   }
 }
 
-module.exports = { MediasoupWebRtcClient };
+export default { MediasoupWebRtcClient };

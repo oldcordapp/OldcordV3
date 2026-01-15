@@ -1,13 +1,13 @@
-const express = require('express');
-const globalUtils = require('../../../helpers/globalutils');
-const { logText } = require('../../../helpers/logger');
-const { guildMiddleware, rateLimitMiddleware } = require('../../../helpers/middlewares');
-const Watchdog = require('../../../helpers/watchdog');
-const errors = require('../../../helpers/errors');
-const lazyRequest = require('../../../helpers/lazyRequest');
-const dispatcher = require('../../../helpers/dispatcher');
+import { Router } from 'express';
+import globalUtils from '../../../helpers/globalutils';
+import { logText } from '../../../helpers/logger';
+import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares';
+import Watchdog from '../../../helpers/watchdog';
+import errors from '../../../helpers/errors';
+import lazyRequest from '../../../helpers/lazyRequest';
+import dispatcher from '../../../helpers/dispatcher';
 
-const router = express.Router();
+const router = Router();
 
 router.param('guildid', async (req, _, next, guildid) => {
   req.guild = await global.database.getGuildById(guildid);
@@ -197,4 +197,4 @@ router.get('/premium/subscriptions/cooldown', async (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

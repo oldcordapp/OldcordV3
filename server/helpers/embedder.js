@@ -1,9 +1,9 @@
-const ytdl = require('@distube/ytdl-core');
-const { logText } = require('./logger');
-const globalUtils = require('./globalutils');
-const cheerio = require('cheerio');
-const { Jimp } = require('jimp');
-const path = require('fs');
+import { getInfo } from '@distube/ytdl-core';
+import { logText } from './logger';
+import globalUtils from './globalutils';
+import { load } from 'cheerio';
+import { Jimp } from 'jimp';
+import path from 'fs';
 
 const hexToDecimal = (hex) => {
   if (hex.startsWith('#')) {
@@ -53,7 +53,7 @@ const embedder = {
       }
 
       let text = await content.text();
-      let $ = cheerio.load(text);
+      let $ = load(text);
       let videoUrl =
         $('meta[property="og:video"]').attr('content') ||
         $('meta[property="twitter:player:stream"]').attr('content');
@@ -171,7 +171,7 @@ const embedder = {
   },
   embedYouTube: async (url) => {
     try {
-      const info = await ytdl.getInfo(url);
+      const info = await getInfo(url);
       const videoDetails = info.videoDetails;
 
       const thumbnails = videoDetails.thumbnails;
@@ -367,4 +367,4 @@ const embedder = {
   },
 };
 
-module.exports = embedder;
+export default embedder;

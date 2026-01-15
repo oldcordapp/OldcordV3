@@ -1,4 +1,4 @@
-const { logText } = require('./logger');
+import { logText } from './logger';
 
 const permissions = {
   CREATE_INSTANT_INVITE: 1 << 0,
@@ -177,4 +177,4 @@ const permissions = {
   },
 };
 
-module.exports = permissions;
+export default permissions;

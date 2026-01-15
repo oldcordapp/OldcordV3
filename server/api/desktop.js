@@ -1,37 +1,37 @@
-const path = require('path');
-const fs = require('fs');
-const express = require('express');
-const contentDisposition = require('content-disposition');
-const router = express.Router();
+import { join } from 'path';
+import { existsSync, closeSync, openSync, writeFileSync, readFileSync, statSync } from 'fs';
+import { Router, static as expressStatic } from 'express';
+import contentDisposition from 'content-disposition';
+const router = Router();
 
-const distributionFolder = path.join(process.cwd(), 'distribution');
-const cacheFolder = path.join(distributionFolder, 'cache');
-const windowsCacheFile = path.join(cacheFolder, 'windows.json');
-const moduleVersionFile = path.join(cacheFolder, 'module_versions.json');
-const hostVersionFile = path.join(cacheFolder, 'host_version.json');
+const distributionFolder = join(process.cwd(), 'distribution');
+const cacheFolder = join(distributionFolder, 'cache');
+const windowsCacheFile = join(cacheFolder, 'windows.json');
+const moduleVersionFile = join(cacheFolder, 'module_versions.json');
+const hostVersionFile = join(cacheFolder, 'host_version.json');
 
 let isUsingObjectStorage = false;
 
-if (!fs.existsSync(windowsCacheFile)) {
-  fs.closeSync(fs.openSync(windowsCacheFile, 'w'));
+if (!existsSync(windowsCacheFile)) {
+  closeSync(openSync(windowsCacheFile, 'w'));
 }
 
-if (!fs.existsSync(moduleVersionFile)) {
-  fs.closeSync(fs.openSync(moduleVersionFile, 'w'));
+if (!existsSync(moduleVersionFile)) {
+  closeSync(openSync(moduleVersionFile, 'w'));
 }
 
-if (!fs.existsSync(hostVersionFile)) {
-  fs.writeFileSync(hostVersionFile, JSON.stringify({ windows: null, macOS: null, linux: null }));
+if (!existsSync(hostVersionFile)) {
+  writeFileSync(hostVersionFile, JSON.stringify({ windows: null, macOS: null, linux: null }));
 }
 
 const patched_versions = JSON.parse(
-  fs.readFileSync(path.join(distributionFolder, 'patched_versions.json'), {
+  readFileSync(join(distributionFolder, 'patched_versions.json'), {
     encoding: 'utf-8',
   }),
 );
 
 const setupNames = JSON.parse(
-  fs.readFileSync(path.join(distributionFolder, 'setup_names.json'), {
+  readFileSync(join(distributionFolder, 'setup_names.json'), {
     encoding: 'utf-8',
   }),
 );
@@ -54,7 +54,7 @@ function setPatchedHeaders(res, downloadPath, stat) {
 
 router.use(
   '/download/setup',
-  express.static(path.join(distributionFolder, 'download'), {
+  expressStatic(join(distributionFolder, 'download'), {
     index: false,
     setHeaders: setDownloadHeaders,
   }),
@@ -62,28 +62,28 @@ router.use(
 
 router.use(
   '/download/patched',
-  express.static(path.join(distributionFolder, 'patched'), {
+  expressStatic(join(distributionFolder, 'patched'), {
     index: false,
     setHeaders: setPatchedHeaders,
   }),
 );
 
 router.get('/api/updates/windows/distributions/app/manifests/latest', async (req, res) => {
-  let updateInfo = fs.readFileSync(windowsCacheFile, { encoding: 'utf-8' });
-  const hostVersion = JSON.parse(fs.readFileSync(hostVersionFile, { encoding: 'utf-8' }));
-  let moduleVersions = fs.readFileSync(moduleVersionFile, { encoding: 'utf-8' });
+  let updateInfo = readFileSync(windowsCacheFile, { encoding: 'utf-8' });
+  const hostVersion = JSON.parse(readFileSync(hostVersionFile, { encoding: 'utf-8' }));
+  let moduleVersions = readFileSync(moduleVersionFile, { encoding: 'utf-8' });
 
-  if (Math.abs(new Date() - fs.statSync(windowsCacheFile).mtime) >= 14400000 || updateInfo === '') {
+  if (Math.abs(new Date() - statSync(windowsCacheFile).mtime) >= 14400000 || updateInfo === '') {
     updateInfo = await (
       await fetch(
         'https://updates.discord.com/distributions/app/manifests/latest?channel=stable&platform=win&arch=x64',
       )
     ).json();
-    fs.writeFileSync(windowsCacheFile, JSON.stringify(updateInfo));
+    writeFileSync(windowsCacheFile, JSON.stringify(updateInfo));
 
     if (hostVersion.windows === null) {
       hostVersion.windows = updateInfo.full.host_version;
-      fs.writeFileSync(hostVersionFile, JSON.stringify(hostVersion));
+      writeFileSync(hostVersionFile, JSON.stringify(hostVersion));
     }
   } else {
     updateInfo = JSON.parse(updateInfo);
@@ -96,7 +96,7 @@ router.get('/api/updates/windows/distributions/app/manifests/latest', async (req
         moduleVersions[module] = updateInfo.modules[module].full.module_version;
       }
     }
-    fs.writeFileSync(moduleVersionFile, JSON.stringify(moduleVersions));
+    writeFileSync(moduleVersionFile, JSON.stringify(moduleVersions));
   } else {
     moduleVersions = JSON.parse(moduleVersions);
   }
@@ -106,7 +106,7 @@ router.get('/api/updates/windows/distributions/app/manifests/latest', async (req
     hostVersion.windows.toString() !== updateInfo.full.host_version.toString()
   ) {
     hostVersion.windows = updateInfo.full.host_version;
-    fs.writeFileSync(hostVersionFile, JSON.stringify(hostVersion));
+    writeFileSync(hostVersionFile, JSON.stringify(hostVersion));
 
     for (const module of Object.keys(moduleVersions)) {
       moduleVersions[module] = moduleVersions[module] + 1;
@@ -162,4 +162,4 @@ router.get('/api/download', function (req, res) {
   }
 });
 
-module.exports = router;
+export default router;

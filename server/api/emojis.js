@@ -1,13 +1,13 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const { guildPermissionsMiddleware, guildMiddleware } = require('../helpers/middlewares');
-const globalUtils = require('../helpers/globalutils');
-const Snowflake = require('../helpers/snowflake');
-const fs = require('fs');
-const router = express.Router({ mergeParams: true });
-const quickcache = require('../helpers/quickcache');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import { guildPermissionsMiddleware, guildMiddleware } from '../helpers/middlewares';
+import globalUtils from '../helpers/globalutils';
+import Snowflake from '../helpers/snowflake';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+const router = Router({ mergeParams: true });
+import quickcache from '../helpers/quickcache';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
 router.get(
   '/',
@@ -63,15 +63,15 @@ router.post('/', guildMiddleware, guildPermissionsMiddleware('MANAGE_EMOJIS'), a
 
     let emoji_id = Snowflake.generate();
 
-    if (!fs.existsSync(`./www_dynamic/emojis`)) {
-      fs.mkdirSync(`./www_dynamic/emojis`, { recursive: true });
+    if (!existsSync(`./www_dynamic/emojis`)) {
+      mkdirSync(`./www_dynamic/emojis`, { recursive: true });
     }
 
     const filePath = `./www_dynamic/emojis/${emoji_id}.${extension}`;
 
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    fs.writeFileSync(filePath, imageBuffer);
+    writeFileSync(filePath, imageBuffer);
 
     let tryCreateEmoji = await global.database.createCustomEmoji(
       guild,
@@ -263,4 +263,4 @@ router.delete(
   },
 );
 
-module.exports = router;
+export default router;

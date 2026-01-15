@@ -1,11 +1,11 @@
-const express = require('express');
-const { logText } = require('../../helpers/logger');
-const globalUtils = require('../../helpers/globalutils');
-const quickcache = require('../../helpers/quickcache');
-const errors = require('../../helpers/errors');
-const dispatcher = require('../../helpers/dispatcher');
+import { Router } from 'express';
+import { logText } from '../../helpers/logger';
+import globalUtils from '../../helpers/globalutils';
+import quickcache from '../../helpers/quickcache';
+import errors from '../../helpers/errors';
+import dispatcher from '../../helpers/dispatcher';
 
-const router = express.Router();
+const router = Router();
 
 router.param('userid', async (req, _, next, userid) => {
   req.user = await global.database.getAccountByUserId(userid);
@@ -462,4 +462,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

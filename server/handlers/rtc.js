@@ -1,5 +1,5 @@
-const globalUtils = require('../helpers/globalutils');
-const session = require('../helpers/session');
+import { miniUserObject, generateSsrc, generateString } from '../helpers/globalutils';
+import session from '../helpers/session';
 
 const OPCODES = {
   IDENTIFY: 0,
@@ -53,7 +53,7 @@ async function handleIdentify(socket, packet) {
       game_id: null,
       status: 'online',
       activities: [],
-      user: globalUtils.miniUserObject(socket.user),
+      user: miniUserObject(socket.user),
       roles: [],
     },
     gatewaySession.guild_id,
@@ -101,7 +101,7 @@ async function handleIdentify(socket, packet) {
       JSON.stringify({
         op: OPCODES.CONNECTIONINFO,
         d: {
-          ssrc: globalUtils.generateSsrc(),
+          ssrc: generateSsrc(),
           ip: global.mediaserver.ip,
           port: global.mediaserver.port,
           modes: ['plain', 'xsalsa20_poly1305'],
@@ -128,7 +128,7 @@ async function handleIdentify(socket, packet) {
       );
     });
 
-    let identity_ssrc = globalUtils.generateSsrc();
+    let identity_ssrc = generateSsrc();
 
     mediaServer.socket.send(
       JSON.stringify({
@@ -585,7 +585,7 @@ async function handleResume(socket, packet) {
 
   if (!session2) {
     let sesh = new session(
-      globalUtils.generateString(16),
+      generateString(16),
       socket,
       socket.user,
       token,
@@ -594,7 +594,7 @@ async function handleResume(socket, packet) {
         game_id: null,
         status: 'online',
         activities: [],
-        user: socket.user ? globalUtils.miniUserObject(socket.user) : null,
+        user: socket.user ? miniUserObject(socket.user) : null,
         roles: [],
       },
       server_id,
@@ -642,7 +642,7 @@ const rtcHandlers = {
   [OPCODES.VIDEO]: handleVideo,
 };
 
-module.exports = {
+export default {
   rtcHandlers,
   OPCODES,
 };

@@ -1,14 +1,14 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const { guildPermissionsMiddleware, authMiddleware } = require('../helpers/middlewares');
-const globalUtils = require('../helpers/globalutils');
-const Snowflake = require('../helpers/snowflake');
-const fs = require('fs');
-const md5 = require('../helpers/md5');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import { guildPermissionsMiddleware, authMiddleware } from '../helpers/middlewares';
+import globalUtils from '../helpers/globalutils';
+import Snowflake from '../helpers/snowflake';
+import { existsSync, mkdirSync, promises, copyFileSync } from 'fs';
+import md5 from '../helpers/md5';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
-const router = express.Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 
 router.param('webhookid', async (req, res, next, webhookid) => {
   req.webhook = await global.database.getWebhookById(webhookid);
@@ -158,13 +158,13 @@ router.post('/:webhookid/:webhooktoken', async (req, res) => {
             extension = 'jpg';
           }
 
-          if (!fs.existsSync(`./www_dynamic/avatars/${webhook.id}`)) {
-            fs.mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
+          if (!existsSync(`./www_dynamic/avatars/${webhook.id}`)) {
+            mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
           }
 
           const arrayBuffer = await response.arrayBuffer();
 
-          await fs.promises.writeFile(
+          await promises.writeFile(
             `./www_dynamic/avatars/${webhook.id}/${name_hash}.${extension}`,
             Buffer.from(arrayBuffer),
           );
@@ -311,12 +311,12 @@ router.post('/:webhookid/:webhooktoken/github', async (req, res) => {
       avatar_url: 'github',
     };
 
-    if (!fs.existsSync(`./www_dynamic/avatars/${webhook.id}`)) {
-      fs.mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
+    if (!existsSync(`./www_dynamic/avatars/${webhook.id}`)) {
+      mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
     }
 
-    if (!fs.existsSync(`./www_dynamic/avatars/${webhook.id}/github.png`)) {
-      fs.copyFileSync(
+    if (!existsSync(`./www_dynamic/avatars/${webhook.id}/github.png`)) {
+      copyFileSync(
         `./www_static/assets/misc/github.png`,
         `./www_dynamic/avatars/${webhook.id}/github.png`,
       );
@@ -410,4 +410,4 @@ router.post('/:webhookid/:webhooktoken/github', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,21 +1,21 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const messages = require('./messages');
-const pins = require('./pins');
-const {
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import messages from './messages';
+import pins from './pins';
+import {
   channelPermissionsMiddleware,
   rateLimitMiddleware,
   guildPermissionsMiddleware,
   channelMiddleware,
   instanceMiddleware,
-} = require('../helpers/middlewares');
-const globalUtils = require('../helpers/globalutils');
-const quickcache = require('../helpers/quickcache');
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+} from '../helpers/middlewares';
+import globalUtils from '../helpers/globalutils';
+import quickcache from '../helpers/quickcache';
+import Watchdog from '../helpers/watchdog';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
-const router = express.Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 const config = globalUtils.config;
 
 router.param('channelid', async (req, res, next, channelid) => {
@@ -861,4 +861,4 @@ router.use(
   ),
 );
 
-module.exports = router;
+export default router;

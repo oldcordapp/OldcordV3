@@ -1,11 +1,11 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const { channelMiddleware } = require('../helpers/middlewares');
-const quickcache = require('../helpers/quickcache');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import { channelMiddleware } from '../helpers/middlewares';
+import quickcache from '../helpers/quickcache';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
-const router = express.Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 
 router.param('messageid', async (req, res, next, messageid) => {
   req.message = await global.database.getMessageById(messageid);
@@ -149,4 +149,4 @@ router.post('/ack', channelMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

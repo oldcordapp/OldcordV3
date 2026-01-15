@@ -1,10 +1,10 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const router = express.Router({ mergeParams: true });
-const quickcache = require('../helpers/quickcache');
-const errors = require('../helpers/errors');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+const router = Router({ mergeParams: true });
+import { cacheFor } from '../helpers/quickcache';
+import { response_500 } from '../helpers/errors';
 
-router.get('/trending', quickcache.cacheFor(60 * 5, true), async (req, res) => {
+router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {
   try {
     //let provider = req.query.provider || 'tenor';
     //fuck giphy
@@ -45,11 +45,11 @@ router.get('/trending', quickcache.cacheFor(60 * 5, true), async (req, res) => {
   } catch (error) {
     logText(err, 'error');
 
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
-router.get('/trending-gifs', quickcache.cacheFor(60 * 5, true), async (req, res) => {
+router.get('/trending-gifs', cacheFor(60 * 5, true), async (req, res) => {
   try {
     if (!global.config.tenor_api_key) {
       return res.status(200).json([]);
@@ -78,11 +78,11 @@ router.get('/trending-gifs', quickcache.cacheFor(60 * 5, true), async (req, res)
   } catch (err) {
     logText(err, 'error');
 
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
-router.get('/search', quickcache.cacheFor(60 * 5, true), async (req, res) => {
+router.get('/search', cacheFor(60 * 5, true), async (req, res) => {
   try {
     if (!global.config.tenor_api_key) {
       return res.status(200).json([]);
@@ -121,8 +121,8 @@ router.get('/search', quickcache.cacheFor(60 * 5, true), async (req, res) => {
   } catch (err) {
     logText(err, 'error');
 
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
-module.exports = router;
+export default router;

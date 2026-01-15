@@ -1,5 +1,5 @@
-const { logText } = require('./logger');
-const lazyRequest = require('./lazyRequest');
+import { logText } from './logger';
+import { handleMembersSync } from './lazyRequest';
 
 const dispatcher = {
   dispatchEventTo: async (user_id, type, payload) => {
@@ -165,7 +165,7 @@ const dispatcher = {
         let channel = guild.channels.find((x) => x.id === sub.channel_id);
 
         if (channel) {
-          await lazyRequest.handleMembersSync(session, channel, guild, sub);
+          await handleMembersSync(session, channel, guild, sub);
         }
       }
 
@@ -315,4 +315,4 @@ const dispatcher = {
   },
 };
 
-module.exports = dispatcher;
+export default dispatcher;

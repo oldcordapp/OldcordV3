@@ -1,18 +1,30 @@
-const { Pool } = require('pg');
-const { logText } = require('./logger');
-const globalUtils = require('./globalutils');
-const { genSalt, hash, compareSync } = require('bcrypt');
-const Snowflake = require('./snowflake');
-const fs = require('fs');
-const md5 = require('../helpers/md5');
-const path = require('path');
-const embedder = require('./embedder');
-const fsPromises = require('fs').promises;
-const speakeasy = require('speakeasy');
-const dispatcher = require('./dispatcher');
+import { Pool } from 'pg';
+import { logText } from './logger';
+import {
+  config,
+  miniUserObject,
+  getGuildOnlineUserIds,
+  prepareAccountObject,
+  generateString,
+  usersToIDs,
+  SerializeOverwritesToString,
+  parseMentions,
+  formatMessage,
+  generateToken,
+  generateMemorableInviteCode,
+  getUserPresence,
+} from './globalutils';
+import { genSalt, hash, compareSync } from 'bcrypt';
+import { generate, deconstruct } from './snowflake';
+import { existsSync, readdirSync, unlinkSync, mkdirSync, writeFileSync } from 'fs';
+import md5 from '../helpers/md5';
+import { join } from 'path';
+import { generateMsgEmbeds } from './embedder';
+import { promises as fsPromises } from 'fs';
+import { totp } from 'speakeasy';
+import { dispatchEventInGuild, dispatchEventInChannel } from './dispatcher';
 
-let db_config = globalUtils.config.db_config;
-let config = globalUtils.config;
+let db_config = config.db_config;
 
 const pool = new Pool(db_config);
 
@@ -1104,8 +1116,8 @@ const database = {
       ); //to-do actually do this properly
 
       let audit_log = staff.audit_log;
-      let moderation_id = Snowflake.generate();
-      let deconstructed = Snowflake.deconstruct(moderation_id);
+      let moderation_id = generate();
+      let deconstructed = deconstruct(moderation_id);
       let timestamp = deconstructed.date.toISOString();
 
       let audit_entry = {
@@ -1250,7 +1262,7 @@ const database = {
         [new_sub_count, new_level, JSON.stringify(finalFeatures), guild.id],
       );
 
-      await dispatcher.dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
+      await dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
 
       return true;
     } catch (error) {
@@ -1260,7 +1272,7 @@ const database = {
   },
   createGuildSubscription: async (user, guild) => {
     try {
-      let subscription_id = Snowflake.generate();
+      let subscription_id = generate();
 
       await database.runQuery(
         `INSERT INTO guild_subscriptions (guild_id, user_id, subscription_id, ended) VALUES ($1, $2, $3, $4)`,
@@ -1314,14 +1326,9 @@ const database = {
         [user],
       );
 
-      await dispatcher.dispatchEventInChannel(
-        guild,
-        guild.system_channel_id,
-        'MESSAGE_CREATE',
-        system_msg,
-      ); //funny we're doing it here
+      await dispatchEventInChannel(guild, guild.system_channel_id, 'MESSAGE_CREATE', system_msg); //funny we're doing it here
 
-      await dispatcher.dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
+      await dispatchEventInGuild(guild, 'GUILD_UPDATE', guild);
 
       return {
         id: subscription_id,
@@ -1412,7 +1419,7 @@ const database = {
     try {
       await database.runQuery(
         `INSERT INTO instance_reports (id, problem, subject, description, email_address, action) VALUES ($1, $2, $3, $4, $5, $6)`,
-        [Snowflake.generate(), problem, subject, description, email_address, 'PENDING'],
+        [generate(), problem, subject, description, email_address, 'PENDING'],
       );
 
       return true;
@@ -1430,8 +1437,8 @@ const database = {
       await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id]); //figure out messages
 
       let audit_log = staff.audit_log;
-      let moderation_id = Snowflake.generate();
-      let deconstructed = Snowflake.deconstruct(moderation_id);
+      let moderation_id = generate();
+      let deconstructed = deconstruct(moderation_id);
       let timestamp = deconstructed.date.toISOString();
 
       let audit_entry = {
@@ -1472,7 +1479,7 @@ const database = {
   },
   addToGuildAuditLogs: async (guild_id, action_type, target_id, user_id, changes) => {
     try {
-      let audit_log_id = Snowflake.generate();
+      let audit_log_id = generate();
 
       await database.runQuery(
         `
@@ -1606,7 +1613,7 @@ const database = {
           game_id: null,
           status: presenceStatus,
           activities: [],
-          user: globalUtils.miniUserObject(member.user),
+          user: miniUserObject(member.user),
         };
 
         if (sessions && sessions.length > 0) {
@@ -1737,7 +1744,7 @@ const database = {
 
         userIds = members.map((m) => m.user_id);
       } else if (mentionType === 'here') {
-        userIds = globalUtils.getGuildOnlineUserIds(guild_id);
+        userIds = getGuildOnlineUserIds(guild_id);
       }
 
       if (userIds.length === 0) return false;
@@ -1863,7 +1870,7 @@ const database = {
         [email],
       );
 
-      return await globalUtils.prepareAccountObject(rows, []); //relationships arent even accessed from here either
+      return await prepareAccountObject(rows, []); //relationships arent even accessed from here either
     } catch (error) {
       logText(error, 'error');
 
@@ -1901,7 +1908,7 @@ const database = {
 
       let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
 
-      return globalUtils.prepareAccountObject(rows, relationships); //to-do fix
+      return prepareAccountObject(rows, relationships); //to-do fix
     } catch (error) {
       logText(error, 'error');
 
@@ -1924,7 +1931,7 @@ const database = {
       }
 
       let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
-      return await globalUtils.prepareAccountObject(rows, relationships); //to-do fix
+      return await prepareAccountObject(rows, relationships); //to-do fix
     } catch (error) {
       logText(error, 'error');
 
@@ -2113,7 +2120,7 @@ const database = {
       } else {
         let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
 
-        return await globalUtils.prepareAccountObject(rows, relationships);
+        return await prepareAccountObject(rows, relationships);
       }
     } catch (error) {
       logText(error, 'error');
@@ -2164,7 +2171,7 @@ const database = {
       custom_emojis.push({
         id: emoji_id,
         name: emoji_name,
-        user: globalUtils.miniUserObject(user),
+        user: miniUserObject(user),
       });
 
       await database.runQuery(`UPDATE guilds SET custom_emojis = $1 WHERE id = $2`, [
@@ -2211,13 +2218,13 @@ const database = {
 
       let emojiPath = `./www_dynamic/emojis`;
 
-      if (fs.existsSync(emojiPath)) {
-        let files = fs.readdirSync(emojiPath);
+      if (existsSync(emojiPath)) {
+        let files = readdirSync(emojiPath);
         let emotes = files.filter((x) => x.startsWith(`${emoji_id}.`));
 
         emotes.forEach((emote) => {
           try {
-            fs.unlinkSync(path.join(emojiPath, emote));
+            unlinkSync(join(emojiPath, emote));
           } catch (error) {
             logText(
               `Failed to unlink custom guild emote file ${file} (guild -> ${guild.id}): ${err.message}`,
@@ -2250,7 +2257,7 @@ const database = {
       if (avatar != null && avatar.includes('data:image/')) {
         var extension = avatar.split('/')[1].split(';')[0];
         var imgData = avatar.replace(`data:image/${extension};base64,`, '');
-        var file_name = globalUtils.generateString(30);
+        var file_name = generateString(30);
         var name_hash = md5(file_name);
 
         if (extension == 'jpeg') {
@@ -2259,11 +2266,11 @@ const database = {
 
         finalAvatarValue = name_hash;
 
-        if (!fs.existsSync(`./www_dynamic/avatars/${webhook.id}`)) {
-          fs.mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
+        if (!existsSync(`./www_dynamic/avatars/${webhook.id}`)) {
+          mkdirSync(`./www_dynamic/avatars/${webhook.id}`, { recursive: true });
         }
 
-        fs.writeFileSync(
+        writeFileSync(
           `./www_dynamic/avatars/${webhook.id}/${name_hash}.${extension}`,
           imgData,
           'base64',
@@ -2298,13 +2305,13 @@ const database = {
   },
   createWebhook: async (guild, user, channel_id, name, avatar) => {
     try {
-      let webhook_id = Snowflake.generate();
+      let webhook_id = generate();
       let avatarHash = null;
 
       if (avatar != null && avatar.includes('data:image/')) {
         var extension = avatar.split('/')[1].split(';')[0];
         var imgData = avatar.replace(`data:image/${extension};base64,`, '');
-        var name = globalUtils.generateString(30);
+        var name = generateString(30);
         var name_hash = md5(name);
 
         avatarHash = name_hash;
@@ -2313,18 +2320,18 @@ const database = {
           extension = 'jpg';
         }
 
-        if (!fs.existsSync(`./www_dynamic/avatars/${webhook_id}`)) {
-          fs.mkdirSync(`./www_dynamic/avatars/${webhook_id}`, { recursive: true });
+        if (!existsSync(`./www_dynamic/avatars/${webhook_id}`)) {
+          mkdirSync(`./www_dynamic/avatars/${webhook_id}`, { recursive: true });
         }
 
-        fs.writeFileSync(
+        writeFileSync(
           `./www_dynamic/avatars/${webhook_id}/${name_hash}.${extension}`,
           imgData,
           'base64',
         );
       }
 
-      let token = globalUtils.generateString(60);
+      let token = generateString(60);
 
       await database.runQuery(
         `INSERT INTO webhooks (guild_id, channel_id, id, token, avatar, name, creator_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -2340,7 +2347,7 @@ const database = {
         channel_id: channel_id,
         guild_id: guild.id,
         type: 1,
-        user: globalUtils.miniUserObject(user),
+        user: miniUserObject(user),
       };
     } catch (error) {
       logText(error, 'error');
@@ -2430,7 +2437,7 @@ const database = {
         return false;
       }
 
-      let valid = speakeasy.totp.verify({
+      let valid = totp.verify({
         secret: mfa_status.mfa_secret || overriden_secret,
         encoding: 'base32',
         token: code,
@@ -2445,7 +2452,7 @@ const database = {
   },
   generateMfaTicket: async (user_id) => {
     try {
-      let ticket = globalUtils.generateString(40);
+      let ticket = generateString(40);
 
       await database.runQuery(
         `INSERT INTO mfa_login_tickets (user_id, mfa_ticket) VALUES ($1, $2)`,
@@ -2695,7 +2702,7 @@ const database = {
           ret.push({
             id: relationship.id,
             type: relationship.type,
-            user: globalUtils.miniUserObject(relationship),
+            user: miniUserObject(relationship),
           });
         }
       }
@@ -2757,7 +2764,7 @@ const database = {
 
           if (user != null) {
             ret.push({
-              user: globalUtils.miniUserObject(user),
+              user: miniUserObject(user),
             });
           }
         }
@@ -2836,13 +2843,13 @@ const database = {
     parent_id = null,
   ) => {
     try {
-      const channel_id = Snowflake.generate();
+      const channel_id = generate();
 
       if (type === 1 || type === 3) {
         //create dm channel / group dm
 
         //Convert recipients to user snowflakes, discard other data
-        let recipientIDs = globalUtils.usersToIDs(recipients);
+        let recipientIDs = usersToIDs(recipients);
 
         await database.runQuery(
           `INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -2862,7 +2869,7 @@ const database = {
 
             if (!user) continue;
 
-            user = globalUtils.miniUserObject(user);
+            user = miniUserObject(user);
           } else {
             user = recipients[i];
           }
@@ -2976,7 +2983,7 @@ const database = {
           channel.parent_id,
           channel.position,
           channel.permission_overwrites
-            ? globalUtils.SerializeOverwritesToString(channel.permission_overwrites)
+            ? SerializeOverwritesToString(channel.permission_overwrites)
             : null,
         ];
 
@@ -3014,15 +3021,15 @@ const database = {
         if (channel.icon && channel.icon.includes('data:image/')) {
           const extension = channel.icon.split('/')[1].split(';')[0].replace('jpeg', 'jpg');
           const imgData = channel.icon.replace(/^data:image\/\w+;base64,/, '');
-          const iconHash = md5(globalUtils.generateString(30));
+          const iconHash = md5(generateString(30));
 
           const dir = `./www_dynamic/group_icons/${channel_id}`;
 
-          if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+          if (!existsSync(dir)) {
+            mkdirSync(dir, { recursive: true });
           }
 
-          fs.writeFileSync(`${dir}/${iconHash}.${extension}`, imgData, 'base64');
+          writeFileSync(`${dir}/${iconHash}.${extension}`, imgData, 'base64');
 
           channel.icon = iconHash;
 
@@ -3064,7 +3071,7 @@ const database = {
     try {
       if (!recipients) return false;
 
-      let recipientIDs = globalUtils.usersToIDs(recipients);
+      let recipientIDs = usersToIDs(recipients);
 
       await database.runQuery(`UPDATE group_channels SET recipients = $1 WHERE id = $2`, [
         JSON.stringify(recipientIDs),
@@ -3161,7 +3168,7 @@ const database = {
         };
       }
 
-      const mentions_data = globalUtils.parseMentions(rows[0].content);
+      const mentions_data = parseMentions(rows[0].content);
 
       const mentions = [];
 
@@ -3170,7 +3177,7 @@ const database = {
           const mention = await database.getAccountByUserId(mention_id);
 
           if (mention != null) {
-            mentions.push(globalUtils.miniUserObject(mention));
+            mentions.push(miniUserObject(mention));
           }
         }
       }
@@ -3208,7 +3215,7 @@ const database = {
         });
       }
 
-      return globalUtils.formatMessage(
+      return formatMessage(
         rows[0],
         author,
         messageAttachments,
@@ -3280,14 +3287,14 @@ const database = {
   abracadabraApplication: async (application) => {
     try {
       let salt = await genSalt(10);
-      let pwHash = await hash(globalUtils.generateString(30), salt);
+      let pwHash = await hash(generateString(30), salt);
       let discriminator = Math.round(Math.random() * 9999);
 
       while (discriminator < 1000) {
         discriminator = Math.round(Math.random() * 9999);
       }
 
-      let token = globalUtils.generateToken(application.id, pwHash);
+      let token = generateToken(application.id, pwHash);
 
       await database.runQuery(
         `INSERT INTO bots (id, application_id, username, discriminator, avatar, token) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -3318,7 +3325,7 @@ const database = {
         if (bot.avatar.includes('data:image')) {
           var extension = bot.avatar.split('/')[1].split(';')[0];
           var imgData = bot.avatar.replace(`data:image/${extension};base64,`, '');
-          var file_name = globalUtils.generateString(30);
+          var file_name = generateString(30);
           var hash = md5(file_name);
 
           if (extension == 'jpeg') {
@@ -3327,24 +3334,16 @@ const database = {
 
           send_icon = hash.toString();
 
-          if (!fs.existsSync(`www_dynamic/avatars`)) {
-            fs.mkdirSync(`www_dynamic/avatars`, { recursive: true });
+          if (!existsSync(`www_dynamic/avatars`)) {
+            mkdirSync(`www_dynamic/avatars`, { recursive: true });
           }
 
-          if (!fs.existsSync(`www_dynamic/avatars/${bot.id}`)) {
-            fs.mkdirSync(`www_dynamic/avatars/${bot.id}`, { recursive: true });
+          if (!existsSync(`www_dynamic/avatars/${bot.id}`)) {
+            mkdirSync(`www_dynamic/avatars/${bot.id}`, { recursive: true });
 
-            fs.writeFileSync(
-              `www_dynamic/avatars/${bot.id}/${hash}.${extension}`,
-              imgData,
-              'base64',
-            );
+            writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, 'base64');
           } else {
-            fs.writeFileSync(
-              `www_dynamic/avatars/${bot.id}/${hash}.${extension}`,
-              imgData,
-              'base64',
-            );
+            writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, 'base64');
           }
         } else {
           send_icon = bot.avatar;
@@ -3374,7 +3373,7 @@ const database = {
         if (bot.avatar.includes('data:image')) {
           var extension = bot.avatar.split('/')[1].split(';')[0];
           var imgData = bot.avatar.replace(`data:image/${extension};base64,`, '');
-          var file_name = globalUtils.generateString(30);
+          var file_name = generateString(30);
           var hash = md5(file_name);
 
           if (extension == 'jpeg') {
@@ -3383,24 +3382,16 @@ const database = {
 
           send_icon = hash.toString();
 
-          if (!fs.existsSync(`www_dynamic/avatars`)) {
-            fs.mkdirSync(`www_dynamic/avatars`, { recursive: true });
+          if (!existsSync(`www_dynamic/avatars`)) {
+            mkdirSync(`www_dynamic/avatars`, { recursive: true });
           }
 
-          if (!fs.existsSync(`www_dynamic/avatars/${bot.id}`)) {
-            fs.mkdirSync(`www_dynamic/avatars/${bot.id}`, { recursive: true });
+          if (!existsSync(`www_dynamic/avatars/${bot.id}`)) {
+            mkdirSync(`www_dynamic/avatars/${bot.id}`, { recursive: true });
 
-            fs.writeFileSync(
-              `www_dynamic/avatars/${bot.id}/${hash}.${extension}`,
-              imgData,
-              'base64',
-            );
+            writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, 'base64');
           } else {
-            fs.writeFileSync(
-              `www_dynamic/avatars/${bot.id}/${hash}.${extension}`,
-              imgData,
-              'base64',
-            );
+            writeFileSync(`www_dynamic/avatars/${bot.id}/${hash}.${extension}`, imgData, 'base64');
           }
         } else {
           send_icon = bot.avatar;
@@ -3429,7 +3420,7 @@ const database = {
         if (application.icon.includes('data:image')) {
           var extension = application.icon.split('/')[1].split(';')[0];
           var imgData = application.icon.replace(`data:image/${extension};base64,`, '');
-          var file_name = globalUtils.generateString(30);
+          var file_name = generateString(30);
           var hash = md5(file_name);
 
           if (extension == 'jpeg') {
@@ -3438,20 +3429,20 @@ const database = {
 
           send_icon = hash.toString();
 
-          if (!fs.existsSync(`www_dynamic/applications_icons`)) {
-            fs.mkdirSync(`www_dynamic/applications_icons`, { recursive: true });
+          if (!existsSync(`www_dynamic/applications_icons`)) {
+            mkdirSync(`www_dynamic/applications_icons`, { recursive: true });
           }
 
-          if (!fs.existsSync(`www_dynamic/applications_icons/${application.id}`)) {
-            fs.mkdirSync(`www_dynamic/applications_icons/${application.id}`, { recursive: true });
+          if (!existsSync(`www_dynamic/applications_icons/${application.id}`)) {
+            mkdirSync(`www_dynamic/applications_icons/${application.id}`, { recursive: true });
 
-            fs.writeFileSync(
+            writeFileSync(
               `www_dynamic/applications_icons/${application.id}/${hash}.${extension}`,
               imgData,
               'base64',
             );
           } else {
-            fs.writeFileSync(
+            writeFileSync(
               `www_dynamic/applications_icons/${application.id}/${hash}.${extension}`,
               imgData,
               'base64',
@@ -3478,8 +3469,8 @@ const database = {
   },
   createUserApplication: async (user, name) => {
     try {
-      let id = Snowflake.generate();
-      let secret = globalUtils.generateString(20);
+      let id = generate();
+      let secret = generateString(20);
 
       await database.runQuery(
         `INSERT INTO applications (id, owner_id, name, icon, secret, description) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -3495,7 +3486,7 @@ const database = {
         rpc_application_state: 0,
         rpc_origins: [],
         secret: secret,
-        owner: globalUtils.miniUserObject(user),
+        owner: miniUserObject(user),
       };
     } catch (error) {
       logText(error, 'error');
@@ -3526,7 +3517,7 @@ const database = {
         rpc_application_state: 0,
         rpc_origins: [],
         secret: rows[0].secret,
-        owner: globalUtils.miniUserObject(owner),
+        owner: miniUserObject(owner),
       };
     } catch (error) {
       logText(error, 'error');
@@ -3567,7 +3558,7 @@ const database = {
           rpc_application_state: 0,
           rpc_origins: [],
           secret: row.secret,
-          owner: globalUtils.miniUserObject(user),
+          owner: miniUserObject(user),
         });
       }
 
@@ -3678,7 +3669,7 @@ const database = {
 
       for (const row of messageRows) {
         uniqueUserIds.add(row.author_id);
-        const mentions_data = globalUtils.parseMentions(row.content);
+        const mentions_data = parseMentions(row.content);
         if (mentions_data.mentions && mentions_data.mentions.length > 0) {
           mentions_data.mentions.forEach((uid) => uniqueUserIds.add(uid));
         }
@@ -3759,7 +3750,7 @@ const database = {
           };
         }
 
-        const mentions_data = globalUtils.parseMentions(row.content);
+        const mentions_data = parseMentions(row.content);
         const mentions = [];
 
         if (mentions_data.mentions && mentions_data.mentions.length > 0) {
@@ -3775,7 +3766,7 @@ const database = {
         const messageAttachments = attachmentsMap.get(row.message_id) || [];
 
         finalMessages.push(
-          globalUtils.formatMessage(
+          formatMessage(
             row,
             author,
             messageAttachments,
@@ -3843,7 +3834,7 @@ const database = {
       for (const row of messageRows) {
         uniqueUserIds.add(row.author_id);
 
-        const mentions_data = globalUtils.parseMentions(row.content);
+        const mentions_data = parseMentions(row.content);
 
         if (mentions_data.mentions && mentions_data.mentions.length > 0) {
           mentions_data.mentions.forEach((uid) => uniqueUserIds.add(uid));
@@ -3928,7 +3919,7 @@ const database = {
           };
         }
 
-        const mentions_data = globalUtils.parseMentions(row.content);
+        const mentions_data = parseMentions(row.content);
         const mentions = [];
 
         if (mentions_data.mentions && mentions_data.mentions.length > 0) {
@@ -3987,7 +3978,7 @@ const database = {
         }
 
         finalMessages.push(
-          globalUtils.formatMessage(
+          formatMessage(
             row,
             author,
             messageAttachments,
@@ -4184,7 +4175,7 @@ const database = {
         uniqueUserIds.add(
           row.author_id.includes('WEBHOOK_') ? row.author_id.split('_')[1] : row.author_id,
         );
-        const mentionsData = globalUtils.parseMentions(row.content);
+        const mentionsData = parseMentions(row.content);
         mentionsData.mentions?.forEach((id) => uniqueUserIds.add(id));
       });
 
@@ -4251,12 +4242,12 @@ const database = {
             };
           }
 
-          const mentionsData = globalUtils.parseMentions(row.content);
+          const mentionsData = parseMentions(row.content);
           const mentions = (mentionsData.mentions || [])
             .map((id) => accountMap.get(id))
             .filter(Boolean);
 
-          return globalUtils.formatMessage(
+          return formatMessage(
             row,
             author,
             attachmentsMap.get(row.message_id) || [],
@@ -4357,7 +4348,7 @@ const database = {
       for (const row of messageRows) {
         uniqueUserIds.add(row.author_id);
 
-        const mentions_data = globalUtils.parseMentions(row.content);
+        const mentions_data = parseMentions(row.content);
 
         if (mentions_data.mentions && mentions_data.mentions.length > 0) {
           mentions_data.mentions.forEach((id) => uniqueUserIds.add(id));
@@ -4430,7 +4421,7 @@ const database = {
           webhookRawId = null;
         }
 
-        const mentions_data = globalUtils.parseMentions(row.content);
+        const mentions_data = parseMentions(row.content);
         const mentions = [];
 
         if (mentions_data.mentions && mentions_data.mentions.length > 0) {
@@ -4446,7 +4437,7 @@ const database = {
         const messageAttachments = attachmentsMap.get(row.message_id) || [];
 
         messages.push(
-          globalUtils.formatMessage(
+          formatMessage(
             row,
             author,
             messageAttachments,
@@ -4500,7 +4491,7 @@ const database = {
           let recipients = [];
           for (let i = 0; i < dm_info.recipients.length; i++) {
             let user = await database.getAccountByUserId(recipientIDs[i]);
-            if (user) recipients.push(globalUtils.miniUserObject(user));
+            if (user) recipients.push(miniUserObject(user));
           }
 
           if (dm_info != null) {
@@ -4515,7 +4506,7 @@ const database = {
             let recipients = [];
             for (let i = 0; i < group_info.recipients.length; i++) {
               let user = await database.getAccountByUserId(recipientIDs[i]);
-              if (user) recipients.push(globalUtils.miniUserObject(user));
+              if (user) recipients.push(miniUserObject(user));
             }
 
             privChannel.icon = group_info.icon;
@@ -4666,7 +4657,7 @@ const database = {
             mute: row.mute,
             roles: member_roles,
             joined_at: row.joined_at,
-            user: globalUtils.miniUserObject(user),
+            user: miniUserObject(user),
           });
         }
       }
@@ -4686,7 +4677,7 @@ const database = {
             token: row.token,
             avatar: row.avatar,
             name: row.name,
-            user: globalUtils.miniUserObject(webhookAuthor),
+            user: miniUserObject(webhookAuthor),
             type: 1,
             application_id: null,
           });
@@ -4800,7 +4791,7 @@ const database = {
             game_id: null,
             status: 'offline',
             activities: [],
-            user: globalUtils.miniUserObject(member.user),
+            user: miniUserObject(member.user),
           });
         } else {
           let session = sessions[sessions.length - 1];
@@ -4809,7 +4800,7 @@ const database = {
               game_id: null,
               status: 'offline',
               activities: [],
-              user: globalUtils.miniUserObject(member.user),
+              user: miniUserObject(member.user),
             });
           } else presences.push(session.presence);
         }
@@ -4940,7 +4931,7 @@ const database = {
             mute: row.mute,
             roles: member_roles,
             joined_at: row.joined_at,
-            user: globalUtils.miniUserObject(user),
+            user: miniUserObject(user),
           });
         }
       }
@@ -4963,7 +4954,7 @@ const database = {
             token: row.token,
             avatar: row.avatar,
             name: row.name,
-            user: globalUtils.miniUserObject(webhookAuthor),
+            user: miniUserObject(webhookAuthor),
             type: 1,
             application_id: null,
           });
@@ -5096,7 +5087,7 @@ const database = {
               game_id: null,
               status: 'offline',
               activities: [],
-              user: globalUtils.miniUserObject(member.user),
+              user: miniUserObject(member.user),
             });
           } else {
             let session = sessions[sessions.length - 1];
@@ -5105,7 +5096,7 @@ const database = {
                 game_id: null,
                 status: 'offline',
                 activities: [],
-                user: globalUtils.miniUserObject(member.user),
+                user: miniUserObject(member.user),
               });
             } else presences.push(session.presence);
           }
@@ -5529,9 +5520,9 @@ const database = {
       let code = '';
 
       if (xkcdpass) {
-        code = globalUtils.generateMemorableInviteCode();
+        code = generateMemorableInviteCode();
       } else {
-        code = globalUtils.generateString(16);
+        code = generateString(16);
       }
 
       const date = new Date().toISOString();
@@ -5557,7 +5548,7 @@ const database = {
         code: code,
         temporary: temporary,
         revoked: false,
-        inviter: globalUtils.miniUserObject(inviter),
+        inviter: miniUserObject(inviter),
         max_age: parseInt(maxAge),
         max_uses: parseInt(maxUses),
         uses: 0,
@@ -5611,7 +5602,7 @@ const database = {
   },
   createRole: async (guild_id, name, position) => {
     try {
-      const role_id = Snowflake.generate();
+      const role_id = generate();
 
       let default_permissions = 73468929; //READ, SEND, READ MSG HISTORY, CREATE INSTANT INVITE, SPEAK, MUTE_MEMBERS, CHANGE_NICKNAME
 
@@ -5669,7 +5660,7 @@ const database = {
 
       current_overwrites.splice(findOverwrite, 1);
 
-      let serialized = globalUtils.SerializeOverwritesToString(current_overwrites);
+      let serialized = SerializeOverwritesToString(current_overwrites);
 
       await database.runQuery(
         `
@@ -5700,7 +5691,7 @@ const database = {
         }
       }
 
-      let serialized = globalUtils.SerializeOverwritesToString(current_overwrites);
+      let serialized = SerializeOverwritesToString(current_overwrites);
 
       await database.runQuery(
         `
@@ -5786,9 +5777,7 @@ const database = {
             try {
               const files = await fsPromises.readdir(attachmentPath);
 
-              await Promise.all(
-                files.map((file) => fsPromises.unlink(path.join(attachmentPath, file))),
-              );
+              await Promise.all(files.map((file) => fsPromises.unlink(join(attachmentPath, file))));
 
               await fsPromises.rmdir(attachmentPath);
 
@@ -5828,7 +5817,7 @@ const database = {
 
       await Promise.all(
         assetTypes.map(async (type) => {
-          let dirPath = path.join('./www_dynamic', type, guild_id.toString());
+          let dirPath = join('./www_dynamic', type, guild_id.toString());
 
           try {
             await fsPromises.rm(dirPath, {
@@ -6031,12 +6020,12 @@ const database = {
             7 - guild member join (SERVER)
         */
     try {
-      const id = Snowflake.generate();
-      const nonce = Snowflake.generate();
-      const author_id = props[0].id || Snowflake.generate();
-      const date = Snowflake.deconstruct(id).date.toISOString();
+      const id = generate();
+      const nonce = generate();
+      const author_id = props[0].id || generate();
+      const date = deconstruct(id).date.toISOString();
 
-      let mention_id = Snowflake.generate();
+      let mention_id = generate();
 
       if (type === 1) {
         mention_id = props[1].id;
@@ -6068,7 +6057,7 @@ const database = {
       let msg = await database.getMessageById(id);
 
       if (type === 1) {
-        msg.mentions = [globalUtils.miniUserObject(props[1])];
+        msg.mentions = [miniUserObject(props[1])];
       }
 
       return msg;
@@ -6090,8 +6079,8 @@ const database = {
     webhook_embeds = null,
   ) => {
     try {
-      const id = Snowflake.generate();
-      const deconstructed = Snowflake.deconstruct(id);
+      const id = generate();
+      const deconstructed = deconstruct(id);
       const date = deconstructed.date.toISOString();
 
       if (!nonce || nonce === null) {
@@ -6106,7 +6095,7 @@ const database = {
         content = '';
       }
 
-      let embeds = await embedder.generateMsgEmbeds(content, attachments);
+      let embeds = await generateMsgEmbeds(content, attachments);
 
       if (webhook_embeds && Array.isArray(webhook_embeds) && webhook_embeds.length > 0) {
         embeds = webhook_embeds;
@@ -6160,7 +6149,7 @@ const database = {
           const mention = await database.getAccountByUserId(mention_id);
 
           if (mention != null) {
-            mentions.push(globalUtils.miniUserObject(mention));
+            mentions.push(miniUserObject(mention));
           }
         }
       }
@@ -6234,7 +6223,7 @@ const database = {
         if (icon.includes('data:image')) {
           var extension = icon.split('/')[1].split(';')[0];
           var imgData = icon.replace(`data:image/${extension};base64,`, '');
-          var file_name = globalUtils.generateString(30);
+          var file_name = generateString(30);
           var hash = md5(file_name);
 
           if (extension == 'jpeg') {
@@ -6243,24 +6232,16 @@ const database = {
 
           send_icon = hash.toString();
 
-          if (!fs.existsSync(`www_dynamic/icons`)) {
-            fs.mkdirSync(`www_dynamic/icons`, { recursive: true });
+          if (!existsSync(`www_dynamic/icons`)) {
+            mkdirSync(`www_dynamic/icons`, { recursive: true });
           }
 
-          if (!fs.existsSync(`www_dynamic/icons/${guild_id}`)) {
-            fs.mkdirSync(`www_dynamic/icons/${guild_id}`, { recursive: true });
+          if (!existsSync(`www_dynamic/icons/${guild_id}`)) {
+            mkdirSync(`www_dynamic/icons/${guild_id}`, { recursive: true });
 
-            fs.writeFileSync(
-              `www_dynamic/icons/${guild_id}/${hash}.${extension}`,
-              imgData,
-              'base64',
-            );
+            writeFileSync(`www_dynamic/icons/${guild_id}/${hash}.${extension}`, imgData, 'base64');
           } else {
-            fs.writeFileSync(
-              `www_dynamic/icons/${guild_id}/${hash}.${extension}`,
-              imgData,
-              'base64',
-            );
+            writeFileSync(`www_dynamic/icons/${guild_id}/${hash}.${extension}`, imgData, 'base64');
           }
         } else {
           send_icon = icon;
@@ -6271,7 +6252,7 @@ const database = {
         if (splash.includes('data:image')) {
           var extension = splash.split('/')[1].split(';')[0];
           var imgData = splash.replace(`data:image/${extension};base64,`, '');
-          var file_name = globalUtils.generateString(30);
+          var file_name = generateString(30);
           var hash = md5(file_name);
 
           if (extension == 'jpeg') {
@@ -6280,20 +6261,20 @@ const database = {
 
           send_splash = hash.toString();
 
-          if (!fs.existsSync(`www_dynamic/splashes`)) {
-            fs.mkdirSync(`www_dynamic/splashes`, { recursive: true });
+          if (!existsSync(`www_dynamic/splashes`)) {
+            mkdirSync(`www_dynamic/splashes`, { recursive: true });
           }
 
-          if (!fs.existsSync(`www_dynamic/splashes/${guild_id}`)) {
-            fs.mkdirSync(`www_dynamic/splashes/${guild_id}`, { recursive: true });
+          if (!existsSync(`www_dynamic/splashes/${guild_id}`)) {
+            mkdirSync(`www_dynamic/splashes/${guild_id}`, { recursive: true });
 
-            fs.writeFileSync(
+            writeFileSync(
               `www_dynamic/splashes/${guild_id}/${hash}.${extension}`,
               imgData,
               'base64',
             );
           } else {
-            fs.writeFileSync(
+            writeFileSync(
               `www_dynamic/splashes/${guild_id}/${hash}.${extension}`,
               imgData,
               'base64',
@@ -6308,7 +6289,7 @@ const database = {
         if (banner.includes('data:image')) {
           var extension = banner.split('/')[1].split(';')[0];
           var imgData = banner.replace(`data:image/${extension};base64,`, '');
-          var file_name = globalUtils.generateString(30);
+          var file_name = generateString(30);
           var hash = md5(file_name);
 
           if (extension == 'jpeg') {
@@ -6317,20 +6298,20 @@ const database = {
 
           send_banner = hash.toString();
 
-          if (!fs.existsSync(`www_dynamic/banners`)) {
-            fs.mkdirSync(`www_dynamic/banners`, { recursive: true });
+          if (!existsSync(`www_dynamic/banners`)) {
+            mkdirSync(`www_dynamic/banners`, { recursive: true });
           }
 
-          if (!fs.existsSync(`www_dynamic/banners/${guild_id}`)) {
-            fs.mkdirSync(`www_dynamic/banners/${guild_id}`, { recursive: true });
+          if (!existsSync(`www_dynamic/banners/${guild_id}`)) {
+            mkdirSync(`www_dynamic/banners/${guild_id}`, { recursive: true });
 
-            fs.writeFileSync(
+            writeFileSync(
               `www_dynamic/banners/${guild_id}/${hash}.${extension}`,
               imgData,
               'base64',
             );
           } else {
-            fs.writeFileSync(
+            writeFileSync(
               `www_dynamic/banners/${guild_id}/${hash}.${extension}`,
               imgData,
               'base64',
@@ -6367,14 +6348,14 @@ const database = {
   },
   createGuild: async (owner, icon, name, region, exclusions, client_date) => {
     try {
-      const id = Snowflake.generate();
-      const deconstructed = Snowflake.deconstruct(id);
+      const id = generate();
+      const deconstructed = deconstruct(id);
       const date = deconstructed.date.toISOString();
 
       if (icon != null) {
         var extension = icon.split('/')[1].split(';')[0];
         var imgData = icon.replace(`data:image/${extension};base64,`, '');
-        var file_name = globalUtils.generateString(30);
+        var file_name = generateString(30);
         var hash = md5(file_name);
 
         if (extension == 'jpeg') {
@@ -6383,16 +6364,16 @@ const database = {
 
         icon = hash.toString();
 
-        if (!fs.existsSync(`www_dynamic/icons`)) {
-          fs.mkdirSync(`www_dynamic/icons`, { recursive: true });
+        if (!existsSync(`www_dynamic/icons`)) {
+          mkdirSync(`www_dynamic/icons`, { recursive: true });
         }
 
-        if (!fs.existsSync(`www_dynamic/icons/${id}`)) {
-          fs.mkdirSync(`www_dynamic/icons/${id}`, { recursive: true });
+        if (!existsSync(`www_dynamic/icons/${id}`)) {
+          mkdirSync(`www_dynamic/icons/${id}`, { recursive: true });
 
-          fs.writeFileSync(`www_dynamic/icons/${id}/${hash}.${extension}`, imgData, 'base64');
+          writeFileSync(`www_dynamic/icons/${id}/${hash}.${extension}`, imgData, 'base64');
         } else {
-          fs.writeFileSync(`www_dynamic/icons/${id}/${hash}.${extension}`, imgData, 'base64');
+          writeFileSync(`www_dynamic/icons/${id}/${hash}.${extension}`, imgData, 'base64');
         }
       }
 
@@ -6410,10 +6391,10 @@ const database = {
         (client_date.getFullYear() === 2017 && client_date.getMonth() >= 9) ||
         client_date.getFullYear() >= 2018
       ) {
-        const tCatId = Snowflake.generate();
-        const vCatId = Snowflake.generate();
-        const genTextId = Snowflake.generate();
-        const genVoiceId = Snowflake.generate();
+        const tCatId = generate();
+        const vCatId = generate();
+        const genTextId = generate();
+        const genVoiceId = generate();
 
         await database.runQuery(
           `INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 4, $2, $3, 0)`,
@@ -6477,7 +6458,7 @@ const database = {
         ];
       } else {
         // Legacy 2017
-        let voiceId = Snowflake.generate();
+        let voiceId = generate();
 
         await database.runQuery(
           `INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 0, $2, $3, 0)`,
@@ -6560,7 +6541,7 @@ const database = {
         channels: channelsResponse,
         members: [
           {
-            user: globalUtils.miniUserObject(owner),
+            user: miniUserObject(owner),
             nick: null,
             roles: [],
             joined_at: date,
@@ -6569,8 +6550,8 @@ const database = {
           },
         ],
         presences: [
-          globalUtils.getUserPresence({
-            user: globalUtils.miniUserObject(owner),
+          getUserPresence({
+            user: miniUserObject(owner),
           }),
         ],
         member_count: 1,
@@ -6615,9 +6596,9 @@ const database = {
       }
 
       let salt = await genSalt(10);
-      let pwHash = await hash(password ?? globalUtils.generateString(20), salt);
-      let id = Snowflake.generate();
-      let deconstructed = Snowflake.deconstruct(id);
+      let pwHash = await hash(password ?? generateString(20), salt);
+      let id = generate();
+      let deconstructed = deconstruct(id);
       let date = deconstructed.date.toISOString();
       let discriminator = Math.round(Math.random() * 9999);
 
@@ -6625,7 +6606,7 @@ const database = {
         discriminator = Math.round(Math.random() * 9999);
       }
 
-      let token = globalUtils.generateToken(id, pwHash);
+      let token = generateToken(id, pwHash);
 
       await database.runQuery(
         `INSERT INTO users (id,username,discriminator,email,password,token,created_at,avatar,registration_ip,verified,email_token) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
@@ -6860,7 +6841,7 @@ const database = {
   },
   updateMessage: async (message_id, new_content) => {
     try {
-      let embeds = await embedder.generateMsgEmbeds(new_content);
+      let embeds = await generateMsgEmbeds(new_content);
 
       let date = new Date().toISOString();
 
@@ -6889,18 +6870,18 @@ const database = {
         if (avatar != null && avatar.includes('data:image/')) {
           const extension = avatar.split('/')[1].split(';')[0];
           const imgData = avatar.replace(`data:image/${extension};base64,`, '');
-          const name = globalUtils.generateString(30);
+          const name = generateString(30);
           const name_hash = md5(name);
 
           const validExtension = extension === 'jpeg' ? 'jpg' : extension;
 
           new_avatar = name_hash.toString();
 
-          if (!fs.existsSync(`./www_dynamic/avatars/${account.id}`)) {
-            fs.mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
+          if (!existsSync(`./www_dynamic/avatars/${account.id}`)) {
+            mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
           }
 
-          fs.writeFileSync(
+          writeFileSync(
             `./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`,
             imgData,
             'base64',
@@ -6986,18 +6967,18 @@ const database = {
         if (new_avatar != null && new_avatar.includes('data:image/')) {
           const extension = new_avatar.split('/')[1].split(';')[0];
           const imgData = new_avatar.replace(`data:image/${extension};base64,`, '');
-          const name = globalUtils.generateString(30);
+          const name = generateString(30);
           const name_hash = md5(name);
 
           const validExtension = extension === 'jpeg' ? 'jpg' : extension;
 
           new_avatar = name_hash.toString();
 
-          if (!fs.existsSync(`./www_dynamic/avatars/${account.id}`)) {
-            fs.mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
+          if (!existsSync(`./www_dynamic/avatars/${account.id}`)) {
+            mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
           }
 
-          fs.writeFileSync(
+          writeFileSync(
             `./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`,
             imgData,
             'base64',
@@ -7015,7 +6996,7 @@ const database = {
 
           const salt = await genSalt(10);
           const newPwHash = await hash(new_password, salt);
-          const token = globalUtils.generateToken(account.id, newPwHash);
+          const token = generateToken(account.id, newPwHash);
 
           new_token = token;
           new_password = newPwHash;
@@ -7042,18 +7023,18 @@ const database = {
       } else if (new_avatar != null && new_avatar.includes('data:image/')) {
         const extension = new_avatar.split('/')[1].split(';')[0];
         const imgData = new_avatar.replace(`data:image/${extension};base64,`, '');
-        const name = globalUtils.generateString(30);
+        const name = generateString(30);
         const name_hash = md5(name);
 
         const validExtension = extension === 'jpeg' ? 'jpg' : extension;
 
         new_avatar = name_hash.toString();
 
-        if (!fs.existsSync(`./www_dynamic/avatars/${account.id}`)) {
-          fs.mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
+        if (!existsSync(`./www_dynamic/avatars/${account.id}`)) {
+          mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
         }
 
-        fs.writeFileSync(
+        writeFileSync(
           `./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`,
           imgData,
           'base64',
@@ -7126,4 +7107,4 @@ const database = {
   },
 };
 
-module.exports = database;
+export default database;

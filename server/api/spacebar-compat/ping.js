@@ -1,7 +1,6 @@
-const express = require('express');
-const globalUtils = require('../../helpers/globalutils');
-const config = globalUtils.config;
-const router = express.Router();
+import { Router } from 'express';
+import { config } from '../../helpers/globalutils';
+const router = Router();
 
 router.get('/', (req, res) => {
   res.json({
@@ -19,4 +18,4 @@ router.get('/', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

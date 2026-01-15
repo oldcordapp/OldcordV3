@@ -1,10 +1,10 @@
 process.env.DEBUG = 'mediasoup*';
 
-const mediasoup = require('mediasoup');
-const { SDPInfo } = require('semantic-sdp');
-const { VoiceRoom } = require('./VoiceRoom');
-const { MediasoupWebRtcClient } = require('./MediasoupWebRtcClient');
-const { logText } = require('../logger');
+import { createWorker } from 'mediasoup';
+import { SDPInfo } from 'semantic-sdp';
+import { VoiceRoom } from './VoiceRoom';
+import { MediasoupWebRtcClient } from './MediasoupWebRtcClient';
+import { logText } from '../logger';
 
 class MediasoupSignalingDelegate {
   constructor() {
@@ -20,7 +20,7 @@ class MediasoupSignalingDelegate {
     const numWorkers = 2;
 
     for (let i = 0; i < numWorkers; i++) {
-      const worker = await mediasoup.createWorker({
+      const worker = await createWorker({
         logLevel: debug_logs ? 'debug' : 'none',
         logTags: debug_logs
           ? [
@@ -247,4 +247,4 @@ class MediasoupSignalingDelegate {
   }
 }
 
-module.exports = MediasoupSignalingDelegate;
+export default MediasoupSignalingDelegate;

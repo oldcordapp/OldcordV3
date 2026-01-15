@@ -1,9 +1,9 @@
-const globalUtils = require('./globalutils');
-const Intents = require('./intents');
-const lazyRequest = require('./lazyRequest');
-const dispatcher = require('./dispatcher');
-const { logText } = require('./logger');
-const zlib = require('zlib');
+import globalUtils from './globalutils';
+import Intents from './intents';
+import lazyRequest from './lazyRequest';
+import dispatcher from './dispatcher';
+import { logText } from './logger';
+import { deflateSync, constants } from 'zlib';
 
 let erlpack = null;
 
@@ -275,11 +275,11 @@ class session {
 
       let buffer;
 
-      buffer = zlib.deflateSync(payload, {
+      buffer = deflateSync(payload, {
         chunkSize: 65535,
-        flush: zlib.constants.Z_SYNC_FLUSH,
-        finishFlush: zlib.constants.Z_SYNC_FLUSH,
-        level: zlib.constants.Z_BEST_COMPRESSION,
+        flush: constants.Z_SYNC_FLUSH,
+        finishFlush: constants.Z_SYNC_FLUSH,
+        level: constants.Z_BEST_COMPRESSION,
       });
 
       if (!this.socket.zlibHeader) {
@@ -675,4 +675,4 @@ class session {
   }
 }
 
-module.exports = session;
+export default session;

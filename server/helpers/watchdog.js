@@ -1,7 +1,7 @@
-const crypto = require('crypto');
-const { logText } = require('./logger');
-const globalUtils = require('./globalutils');
-const errors = require('./errors');
+import { createHash } from 'crypto';
+import { logText } from './logger';
+import globalUtils from './globalutils';
+import errors from './errors';
 
 const Watchdog = {
   numHeadersThreshold: 10,
@@ -71,7 +71,7 @@ const Watchdog = {
 
     to_fingerprint += `PROTOCOL=${protocol};`;
 
-    let hash = crypto.createHash('sha256').update(to_fingerprint).digest('hex');
+    let hash = createHash('sha256').update(to_fingerprint).digest('hex');
 
     return {
       fingerprint: hash,
@@ -258,4 +258,4 @@ const Watchdog = {
   },
 };
 
-module.exports = Watchdog;
+export default Watchdog;

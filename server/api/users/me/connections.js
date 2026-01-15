@@ -1,11 +1,11 @@
-const express = require('express');
-const globalUtils = require('../../../helpers/globalutils');
-const { logText } = require('../../../helpers/logger');
-const quickcache = require('../../../helpers/quickcache');
-const errors = require('../../../helpers/errors');
-const dispatcher = require('../../../helpers/dispatcher');
+import { Router } from 'express';
+import globalUtils from '../../../helpers/globalutils';
+import { logText } from '../../../helpers/logger';
+import quickcache from '../../../helpers/quickcache';
+import errors from '../../../helpers/errors';
+import dispatcher from '../../../helpers/dispatcher';
 
-const router = express.Router();
+const router = Router();
 
 router.get('/', quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
@@ -116,4 +116,4 @@ router.patch('/:platform/:connectionid', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

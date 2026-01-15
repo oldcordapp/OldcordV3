@@ -1,28 +1,28 @@
-const express = require('express');
-const { authMiddleware, instanceMiddleware } = require('../helpers/middlewares');
+import express from 'express';
+import { authMiddleware, instanceMiddleware } from '../helpers/middlewares';
 const app = express();
-const globalUtils = require('../helpers/globalutils');
-const auth = require('./auth');
-const tutorial = require('./tutorial');
-const users = require('./users/index');
-const voice = require('./voice');
-const guilds = require('./guilds');
-const invites = require('./invites');
-const channels = require('./channels');
-const connections = require('./connections');
-const admin = require('./admin');
-const gifs = require('./gifs');
-const webhooks = require('./webhooks');
-const store = require('./store');
-const oauth2 = require('./oauth2/index');
-const entitlements = require('./entitlements');
-const activities = require('./activities');
-const integrations = require('./integrations');
-const reports = require('./reports');
-const spacebarPing = require('./spacebar-compat/ping');
-const spacebarPolicies = require('./spacebar-compat/policies');
+import { config, generateGatewayURL } from '../helpers/globalutils';
+import auth from './auth';
+import tutorial from './tutorial';
+import users from './users/index';
+import voice from './voice';
+import guilds from './guilds';
+import invites from './invites';
+import channels from './channels';
+import connections from './connections';
+import admin from './admin';
+import gifs from './gifs';
+import webhooks from './webhooks';
+import store from './store';
+import oauth2 from './oauth2/index';
+import entitlements from './entitlements';
+import activities from './activities';
+import integrations from './integrations';
+import reports from './reports';
+import spacebarPing from './spacebar-compat/ping';
+import spacebarPolicies from './spacebar-compat/policies';
 
-global.config = globalUtils.config;
+global.config = config;
 //just in case
 
 app.use('/auth', auth);
@@ -78,13 +78,13 @@ app.get('/games', (req, res) => {
 
 app.get('/gateway', (req, res) => {
   return res.status(200).json({
-    url: globalUtils.generateGatewayURL(req),
+    url: generateGatewayURL(req),
   });
 });
 
 app.get('/gateway/bot', (req, res) => {
   return res.status(200).json({
-    url: globalUtils.generateGatewayURL(req),
+    url: generateGatewayURL(req),
     shards: 0,
     session_start_limit: {
       total: 1,
@@ -134,4 +134,4 @@ app.use('/science', (_, res) => {
   return res.status(204).send();
 });
 
-module.exports = app;
+export default app;

@@ -1,15 +1,15 @@
-const express = require('express');
-const globalUtils = require('../../../helpers/globalutils');
-const { rateLimitMiddleware, guildMiddleware } = require('../../../helpers/middlewares');
-const { logText } = require('../../../helpers/logger');
-const router = express.Router();
-const relationships = require('../relationships');
-const quickcache = require('../../../helpers/quickcache');
-const Watchdog = require('../../../helpers/watchdog');
-const connections = require('./connections');
-const guilds = require('./guilds');
-const billing = require('./billing');
-const errors = require('../../../helpers/errors');
+import { Router } from 'express';
+import globalUtils from '../../../helpers/globalutils';
+import { rateLimitMiddleware, guildMiddleware } from '../../../helpers/middlewares';
+import { logText } from '../../../helpers/logger';
+const router = Router();
+import relationships from '../relationships';
+import quickcache from '../../../helpers/quickcache';
+import Watchdog from '../../../helpers/watchdog';
+import connections from './connections';
+import guilds from './guilds';
+import billing from './billing';
+import errors from '../../../helpers/errors';
 
 router.use('/relationships', relationships);
 
@@ -752,4 +752,4 @@ router.post(
   },
 );
 
-module.exports = router;
+export default router;

@@ -1,13 +1,13 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const globalUtils = require('../helpers/globalutils');
-const dispatcher = require('../helpers/dispatcher');
-const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
-const router = express.Router({ mergeParams: true });
-const quickcache = require('../helpers/quickcache');
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
-const lazyRequest = require('../helpers/lazyRequest');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import globalUtils from '../helpers/globalutils';
+import dispatcher from '../helpers/dispatcher';
+import { rateLimitMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares';
+const router = Router({ mergeParams: true });
+import quickcache from '../helpers/quickcache';
+import Watchdog from '../helpers/watchdog';
+import errors from '../helpers/errors';
+import lazyRequest from '../helpers/lazyRequest';
 
 router.param('memberid', async (req, res, next, memberid) => {
   req.member = req.guild.members.find((x) => x.id === memberid);
@@ -204,4 +204,4 @@ router.delete(
   },
 );
 
-module.exports = router;
+export default router;

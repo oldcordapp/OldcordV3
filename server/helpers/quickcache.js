@@ -1,5 +1,5 @@
-const crypto = require('crypto');
-const globalUtils = require('./globalutils');
+import { createHash } from 'crypto';
+import globalUtils from './globalutils';
 
 const quickcache = {
   cacheStore: new Map(),
@@ -18,7 +18,7 @@ const quickcache = {
       inValue = `${url}::${token}`;
     }
 
-    let hash = crypto.createHash('sha256').update(inValue).digest('hex');
+    let hash = createHash('sha256').update(inValue).digest('hex');
 
     return hash;
   },
@@ -96,4 +96,4 @@ const quickcache = {
   },
 };
 
-module.exports = quickcache;
+export default quickcache;

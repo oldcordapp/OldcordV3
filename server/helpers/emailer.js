@@ -1,6 +1,6 @@
-const { logText } = require('./logger');
-const globalUtils = require('./globalutils');
-const fs = require('fs');
+import { logText } from './logger';
+import { replaceAll } from './globalutils';
+import { readFileSync } from 'fs';
 
 //So SES is the best we got, everything else is quick to block ya - so just use amazon.
 
@@ -84,34 +84,26 @@ class emailer {
   }
   async sendRegistrationEmail(to, emailToken, account) {
     try {
-      let htmlContent = fs.readFileSync('./www_static/assets/emails/verify-email.html', 'utf8');
+      let htmlContent = readFileSync('./www_static/assets/emails/verify-email.html', 'utf8');
 
-      htmlContent = globalUtils.replaceAll(htmlContent, '[username]', account.username);
-      htmlContent = globalUtils.replaceAll(htmlContent, '[discriminator]', account.discriminator);
-      htmlContent = globalUtils.replaceAll(htmlContent, '[instance]', global.config.instance.name);
-      htmlContent = globalUtils.replaceAll(
-        htmlContent,
-        '[protocol]',
-        global.config.secure ? 'https' : 'http',
-      );
-      htmlContent = globalUtils.replaceAll(
+      htmlContent = replaceAll(htmlContent, '[username]', account.username);
+      htmlContent = replaceAll(htmlContent, '[discriminator]', account.discriminator);
+      htmlContent = replaceAll(htmlContent, '[instance]', global.config.instance.name);
+      htmlContent = replaceAll(htmlContent, '[protocol]', global.config.secure ? 'https' : 'http');
+      htmlContent = replaceAll(
         htmlContent,
         '[assets_cdn_url]',
         global.config.assets_cdn_url === '' ? 'cdn.oldcordapp.com' : global.config.assets_cdn_url,
       );
-      htmlContent = globalUtils.replaceAll(htmlContent, '[domain]', global.full_url);
-      htmlContent = globalUtils.replaceAll(htmlContent, '[ffnum]', '2');
-      htmlContent = globalUtils.replaceAll(htmlContent, '[email_token]', emailToken);
-      htmlContent = globalUtils.replaceAll(
+      htmlContent = replaceAll(htmlContent, '[domain]', global.full_url);
+      htmlContent = replaceAll(htmlContent, '[ffnum]', '2');
+      htmlContent = replaceAll(htmlContent, '[email_token]', emailToken);
+      htmlContent = replaceAll(
         htmlContent,
         '[fftext]',
         'The bushes and clouds in the original Super Mario Bros are the same sprite recolored.',
       );
-      htmlContent = globalUtils.replaceAll(
-        htmlContent,
-        '[address]',
-        '401 California Dr, Burlingame, CA 94010',
-      );
+      htmlContent = replaceAll(htmlContent, '[address]', '401 California Dr, Burlingame, CA 94010');
 
       let res = await global.emailer.trySendEmail(to, 'Verify Email', htmlContent);
 
@@ -124,37 +116,29 @@ class emailer {
   }
   async sendForgotPassword(to, emailToken, account) {
     try {
-      let htmlContent = fs.readFileSync(
+      let htmlContent = readFileSync(
         './www_static/assets/emails/password-reset-request-for-discord.html',
         'utf8',
       ); //to-do: have variety based on client year
 
-      htmlContent = globalUtils.replaceAll(htmlContent, '[username]', account.username);
-      htmlContent = globalUtils.replaceAll(htmlContent, '[discriminator]', account.discriminator);
-      htmlContent = globalUtils.replaceAll(htmlContent, '[instance]', global.config.instance.name);
-      htmlContent = globalUtils.replaceAll(
-        htmlContent,
-        '[protocol]',
-        global.config.secure ? 'https' : 'http',
-      );
-      htmlContent = globalUtils.replaceAll(
+      htmlContent = replaceAll(htmlContent, '[username]', account.username);
+      htmlContent = replaceAll(htmlContent, '[discriminator]', account.discriminator);
+      htmlContent = replaceAll(htmlContent, '[instance]', global.config.instance.name);
+      htmlContent = replaceAll(htmlContent, '[protocol]', global.config.secure ? 'https' : 'http');
+      htmlContent = replaceAll(
         htmlContent,
         '[assets_cdn_url]',
         global.config.assets_cdn_url === '' ? 'cdn.oldcordapp.com' : global.config.assets_cdn_url,
       );
-      htmlContent = globalUtils.replaceAll(htmlContent, '[domain]', global.full_url);
-      htmlContent = globalUtils.replaceAll(htmlContent, '[ffnum]', '2');
-      htmlContent = globalUtils.replaceAll(htmlContent, '[email_token]', emailToken);
-      htmlContent = globalUtils.replaceAll(
+      htmlContent = replaceAll(htmlContent, '[domain]', global.full_url);
+      htmlContent = replaceAll(htmlContent, '[ffnum]', '2');
+      htmlContent = replaceAll(htmlContent, '[email_token]', emailToken);
+      htmlContent = replaceAll(
         htmlContent,
         '[fftext]',
         'The bushes and clouds in the original Super Mario Bros are the same sprite recolored.',
       );
-      htmlContent = globalUtils.replaceAll(
-        htmlContent,
-        '[address]',
-        '401 California Dr, Burlingame, CA 94010',
-      );
+      htmlContent = replaceAll(htmlContent, '[address]', '401 California Dr, Burlingame, CA 94010');
 
       let res = await global.emailer.trySendEmail(
         to,
@@ -171,4 +155,4 @@ class emailer {
   }
 }
 
-module.exports = emailer;
+export default emailer;

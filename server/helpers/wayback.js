@@ -1,4 +1,4 @@
-const { logText } = require('./logger');
+import { logText } from './logger';
 
 const wayback = {
   convertTimestampToCustomFormat: (timestamp) => {
@@ -53,4 +53,4 @@ const wayback = {
   },
 };
 
-module.exports = wayback;
+export default wayback;

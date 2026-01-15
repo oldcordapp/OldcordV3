@@ -1,13 +1,13 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const { rateLimitMiddleware, guildPermissionsMiddleware } = require('../helpers/middlewares');
-const globalUtils = require('../helpers/globalutils');
-const quickcache = require('../helpers/quickcache');
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import { rateLimitMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares';
+import globalUtils from '../helpers/globalutils';
+import quickcache from '../helpers/quickcache';
+import Watchdog from '../helpers/watchdog';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
-const router = express.Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 
 router.param('roleid', async (req, res, next, roleid) => {
   req.role = req.guild.roles.find((x) => x.id === roleid);
@@ -283,4 +283,4 @@ router.post(
   },
 );
 
-module.exports = router;
+export default router;

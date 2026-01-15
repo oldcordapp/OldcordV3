@@ -1,11 +1,11 @@
-const express = require('express');
-const globalUtils = require('../helpers/globalutils');
+import { Router } from 'express';
+import { getRegions } from '../helpers/globalutils';
 
-const router = express.Router({ mergeParams: true });
-const quickcache = require('../helpers/quickcache');
+const router = Router({ mergeParams: true });
+import { cacheFor } from '../helpers/quickcache';
 
-router.get('/regions', quickcache.cacheFor(60 * 60 * 5, true), async (_, res) => {
-  return res.status(200).json(globalUtils.getRegions());
+router.get('/regions', cacheFor(60 * 60 * 5, true), async (_, res) => {
+  return res.status(200).json(getRegions());
 });
 
-module.exports = router;
+export default router;

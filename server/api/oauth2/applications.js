@@ -1,7 +1,7 @@
-const express = require('express');
-const { logText } = require('../../helpers/logger');
-const router = express.Router({ mergeParams: true });
-const errors = require('../../helpers/errors');
+import { Router } from 'express';
+import { logText } from '../../helpers/logger';
+const router = Router({ mergeParams: true });
+import errors from '../../helpers/errors';
 
 router.param('applicationid', async (req, res, next, applicationid) => {
   req.application = await global.database.getApplicationById(applicationid);
@@ -266,4 +266,4 @@ router.post('/:applicationid/delete', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

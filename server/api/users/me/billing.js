@@ -1,6 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const Snowflake = require('../../../helpers/snowflake');
+import { Router } from 'express';
+const router = Router();
+import Snowflake from '../../../helpers/snowflake';
 
 router.param('guildid', async (req, _, next, guildid) => {
   req.guild = await global.database.getGuildById(guildid);
@@ -40,4 +40,4 @@ router.get('/payment-sources', (req, res) => {
   ]);
 });
 
-module.exports = router;
+export default router;

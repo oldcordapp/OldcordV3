@@ -1,12 +1,11 @@
-const express = require('express');
-const globalUtils = require('../../helpers/globalutils');
-const config = globalUtils.config;
-const router = express.Router();
+import { Router } from 'express';
+import { config, generateGatewayURL } from '../../helpers/globalutils';
+const router = Router();
 
 router.get('/instance/domains', (req, res) => {
   res.json({
     cdn: `${config.secure ? 'https://' : 'http://'}${global.full_url}`, //for user uploaded attachments
-    gateway: globalUtils.generateGatewayURL(req),
+    gateway: generateGatewayURL(req),
     defaultApiVersion: '6',
     apiEndpoint: `${config.secure ? 'https://' : 'http://'}${global.full_url}/api`,
   });
@@ -35,4 +34,4 @@ router.get('/instance/config', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

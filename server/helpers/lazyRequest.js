@@ -1,6 +1,6 @@
-const globalUtils = require('./globalutils');
-const dispatcher = require('./dispatcher');
-const murmur = require('murmurhash-js');
+import globalUtils from './globalutils';
+import dispatcher from './dispatcher';
+import { murmur3 } from 'murmurhash-js';
 
 const lazyRequest = {
   getSortedList: (guild) => {
@@ -22,7 +22,7 @@ const lazyRequest = {
 
       session.subscriptions[guild.id] = {};
 
-      return murmur.murmur3('', 0).toString();
+      return murmur3('', 0).toString();
     }
 
     let READ_MESSAGES = global.permissions.toObject().READ_MESSAGES;
@@ -53,10 +53,10 @@ const lazyRequest = {
     });
 
     if (perms.length === 0) {
-      return murmur.murmur3('', 0).toString();
+      return murmur3('', 0).toString();
     }
 
-    return murmur.murmur3(perms.sort().join(','), 0).toString();
+    return murmur3(perms.sort().join(','), 0).toString();
   },
   computeMemberList: (guild, channel, ranges, bypassPerms = false) => {
     function arrayPartition(array, callback) {
@@ -512,4 +512,4 @@ const lazyRequest = {
   },
 };
 
-module.exports = lazyRequest;
+export default lazyRequest;

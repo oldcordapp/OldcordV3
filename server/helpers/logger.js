@@ -57,6 +57,4 @@ const logText = (text, type) => {
   console.error(`[OLDCORDV3] ERROR @ ${functionname} -> ${message}`);
 };
 
-module.exports = {
-  logText,
-};
+export { logText };

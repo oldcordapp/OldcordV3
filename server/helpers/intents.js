@@ -100,4 +100,4 @@ for (const [bit, value] of Object.entries(Intents.Data)) {
   }
 }
 
-module.exports = Intents;
+export default Intents;

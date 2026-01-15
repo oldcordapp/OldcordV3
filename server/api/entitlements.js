@@ -1,9 +1,9 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const Snowflake = require('../helpers/snowflake');
-const router = express.Router({ mergeParams: true });
-const quickcache = require('../helpers/quickcache');
-const errors = require('../helpers/errors');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import { generate } from '../helpers/snowflake';
+const router = Router({ mergeParams: true });
+import { cacheFor } from '../helpers/quickcache';
+import { response_500 } from '../helpers/errors';
 
 router.param('code', async (req, _, next, code) => {
   let id = '1279311572212178955';
@@ -74,28 +74,28 @@ router.param('code', async (req, _, next, code) => {
       },
       tagline: 'Jason Citron Simulator 2024',
       box_art: {
-        id: Snowflake.generate(),
+        id: generate(),
         size: 95039,
         mime_type: 'image/png',
         width: 600,
         height: 800,
       },
       thumbnail: {
-        id: Snowflake.generate(),
+        id: generate(),
         size: 297008,
         mime_type: 'image/png',
         width: 1280,
         height: 720,
       },
       preview_video: {
-        id: Snowflake.generate(),
+        id: generate(),
         size: 1311923,
         mime_type: 'video/mp4',
         width: 640,
         height: 360,
       },
       hero_video: {
-        id: Snowflake.generate(),
+        id: generate(),
         size: 1311923,
         mime_type: 'video/mp4',
         width: 640,
@@ -108,14 +108,14 @@ router.param('code', async (req, _, next, code) => {
   next();
 });
 
-router.get('/gift-codes/:code', quickcache.cacheFor(60 * 10), async (req, res) => {
+router.get('/gift-codes/:code', cacheFor(60 * 10), async (req, res) => {
   try {
     return res.status(200).json(req.gift);
   } catch (error) {
     logText(error, 'error');
 
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
-module.exports = router;
+export default router;

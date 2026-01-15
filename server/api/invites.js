@@ -1,13 +1,13 @@
-const express = require('express');
-const globalUtils = require('../helpers/globalutils');
-const { logText } = require('../helpers/logger');
-const { instanceMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
-const quickcache = require('../helpers/quickcache');
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
-const lazyRequest = require('../helpers/lazyRequest');
-const dispatcher = require('../helpers/dispatcher');
-const router = express.Router({ mergeParams: true });
+import { Router } from 'express';
+import globalUtils from '../helpers/globalutils';
+import { logText } from '../helpers/logger';
+import { instanceMiddleware, rateLimitMiddleware } from '../helpers/middlewares';
+import quickcache from '../helpers/quickcache';
+import Watchdog from '../helpers/watchdog';
+import errors from '../helpers/errors';
+import lazyRequest from '../helpers/lazyRequest';
+import dispatcher from '../helpers/dispatcher';
+const router = Router({ mergeParams: true });
 
 router.param('code', async (req, res, next, memberid) => {
   req.invite = await global.database.getInvite(req.params.code);
@@ -211,4 +211,4 @@ router.post(
   },
 );
 
-module.exports = router;
+export default router;

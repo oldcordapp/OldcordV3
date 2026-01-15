@@ -1,12 +1,12 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const { staffAccessMiddleware } = require('../helpers/middlewares');
-const router = express.Router({ mergeParams: true });
-const globalUtils = require('../helpers/globalutils');
-const dispatcher = require('../helpers/dispatcher');
-const fs = require('node:fs');
-const path = require('node:path');
-const errors = require('../helpers/errors');
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import { staffAccessMiddleware } from '../helpers/middlewares';
+const router = Router({ mergeParams: true });
+import globalUtils from '../helpers/globalutils';
+import dispatcher from '../helpers/dispatcher';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import errors from '../helpers/errors';
 //PRIVILEGE: 1 - (JANITOR) [Can only flag things for review], 2 - (MODERATOR) [Can only delete messages, mute users, and flag things for review], 3 - (ADMIN) [Free reign, can review flags, disable users, delete servers, etc], 4 - (INSTANCE OWNER) - [Can add new admins, manage staff, etc]
 
 router.param('userid', async (req, res, next, userid) => {
@@ -640,7 +640,7 @@ router.post('/users/:userid/moderate/delete', staffAccessMiddleware(3), async (r
 
 router.get('/settings', staffAccessMiddleware(4), async (req, res) => {
   try {
-    const configFile = fs.readFileSync(path.join(process.cwd(), 'config.json'), {
+    const configFile = readFileSync(join(process.cwd(), 'config.json'), {
       encoding: 'utf-8',
     });
 
@@ -658,9 +658,9 @@ router.post('/settings', staffAccessMiddleware(4), async (req, res) => {
   try {
     const settingsToChange = req.body;
 
-    const configFile = path.join(process.cwd(), 'config.json');
+    const configFile = join(process.cwd(), 'config.json');
 
-    let configJson = JSON.parse(fs.readFileSync(configFile, { encoding: 'utf-8' }));
+    let configJson = JSON.parse(readFileSync(configFile, { encoding: 'utf-8' }));
 
     for (const key in settingsToChange) {
       if (settingsToChange.hasOwnProperty(key)) {
@@ -668,7 +668,7 @@ router.post('/settings', staffAccessMiddleware(4), async (req, res) => {
       }
     }
 
-    fs.writeFileSync(configFile, JSON.stringify(configJson, null, 2), {
+    writeFileSync(configFile, JSON.stringify(configJson, null, 2), {
       encoding: 'utf-8',
       flag: 'w',
     });
@@ -681,4 +681,4 @@ router.post('/settings', staffAccessMiddleware(4), async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

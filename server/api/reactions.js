@@ -1,13 +1,13 @@
-const express = require('express');
-const globalUtils = require('../helpers/globalutils');
-const { logText } = require('../helpers/logger');
-const { channelPermissionsMiddleware, rateLimitMiddleware } = require('../helpers/middlewares');
-const quickcache = require('../helpers/quickcache');
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+import { Router } from 'express';
+import globalUtils from '../helpers/globalutils';
+import { logText } from '../helpers/logger';
+import { channelPermissionsMiddleware, rateLimitMiddleware } from '../helpers/middlewares';
+import quickcache from '../helpers/quickcache';
+import Watchdog from '../helpers/watchdog';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
-const router = express.Router({ mergeParams: false });
+const router = Router({ mergeParams: false });
 
 router.param('userid', async (req, res, next, userid) => {
   req.user = await global.database.getAccountByUserId(userid);
@@ -377,4 +377,4 @@ router.get('/:urlencoded', quickcache.cacheFor(60 * 5), async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,19 +1,19 @@
-const crypto = require('crypto');
-const encode = require('./base64url');
-const fs = require('fs');
-const { logText } = require('./logger');
-const dispatcher = require('./dispatcher');
+import { randomBytes, createHmac } from 'crypto';
+import encode from './base64url';
+import { existsSync, readFileSync } from 'fs';
+import { logText } from './logger';
+import dispatcher from './dispatcher';
 
 const configPath = './config.json';
 
-if (!fs.existsSync(configPath)) {
+if (!existsSync(configPath)) {
   console.error(
     'No config.json file exists: Please create one using config.example.json as a template.',
   );
   process.exit(1);
 }
 
-const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+const config = JSON.parse(readFileSync(configPath, 'utf8'));
 
 const globalUtils = {
   config: config,
@@ -24,7 +24,7 @@ const globalUtils = {
       : config.port != 80
     : false,
   generateSsrc() {
-    return crypto.randomBytes(4).readUInt32BE(0);
+    return randomBytes(4).readUInt32BE(0);
   },
   generateGatewayURL: (req) => {
     let host = req.headers['host'];
@@ -42,7 +42,7 @@ const globalUtils = {
     let result = '';
     let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let charactersLength = characters.length;
-    let randomBytes = crypto.randomBytes(length);
+    let randomBytes = randomBytes(length);
 
     for (let i = 0; i < length; i++) {
       result += characters.charAt(randomBytes[i] % charactersLength);
@@ -289,7 +289,7 @@ const globalUtils = {
     const encodedTimeStamp = encode(timeStampBuffer);
     const encodedUserId = encode(user_id);
     const partOne = `${encodedUserId}.${encodedTimeStamp}`;
-    const encryptedAuth = crypto.createHmac('sha3-224', key).update(partOne).digest();
+    const encryptedAuth = createHmac('sha3-224', key).update(partOne).digest();
     const encodedEncryptedAuth = encode(encryptedAuth);
     const partTwo = `${partOne}.${encodedEncryptedAuth}`;
 
@@ -843,4 +843,4 @@ const globalUtils = {
   },
 };
 
-module.exports = globalUtils;
+export default globalUtils;

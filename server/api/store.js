@@ -1,9 +1,9 @@
-const express = require('express');
-const globalUtils = require('../helpers/globalutils');
-const { rateLimitMiddleware, guildMiddleware } = require('../helpers/middlewares');
-const { logText } = require('../helpers/logger');
-const router = express.Router();
-const Snowflake = require('../helpers/snowflake');
+import { Router } from 'express';
+import globalUtils from '../helpers/globalutils';
+import { rateLimitMiddleware, guildMiddleware } from '../helpers/middlewares';
+import { logText } from '../helpers/logger';
+const router = Router();
+import { generate } from '../helpers/snowflake';
 
 router.param('id', async (req, _, next, id) => {
   //Currently unknown
@@ -12,8 +12,8 @@ router.param('id', async (req, _, next, id) => {
 
 router.get('/directory/:id', (req, res) => {
   let id = req.params.id;
-  let SKU_ID = Snowflake.generate();
-  let APP_ID = Snowflake.generate();
+  let SKU_ID = generate();
+  let APP_ID = generate();
 
   return res.status(200).json({
     id: id,
@@ -65,7 +65,7 @@ router.get('/published-listings/skus/:skuId', async (req, res) => {
     description:
       'In this game work your way to the top of your own games company! Release a mobile chat application then sell your data to tencent! Sell the platform and then months later have them be fined for privacy violations! Afterwards, start a quirky company for gamers and take the world by storm! Rolling out promising features and stability at first just to have it all unravel into a corporate shell with microtransactions and bloatware. Do you have what it takes to become the CEO of Discord?',
     thumbnail: {
-      id: Snowflake.generate(),
+      id: generate(),
       size: 297008,
       mime_type: 'image/png',
       width: 1280,
@@ -143,21 +143,21 @@ router.get('/published-listings/skus/:skuId', async (req, res) => {
     },
     tagline: 'Jason Citron Simulator 2024',
     box_art: {
-      id: Snowflake.generate(),
+      id: generate(),
       size: 95039,
       mime_type: 'image/png',
       width: 600,
       height: 800,
     },
     preview_video: {
-      id: Snowflake.generate(),
+      id: generate(),
       size: 1311923,
       mime_type: 'video/mp4',
       width: 640,
       height: 360,
     },
     hero_video: {
-      id: Snowflake.generate(),
+      id: generate(),
       size: 1311923,
       mime_type: 'video/mp4',
       width: 640,
@@ -166,4 +166,4 @@ router.get('/published-listings/skus/:skuId', async (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

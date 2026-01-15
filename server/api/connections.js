@@ -1,10 +1,10 @@
-const express = require('express');
-const globalUtils = require('../helpers/globalutils');
-const Twitch = require('../helpers/integrations/twitch');
-const errors = require('../helpers/errors');
-const dispatcher = require('../helpers/dispatcher');
+import { Router } from 'express';
+import globalUtils from '../helpers/globalutils';
+import Twitch from '../helpers/integrations/twitch';
+import errors from '../helpers/errors';
+import dispatcher from '../helpers/dispatcher';
 
-const router = express.Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 const integrationConfig = globalUtils.config.integration_config;
 
 let pendingCallback = [];
@@ -120,4 +120,4 @@ router.get('/:platform/callback', async (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

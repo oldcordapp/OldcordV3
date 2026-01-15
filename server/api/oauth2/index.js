@@ -1,13 +1,13 @@
-const express = require('express');
-const { logText } = require('../../helpers/logger');
-const applications = require('./applications');
-const tokens = require('./tokens');
-const globalUtils = require('../../helpers/globalutils');
-const errors = require('../../helpers/errors');
-const lazyRequest = require('../../helpers/lazyRequest');
-const dispatcher = require('../../helpers/dispatcher');
+import { Router } from 'express';
+import { logText } from '../../helpers/logger';
+import applications from './applications';
+import tokens from './tokens';
+import globalUtils from '../../helpers/globalutils';
+import errors from '../../helpers/errors';
+import lazyRequest from '../../helpers/lazyRequest';
+import dispatcher from '../../helpers/dispatcher';
 
-const router = express.Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 
 router.use('/applications', applications);
 router.use('/tokens', tokens);
@@ -266,4 +266,4 @@ router.post('/authorize', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

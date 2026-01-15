@@ -1,14 +1,14 @@
-const express = require('express');
-const { logText } = require('../../helpers/logger');
-const me = require('./me/index');
-const globalUtils = require('../../helpers/globalutils');
-const { rateLimitMiddleware, userMiddleware } = require('../../helpers/middlewares');
-const quickcache = require('../../helpers/quickcache');
-const Watchdog = require('../../helpers/watchdog');
-const errors = require('../../helpers/errors');
-const dispatcher = require('../../helpers/dispatcher');
+import { Router } from 'express';
+import { logText } from '../../helpers/logger';
+import me from './me/index';
+import globalUtils from '../../helpers/globalutils';
+import { rateLimitMiddleware, userMiddleware } from '../../helpers/middlewares';
+import quickcache from '../../helpers/quickcache';
+import Watchdog from '../../helpers/watchdog';
+import errors from '../../helpers/errors';
+import dispatcher from '../../helpers/dispatcher';
 
-const router = express.Router();
+const router = Router();
 
 router.param('userid', async (req, res, next, userid) => {
   if (userid === '@me') {
@@ -264,4 +264,4 @@ router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req, re
   }
 });
 
-module.exports = router;
+export default router;

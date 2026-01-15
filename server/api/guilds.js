@@ -1,23 +1,23 @@
-const express = require('express');
-const globalUtils = require('../helpers/globalutils');
-const { logText } = require('../helpers/logger');
-const roles = require('./roles');
-const members = require('./members');
-const bans = require('./bans');
-const emojis = require('./emojis');
-const quickcache = require('../helpers/quickcache');
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
-const {
+import { Router } from 'express';
+import globalUtils from '../helpers/globalutils';
+import { logText } from '../helpers/logger';
+import roles from './roles';
+import members from './members';
+import bans from './bans';
+import emojis from './emojis';
+import quickcache from '../helpers/quickcache';
+import Watchdog from '../helpers/watchdog';
+import errors from '../helpers/errors';
+import {
   instanceMiddleware,
   rateLimitMiddleware,
   guildMiddleware,
   guildPermissionsMiddleware,
-} = require('../helpers/middlewares');
-const lazyRequest = require('../helpers/lazyRequest');
-const dispatcher = require('../helpers/dispatcher');
+} from '../helpers/middlewares';
+import lazyRequest from '../helpers/lazyRequest';
+import dispatcher from '../helpers/dispatcher';
 
-const router = express.Router();
+const router = Router();
 
 router.param('guildid', async (req, _, next, guildid) => {
   req.guild = await global.database.getGuildById(guildid);
@@ -1018,4 +1018,4 @@ router.get('/:guildid/application-command-index', guildMiddleware, async (req, r
   });
 });
 
-module.exports = router;
+export default router;

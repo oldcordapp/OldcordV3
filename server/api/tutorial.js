@@ -1,7 +1,7 @@
-const express = require('express');
-const { logText } = require('../helpers/logger');
-const errors = require('../helpers/errors');
-const router = express.Router();
+import { Router } from 'express';
+import { logText } from '../helpers/logger';
+import { response_500 } from '../helpers/errors';
+const router = Router();
 
 router.get('/', async (req, res) => {
   try {
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
   } catch (error) {
     logText(error, 'error');
 
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -47,7 +47,7 @@ router.post('/indicators/suppress', async (req, res) => {
   } catch (error) {
     logText(error, 'error');
 
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -71,8 +71,8 @@ router.put('/indicators/:indicator', async (req, res) => {
   } catch (error) {
     logText(error, 'error');
 
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
 });
 
-module.exports = router;
+export default router;

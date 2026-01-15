@@ -1,7 +1,7 @@
-const globalUtils = require('../helpers/globalutils');
-const dispatcher = require('../helpers/dispatcher');
-const lazyRequest = require('../helpers/lazyRequest');
-const session = require('../helpers/session');
+import globalUtils from '../helpers/globalutils';
+import dispatcher from '../helpers/dispatcher';
+import lazyRequest from '../helpers/lazyRequest';
+import session from '../helpers/session';
 
 const OPCODES = {
   HEARTBEAT: 1,
@@ -346,7 +346,7 @@ const gatewayHandlers = {
   [OPCODES.RESUME]: handleResume,
 };
 
-module.exports = {
+export default {
   gatewayHandlers,
   OPCODES,
 };

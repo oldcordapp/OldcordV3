@@ -1,10 +1,10 @@
-const express = require('express');
-const { rateLimitMiddleware } = require('../helpers/middlewares');
-const { logText } = require('../helpers/logger');
-const quickcache = require('../helpers/quickcache');
-const router = express.Router({ mergeParams: true });
-const Watchdog = require('../helpers/watchdog');
-const errors = require('../helpers/errors');
+import { Router } from 'express';
+import { rateLimitMiddleware } from '../helpers/middlewares';
+import { logText } from '../helpers/logger';
+import { cacheFor } from '../helpers/quickcache';
+const router = Router({ mergeParams: true });
+import { middleware } from '../helpers/watchdog';
+import { response_500 } from '../helpers/errors';
 
 router.get(
   '/tenor/search',
@@ -12,12 +12,12 @@ router.get(
     global.config.ratelimit_config.tenorSearch.maxPerTimeFrame,
     global.config.ratelimit_config.tenorSearch.timeFrame,
   ),
-  Watchdog.middleware(
+  middleware(
     global.config.ratelimit_config.tenorSearch.maxPerTimeFrame,
     global.config.ratelimit_config.tenorSearch.timeFrame,
     0.1,
   ),
-  quickcache.cacheFor(60 * 30, true),
+  cacheFor(60 * 30, true),
   async (req, res) => {
     try {
       const query = req.query.q;
@@ -60,9 +60,9 @@ router.get(
     } catch (err) {
       logText(err, 'error');
 
-      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
     }
   },
 );
 
-module.exports = router;
+export default router;

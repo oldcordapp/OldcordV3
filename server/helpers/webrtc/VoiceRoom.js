@@ -81,4 +81,4 @@ class VoiceRoom {
   }
 }
 
-module.exports = { VoiceRoom };
+export default { VoiceRoom };

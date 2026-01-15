@@ -639,4 +639,4 @@ const errors = {
   },
 };
 
-module.exports = errors;
+export default errors;
