@@ -18,6 +18,7 @@
       "@types/*": ["./types/*"]
     },
 
+    // TODO: remove those whenever we migrate to TypeScript fully
     "noImplicitAny": false
   },
   "include": ["./**/*.ts", "./**/*.js"],
