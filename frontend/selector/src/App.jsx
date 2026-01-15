@@ -152,7 +152,11 @@ function Container() {
 
   useEffect(() => {
     if (triggeredRedirect) {
-      window.location.href = `${window.location.protocol}//${window.location.host}`;
+      const timer = setTimeout(() => {
+        window.location.href = `${window.location.protocol}//${window.location.host}`;
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
   }, [triggeredRedirect]);
 
