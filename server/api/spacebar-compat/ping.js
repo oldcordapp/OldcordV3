@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { config } from '../../helpers/globalutils';
+
+import { config } from '../../helpers/globalutils.js';
 const router = Router();
 
 router.get('/', (req, res) => {

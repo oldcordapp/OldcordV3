@@ -2,9 +2,10 @@ process.env.DEBUG = 'mediasoup*';
 
 import { createWorker } from 'mediasoup';
 import { SDPInfo } from 'semantic-sdp';
-import { VoiceRoom } from './VoiceRoom';
-import { MediasoupWebRtcClient } from './MediasoupWebRtcClient';
-import { logText } from '../logger';
+
+import { logText } from '../logger.js';
+import { MediasoupWebRtcClient } from './MediasoupWebRtcClient.js';
+import { VoiceRoom } from './VoiceRoom.js';
 
 class MediasoupSignalingDelegate {
   constructor() {

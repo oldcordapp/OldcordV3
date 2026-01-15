@@ -1,15 +1,16 @@
 import { Router } from 'express';
-import globalUtils from '../../../helpers/globalutils';
-import { rateLimitMiddleware, guildMiddleware } from '../../../helpers/middlewares';
-import { logText } from '../../../helpers/logger';
+
+import globalUtils from '../../../helpers/globalutils.js';
+import { logText } from '../../../helpers/logger.js';
+import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares.js';
 const router = Router();
-import relationships from '../relationships';
-import quickcache from '../../../helpers/quickcache';
-import Watchdog from '../../../helpers/watchdog';
-import connections from './connections';
-import guilds from './guilds';
-import billing from './billing';
-import errors from '../../../helpers/errors';
+import errors from '../../../helpers/errors.js';
+import quickcache from '../../../helpers/quickcache.js';
+import Watchdog from '../../../helpers/watchdog.js';
+import relationships from '../relationships.js';
+import billing from './billing.js';
+import connections from './connections.js';
+import guilds from './guilds.js';
 
 router.use('/relationships', relationships);
 

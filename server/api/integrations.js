@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { rateLimitMiddleware } from '../helpers/middlewares';
-import { logText } from '../helpers/logger';
-import { cacheFor } from '../helpers/quickcache';
+
+import { logText } from '../helpers/logger.js';
+import { rateLimitMiddleware } from '../helpers/middlewares.js';
+import { cacheFor } from '../helpers/quickcache.js';
 const router = Router({ mergeParams: true });
-import { middleware } from '../helpers/watchdog';
-import { response_500 } from '../helpers/errors';
+import { response_500 } from '../helpers/errors.js';
+import { middleware } from '../helpers/watchdog.js';
 
 router.get(
   '/tenor/search',

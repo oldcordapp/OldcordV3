@@ -81,4 +81,4 @@ class VoiceRoom {
   }
 }
 
-export default { VoiceRoom };
+export { VoiceRoom };

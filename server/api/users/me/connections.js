@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import globalUtils from '../../../helpers/globalutils';
-import { logText } from '../../../helpers/logger';
-import quickcache from '../../../helpers/quickcache';
-import errors from '../../../helpers/errors';
-import dispatcher from '../../../helpers/dispatcher';
+
+import dispatcher from '../../../helpers/dispatcher.js';
+import errors from '../../../helpers/errors.js';
+import globalUtils from '../../../helpers/globalutils.js';
+import { logText } from '../../../helpers/logger.js';
+import quickcache from '../../../helpers/quickcache.js';
 
 const router = Router();
 

@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { logText } from '../helpers/logger';
-import { generate } from '../helpers/snowflake';
+
+import { logText } from '../helpers/logger.js';
+import { generate } from '../helpers/snowflake.js';
 const router = Router({ mergeParams: true });
-import { cacheFor } from '../helpers/quickcache';
-import { response_500 } from '../helpers/errors';
+import { response_500 } from '../helpers/errors.js';
+import { cacheFor } from '../helpers/quickcache.js';
 
 router.param('code', async (req, _, next, code) => {
   let id = '1279311572212178955';

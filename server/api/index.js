@@ -1,26 +1,27 @@
 import express from 'express';
-import { authMiddleware, instanceMiddleware } from '../helpers/middlewares';
+
+import { authMiddleware, instanceMiddleware } from '../helpers/middlewares.js';
 const app = express();
-import { config, generateGatewayURL } from '../helpers/globalutils';
-import auth from './auth';
-import tutorial from './tutorial';
-import users from './users/index';
-import voice from './voice';
-import guilds from './guilds';
-import invites from './invites';
-import channels from './channels';
-import connections from './connections';
-import admin from './admin';
-import gifs from './gifs';
-import webhooks from './webhooks';
-import store from './store';
-import oauth2 from './oauth2/index';
-import entitlements from './entitlements';
-import activities from './activities';
-import integrations from './integrations';
-import reports from './reports';
-import spacebarPing from './spacebar-compat/ping';
-import spacebarPolicies from './spacebar-compat/policies';
+import { config, generateGatewayURL } from '../helpers/globalutils.js';
+import activities from './activities.js';
+import admin from './admin.js';
+import auth from './auth.js';
+import channels from './channels.js';
+import connections from './connections.js';
+import entitlements from './entitlements.js';
+import gifs from './gifs.js';
+import guilds from './guilds.js';
+import integrations from './integrations.js';
+import invites from './invites.js';
+import oauth2 from './oauth2/index.js';
+import reports from './reports.js';
+import spacebarPing from './spacebar-compat/ping.js';
+import spacebarPolicies from './spacebar-compat/policies.js';
+import store from './store.js';
+import tutorial from './tutorial.js';
+import users from './users/index.js';
+import voice from './voice.js';
+import webhooks from './webhooks.js';
 
 global.config = config;
 //just in case

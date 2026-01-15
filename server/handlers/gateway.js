@@ -1,7 +1,7 @@
-import globalUtils from '../helpers/globalutils';
-import dispatcher from '../helpers/dispatcher';
-import lazyRequest from '../helpers/lazyRequest';
-import session from '../helpers/session';
+import dispatcher from '../helpers/dispatcher.js';
+import globalUtils from '../helpers/globalutils.js';
+import lazyRequest from '../helpers/lazyRequest.js';
+import session from '../helpers/session.js';
 
 const OPCODES = {
   HEARTBEAT: 1,
@@ -346,7 +346,4 @@ const gatewayHandlers = {
   [OPCODES.RESUME]: handleResume,
 };
 
-export default {
-  gatewayHandlers,
-  OPCODES,
-};
+export { gatewayHandlers, OPCODES };

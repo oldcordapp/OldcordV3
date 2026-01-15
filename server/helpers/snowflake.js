@@ -1,12 +1,12 @@
-import { worker } from 'cluster';
 import { Snowflake as SapphireSnowflake } from '@sapphire/snowflake';
+import cluster from 'cluster';
 
 const EPOCH = 1420070400000n;
 const snowflakeInstance = new SapphireSnowflake(EPOCH);
 
 class Snowflake {
   static processId = BigInt(process.pid % 31);
-  static workerId = BigInt((worker?.id || 0) % 31);
+  static workerId = BigInt((cluster.worker?.id || 0) % 31);
 
   constructor() {
     throw new Error(`The ${this.constructor.name} class may not be instantiated.`);
@@ -67,5 +67,9 @@ class Snowflake {
     }
   }
 }
+
+export const generate = Snowflake.generate;
+export const deconstruct = Snowflake.deconstruct;
+export const isValid = Snowflake.isValid;
 
 export default Snowflake;

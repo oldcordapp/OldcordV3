@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { logText } from '../helpers/logger';
-import { channelMiddleware } from '../helpers/middlewares';
-import quickcache from '../helpers/quickcache';
-import errors from '../helpers/errors';
-import dispatcher from '../helpers/dispatcher';
+
+import dispatcher from '../helpers/dispatcher.js';
+import errors from '../helpers/errors.js';
+import { logText } from '../helpers/logger.js';
+import { channelMiddleware } from '../helpers/middlewares.js';
+import quickcache from '../helpers/quickcache.js';
 
 const router = Router({ mergeParams: true });
 

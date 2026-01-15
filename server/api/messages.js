@@ -1,22 +1,24 @@
-import { Router, json } from 'express';
-import globalUtils from '../helpers/globalutils';
-import { logText } from '../helpers/logger';
+import { json, Router } from 'express';
+import ffmpeg from 'fluent-ffmpeg';
+const { ffprobe } = ffmpeg;
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { Jimp } from 'jimp';
+import multer from 'multer';
+import { extname, join } from 'path';
+
+import dispatcher from '../helpers/dispatcher.js';
+import errors from '../helpers/errors.js';
+import globalUtils from '../helpers/globalutils.js';
+import { logText } from '../helpers/logger.js';
 import {
   channelPermissionsMiddleware,
-  rateLimitMiddleware,
   instanceMiddleware,
-} from '../helpers/middlewares';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import multer from 'multer';
-import { Jimp } from 'jimp';
-import Snowflake from '../helpers/snowflake';
-import reactions from './reactions';
-import { join, extname } from 'path';
-import quickcache from '../helpers/quickcache';
-import Watchdog from '../helpers/watchdog';
-import ffmpeg, { ffprobe } from 'fluent-ffmpeg';
-import errors from '../helpers/errors';
-import dispatcher from '../helpers/dispatcher';
+  rateLimitMiddleware,
+} from '../helpers/middlewares.js';
+import quickcache from '../helpers/quickcache.js';
+import Snowflake from '../helpers/snowflake.js';
+import Watchdog from '../helpers/watchdog.js';
+import reactions from './reactions.js';
 
 const upload = multer();
 const router = Router({ mergeParams: true });

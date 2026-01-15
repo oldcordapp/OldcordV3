@@ -1,7 +1,8 @@
 import { createHash } from 'crypto';
-import { logText } from './logger';
-import globalUtils from './globalutils';
-import errors from './errors';
+
+import errors from './errors.js';
+import globalUtils from './globalutils.js';
+import { logText } from './logger.js';
 
 const Watchdog = {
   numHeadersThreshold: 10,
@@ -257,5 +258,17 @@ const Watchdog = {
     Watchdog.susScoreDecayStore.set(fingerprint, decayTimer);
   },
 };
+
+export const {
+  numHeadersThreshold,
+  susScoreDecayTime,
+  susScoreDecayStore,
+  rateLimitStore,
+  normalizeHeader,
+  getFingerprint,
+  getRandomRange,
+  middleware,
+  setSusScoreDecay
+} = Watchdog;
 
 export default Watchdog;

@@ -1,5 +1,5 @@
-import globalUtils from '../globalutils';
-import { logText } from '../logger';
+import globalUtils from '../globalutils.js';
+import { logText } from '../logger.js';
 const twitchConfig = globalUtils.config.integration_config.find((x) => x.platform == 'twitch');
 
 class Twitch {

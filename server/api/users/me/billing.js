@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import Snowflake from '../../../helpers/snowflake';
+import Snowflake from '../../../helpers/snowflake.js';
 
 router.param('guildid', async (req, _, next, guildid) => {
   req.guild = await global.database.getGuildById(guildid);

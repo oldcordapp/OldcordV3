@@ -332,4 +332,4 @@ class MediasoupWebRtcClient {
   }
 }
 
-export default { MediasoupWebRtcClient };
+export { MediasoupWebRtcClient };

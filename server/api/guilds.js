@@ -1,21 +1,22 @@
 import { Router } from 'express';
-import globalUtils from '../helpers/globalutils';
-import { logText } from '../helpers/logger';
-import roles from './roles';
-import members from './members';
-import bans from './bans';
-import emojis from './emojis';
-import quickcache from '../helpers/quickcache';
-import Watchdog from '../helpers/watchdog';
-import errors from '../helpers/errors';
+
+import dispatcher from '../helpers/dispatcher.js';
+import errors from '../helpers/errors.js';
+import globalUtils from '../helpers/globalutils.js';
+import lazyRequest from '../helpers/lazyRequest.js';
+import { logText } from '../helpers/logger.js';
 import {
-  instanceMiddleware,
-  rateLimitMiddleware,
   guildMiddleware,
   guildPermissionsMiddleware,
-} from '../helpers/middlewares';
-import lazyRequest from '../helpers/lazyRequest';
-import dispatcher from '../helpers/dispatcher';
+  instanceMiddleware,
+  rateLimitMiddleware,
+} from '../helpers/middlewares.js';
+import quickcache from '../helpers/quickcache.js';
+import Watchdog from '../helpers/watchdog.js';
+import bans from './bans.js';
+import emojis from './emojis.js';
+import members from './members.js';
+import roles from './roles.js';
 
 const router = Router();
 

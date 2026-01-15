@@ -1,14 +1,21 @@
-import globalUtils from './globalutils';
-import Intents from './intents';
-import lazyRequest from './lazyRequest';
-import dispatcher from './dispatcher';
-import { logText } from './logger';
-import { deflateSync, constants } from 'zlib';
+import { constants, deflateSync } from 'zlib';
+
+import dispatcher from './dispatcher.js';
+import globalUtils from './globalutils.js';
+import Intents from './intents.js';
+import lazyRequest from './lazyRequest.js';
+import { logText } from './logger.js';
 
 let erlpack = null;
 
 if (globalUtils.config.gateway_erlpack) {
-  erlpack = require('@spacebarchat/erlpack');
+  try {
+    const erlpackModule = await import('@spacebarchat/erlpack');
+    erlpack = erlpackModule.default || erlpackModule;
+  } catch (e) {
+    logText('erlpack is enabled in config but the package is not installed.', 'warning');
+    erlpack = null;
+  }
 }
 
 //Adapted from Hummus' handling of sessions & whatnot

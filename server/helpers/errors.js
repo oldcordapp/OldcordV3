@@ -639,4 +639,15 @@ const errors = {
   },
 };
 
+export const {
+  response_400,
+  response_401,
+  response_403,
+  response_404,
+  response_405,
+  response_500,
+  response_502,
+  response_429,
+} = errors;
+
 export default errors;

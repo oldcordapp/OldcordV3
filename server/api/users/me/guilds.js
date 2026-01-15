@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import globalUtils from '../../../helpers/globalutils';
-import { logText } from '../../../helpers/logger';
-import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares';
-import Watchdog from '../../../helpers/watchdog';
-import errors from '../../../helpers/errors';
-import lazyRequest from '../../../helpers/lazyRequest';
-import dispatcher from '../../../helpers/dispatcher';
+
+import dispatcher from '../../../helpers/dispatcher.js';
+import errors from '../../../helpers/errors.js';
+import globalUtils from '../../../helpers/globalutils.js';
+import lazyRequest from '../../../helpers/lazyRequest.js';
+import { logText } from '../../../helpers/logger.js';
+import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares.js';
+import Watchdog from '../../../helpers/watchdog.js';
 
 const router = Router();
 

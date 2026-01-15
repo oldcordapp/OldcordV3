@@ -1,5 +1,5 @@
-import { logText } from './logger';
-import { handleMembersSync } from './lazyRequest';
+import { handleMembersSync } from './lazyRequest.js';
+import { logText } from './logger.js';
 
 const dispatcher = {
   dispatchEventTo: async (user_id, type, payload) => {
@@ -314,5 +314,19 @@ const dispatcher = {
     return true;
   },
 };
+
+export const {
+  dispatchEventTo,
+  dispatchLogoutTo,
+  dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis,
+  dispatchGuildMemberUpdateToAllTheirGuilds,
+  dispatchEventToAllPerms,
+  dispatchEventInGuildToThoseSubscribedTo,
+  getSessionsInGuild,
+  getAllActiveSessions,
+  dispatchEventInGuild,
+  dispatchEventInPrivateChannel,
+  dispatchEventInChannel,
+} = dispatcher;
 
 export default dispatcher;

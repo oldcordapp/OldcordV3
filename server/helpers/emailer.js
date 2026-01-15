@@ -1,6 +1,7 @@
-import { logText } from './logger';
-import { replaceAll } from './globalutils';
 import { readFileSync } from 'fs';
+
+import { replaceAll } from './globalutils.js';
+import { logText } from './logger.js';
 
 //So SES is the best we got, everything else is quick to block ya - so just use amazon.
 

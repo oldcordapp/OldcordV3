@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "rootDir": ".",
-    "lib": ["ESNext", "ESNext.Array", "ESNext.Collection", "ESNext.Iterator", "ESNext.Promise"],
+    "lib": ["ESNext"],
     "module": "nodenext",
     "target": "esnext",
     "strict": true,
@@ -11,14 +11,15 @@
     "rewriteRelativeImportExtensions": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
-
+    "allowJs": true,
+    "checkJs": false,
+    "outDir": "../dist_server",
     "paths": {
       "@types/*": ["./types/*"]
     },
 
-    // TODO: remove those whenever we migrate to TypeScript fully
     "noImplicitAny": false
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["./**/*.ts", "./**/*.js"],
+  "exclude": ["node_modules", "dist"]
 }

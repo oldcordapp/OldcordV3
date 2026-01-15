@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { logText } from '../helpers/logger';
+
+import { logText } from '../helpers/logger.js';
 const router = Router({ mergeParams: true });
-import { rateLimitMiddleware } from '../helpers/middlewares';
-import { middleware } from '../helpers/watchdog';
-import { response_500 } from '../helpers/errors';
+import { response_500 } from '../helpers/errors.js';
+import { rateLimitMiddleware } from '../helpers/middlewares.js';
+import { middleware } from '../helpers/watchdog.js';
 
 router.post(
   '/',

@@ -8,7 +8,7 @@ interface JSONReviverContext {
 type JSONReviver = (this: any, key: string, value: any, context: JSONReviverContext) => any;
 
 interface JSON {
-  parse(text: string, reviver?: JSONReviver): unknown;
+  parse(text: string, reviver?: JSONReviver): any;
 }
 
 interface SyntaxError {

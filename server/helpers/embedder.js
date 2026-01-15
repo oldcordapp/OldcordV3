@@ -1,9 +1,11 @@
-import { getInfo } from '@distube/ytdl-core';
-import { logText } from './logger';
-import globalUtils from './globalutils';
+import ytdl_core from '@distube/ytdl-core';
+const { getInfo } = ytdl_core;
 import { load } from 'cheerio';
-import { Jimp } from 'jimp';
 import path from 'fs';
+import { Jimp } from 'jimp';
+
+import globalUtils from './globalutils.js';
+import { logText } from './logger.js';
 
 const hexToDecimal = (hex) => {
   if (hex.startsWith('#')) {
@@ -366,5 +368,13 @@ const embedder = {
     return ret;
   },
 };
+
+export const {
+  embed_cache,
+  getEmbedInfo,
+  embedAttachedVideo,
+  embedYouTube,
+  generateMsgEmbeds,
+} = embedder;
 
 export default embedder;

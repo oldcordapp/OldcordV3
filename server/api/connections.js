@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import globalUtils from '../helpers/globalutils';
-import Twitch from '../helpers/integrations/twitch';
-import errors from '../helpers/errors';
-import dispatcher from '../helpers/dispatcher';
+
+import dispatcher from '../helpers/dispatcher.js';
+import errors from '../helpers/errors.js';
+import globalUtils from '../helpers/globalutils.js';
+import Twitch from '../helpers/integrations/twitch.js';
 
 const router = Router({ mergeParams: true });
 const integrationConfig = globalUtils.config.integration_config;

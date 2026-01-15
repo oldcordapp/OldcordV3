@@ -77,12 +77,6 @@ export default defineConfig([
   },
   // TODO: Remove the following two after migrating to TS
   {
-    files: ['server/**/*.js'],
-    languageOptions: {
-      sourceType: 'commonjs',
-    },
-  },
-  {
     files: ['**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',

@@ -1,5 +1,5 @@
-import { miniUserObject, generateSsrc, generateString } from '../helpers/globalutils';
-import session from '../helpers/session';
+import { generateSsrc, generateString, miniUserObject } from '../helpers/globalutils.js';
+import session from '../helpers/session.js';
 
 const OPCODES = {
   IDENTIFY: 0,
@@ -642,7 +642,4 @@ const rtcHandlers = {
   [OPCODES.VIDEO]: handleVideo,
 };
 
-export default {
-  rtcHandlers,
-  OPCODES,
-};
+export { OPCODES, rtcHandlers };

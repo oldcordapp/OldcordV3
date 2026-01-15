@@ -1,8 +1,9 @@
-import { randomBytes, createHmac } from 'crypto';
-import encode from './base64url';
+import { createHmac, randomBytes } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
-import { logText } from './logger';
-import dispatcher from './dispatcher';
+
+import encode from './base64url.js';
+import dispatcher from './dispatcher.js';
+import { logText } from './logger.js';
 
 const configPath = './config.json';
 
@@ -13,15 +14,15 @@ if (!existsSync(configPath)) {
   process.exit(1);
 }
 
-const config = JSON.parse(readFileSync(configPath, 'utf8'));
+const _config = JSON.parse(readFileSync(configPath, 'utf8'));
 
 const globalUtils = {
-  config: config,
+  config: _config,
   badEmails: null,
-  nonStandardPort: config.includePortInUrl
-    ? config.secure
-      ? config.port != 443
-      : config.port != 80
+  nonStandardPort: _config.includePortInUrl
+    ? _config.secure
+      ? _config.port != 443
+      : _config.port != 80
     : false,
   generateSsrc() {
     return randomBytes(4).readUInt32BE(0);
@@ -29,23 +30,23 @@ const globalUtils = {
   generateGatewayURL: (req) => {
     let host = req.headers['host'];
     if (host) host = host.split(':', 2)[0];
-    let baseUrl = config.gateway_url == '' ? (host ?? config.base_url) : config.gateway_url;
-    return `${config.secure ? 'wss' : 'ws'}://${baseUrl}${config.includePortInWsUrl && (config.secure ? config.ws_port != 443 : config.ws_port != 80) ? `:${config.ws_port}` : ''}`;
+    let baseUrl = _config.gateway_url == '' ? (host ?? _config.base_url) : _config.gateway_url;
+    return `${_config.secure ? 'wss' : 'ws'}://${baseUrl}${_config.includePortInWsUrl && (_config.secure ? _config.ws_port != 443 : _config.ws_port != 80) ? `:${_config.ws_port}` : ''}`;
   },
   generateRTCServerURL: () => {
-    return config.signaling_server_url == ''
-      ? config.base_url + ':' + config.signaling_server_port
-      : config.signaling_server_url;
+    return _config.signaling_server_url == ''
+      ? _config.base_url + ':' + _config.signaling_server_port
+      : _config.signaling_server_url;
   },
   unavailableGuildsStore: [],
   generateString: (length) => {
     let result = '';
     let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let charactersLength = characters.length;
-    let randomBytes = randomBytes(length);
+    let bytes = randomBytes(length);
 
     for (let i = 0; i < length; i++) {
-      result += characters.charAt(randomBytes[i] % charactersLength);
+      result += characters.charAt(bytes[i] % charactersLength);
     }
 
     return result;
@@ -281,7 +282,7 @@ const globalUtils = {
     //sorry ziad but im stealing this from hummus source, love you
     //oh also this: https://user-images.githubusercontent.com/34555296/120932740-4ca47480-c6f7-11eb-9270-6fb3fbbd856c.png
 
-    const key = `${config.token_secret}--${password_hash}`;
+    const key = `${_config.token_secret}--${password_hash}`;
     const timeStampBuffer = Buffer.allocUnsafe(4);
 
     timeStampBuffer.writeUInt32BE(Math.floor(Date.now() / 1000) - 1293840);
@@ -842,5 +843,46 @@ const globalUtils = {
     return bot;
   },
 };
+
+export const {
+  config,
+  badEmails,
+  nonStandardPort,
+  generateSsrc,
+  generateGatewayURL,
+  generateRTCServerURL,
+  unavailableGuildsStore,
+  generateString,
+  getUserPresence,
+  getGuildPresences,
+  getGuildOnlineUserIds,
+  generateMemorableInviteCode,
+  addClientCapabilities,
+  flagToReason,
+  getRegions,
+  serverRegionToYear,
+  canUseServer,
+  generateToken,
+  replaceAll,
+  SerializeOverwriteToString,
+  SerializeOverwritesToString,
+  sanitizeObject,
+  buildGuildObject,
+  checkUsername,
+  badEmail,
+  validSuperPropertiesObject,
+  prepareAccountObject,
+  areWeFriends,
+  parseMentions,
+  pingPrivateChannel,
+  pingPrivateChannelUser,
+  formatMessage,
+  channelTypeToString,
+  personalizeMessageObject,
+  personalizeChannelObject,
+  usersToIDs,
+  miniUserObject,
+  miniBotObject,
+} = globalUtils;
 
 export default globalUtils;

@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { logText } from '../../helpers/logger';
-import me from './me/index';
-import globalUtils from '../../helpers/globalutils';
-import { rateLimitMiddleware, userMiddleware } from '../../helpers/middlewares';
-import quickcache from '../../helpers/quickcache';
-import Watchdog from '../../helpers/watchdog';
-import errors from '../../helpers/errors';
-import dispatcher from '../../helpers/dispatcher';
+
+import dispatcher from '../../helpers/dispatcher.js';
+import errors from '../../helpers/errors.js';
+import globalUtils from '../../helpers/globalutils.js';
+import { logText } from '../../helpers/logger.js';
+import { rateLimitMiddleware, userMiddleware } from '../../helpers/middlewares.js';
+import quickcache from '../../helpers/quickcache.js';
+import Watchdog from '../../helpers/watchdog.js';
+import me from './me/index.js';
 
 const router = Router();
 

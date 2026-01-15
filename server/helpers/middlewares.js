@@ -1,9 +1,10 @@
 import rateLimit from 'express-rate-limit';
-import { logText } from './logger';
-import globalUtils from './globalutils';
-import { getTimestamps } from './wayback';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import errors from './errors';
+
+import errors from './errors.js';
+import globalUtils from './globalutils.js';
+import { logText } from './logger.js';
+import { getTimestamps } from './wayback.js';
 
 const config = globalUtils.config;
 
@@ -677,17 +678,17 @@ function channelPermissionsMiddleware(permission) {
 }
 
 export {
-  corsMiddleware,
   apiVersionMiddleware,
-  clientMiddleware,
-  authMiddleware,
   assetsMiddleware,
+  authMiddleware,
+  channelMiddleware,
+  channelPermissionsMiddleware,
+  clientMiddleware,
+  corsMiddleware,
+  guildMiddleware,
+  guildPermissionsMiddleware,
   instanceMiddleware,
   rateLimitMiddleware,
   staffAccessMiddleware,
-  channelMiddleware,
-  guildMiddleware,
   userMiddleware,
-  guildPermissionsMiddleware,
-  channelPermissionsMiddleware,
 };

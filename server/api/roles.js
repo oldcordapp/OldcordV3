@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { logText } from '../helpers/logger';
-import { rateLimitMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares';
-import globalUtils from '../helpers/globalutils';
-import quickcache from '../helpers/quickcache';
-import Watchdog from '../helpers/watchdog';
-import errors from '../helpers/errors';
-import dispatcher from '../helpers/dispatcher';
+
+import dispatcher from '../helpers/dispatcher.js';
+import errors from '../helpers/errors.js';
+import globalUtils from '../helpers/globalutils.js';
+import { logText } from '../helpers/logger.js';
+import { guildPermissionsMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
+import quickcache from '../helpers/quickcache.js';
+import Watchdog from '../helpers/watchdog.js';
 
 const router = Router({ mergeParams: true });
 

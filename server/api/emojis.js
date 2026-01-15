@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { logText } from '../helpers/logger';
-import { guildPermissionsMiddleware, guildMiddleware } from '../helpers/middlewares';
-import globalUtils from '../helpers/globalutils';
-import Snowflake from '../helpers/snowflake';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
+
+import globalUtils from '../helpers/globalutils.js';
+import { logText } from '../helpers/logger.js';
+import { guildMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares.js';
+import Snowflake from '../helpers/snowflake.js';
 const router = Router({ mergeParams: true });
-import quickcache from '../helpers/quickcache';
-import errors from '../helpers/errors';
-import dispatcher from '../helpers/dispatcher';
+import dispatcher from '../helpers/dispatcher.js';
+import errors from '../helpers/errors.js';
+import quickcache from '../helpers/quickcache.js';
 
 router.get(
   '/',

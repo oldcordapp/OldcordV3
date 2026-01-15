@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
-import globalUtils from './globalutils';
+
+import globalUtils from './globalutils.js';
 
 const quickcache = {
   cacheStore: new Map(),
@@ -95,5 +96,12 @@ const quickcache = {
     };
   },
 };
+
+export const {
+  cacheStore,
+  requestLock,
+  getCacheKey,
+  cacheFor
+} = quickcache;
 
 export default quickcache;

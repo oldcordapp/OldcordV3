@@ -1,28 +1,29 @@
+import { compareSync, genSalt, hash } from 'bcrypt';
+import { existsSync, mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
+import { promises as fsPromises } from 'fs';
+import { join } from 'path';
 import { Pool } from 'pg';
-import { logText } from './logger';
+import { totp } from 'speakeasy';
+
+import md5 from '../helpers/md5.js';
+import { dispatchEventInChannel, dispatchEventInGuild } from './dispatcher.js';
+import { generateMsgEmbeds } from './embedder.js';
 import {
   config,
-  miniUserObject,
-  getGuildOnlineUserIds,
-  prepareAccountObject,
-  generateString,
-  usersToIDs,
-  SerializeOverwritesToString,
-  parseMentions,
   formatMessage,
-  generateToken,
   generateMemorableInviteCode,
+  generateString,
+  generateToken,
+  getGuildOnlineUserIds,
   getUserPresence,
-} from './globalutils';
-import { genSalt, hash, compareSync } from 'bcrypt';
-import { generate, deconstruct } from './snowflake';
-import { existsSync, readdirSync, unlinkSync, mkdirSync, writeFileSync } from 'fs';
-import md5 from '../helpers/md5';
-import { join } from 'path';
-import { generateMsgEmbeds } from './embedder';
-import { promises as fsPromises } from 'fs';
-import { totp } from 'speakeasy';
-import { dispatchEventInGuild, dispatchEventInChannel } from './dispatcher';
+  miniUserObject,
+  parseMentions,
+  prepareAccountObject,
+  SerializeOverwritesToString,
+  usersToIDs,
+} from './globalutils.js';
+import { logText } from './logger.js';
+import { deconstruct, generate } from './snowflake.js';
 
 let db_config = config.db_config;
 
@@ -106,7 +107,7 @@ async function doescolumnExist(column, table) {
 }
 
 async function performMigrations() {
-  v = await database.runQuery(`SELECT * FROM instance_info;`);
+  const v = await database.runQuery(`SELECT * FROM instance_info;`);
 
   if (v[0].version != database.version) {
     //auto migrate for the time being
