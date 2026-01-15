@@ -1,23 +1,26 @@
-import Card from "@oldcord/frontend-shared/components/card";
-import Background from "./background";
-import Logo from "./logo";
-import "./main.css";
-import SettingsButton from "./settingsButton";
-import { Text } from "@oldcord/frontend-shared/components/textComponent";
-import DropdownList from "@oldcord/frontend-shared/components/dropdownList";
-import { builds } from "../../../constants/builds";
-import Button from "@oldcord/frontend-shared/components/button";
-import Download from "../../../assets/download.svg?react";
-import { useEffect, useState } from "react";
-import { convertBuildIds, convertBuildId } from "../../../lib/convertBuildIds";
-import cookieManager from "../../../lib/cookieManager";
-import { useLayer } from "../../../hooks/layerHandler";
-import localStorageManager from "../../../lib/localStorageManager";
-import BuildChangelogCard from "./buildChangelogCard";
-import BuildConfirmation from "./modals/buildConfirmation";
-import EnvironmentWarning from "./modals/environmentWarning";
-import LegalAgreement from "./modals/legalAgreement";
-import OpfsComingSoon from "./modals/opfsComingSoon";
+import { useEffect, useState } from 'react';
+
+import Button from '@oldcord/frontend-shared/components/button';
+import Card from '@oldcord/frontend-shared/components/card';
+import DropdownList from '@oldcord/frontend-shared/components/dropdownList';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
+
+import Download from '../../../assets/download.svg?react';
+import { builds } from '../../../constants/builds';
+import { useLayer } from '../../../hooks/layerHandler';
+import { convertBuildId, convertBuildIds } from '../../../lib/convertBuildIds';
+import cookieManager from '../../../lib/cookieManager';
+import localStorageManager from '../../../lib/localStorageManager';
+import Background from './background';
+import BuildChangelogCard from './buildChangelogCard';
+import Logo from './logo';
+import BuildConfirmation from './modals/buildConfirmation';
+import EnvironmentWarning from './modals/environmentWarning';
+import LegalAgreement from './modals/legalAgreement';
+import OpfsComingSoon from './modals/opfsComingSoon';
+import SettingsButton from './settingsButton';
+
+import './main.css';
 
 export default function () {
   const [instance, setInstance] = useState(null);
@@ -40,34 +43,30 @@ export default function () {
     props: {},
   });
 
-  if (!cookieManager.get("release_date")) {
+  if (!cookieManager.get('release_date')) {
     cookieManager.set(
-      "release_date",
-      cookieManager.get("default_client_build") ?? "october_5_2017",
-      { expires: 365 }
+      'release_date',
+      cookieManager.get('default_client_build') ?? 'october_5_2017',
+      { expires: 365 },
     );
   }
 
   const defaultBuild =
-    cookieManager.get("release_date") ??
-    cookieManager.get("default_client_build") ??
-    builds[0];
+    cookieManager.get('release_date') ?? cookieManager.get('default_client_build') ?? builds[0];
 
   const [selectedBuild, setSelectedBuild] = useState(defaultBuild);
 
   useEffect(() => {
     async function fetchInstanceConfig() {
       try {
-        const response = await fetch(
-          `${location.protocol}//${location.host}/instance`
-        );
+        const response = await fetch(`${location.protocol}//${location.host}/instance`);
         if (!response.ok) {
-          setInstance({ error: "Instance did not load" });
+          setInstance({ error: 'Instance did not load' });
         }
 
         setInstance(await response.json());
       } catch (error) {
-        setInstance({ error: "Instance did not load" });
+        setInstance({ error: 'Instance did not load' });
       }
     }
     fetchInstanceConfig();
@@ -75,12 +74,9 @@ export default function () {
 
   async function showBuildConfirmation() {
     const selectedBuildInfo = convertBuildId(selectedBuild);
-    const allSelectedPatches =
-      localStorageManager.get("oldcord_settings") ?? {};
-    const enabledLegacyPatches =
-      allSelectedPatches.selectedPatches[selectedBuild] ?? [];
-    const enabledOldplungerPlugins =
-      allSelectedPatches.selectedPlugins[selectedBuild] ?? [];
+    const allSelectedPatches = localStorageManager.get('oldcord_settings') ?? {};
+    const enabledLegacyPatches = allSelectedPatches.selectedPatches[selectedBuild] ?? [];
+    const enabledOldplungerPlugins = allSelectedPatches.selectedPlugins[selectedBuild] ?? [];
 
     const enabledPlugins = {
       legacy: enabledLegacyPatches,
@@ -97,7 +93,7 @@ export default function () {
   }
 
   async function showEnvironmentWarning() {
-    if (!instance?.instance || instance.instance.environment === "stable") {
+    if (!instance?.instance || instance.instance.environment === 'stable') {
       return true;
     }
 
@@ -111,7 +107,7 @@ export default function () {
   }
 
   async function showLegalAgreement() {
-    if (cookieManager.has("legal_agreed")) {
+    if (cookieManager.has('legal_agreed')) {
       return true;
     }
 
@@ -120,19 +116,19 @@ export default function () {
     if (instance?.instance?.legal) {
       if (instance.instance.legal.terms) {
         legalLinks.push({
-          title: "Terms",
+          title: 'Terms',
           url: instance.instance.legal.terms,
         });
       }
       if (instance.instance.legal.privacy) {
         legalLinks.push({
-          title: "Privacy",
+          title: 'Privacy',
           url: instance.instance.legal.privacy,
         });
       }
       if (instance.instance.legal.instanceRules) {
         legalLinks.push({
-          title: "Instance Rules",
+          title: 'Instance Rules',
           url: instance.instance.legal.instanceRules,
         });
       }
@@ -165,9 +161,9 @@ export default function () {
       if (!legalConfirmed) return;
 
       setTriggeredRedirect(true);
-      changeLayer("redirect", 500);
+      changeLayer('redirect', 500);
     } catch (error) {
-      console.error("Error during launch process:", error);
+      console.error('Error during launch process:', error);
     }
   }
 
@@ -175,7 +171,7 @@ export default function () {
 
   function onBuildChange(selectedFriendlyBuild) {
     const buildId = builds[friendlyBuildIds.indexOf(selectedFriendlyBuild)];
-    cookieManager.set("release_date", buildId, { expires: 365 });
+    cookieManager.set('release_date', buildId, { expires: 365 });
     setSelectedBuild(buildId);
   }
 
@@ -192,14 +188,14 @@ export default function () {
           <Text variant="h2">Choose your preferred Discord build below</Text>
           <div className="build-option-section">
             <DropdownList
-              label={"Client Build"}
+              label={'Client Build'}
               options={friendlyBuildIds}
               defaultOption={convertBuildId(selectedBuild)}
-              style={{ marginBottom: "20px" }}
+              style={{ marginBottom: '20px' }}
               onSelected={onBuildChange}
             />
             <Button
-              style={{ marginTop: "10px" }}
+              style={{ marginTop: '10px' }}
               notImplemented={true}
               onClick={() => {
                 setIsOpfsModalOpen(true);
@@ -209,49 +205,45 @@ export default function () {
             </Button>
           </div>
 
-          <Text variant="body" style={{ marginTop: "-10px" }}>
-            Looking for patches or a way to report content? You can now find
-            both options conveniently located in the Settings menu.
+          <Text variant="body" style={{ marginTop: '-10px' }}>
+            Looking for patches or a way to report content? You can now find both options
+            conveniently located in the Settings menu.
           </Text>
 
           <div className="important-information">
             <Text
               variant="body"
               style={{
-                color: "gray",
-                borderBottom: "0.2px dotted #585757",
-                borderTop: "0.2px dotted #585757",
-                padding: "5px",
-                background: "#33363b",
+                color: 'gray',
+                borderBottom: '0.2px dotted #585757',
+                borderTop: '0.2px dotted #585757',
+                padding: '5px',
+                background: '#33363b',
               }}
             >
-              While there is only one official instance running with Oldcord,
-              please keep in mind the defined rules that may exist in 3rd party
-              Oldcord instances.
+              While there is only one official instance running with Oldcord, please keep in mind
+              the defined rules that may exist in 3rd party Oldcord instances.
             </Text>
 
             <Text
               variant="body"
               style={{
-                marginBottom: "10px",
-                marginTop: "20px",
-                color: "rgb(240, 71, 71)",
+                marginBottom: '10px',
+                marginTop: '20px',
+                color: 'rgb(240, 71, 71)',
               }}
             >
-              Please be mindful of what you post, illegal content will be
-              reported.
+              Please be mindful of what you post, illegal content will be reported.
             </Text>
           </div>
 
           <div className="instance-section">
             {instance === null && <Text variant="h1">Loading...</Text>}
-            {instance && instance.error && (
-              <Text variant="h1">{instance.error}</Text>
-            )}
+            {instance && instance.error && <Text variant="h1">{instance.error}</Text>}
             {instance && (
               <>
                 <Text variant="h1">Welcome to {instance.instance.name}!</Text>
-                <Text variant="h2" style={{ marginBottom: "20px" }}>
+                <Text variant="h2" style={{ marginBottom: '20px' }}>
                   {instance.instance.description}
                 </Text>
                 <div className="legal">
@@ -286,7 +278,7 @@ export default function () {
               onClick={() => {
                 handleLaunch();
               }}
-              style={{ width: "100%" }}
+              style={{ width: '100%' }}
             >
               Launch!
             </Button>
@@ -295,14 +287,11 @@ export default function () {
         </Card>
         <BuildChangelogCard selectedBuild={selectedBuild} />
         <Text variant="label" className="notice">
-          Oldcord is an old Discord historical preservation/revival project and
-          is not affiliated with or endorsed by Discord, Inc.
+          Oldcord is an old Discord historical preservation/revival project and is not affiliated
+          with or endorsed by Discord, Inc.
         </Text>
       </div>
-      <OpfsComingSoon
-        isOpen={isOpfsModalOpen}
-        onClose={() => setIsOpfsModalOpen(false)}
-      />
+      <OpfsComingSoon isOpen={isOpfsModalOpen} onClose={() => setIsOpfsModalOpen(false)} />
       {buildConfirmationState.resolve && (
         <BuildConfirmation
           isOpen={buildConfirmationState.isOpen}
@@ -313,10 +302,10 @@ export default function () {
           }}
           onConfirm={() => {
             const enabledPatches = JSON.stringify(
-              buildConfirmationState.props.enabledPlugins.legacy
+              buildConfirmationState.props.enabledPlugins.legacy,
             );
             const enabledPlugins = JSON.stringify(
-              buildConfirmationState.props.enabledPlugins.oldplunger
+              buildConfirmationState.props.enabledPlugins.oldplunger,
             );
             const expires = new Date();
             expires.setDate(expires.getDate() + 365);
@@ -351,7 +340,7 @@ export default function () {
             setLegalAgreementState((s) => ({ ...s, isOpen: false }));
           }}
           onConfirm={() => {
-            cookieManager.set("legal_agreed", "true", { expires: 365 });
+            cookieManager.set('legal_agreed', 'true', { expires: 365 });
             legalAgreementState.resolve(true);
             setLegalAgreementState((s) => ({ ...s, isOpen: false }));
           }}

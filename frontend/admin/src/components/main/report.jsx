@@ -1,5 +1,6 @@
-import Button from '@oldcord/frontend-shared/components/button';
 import { useNavigate } from 'react-router-dom';
+
+import Button from '@oldcord/frontend-shared/components/button';
 
 const Report = ({ id, problem, email_address, onDiscard, onApprove, selected = false }) => {
   const navigate = useNavigate();

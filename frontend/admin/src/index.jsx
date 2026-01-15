@@ -1,6 +1,3 @@
-import './index.css';
-import '@oldcord/frontend-shared/fonts.css';
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -19,6 +16,9 @@ import Staff from './components/main/staff';
 import Updates from './components/main/updates';
 import Users from './components/main/users';
 import MfaNotice from './components/mfanotice';
+
+import './index.css';
+import '@oldcord/frontend-shared/fonts.css';
 
 const root = ReactDOM.createRoot(document.getElementById('app-mount'));
 

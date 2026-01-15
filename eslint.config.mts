@@ -26,8 +26,26 @@ export default defineConfig([
       'simple-import-sort': pluginImportSort,
     },
     rules: {
-      'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
+      'simple-import-sort/imports': [
+        'error',
+        {
+          // Keep css below
+          groups: [
+            ['^\\u0000'],
+            ['^@?\\w'],
+            ['^@oldcord(/.*|$)'],
+            [
+              '^\\.\\.(?!/?$)',
+              '^\\.\\./?$',
+              '^\\./(?=[^/]*?)(?!.*\\.css$)',
+              '^\\.(?!/?$)',
+              '^\\./?$',
+            ],
+            ['^.+\\.css$', '^\\u0000.*\\.css$'],
+          ],
+        },
+      ],
     },
     languageOptions: {
       ecmaVersion: 'latest',

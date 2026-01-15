@@ -1,7 +1,8 @@
-import Modal from "@oldcord/frontend-shared/components/modal";
-import Button from "@oldcord/frontend-shared/components/button";
-import { Text } from "@oldcord/frontend-shared/components/textComponent";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
+
+import Button from '@oldcord/frontend-shared/components/button';
+import Modal from '@oldcord/frontend-shared/components/modal';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
 
 export default function ({ isOpen, onClose, onConfirm, environment }) {
   const [displayedEnvironment, setDisplayedEnvironment] = useState(environment);
@@ -29,15 +30,16 @@ export default function ({ isOpen, onClose, onConfirm, environment }) {
       footerAlignment="right"
       footer={
         <>
-          <Button variant="ghost" onClick={() => onClose(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onClose(false)}>
+            Cancel
+          </Button>
           <Button onClick={() => onConfirm()}>Continue</Button>
         </>
       }
     >
-      <div style={{ paddingBottom: "20px" }}>
+      <div style={{ paddingBottom: '20px' }}>
         <Text variant="body">
-          This is a/an {displayedEnvironment} instance and may be unstable. Do you want
-          to continue?
+          This is a/an {displayedEnvironment} instance and may be unstable. Do you want to continue?
         </Text>
       </div>
     </Modal>

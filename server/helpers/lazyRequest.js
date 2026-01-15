@@ -522,7 +522,7 @@ export const {
   handleMemberAdd,
   handleMembersSync,
   syncMemberList,
-  fire
+  fire,
 } = lazyRequest;
 
 export default lazyRequest;

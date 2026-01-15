@@ -1,6 +1,6 @@
-import './navigationList.css';
-
 import { useState } from 'react';
+
+import './navigationList.css';
 
 export default function ({ navItems, activeView, onItemClick }) {
   const [clickingIndex, setClickingIndex] = useState(null);

@@ -1,14 +1,17 @@
-import { useState } from "react";
-import InfoCard from "@oldcord/frontend-shared/components/infoCard";
-import ToggleSetting from "../../../../components/shared/toggleSetting";
-import { Text } from "@oldcord/frontend-shared/components/textComponent";
+import { useState } from 'react';
 
-import cookieManager from "../../../../lib/cookieManager";
+import InfoCard from '@oldcord/frontend-shared/components/infoCard';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
 
-const oldplungerEnabledKey = "oldplunger_enabled";
+import ToggleSetting from '../../../../components/shared/toggleSetting';
+import cookieManager from '../../../../lib/cookieManager';
+
+const oldplungerEnabledKey = 'oldplunger_enabled';
 
 export default function () {
-  const [oldplungerEnabled, setOldplungerEnabled] = useState(cookieManager.get(oldplungerEnabledKey) === "true" ? true : false);
+  const [oldplungerEnabled, setOldplungerEnabled] = useState(
+    cookieManager.get(oldplungerEnabledKey) === 'true' ? true : false,
+  );
 
   function enableOldplunger() {
     const newValue = !oldplungerEnabled;
@@ -27,8 +30,8 @@ export default function () {
         Please help us test Oldplunger!
       </InfoCard>
       <ToggleSetting
-        title={"Enable Oldplunger"}
-        description={"Enable the next generation of Oldcord modding. ! In development !"}
+        title={'Enable Oldplunger'}
+        description={'Enable the next generation of Oldcord modding. ! In development !'}
         isChecked={oldplungerEnabled}
         onChange={enableOldplunger}
       />

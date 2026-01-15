@@ -1,6 +1,6 @@
-import './textComponent.css';
-
 import React from 'react';
+
+import './textComponent.css';
 
 const variantMap = {
   h1: 'h1',

@@ -369,12 +369,7 @@ const embedder = {
   },
 };
 
-export const {
-  embed_cache,
-  getEmbedInfo,
-  embedAttachedVideo,
-  embedYouTube,
-  generateMsgEmbeds,
-} = embedder;
+export const { embed_cache, getEmbedInfo, embedAttachedVideo, embedYouTube, generateMsgEmbeds } =
+  embedder;
 
 export default embedder;

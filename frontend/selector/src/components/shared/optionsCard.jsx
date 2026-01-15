@@ -1,9 +1,12 @@
-import ToggleSwitch from "@oldcord/frontend-shared/components/toggleSwitch";
-import Gear from "@oldcord/frontend-shared/assets/gear.svg?react";
-import Info from "@oldcord/frontend-shared/assets/info.svg?react";
-import "./optionsCard.css";
-import { useState } from "react";
-import PluginInfo from "../views/settings/modals/pluginInfo";
+import { useState } from 'react';
+
+import Gear from '@oldcord/frontend-shared/assets/gear.svg?react';
+import Info from '@oldcord/frontend-shared/assets/info.svg?react';
+import ToggleSwitch from '@oldcord/frontend-shared/components/toggleSwitch';
+
+import PluginInfo from '../views/settings/modals/pluginInfo';
+
+import './optionsCard.css';
 
 export default function ({
   cardId,
@@ -19,13 +22,13 @@ export default function ({
 
   function renderIcon() {
     switch (iconType) {
-      case "settings":
+      case 'settings':
         return (
           <button className="icon-button" onClick={() => setIsModalOpen(true)}>
             <Gear />
           </button>
         );
-      case "info":
+      case 'info':
         return (
           <button className="icon-button" onClick={() => setIsModalOpen(true)}>
             <Info />
@@ -36,7 +39,7 @@ export default function ({
 
   return (
     <>
-      <div className={`options-card ${disabled ? "disabled" : ""}`}>
+      <div className={`options-card ${disabled ? 'disabled' : ''}`}>
         <div className="content">
           <h3 className="title">{title}</h3>
           <p className="description" title={description}>

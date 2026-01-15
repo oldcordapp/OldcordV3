@@ -97,11 +97,6 @@ const quickcache = {
   },
 };
 
-export const {
-  cacheStore,
-  requestLock,
-  getCacheKey,
-  cacheFor
-} = quickcache;
+export const { cacheStore, requestLock, getCacheKey, cacheFor } = quickcache;
 
 export default quickcache;

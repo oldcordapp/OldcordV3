@@ -1,9 +1,9 @@
-import './unsavedChangesNotice.css';
-
 import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import Button from './button';
+
+import './unsavedChangesNotice.css';
 
 export default function ({
   show,

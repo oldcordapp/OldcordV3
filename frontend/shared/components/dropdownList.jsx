@@ -1,6 +1,6 @@
-import './dropdownList.css';
-
 import { useEffect, useRef, useState } from 'react';
+
+import './dropdownList.css';
 
 export default function ({
   label,

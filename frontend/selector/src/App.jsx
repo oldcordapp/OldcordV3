@@ -1,64 +1,57 @@
-import { LayerHandler, useLayer } from "./hooks/layerHandler";
+import { useEffect, useRef } from 'react';
+
 import {
   UnsavedChangesHandler,
   useUnsavedChanges,
-} from "@oldcord/frontend-shared/hooks/unsavedChangesHandler";
-import { useEffect, useRef } from "react";
+} from '@oldcord/frontend-shared/hooks/unsavedChangesHandler';
 
-import layerConfig from "./components/layerConfig";
+import layerConfig from './components/layerConfig';
+import PrimaryLayer from './components/layers/primaryLayer';
+import { builds } from './constants/builds';
+import { PATCHES } from './constants/patches';
+import { LayerHandler, useLayer } from './hooks/layerHandler';
+import { OldplungerPluginsHandler, useOldplugerPlugins } from './hooks/oldplungerPluginsHandler';
+import localStorageManager from './lib/localStorageManager';
 
-import PrimaryLayer from "./components/layers/primaryLayer";
-import "./App.css";
-
-import localStorageManager from "./lib/localStorageManager";
-import { PATCHES } from "./constants/patches";
-import { builds } from "./constants/builds";
-import {
-  OldplungerPluginsHandler,
-  useOldplugerPlugins,
-} from "./hooks/oldplungerPluginsHandler";
+import './App.css';
 
 function initializeLocalStorageKeys(plugins) {
-  const localStorageKey = "oldcord_settings";
+  const localStorageKey = 'oldcord_settings';
 
   let localStorageCEP = localStorageManager.get(localStorageKey);
 
-  if (typeof localStorageCEP !== "object" || !localStorageCEP) {
+  if (typeof localStorageCEP !== 'object' || !localStorageCEP) {
     const initializedObject = { selectedPatches: {}, selectedPlugins: {} };
 
     builds.forEach((build) => {
-      initializedObject.selectedPatches[build] = Object.keys(PATCHES).filter(
-        (key) => {
-          const patch = PATCHES[key];
-          const compatibleBuilds = patch.compatibleBuilds;
+      initializedObject.selectedPatches[build] = Object.keys(PATCHES).filter((key) => {
+        const patch = PATCHES[key];
+        const compatibleBuilds = patch.compatibleBuilds;
+
+        if (
+          (compatibleBuilds === 'all' ||
+            build.includes(compatibleBuilds) ||
+            compatibleBuilds.includes(build)) &&
+          (patch.defaultEnabled || patch.mandatory)
+        ) {
+          return key;
+        }
+      });
+
+      if (plugins) {
+        initializedObject.selectedPlugins[build] = Object.keys(plugins).filter((key) => {
+          const plugin = plugins[key];
+          const compatibleBuilds = plugin.compatibleBuilds;
 
           if (
-            (compatibleBuilds === "all" ||
+            (compatibleBuilds === 'all' ||
               build.includes(compatibleBuilds) ||
               compatibleBuilds.includes(build)) &&
-            (patch.defaultEnabled || patch.mandatory)
+            (plugin.defaultEnabled || plugin.mandatory)
           ) {
             return key;
           }
-        }
-      );
-
-      if (plugins) {
-        initializedObject.selectedPlugins[build] = Object.keys(plugins).filter(
-          (key) => {
-            const plugin = plugins[key];
-            const compatibleBuilds = plugin.compatibleBuilds;
-
-            if (
-              (compatibleBuilds === "all" ||
-                build.includes(compatibleBuilds) ||
-                compatibleBuilds.includes(build)) &&
-              (plugin.defaultEnabled || plugin.mandatory)
-            ) {
-              return key;
-            }
-          }
-        );
+        });
       }
     });
 
@@ -79,20 +72,20 @@ function initializeLocalStorageKeys(plugins) {
 
     const isDesktop = !!window.DiscordNative;
     const selectedPatches = localStorageCEP.selectedPatches[build];
-    const hasElectronPatch = selectedPatches.includes("electronPatch");
+    const hasElectronPatch = selectedPatches.includes('electronPatch');
 
     if (isDesktop && !hasElectronPatch) {
-      localStorageCEP.selectedPatches[build].push("electronPatch");
-      localStorageCEP.selectedPlugins[build].push("electronPatch");
+      localStorageCEP.selectedPatches[build].push('electronPatch');
+      localStorageCEP.selectedPlugins[build].push('electronPatch');
       needsUpdate = true;
     } else if (!isDesktop && hasElectronPatch) {
-      localStorageCEP.selectedPatches[build] = localStorageCEP.selectedPatches[
-        build
-      ].filter((p) => p !== "electronPatch");
+      localStorageCEP.selectedPatches[build] = localStorageCEP.selectedPatches[build].filter(
+        (p) => p !== 'electronPatch',
+      );
 
-      localStorageCEP.selectedPlugins[build] = localStorageCEP.selectedPlugins[
-        build
-      ].filter((p) => p !== "electronPatch");
+      localStorageCEP.selectedPlugins[build] = localStorageCEP.selectedPlugins[build].filter(
+        (p) => p !== 'electronPatch',
+      );
 
       needsUpdate = true;
     }
@@ -100,15 +93,11 @@ function initializeLocalStorageKeys(plugins) {
     Object.keys(PATCHES).forEach((key) => {
       const patch = PATCHES[key];
       const compatible =
-        patch.compatibleBuilds === "all" ||
+        patch.compatibleBuilds === 'all' ||
         build.includes(patch.compatibleBuilds) ||
         patch.compatibleBuilds.includes(build);
 
-      if (
-        compatible &&
-        patch.mandatory &&
-        !localStorageCEP.selectedPatches[build].includes(key)
-      ) {
+      if (compatible && patch.mandatory && !localStorageCEP.selectedPatches[build].includes(key)) {
         localStorageCEP.selectedPatches[build].push(key);
         needsUpdate = true;
       }
@@ -118,7 +107,7 @@ function initializeLocalStorageKeys(plugins) {
       Object.keys(plugins).forEach((key) => {
         const plugin = plugins[key];
         const compatible =
-          plugin.compatibleBuilds === "all" ||
+          plugin.compatibleBuilds === 'all' ||
           build.includes(plugin.compatibleBuilds) ||
           plugin.compatibleBuilds.includes(build);
 
@@ -156,7 +145,7 @@ function Container() {
         }
       }, 10);
     } else if (ref.current) {
-      ref.current.style.transform = "";
+      ref.current.style.transform = '';
     }
     return () => clearInterval(intervalId);
   }, [isNudging]);

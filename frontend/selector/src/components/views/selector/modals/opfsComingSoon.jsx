@@ -1,6 +1,6 @@
-import Modal from "@oldcord/frontend-shared/components/modal";
-import Button from "@oldcord/frontend-shared/components/button";
-import { Text } from "@oldcord/frontend-shared/components/textComponent";
+import Button from '@oldcord/frontend-shared/components/button';
+import Modal from '@oldcord/frontend-shared/components/modal';
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
 
 export default function ({ isOpen, onClose }) {
   return (
@@ -17,7 +17,7 @@ export default function ({ isOpen, onClose }) {
         </>
       }
     >
-      <div style={{ paddingBottom: "20px" }}>
+      <div style={{ paddingBottom: '20px' }}>
         <Text variant="body">This is a button for OPFS which is not implemented yet!</Text>
       </div>
     </Modal>

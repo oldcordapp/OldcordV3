@@ -1,6 +1,6 @@
-import './card.css';
-
 import { useEffect, useRef } from 'react';
+
+import './card.css';
 
 export default function ({ children, className, ...rest }) {
   const ref = useRef(null);

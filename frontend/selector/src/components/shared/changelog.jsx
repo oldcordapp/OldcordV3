@@ -1,18 +1,21 @@
-import React from "react";
-import "./changelog.css";
-import { Text } from "@oldcord/frontend-shared/components/textComponent";
-import changlogImage from "../../assets/changelogImage.png";
+import React from 'react';
+
+import { Text } from '@oldcord/frontend-shared/components/textComponent';
+
+import changlogImage from '../../assets/changelogImage.png';
+
+import './changelog.css';
 
 const headerTypeClasses = {
-  added: "header-added",
-  fixed: "header-fixed",
-  improved: "header-improved",
-  progress: "header-progress",
-  default: "header-default",
+  added: 'header-added',
+  fixed: 'header-fixed',
+  improved: 'header-improved',
+  progress: 'header-progress',
+  default: 'header-default',
 };
 
 export default function Changelog({ sections, video, image = false, style }) {
-  const videoId = video ? new URL(video.url).pathname.split("/").pop() : null;
+  const videoId = video ? new URL(video.url).pathname.split('/').pop() : null;
 
   return (
     <div className="changelog-container" style={style}>
@@ -46,19 +49,13 @@ export default function Changelog({ sections, video, image = false, style }) {
             </Text>
           )}
           {section.body && (
-            <Text
-              variant="body"
-              dangerouslySetInnerHTML={{ __html: section.body }}
-            />
+            <Text variant="body" dangerouslySetInnerHTML={{ __html: section.body }} />
           )}
           {section.items && (
             <ul className="changelog-list">
               {section.items.map((item, itemIndex) => (
                 <li key={itemIndex} className="changelog-list-item">
-                  <Text
-                    variant="body"
-                    dangerouslySetInnerHTML={{ __html: item }}
-                  />
+                  <Text variant="body" dangerouslySetInnerHTML={{ __html: item }} />
                 </li>
               ))}
             </ul>

@@ -1,5 +1,6 @@
-import contextFactory from "@oldcord/frontend-shared/hooks/contextFactory";
-import { useState } from "react";
+import { useState } from 'react';
+
+import contextFactory from '@oldcord/frontend-shared/hooks/contextFactory';
 
 export default function ({ views, defaultView }) {
   function useViewState() {

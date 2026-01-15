@@ -268,7 +268,7 @@ export const {
   getFingerprint,
   getRandomRange,
   middleware,
-  setSusScoreDecay
+  setSusScoreDecay,
 } = Watchdog;
 
 export default Watchdog;
