@@ -184,7 +184,7 @@ const database = {
 
       await database.runQuery(
         `INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,
-        [0.1],
+        [0.2],
       ); //for the people who update their instance but do not manually run the relationships migration script
 
       await performMigrations();

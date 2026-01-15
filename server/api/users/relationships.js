@@ -102,7 +102,7 @@ router.put('/:userid', async (req, res) => {
     var type = 'SEND_FR';
     let relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
 
-    if (JSON.stringify(body) == '{}' && relationship.type == 3) {
+    if (relationship.type == 3) {
       type = 'ACCEPT_FR';
     } else if (body.type == 2) {
       type = 'BLOCK';
