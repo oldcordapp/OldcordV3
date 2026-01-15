@@ -91,7 +91,7 @@ const database = {
         try {
             await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
 
-            await database.runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`, [0.1]); //for the people who update their instance but do not manually run the relationships migration script
+            await database.runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`, [0.2]); //for the people who update their instance but do not manually run the relationships migration script
 
             v = await database.runQuery(`SELECT * FROM instance_info;`);
 
@@ -104,7 +104,7 @@ const database = {
 
                 if (!value[0].relationships) {
                     await runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`,[]);
-                    await runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,[0.2]); //safeguards, in case the script is run outside of the instance executing it
+                    await runQuery(`INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`, [0.2]); //safeguards, in case the script is run outside of the instance executing it
                     await runQuery(`UPDATE instance_info SET version = $1 WHERE version = 0.1`,[0.2]);
 
                     return;
