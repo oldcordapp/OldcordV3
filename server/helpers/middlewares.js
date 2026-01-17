@@ -447,12 +447,7 @@ async function userMiddleware(req, res, next) {
     return res.status(404).json(errors.response_404.UNKNOWN_USER);
   } //investigate later
 
-  let share = guilds.some(
-    (guild) =>
-      guild.members != null &&
-      guild.members.length > 0 &&
-      guild.members.some((member) => member.id === account.id),
-  );
+  let share = guilds.some((guild) => guild && guild.members && guild.members.length > 0 && guild.members.some((member) => member.id === account.id));
 
   if (!share) {
     return res.status(404).json(errors.response_404.UNKNOWN_USER);
