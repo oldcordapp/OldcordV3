@@ -6,11 +6,12 @@ import dispatcher from './helpers/dispatcher.js';
 import globalUtils from './helpers/globalutils.js';
 import { logText } from './helpers/logger.js';
 
-let erlpack: typeof import('@spacebarchat/erlpack') | null = null;
+
+let erlpack: typeof import('erlpack') | null = null;
 
 if (globalUtils.config.gateway_erlpack) {
   try {
-    const erlpackModule = await import('@spacebarchat/erlpack');
+    const erlpackModule = await import('erlpack');
     erlpack = erlpackModule.default || erlpackModule;
   } catch (e) {
     logText('erlpack is enabled in config but the package is not installed.', 'warning');

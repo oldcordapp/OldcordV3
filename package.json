@@ -39,6 +39,7 @@
     "cheerio": "^1.1.2",
     "cookie-parser": "^1.4.7",
     "cross-env": "^10.1.0",
+    "erlpack": "^0.1.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "fluent-ffmpeg": "^2.1.3",
@@ -91,8 +92,5 @@
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.3.1"
-  },
-  "optionalDependencies": {
-    "@spacebarchat/erlpack": "^1.0.1"
   }
 }

@@ -122,7 +122,7 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
 - **discord.js**: Snowflake implementation.
 - **unkn0w**: Disposable email domain list.
 - **Nebula Entertainment & Broadcasting LLC**: [Nebula Sans font](https://nebulasans.com/) - Drop in replacement for Whitney (Font which Discord used before 2022), used in the bootloader, build selector and admin panel for the pre-2022 Discord feel.
-- **Spacebar**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc) and [erlpack](https://github.com/spacebarchat/erlpack).
+- **Spacebar**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc).
 - **Google**: [Material Design Icons](https://fonts.google.com/icons).
 - **SVGRepo**: [Businessman Wearing Tie With Exclamation Mark - Modified for Reports SVG](https://www.svgrepo.com/svg/109813/businessman-wearing-tie-with-exclamation-mark)
 - **Discord**: Other SVGs, images, fonts, etc - for the base clients (before patches) & some parts of Selector/Admin panel. Discord Developer Portal also has documented API responses for this recreation, along with general reverse engineering.

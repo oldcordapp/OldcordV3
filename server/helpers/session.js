@@ -10,7 +10,7 @@ let erlpack = null;
 
 if (globalUtils.config.gateway_erlpack) {
   try {
-    const erlpackModule = await import('@spacebarchat/erlpack');
+    const erlpackModule = await import('erlpack');
     erlpack = erlpackModule.default || erlpackModule;
   } catch (e) {
     logText('erlpack is enabled in config but the package is not installed.', 'warning');
