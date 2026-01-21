@@ -60,6 +60,8 @@ import mrServer from './mrserver.ts';
 import rtcServer from './rtcserver.ts';
 import udpServer from './udpserver.ts';
 
+// TODO: Replace all String() or "as type" conversions with better ones
+
 app.set('trust proxy', 1);
 
 database.setupDatabase();

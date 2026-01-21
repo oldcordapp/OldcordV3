@@ -3,6 +3,8 @@ import { WebSocketServer } from 'ws';
 import { mrHandlers, OPCODES } from './handlers/mr.js';
 import { logText } from './helpers/logger.js';
 
+// TODO: Replace all String() or "as type" conversions with better ones
+
 const mrServer = {
   port: null as number | null,
   debug_logs: false,
