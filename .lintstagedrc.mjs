@@ -5,7 +5,7 @@ export default {
 
     const files = validFiles.map((f) => `"${f}"`).join(' ');
 
-    return [`eslint --fix --quiet ${files}`, `prettier --write ${files}`];
+    return [`eslint --fix ${files}`, `prettier --write ${files}`];
   },
   '*.{html,yml,yaml}': (filenames) => {
     const files = filenames.map((f) => `"${f}"`).join(' ');
