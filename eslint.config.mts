@@ -93,7 +93,7 @@ export default defineConfig([
       globals: { ...globals.node },
     },
   },
-  // TODO: Remove the following three after migrating to TS
+  // TODO: Remove the following two after migrating to TS
   {
     files: ['**/*.{js,jsx,mjs,cjs}'],
     rules: {
@@ -120,6 +120,7 @@ export default defineConfig([
       'prefer-const': 'error',
     },
   },
+  // DO NOT REMOVE THE FOLLOWING OR ELSE YOU CANNOT COMMIT LINTER CONFIG CHANGES!
   {
     files: ['eslint.config.mts'],
     rules: {
