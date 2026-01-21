@@ -8,14 +8,12 @@ import { logText } from './logger.js';
 
 let erlpack = null;
 
-if (globalUtils.config.gateway_erlpack) {
-  try {
-    const erlpackModule = await import('erlpack');
-    erlpack = erlpackModule.default || erlpackModule;
-  } catch (e) {
-    logText('erlpack is enabled in config but the package is not installed.', 'warning');
-    erlpack = null;
-  }
+try {
+  const erlpackModule = await import('erlpack');
+  erlpack = erlpackModule.default || erlpackModule;
+} catch (e) {
+  logText('erlpack is not installed, desktop clients will not be able to connect.', 'warning');
+  erlpack = null;
 }
 
 //Adapted from Hummus' handling of sessions & whatnot
@@ -336,7 +334,7 @@ class session {
     if (this.type === 'gateway') {
       let items = this.eventsBuffer.filter((s) => s.seq > seq);
 
-      for (var k of items) {
+      for (const k of items) {
         this.dispatch(k.type, k.payload);
       }
 
@@ -361,7 +359,7 @@ class session {
       this.guilds = await global.database.getUsersGuilds(this.user.id);
 
       if (this.user.bot) {
-        for (var guild of this.guilds) {
+        for (const guild of this.guilds) {
           this.guildCache.push(guild);
 
           guild = {
@@ -370,7 +368,7 @@ class session {
           }; //bots cant get this here idk
         }
       } else {
-        for (var guild of this.guilds) {
+        for (const guild of this.guilds) {
           if (guild.unavailable) {
             this.guilds = this.guilds.filter((x) => x.id !== guild.id);
 
@@ -472,7 +470,7 @@ class session {
             guild_presences = [guild_presences.find((x) => x.user.id === this.user.id)];
           }
 
-          for (var presence of guild_presences) {
+          for (const presence of guild_presences) {
             if (this.presences.find((x) => x.user.id === presence.user.id)) continue;
 
             this.presences.push({
@@ -501,7 +499,7 @@ class session {
             }),
           );
 
-          for (var channel of guild.channels) {
+          for (const channel of guild.channels) {
             if ((year === 2017 && month < 9) || year < 2017) {
               if (channel.type === 4) {
                 guild.channels = guild.channels.filter((x) => x.id !== channel.id);
@@ -575,7 +573,7 @@ class session {
 
       const users = new Set();
 
-      for (var chan_id of chans) {
+      for (const chan_id of chans) {
         let chan = await database.getChannelById(chan_id);
 
         if (!chan) continue;
@@ -657,7 +655,7 @@ class session {
         _trace: [JSON.stringify(['oldcord-v3', { micros: 0, calls: ['oldcord-v3'] }])],
       });
 
-      for (var guild of this.unavailable_guilds) {
+      for (const guild of this.unavailable_guilds) {
         await this.dispatch('GUILD_DELETE', {
           id: guild.id,
           unavailable: true,
@@ -665,7 +663,7 @@ class session {
       }
 
       if (this.user.bot) {
-        for (var guild of this.guilds) {
+        for (const guild of this.guilds) {
           if (guild.unavailable) {
             await this.dispatch(
               'GUILD_CREATE',

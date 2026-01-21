@@ -7,7 +7,7 @@
 An open-source reimplementation of the old (2015-2018) Discord backend, including an on-demand client patcher. <br>
 Contributions are highly encouraged! We'd love your help to clean and refactor the codebase!
 
-# ⚠️ Important Notices
+## ⚠️ Important Notices
 
 **Database Migrations**:
 
@@ -32,7 +32,7 @@ There are some features we need help with, if you're up for the task, feel free 
 - Admin panel
 - Reworking the existing webhooks implementation & webhook overrides.
 
-# Project Status & Features
+## Project Status & Features
 
 **Support Status for Features from Client Year**:
 
@@ -67,7 +67,7 @@ There are some features we need help with, if you're up for the task, feel free 
 - **Note**: We only support the latest Discord desktop clients (Stable, PTB, Canary, Development) or ones that repackaged from it. Older versions are not recommended.
 - **Compatibility**: 🟠 Work in progress
 
-# Setup Guide
+## Setup Guide
 
 **Prerequisites**:
 
@@ -87,13 +87,13 @@ There are some features we need help with, if you're up for the task, feel free 
 - `Google reCAPTCHA`: To enable, provide a `site_key`, `secret_key` and change `enabled` to `true`. Do the opposite (`enabled` to `false`) to disable.
   - **IMPORTANT**: The default keys are for demo purposes, **all answers will be marked as valid**, you MUST change these for a production environment.
 - `integration_config`: Manages in-app connections (e.g, Twitch). You'll need to create developer applications on these platforms (like Twitch) to get a `client_id` and `client_secret`.
-  ```
+  ```json
     "integration_config" : [{
       "platform" : "twitch",
       "client_id" : "client_id",
       "client_secret" : "client_secret",
       "redirect_uri" : "https://staging.oldcordapp.com/api/connections/twitch/callback"
-  }]
+    }]
   ```
 - `trusted_users`: An array of user IDs that bypass short-term rate limits. Useful for bots.
 - `instance_flags`: An array of strings to enable special features or restrictions:
@@ -105,16 +105,15 @@ There are some features we need help with, if you're up for the task, feel free 
 - `includePortInWsUrl`: If set to `false` will force the server gateway to use ports 443/80 instead of the instance port. Good for reverse proxies.
 - `tenor_api_key`: Needed if you want `/tenor` support. You can get an API key [here](https://tenor.com/developer/dashboard).
 - `auto_embed_urls`: Set to `true` if you want urls included in message content to automatically embed.
-- `gateway_erlpack`: Set to `true` if you want the gateway to support client communications which specifically want etf, such as the desktop client. It's disabled by default, although this will come as a cost of desktop clients not being able to connect.
 
-# FAQ
+## FAQ
 
 **What is WebRTC P2P?**
 
 - WebRTC P2P is a peer-to-peer voice protocol found in 2017-2018 Discord clients. As far as we're aware, it was never officially used, it works by relaying connection data directly between users in a call.
 - Because this protocol is **peer-to-peer**, **it will expose your IP address to other users** in the call. **It is highly recommended to use a VPN with this feature.**
 
-# Acknowledgements
+## Acknowledgements
 
 Without these awesome people & resources, Oldcord wouldn't be possible.
 
@@ -125,6 +124,6 @@ Without these awesome people & resources, Oldcord wouldn't be possible.
 - **Spacebar**: [WebRTC media server implementation](https://github.com/spacebarchat/mediasoup-webrtc).
 - **Google**: [Material Design Icons](https://fonts.google.com/icons).
 - **SVGRepo**: [Businessman Wearing Tie With Exclamation Mark - Modified for Reports SVG](https://www.svgrepo.com/svg/109813/businessman-wearing-tie-with-exclamation-mark)
-- **Discord**: Other SVGs, images, fonts, etc - for the base clients (before patches) & some parts of Selector/Admin panel. Discord Developer Portal also has documented API responses for this recreation, along with general reverse engineering.
+- **Discord**: Other SVGs, images, fonts, etc - for the base clients (before patches) & some parts of Selector/Admin panel. Discord Developer Portal also has documented API responses for this recreation. And also [erlpack](http://github.com/discord/erlpack).
 - **Vencord**: Reference to build Oldplunger and it's logger class.
 - **Cordwood**: Filter/Search functions for Oldplunger.

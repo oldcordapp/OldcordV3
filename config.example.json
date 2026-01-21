@@ -12,7 +12,6 @@
   "ws_port": 1337,
   "includePortInUrl": true,
   "includePortInWsUrl": true,
-  "gateway_erlpack": false,
   "cache404s": false,
   "serve_selector": true,
   "intents_required": false,

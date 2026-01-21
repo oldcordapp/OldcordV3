@@ -6,17 +6,15 @@ import dispatcher from './helpers/dispatcher.js';
 import globalUtils from './helpers/globalutils.js';
 import { logText } from './helpers/logger.js';
 
+// TODO: Replace all String() or "as type" conversions with better ones
 
 let erlpack: typeof import('erlpack') | null = null;
 
-if (globalUtils.config.gateway_erlpack) {
-  try {
-    const erlpackModule = await import('erlpack');
-    erlpack = erlpackModule.default || erlpackModule;
-  } catch (e) {
-    logText('erlpack is enabled in config but the package is not installed.', 'warning');
-    erlpack = null;
-  }
+try {
+  erlpack = await import('erlpack');
+} catch {
+  logText('erlpack is not installed, desktop clients will not be able to connect.', 'warning');
+  erlpack = null;
 }
 
 const gateway = {
@@ -38,7 +36,7 @@ const gateway = {
     let gameField = null;
 
     if (socket.client_build.includes('2015')) {
-      gameField = packet.d.game_id || null;
+      gameField = packet.d.game_id ?? null;
 
       if (packet.d.idle_since != null || packet.d.afk === true) {
         setStatusTo = 'idle';
@@ -54,7 +52,7 @@ const gateway = {
         socket.session.last_idle = 0;
       }
     } else {
-      gameField = packet.d.game || null;
+      gameField = packet.d.game ?? null;
 
       if (packet.d.status) {
         setStatusTo = packet.d.status.toLowerCase();
@@ -75,20 +73,20 @@ const gateway = {
       if (session.id !== socket.session.id) {
         session.presence.status = setStatusTo;
         session.presence.game_id = gameField;
-        session.last_idle = socket.session.last_idle || 0;
+        session.last_idle = socket.session.last_idle ?? 0;
       } //only do this for other sessions, not us as we're gonna update in a sec
     }
 
     await socket.session.updatePresence(setStatusTo, gameField);
   },
-  handleClientConnect: async function (socket, req) {
+  handleClientConnect: function (socket, req) {
     const reqHost = req.headers.origin ?? req.headers.host;
 
     const isInstanceLocal =
-      global.full_url.includes('localhost') || global.full_url.includes('127.0.0.1');
-    const isReqLocal = reqHost.includes('localhost') || reqHost.includes('127.0.0.1');
+      global.full_url.includes('localhost') ?? global.full_url.includes('127.0.0.1');
+    const isReqLocal = reqHost.includes('localhost') ?? reqHost.includes('127.0.0.1');
 
-    const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(req.headers['user-agent']);
+    const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(String(req.headers['user-agent']));
     let isSameHost = false;
 
     if (global.full_url === reqHost) {
@@ -102,34 +100,32 @@ const gateway = {
       isSameHost = false;
     }
 
-    let cookies = req.headers.cookie;
+    let cookies: string = req.headers.cookie ?? '';
 
     if (!cookies || !isBrowser) {
-      cookies = `release_date=thirdPartyOrMobile;default_client_build=${globalUtils.config.default_client_build || 'october_5_2017'};`;
+      cookies = `release_date=thirdPartyOrMobile;default_client_build=${String(globalUtils.config.default_client_build ?? 'october_5_2017')};`;
     }
 
     if (!cookies && isSameHost && isBrowser && !globalUtils.config.require_release_date_cookie) {
-      cookies = `release_date=${globalUtils.config.default_client_build || 'october_5_2017'};default_client_build=${globalUtils.config.default_client_build || 'october_5_2017'};`;
+      cookies = `release_date=${String(globalUtils.config.default_client_build ?? 'october_5_2017')};default_client_build=${String(globalUtils.config.default_client_build ?? 'october_5_2017')};`;
     }
 
-    let cookieStore = cookies?.split(';').reduce((acc, cookie) => {
+    const cookieStore = cookies.split(';').reduce<Record<string, string>>((acc, cookie) => {
       const [key, value] = cookie.split('=').map((v) => v.trim());
-      acc[key] = value;
+      if (key) acc[key] = value;
       return acc;
     }, {});
-
-    if (!cookieStore) {
-      cookieStore = {};
-    }
 
     if (
       !cookies &&
       isSameHost &&
       isBrowser &&
-      !cookies?.includes('release_date') &&
+      !cookies.includes('release_date') &&
       !globalUtils.config.require_release_date_cookie
     ) {
-      cookieStore.release_date = globalUtils.config.default_client_build || 'october_5_2017';
+      cookieStore.release_date = String(
+        globalUtils.config.default_client_build ?? 'october_5_2017',
+      );
     }
 
     if (!cookieStore.release_date) {
@@ -196,10 +192,10 @@ const gateway = {
     socket.hb = {
       timeout: null,
       start: () => {
-        if (socket.hb.timeout) clearTimeout(socket.hb.timeout);
+        if (socket.hb.timeout) clearTimeout(socket.hb.timeout as NodeJS.Timeout);
 
         socket.hb.timeout = setTimeout(
-          async () => {
+          () => {
             socket.close(4009, 'Session timed out');
           },
           45 * 1000 + 20 * 1000,
@@ -224,14 +220,16 @@ const gateway = {
     try {
       const msg = socket.wantsEtf ? data : data.toString('utf-8');
       const packet: GatewayPayload = (
-        socket.wantsEtf && erlpack !== null ? erlpack.unpack(msg) : JSON.parse(msg)
+        socket.wantsEtf && erlpack !== null
+          ? erlpack.unpack(msg as Buffer)
+          : JSON.parse(msg as string)
       ) as GatewayPayload;
 
       if (packet.op !== 1) {
-        this.debug(`Incoming -> ${socket.wantsEtf ? JSON.stringify(packet) : msg}`);
+        this.debug(`Incoming -> ${String(socket.wantsEtf ? JSON.stringify(packet) : msg)}`);
       } //ignore heartbeat stuff
 
-      await gatewayHandlers[packet.op]?.(socket, packet);
+      await gatewayHandlers[packet.op](socket, packet);
     } catch (error) {
       logText(error, 'error');
 
