@@ -1,15 +1,15 @@
+import css from '@eslint/css';
 import js from '@eslint/js';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
-import pluginReact from 'eslint-plugin-react';
-import pluginReactHooks from 'eslint-plugin-react-hooks';
-import pluginJsxA11y from 'eslint-plugin-jsx-a11y';
-import pluginImportSort from 'eslint-plugin-simple-import-sort';
 import json from '@eslint/json';
 import markdown from '@eslint/markdown';
-import css from '@eslint/css';
-import configPrettier from 'eslint-config-prettier';
 import { defineConfig, globalIgnores } from 'eslint/config';
+import configPrettier from 'eslint-config-prettier';
+import pluginJsxA11y from 'eslint-plugin-jsx-a11y';
+import pluginReact from 'eslint-plugin-react';
+import pluginReactHooks from 'eslint-plugin-react-hooks';
+import pluginImportSort from 'eslint-plugin-simple-import-sort';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   globalIgnores([
@@ -48,16 +48,18 @@ export default defineConfig([
       ],
     },
     languageOptions: {
+      parser: tseslint.parser,
       ecmaVersion: 'latest',
       sourceType: 'module',
     },
   },
   {
     files: ['**/*.{ts,mts,cts,tsx}'],
+    ignores: ['eslint.config.mts'],
     extends: [tseslint.configs.strictTypeChecked, tseslint.configs.stylisticTypeChecked],
     languageOptions: {
       parserOptions: {
-        project: true,
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -82,9 +84,7 @@ export default defineConfig([
   {
     files: ['www_static/assets/bootloader/**/*.js', 'oldplunger/**/*.{js,ts}'],
     languageOptions: {
-      globals: {
-        ...globals.browser,
-      },
+      globals: { ...globals.browser },
     },
   },
   {
@@ -93,13 +93,37 @@ export default defineConfig([
       globals: { ...globals.node },
     },
   },
-  // TODO: Remove the following two after migrating to TS
+  // TODO: Remove the following three after migrating to TS
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{js,jsx,mjs,cjs}'],
+    rules: {
+      'no-unused-vars': 'warn',
+      'no-undef': 'warn',
+      'no-console': 'off',
+      'no-debugger': 'warn',
+      'no-unreachable': 'warn',
+      'no-constant-condition': 'warn',
+      'no-empty': 'warn',
+      eqeqeq: 'warn',
+      'no-unused-expressions': 'warn',
+      'no-const-assign': 'warn',
+      'no-func-assign': 'warn',
+      'no-import-assign': 'warn',
+    },
+  },
+  {
+    files: ['**/*.{ts,mts,cts,tsx}'],
+    ignores: ['eslint.config.mts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'prefer-const': 'error',
+    },
+  },
+  {
+    files: ['eslint.config.mts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
   {
