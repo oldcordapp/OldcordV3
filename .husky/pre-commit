@@ -1,1 +1,1 @@
-npm run lint:fix || exit 0
+npx lint-staged || exit 0
