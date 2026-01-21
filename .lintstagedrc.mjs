@@ -8,6 +8,7 @@ export default {
     return [`eslint --fix ${files}`, `prettier --write ${files}`];
   },
   '*.{html,yml,yaml}': (filenames) => {
-    return `prettier --write ${filenames}`;
+    const files = filenames.map((f) => `"${f}"`).join(' ');
+    return `prettier --write ${files}`;
   },
 };
