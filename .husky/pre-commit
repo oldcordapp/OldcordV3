@@ -1,1 +1,1 @@
-npx lint-staged || exit 0
+npx lint-staged
