@@ -19,6 +19,7 @@ export default defineConfig([
     'www_static/assets/oldplunger/**',
     'www_static/assets/selector/**',
     'www_dynamic/**',
+    'dist_server/**',
     '**/package-lock.json',
   ]),
   {
