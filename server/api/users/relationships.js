@@ -100,18 +100,12 @@ router.put('/:userid', async (req, res) => {
     }
 
     let body = req.body;
-    var type = 'SEND_FR';
+    let action = 'SEND_FR';
     let relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
+    let targetRelationship = user.relationships.find((item) => item.id === account.id) ?? { type: 0 };
 
-    if (relationship.type == 3) {
-      type = 'ACCEPT_FR';
-    } else if (body.type == 2) {
-      type = 'BLOCK';
-    }
-
-    let targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
-      type: 0,
-    };
+    if (relationship.type === 3) action = 'ACCEPT_FR';
+    if (body.type === 2) action = 'BLOCK';
 
     //The following can be expanded to:
     //if (relationship.type === 2 || relationship.type === 1) {return 403}
@@ -120,16 +114,13 @@ router.put('/:userid', async (req, res) => {
     //if (!user.settings.friend_source_flags.all && !user.settings.friend_source_flags.mutual_friends && !user.settings.friend_source_flags.mutual_guilds) {return 403}
     //
     //It is compressed to not have repetetive lines. If you wish, revert this.
-    if (type === 'SEND_FR') {
-      if (
-        relationship.type === 2 ||
-        relationship.type === 1 ||
-        targetRelationship.type === 2 ||
-        !user.settings.friend_source_flags ||
-        (!user.settings.friend_source_flags.all &&
-          !user.settings.friend_source_flags.mutual_friends &&
-          !user.settings.friend_source_flags.mutual_guilds)
-      ) {
+    if (action === 'SEND_FR') {
+      //Prevent uh existing friendships from being overwritten + dont allow people who've blocked us to get a friend request
+      if (relationship.type !== 0 || targetRelationship.type === 2) {
+        return res.status(403).json({ code: 403, message: 'Failed to send friend request' });
+      }
+      
+      if (relationship.type === 2 || relationship.type === 1 || targetRelationship.type === 2 || !user.settings.friend_source_flags || (!user.settings.friend_source_flags.all && !user.settings.friend_source_flags.mutual_friends && !user.settings.friend_source_flags.mutual_guilds)) {
         return res.status(403).json({
           code: 403,
           message: 'Failed to send friend request',
@@ -209,7 +200,7 @@ router.put('/:userid', async (req, res) => {
       });
 
       return res.status(204).send();
-    } else if (type === 'ACCEPT_FR') {
+    } else if (action === 'ACCEPT_FR') {
       if (relationship.type === 3) {
         relationship.type = 1;
 
@@ -234,7 +225,7 @@ router.put('/:userid', async (req, res) => {
           message: 'No pending friend request',
         });
       }
-    } else if (type === 'BLOCK') {
+    } else if (action === 'BLOCK') {
       if (relationship.type === 1) {
         //ex-friend
         relationship.type = 0; //cannot set this to 2 in the case that the user blocking is not the user that initiated the current relationship
@@ -316,7 +307,7 @@ router.post('/', async (req, res) => {
         type: 0,
       };
 
-      if (relationship.type === 2 || relaionship.type === 1 || targetRelationship.type === 2) {
+      if (relationship.type === 2 || relationship.type === 1 || targetRelationship.type === 2) {
         return res.status(403).json({
           code: 403,
           message: 'Failed to send friend request',

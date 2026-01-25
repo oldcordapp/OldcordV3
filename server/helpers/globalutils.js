@@ -418,7 +418,7 @@ const globalUtils = {
     try {
       if (!globalUtils.badEmails) {
         let response = await fetch(
-          'https://raw.githubusercontent.com/unkn0w/disposable-email-domain-list/main/domains.txt',
+          'https://raw.githubusercontent.com/oldcordapp/disposable-email-domain-list/refs/heads/main/domains.txt',
         );
 
         if (!response.ok) {

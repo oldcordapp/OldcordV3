@@ -23,6 +23,7 @@
   },
   "require_release_date_cookie": true,
   "cache_authenticated_get_requests": true,
+  "require_friendship_for_dm" : false,
   "auto_embed_urls": false,
   "mfa_required_for_admin": false,
   "tenor_api_key": "",

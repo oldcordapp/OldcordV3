@@ -11,6 +11,7 @@ import relationships from '../relationships.js';
 import billing from './billing.js';
 import connections from './connections.js';
 import guilds from './guilds.js';
+import dispatcher from '../../../helpers/dispatcher.js';
 
 router.use('/relationships', relationships);
 
@@ -188,7 +189,7 @@ router.patch(
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await global.dispatcher.dispatchEventTo(retAccount.id, 'USER_UPDATE', {
+        await dispatcher.dispatchEventTo(retAccount.id, 'USER_UPDATE', {
           avatar: retAccount.avatar,
           discriminator: retAccount.discriminator,
           email: retAccount.email,

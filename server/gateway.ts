@@ -229,7 +229,13 @@ const gateway = {
         this.debug(`Incoming -> ${String(socket.wantsEtf ? JSON.stringify(packet) : msg)}`);
       } //ignore heartbeat stuff
 
-      await gatewayHandlers[packet.op](socket, packet);
+      const handler = gatewayHandlers[packet.op];
+
+      if (typeof handler === 'function') {
+        await handler(socket, packet);
+      } else {
+        this.debug(`Unknown Opcode?? ${packet.op}`);
+      }
     } catch (error) {
       logText(error, 'error');
 

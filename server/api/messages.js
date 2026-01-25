@@ -327,32 +327,28 @@ router.post(
             return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
           }
 
-          let guilds = await global.database.getUsersGuilds(recipient.id);
+          let recipientGuilds = await global.database.getUsersGuilds(recipient.id);
           let ourGuilds = await global.database.getUsersGuilds(account.id);
 
-          let dmsOff = [];
+          let mutualGuilds = recipientGuilds.filter(rg => 
+            ourGuilds.some(og => og.id === rg.id)
+          );
 
-          for (var guild of guilds) {
-            if (!recipient.bot && recipient.settings.restricted_guilds.includes(guild.id)) {
-              dmsOff.push(guild.id);
+          let hasAllowedSharedGuild = mutualGuilds.some((guild) => {
+            const senderAllows = !account.settings.restricted_guilds.includes(guild.id);
+            const recipientAllows = !recipient.settings.restricted_guilds.includes(guild.id);
+
+            return senderAllows && recipientAllows;
+          });
+          
+          if (!globalUtils.areWeFriends(account, recipient)) {
+            if (global.config.require_friendship_for_dm) {
+              return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
             }
-          }
 
-          if (dmsOff.length === guilds.length && !globalUtils.areWeFriends(account, recipient)) {
-            return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
-          }
-
-          let shareMutualGuilds = false;
-
-          for (var guild of guilds) {
-            if (ourGuilds.find((x) => x.id === guild.id)) {
-              shareMutualGuilds = true;
-              break;
+            if (mutualGuilds.length === 0 || !hasAllowedSharedGuild) {
+              return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
             }
-          }
-
-          if (!shareMutualGuilds && !globalUtils.areWeFriends(account, recipient)) {
-            return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
           }
         }
       } else {

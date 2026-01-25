@@ -637,20 +637,17 @@ function channelPermissionsMiddleware(permission) {
               guild.members.some((member) => member.id === sender.id),
           );
 
-          if (!friends && sharedGuilds.length === 0) {
-            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
-          }
+          if (!friends) {
+            let hasAllowedGuild = sharedGuilds.some((guild) => {
+              const senderAllows = !sender.settings.restricted_guilds.includes(guild.id);
+              const recipientAllows = !other.settings.restricted_guilds.includes(guild.id);
 
-          let counted = 0;
+              return senderAllows && recipientAllows;
+            });
 
-          for (var guild of sharedGuilds) {
-            if (!other.bot && other.settings.restricted_guilds.includes(guild.id)) {
-              counted++;
+            if (!hasAllowedGuild || global.config.require_friendship_for_dm) {
+              return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
             }
-          }
-
-          if (counted === sharedGuilds.length && !friends) {
-            return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
           }
         } else if (channel.type == 3) {
           //Permission to send in group chat
