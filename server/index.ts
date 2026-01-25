@@ -234,7 +234,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(cookieParser());
 
-app.use((err, req, res, next) => {
+app.use((err, _req, res, _next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     logText(`Body Parsing Error: ${err.message}`, 'error');
 
@@ -855,7 +855,7 @@ app.get(
   },
 );
 
-app.get(/\/admin*/, (req: any, res: { send: (arg0: any) => any }) => {
+app.get(/\/admin*/, (_req: any, res: { send: (arg0: any) => any }) => {
   return res.send(fs.readFileSync(`./www_static/assets/admin/index.html`, 'utf8'));
 });
 

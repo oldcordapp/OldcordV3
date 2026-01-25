@@ -21,7 +21,7 @@ const identifyPayload = z.object({
     compress: z.boolean().optional(),
     large_threshold: z.number().min(50).max(250).optional(),
     shard: z.tuple([z.number(), z.number()]).optional(),
-    intents: z.number(),
+    intents: z.number().nullish(),
     presence: z.looseObject({}).optional(),
   }),
   s: z.int().nullish(),
@@ -49,11 +49,15 @@ const heartbeatInfoPayload = z.object({
   t: z.string().nullish(),
 });
 
-export const GatewayPayloadSchema = z.discriminatedUnion('op', [
-  heartbeatPayload,
-  identifyPayload,
-  resumePayload,
-  heartbeatInfoPayload,
-]);
+export const GatewayPayloadSchema = z
+  .discriminatedUnion('op', [
+    heartbeatPayload,
+    identifyPayload,
+    resumePayload,
+    heartbeatInfoPayload,
+  ])
+  .catch((ctx) => {
+    return ctx.value as any;
+  });
 
 export type GatewayPayload = z.infer<typeof GatewayPayloadSchema>;
