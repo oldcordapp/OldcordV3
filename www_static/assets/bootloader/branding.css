@@ -3,12 +3,13 @@
   font-size: 12px;
   content: ' This is not official Discord. Oldcord is an old Discord historical preservation/revival project and is not affiliated with or endorsed by Discord, Inc. Do not login with your Discord account.';
 }
+
 .auth-inner .auth-logo {
   width: 168px !important;
   height: 168px !important;
-  background: url(/assets/logo2017.svg) !important;
-  -webkit-background-size: 168px 168px !important;
-  -moz-background-size: 168px 168px !important;
+  background: url('/assets/logo2017.svg') !important;
+  background-size: 168px 168px !important;
+  background-size: 168px 168px !important;
   background-size: 168px 168px !important;
 }
 
@@ -18,7 +19,7 @@
 
 a[class^='logo-'],
 form[class^='authBox-']::before {
-  background: url(/assets/logo.svg) !important;
+  background: url('/assets/logo.svg') !important;
   width: 152px !important;
   height: 30px !important;
 }

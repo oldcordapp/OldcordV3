@@ -6,8 +6,8 @@
   --background: #282b30;
   --background-secondary: #36393f;
 
-  /* Card colors*/
-  --card-shadow: rgba(0, 0, 0, 0.2);
+  /* Card colors */
+  --card-shadow: rgb(0 0 0 / 20%);
 
   /* Text colors */
   --text-normal: #f6f6f7;
@@ -17,7 +17,7 @@
   /* Interactive colors */
   --interactive-normal: #b5bac1;
   --interactive-hover: #dcddde;
-  --interactive-active: #ffffff;
+  --interactive-active: #fff;
   --interactive-muted: #72767d;
 
   /* Button colors */

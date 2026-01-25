@@ -23,8 +23,8 @@
   height: 40px;
   padding: 0 10px;
   margin-top: 10px;
-  background-color: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  background-color: rgb(0 0 0 / 10%);
+  border: 1px solid rgb(0 0 0 / 30%);
   border-radius: 3px;
   color: #f6f6f7;
   font-size: 16px;
@@ -79,7 +79,7 @@
   border: 1px solid #202225;
   border-top: none;
   border-radius: 0 0 3px 3px;
-  box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 5px 0 rgb(0 0 0 / 30%);
   list-style: none;
   padding: 0;
   margin: 0;
@@ -98,11 +98,11 @@
 }
 
 .list-option:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgb(0 0 0 / 10%);
 }
 
 .list-option.is-selected {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgb(0 0 0 / 20%);
 }
 
 .list-dropdown::-webkit-scrollbar {

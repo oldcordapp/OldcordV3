@@ -5,7 +5,7 @@
 }
 
 .changelog-header {
-  padding: 20px 0 20px 0;
+  padding: 20px 0;
   border-bottom: 1px solid var(--background-modifier-accent);
   flex-shrink: 0;
 }

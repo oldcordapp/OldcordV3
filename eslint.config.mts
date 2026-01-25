@@ -162,6 +162,13 @@ export default defineConfig([
     extends: ['css/recommended'],
     rules: {
       'css/no-important': 'off', // We need to override branding
+      'css/no-invalid-properties': [
+        'error',
+        {
+          allowUnknownVariables: true,
+        },
+      ],
+      'css/use-baseline': 'off',
     },
   },
   // Keep original changelogs for archival sake

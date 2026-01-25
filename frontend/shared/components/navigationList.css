@@ -41,7 +41,7 @@
 }
 
 .nav-item:hover {
-  background-color: rgba(79, 84, 92, 0.32);
+  background-color: rgb(79 84 92 / 32%);
   color: #dcddde;
 }
 
@@ -55,7 +55,7 @@
 .nav-separator {
   height: 1px;
   margin: 8px 10px;
-  background-color: rgba(114, 118, 125, 0.3);
+  background-color: rgb(114 118 125 / 30%);
   width: 172px;
 }
 

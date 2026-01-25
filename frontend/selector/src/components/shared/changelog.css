@@ -1,7 +1,7 @@
 .changelog-container {
   background-color: #36393f;
   color: #b9bbbe !important;
-  padding: 0 0 20px 0;
+  padding: 0 0 20px;
 }
 
 .changelog-container p,
@@ -56,6 +56,7 @@
 .header-added {
   color: #43b581;
 }
+
 .header-added::after {
   background-color: #43b581;
 }
@@ -63,6 +64,7 @@
 .header-fixed {
   color: #f04747;
 }
+
 .header-fixed::after {
   background-color: #f04747;
 }
@@ -70,6 +72,7 @@
 .header-improved {
   color: #7289da;
 }
+
 .header-improved::after {
   background-color: #7289da;
 }
@@ -77,15 +80,17 @@
 .header-progress {
   color: #faa61a;
 }
+
 .header-progress::after {
   background-color: #faa61a;
 }
 
 .header-default {
-  color: #ffffff;
+  color: #fff;
 }
+
 .header-default::after {
-  background-color: #ffffff;
+  background-color: #fff;
 }
 
 .changelog-list {
@@ -108,7 +113,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: currentColor;
+  background-color: currentcolor;
   opacity: 0.5;
 }
 

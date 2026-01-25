@@ -12,11 +12,9 @@
   border-radius: 50%;
   border: 2px solid #72767d;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: none;
   padding: 0;
   outline: none;

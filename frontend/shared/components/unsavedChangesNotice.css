@@ -49,18 +49,18 @@ transform: translateY(150.078%) translateZ(0px);
 .notice-container {
   display: flex;
   align-items: center;
-  background-color: rgba(32, 34, 37, 0.9);
+  background-color: rgb(32 34 37 / 90%);
   color: white;
   padding: 10px 10px 10px 16px;
   border-radius: 5px;
-  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 20%);
   pointer-events: auto;
   box-sizing: border-box;
   transition: background-color 0.2s linear;
 }
 
 .red-notice {
-  background-color: rgba(240, 71, 71, 0.9);
+  background-color: rgb(240 71 71 / 90%);
 }
 
 .notice-message {

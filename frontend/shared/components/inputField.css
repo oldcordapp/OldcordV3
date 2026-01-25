@@ -23,8 +23,8 @@
   height: 40px;
   padding: 0 10px;
   margin-top: 10px;
-  background-color: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  background-color: rgb(0 0 0 / 10%);
+  border: 1px solid rgb(0 0 0 / 30%);
   border-radius: 3px;
   color: #f6f6f7;
   font-size: 16px;
@@ -34,7 +34,7 @@
 }
 
 .required-text {
-  color: #ff4444;
+  color: #f44;
   text-align: left;
   display: inline;
   margin-left: 4px;

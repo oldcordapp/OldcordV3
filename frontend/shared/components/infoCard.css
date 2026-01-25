@@ -14,10 +14,8 @@
   line-height: 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-
-  color: rgba(255, 255, 255, 0.4);
-
-  margin: 0 0 4px 0;
+  color: rgb(255 255 255 / 40%);
+  margin: 0 0 4px;
   transform: scaleY(
     1.03
   ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
@@ -29,5 +27,5 @@
 }
 
 .info-body ul {
-  padding: 0px 20px 0 20px;
+  padding: 0 20px;
 }

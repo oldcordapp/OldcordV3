@@ -48,7 +48,7 @@
   font-weight: 400;
   line-height: 1.6;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .description {

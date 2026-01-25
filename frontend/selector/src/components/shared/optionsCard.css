@@ -21,7 +21,7 @@
   color: #f6f6f7;
   font-weight: 600;
   font-size: 16px;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   transform: scaleY(
     1.03
   ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */

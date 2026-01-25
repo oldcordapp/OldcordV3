@@ -3,7 +3,7 @@
   padding: 0;
   box-sizing: border-box;
   scroll-behavior: smooth;
-  text-rendering: optimizeLegibility;
+  text-rendering: optimizelegibility;
 }
 
 html,
@@ -59,7 +59,7 @@ body {
 }
 
 .scroller::-webkit-scrollbar-thumb {
-  background-color: rgba(32, 34, 37, 0.6);
+  background-color: rgb(32 34 37 / 60%);
   border: 2px solid transparent;
   border-radius: 4px;
 }

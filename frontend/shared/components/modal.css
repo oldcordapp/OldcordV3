@@ -2,6 +2,7 @@
   position: absolute;
   z-index: 100;
 }
+
 .modal-container {
   position: fixed;
   top: 0;
@@ -59,8 +60,8 @@
   background-color: #36393f;
   border-radius: 5px;
   box-shadow:
-    0 0 0 1px rgba(32, 34, 37, 0.6),
-    0 2px 10px 0 rgba(0, 0, 0, 0.2);
+    0 0 0 1px rgb(32 34 37 / 60%),
+    0 2px 10px 0 rgb(0 0 0 / 20%);
   max-height: 100%;
   opacity: 0;
   transform: scale(0.7);
@@ -106,7 +107,8 @@
 
 .modal-content.medium {
   max-height: 800px;
-  /*min-height: 400px;*/
+
+  /* min-height: 400px; */
   width: 600px;
 }
 
@@ -123,9 +125,11 @@
   padding: 20px;
   flex-shrink: 0;
 }
+
 .modal-header-text {
   flex-grow: 1;
 }
+
 .modal-title {
   font-size: 16px;
   font-weight: 600;
@@ -137,11 +141,13 @@
     1.03
   ); /* for some reason Nebula Sans' semi-bold and above's height is smaller than the rest */
 }
+
 .modal-subtitle {
   font-size: 12px;
   line-height: 16px;
   color: #b9bbbe;
 }
+
 .modal-close-button {
   color: #dcddde;
   background: none;
@@ -152,25 +158,29 @@
   cursor: pointer;
   transition: opacity 0.17s;
 }
+
 .modal-close-button:hover {
   opacity: 1;
-  background-color: rgba(220, 221, 222, 0.05);
+  background-color: rgb(220 221 222 / 5%);
 }
+
 .modal-content .scroller-wrapper {
   overflow: hidden;
   position: relative;
   flex-grow: 1;
 }
+
 .modal-content .scroller {
   overflow-y: scroll;
   padding: 0 12px 0 20px;
 }
+
 .modal-footer {
   display: flex;
   padding: 20px;
   flex-shrink: 0;
   background-color: #2f3136;
-  box-shadow: inset 0 1px 0 rgba(47, 49, 54, 0.6);
+  box-shadow: inset 0 1px 0 rgb(47 49 54 / 60%);
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
 }
@@ -182,14 +192,17 @@
 .modal-footer.footer-right {
   justify-content: flex-end;
 }
+
 .modal-footer-text {
   font-size: 12px;
   color: #b9bbbe;
 }
+
 .modal-footer-text a {
   color: #00b0f4;
   text-decoration: none;
 }
+
 .modal-footer-text a:hover {
   text-decoration: underline;
 }
@@ -200,10 +213,12 @@
   color: #dcddde;
   margin-top: 0;
 }
+
 .modal-content .scroller ul {
   margin: 20px 0 8px 20px;
   padding: 0;
 }
+
 .modal-content .scroller li {
   list-style: none;
   position: relative;
@@ -212,6 +227,7 @@
   color: #dcddde;
   line-height: 20px;
 }
+
 .modal-content .scroller li::before {
   content: '';
   position: absolute;
@@ -223,6 +239,7 @@
   background-color: #dcddde;
   opacity: 0.3;
 }
+
 .modal-content .scroller strong {
   font-weight: 700;
   color: #f6f6f7;

@@ -44,7 +44,7 @@ body {
   height: 100px;
   width: 100px;
   border-radius: 50px;
-  border: 2px dotted #bbbbbb;
+  border: 2px dotted #bbb;
   user-select: none;
   transition: 0.3s filter;
 }
@@ -52,7 +52,8 @@ body {
 .no-mfa::before {
   content: 'NO MFA';
   color: #fd1b1b1a;
-  /*-webkit-text-stroke: 0.5px red;*/
+
+  /* -webkit-text-stroke: 0.5px red; */
   font-size: 100px;
   top: -15px;
   z-index: 20;
@@ -64,8 +65,7 @@ body {
 .staff-container {
   padding: 10px;
   display: flex;
-  flex-wrap: nowrap;
-  flex-direction: row;
+  flex-flow: row nowrap;
   align-items: center;
 }
 
@@ -87,7 +87,7 @@ body {
 }
 
 .staff-card > h2 > span {
-  color: rgb(144, 153, 164);
+  color: rgb(144 153 164);
 }
 
 .staff-buttons {
@@ -113,12 +113,11 @@ body {
 .confirmation-modal-wrapper {
   background-color: #fff;
   border-radius: 5px;
-  box-shadow: 0 5px 45px 0 rgba(4, 4, 5, 0.1);
+  box-shadow: 0 5px 45px 0 rgb(4 4 5 / 10%);
   color: #36393f;
   font-size: 18px;
   line-height: 21px;
   position: relative;
-  text-align: center;
   display: flex;
   flex-direction: column;
   padding: 40px;
@@ -150,17 +149,17 @@ body {
 
 .confirmation-modal-inner-span {
   text-align: left;
-  color: rgb(79, 84, 92);
+  color: rgb(79 84 92);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .confirmation-modal-inner input {
-  border: 0px;
+  border: 0;
   border-radius: 3px;
-  box-shadow: rgb(227, 229, 232) 0px 0px 0px 1px;
-  color: rgb(79, 86, 96);
+  box-shadow: rgb(227 229 232) 0 0 0 1px;
+  color: rgb(79 86 96);
   font-weight: 500;
   line-height: 20px;
   padding: 10px;
@@ -168,7 +167,7 @@ body {
   box-sizing: border-box;
 }
 
-.confirmation-modal-inner input::-webkit-input-placeholder {
+.confirmation-modal-inner input::input-placeholder {
   color: #e3e5e8;
   font-weight: 500;
 }
@@ -182,7 +181,7 @@ body {
   box-shadow: 0 0 0 1px #c7d0f0;
 }
 
-.confirmation-modal-inner input:hover::-webkit-input-placeholder {
+.confirmation-modal-inner input:hover::input-placeholder {
   color: #9099a4;
 }
 
@@ -197,7 +196,7 @@ body {
   color: #7289da;
 }
 
-.confirmation-modal-inner input::-webkit-input-placeholder {
+.confirmation-modal-inner input::input-placeholder {
   color: #9099a4;
 }
 
@@ -272,12 +271,7 @@ body {
 button {
   border: 0;
   cursor: pointer;
-  font-family:
-    Whitney,
-    Helvetica Neue,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: Whitney, 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .loginPage-account {
@@ -326,7 +320,7 @@ button {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0 0 0 / 60%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -399,7 +393,7 @@ button {
 .mainPage-main-components-dropDownMenu {
   background-color: #fff;
   border-radius: 3px;
-  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 5px 0 rgb(0 0 0 / 10%);
   padding: 8px 0;
   width: 200px;
 }
@@ -449,7 +443,7 @@ button {
   padding: 0 10px;
   border: 1px solid #0000001f;
   border-radius: 3px;
-  color: #000000;
+  color: #000;
   text-align: left;
   transition: border-color 0.15s ease;
   outline: none;
@@ -475,9 +469,7 @@ button {
 
 .textarea-reports {
   resize: vertical;
-  width: 100%;
   background-color: #e3e5e8;
-  color: #9099a4;
   cursor: not-allowed;
   border: 0;
   border-radius: 3px;
@@ -508,7 +500,6 @@ button {
 }
 
 .mainPage-sidebar-menuItem {
-  color: #9099a4;
   display: flex;
   flex-flow: row;
   align-items: center;
@@ -598,7 +589,6 @@ button {
   margin-left: 0;
   border: 0;
   border-radius: 3px;
-  box-shadow: 0 0 0 1px #e3e5e8;
   color: #4f5660;
   display: block;
   font-size: 16px;
@@ -609,12 +599,7 @@ button {
   padding-left: 10px;
   text-align: left;
   width: 100%;
-  font-family:
-    Whitney,
-    Helvetica Neue,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: Whitney, 'Helvetica Neue', Helvetica, Arial, sans-serif;
   box-shadow: 0 2px 4px 0 #0000001a;
 }
 
@@ -639,12 +624,12 @@ button {
 }
 
 .input-error {
-  border: 1px solid rgb(204, 19, 19);
+  border: 1px solid rgb(204 19 19);
   margin-top: -20px;
 }
 
 .input-error-text {
-  color: rgb(204, 19, 19);
+  color: rgb(204 19 19);
   margin-top: 5px;
   margin-left: 5px;
 }
@@ -675,7 +660,7 @@ button {
   margin-right: 10px;
   background-color: #fff;
   border-radius: 5px;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 10%);
   padding: 40px;
   position: relative;
   text-align: center;
@@ -687,7 +672,7 @@ button {
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 10%);
   padding: 20px;
   margin-bottom: 20px;
   position: relative;
@@ -725,7 +710,7 @@ button {
 }
 
 .server-card-details-text h1 {
-  margin: 0 0 5px 0;
+  margin: 0 0 5px;
   color: #4f5660;
 }
 
@@ -857,7 +842,7 @@ button {
 }
 
 .bold {
-  color: #000000 !important;
+  color: #000 !important;
   font-size: 13px;
   font-weight: 500;
 }
@@ -893,9 +878,9 @@ button {
 .message-result-body h1 {
   font-size: 16px;
   font-weight: 400;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   color: #333;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .message-result-body span {
@@ -906,7 +891,7 @@ button {
 
 .subsection-sidebar-info {
   background: #f7f5f5;
-  border: 1px solid #eeeeee;
+  border: 1px solid #eee;
   border-radius: 3px;
   padding: 7px;
 }
@@ -928,7 +913,6 @@ button {
 
 .subsection-sidebar-info::after {
   content: var(--subsection-status-symbol);
-  position: absolute;
   padding: 5px;
   font-size: 12px;
   position: absolute;
@@ -965,7 +949,7 @@ button {
 .attachment-detail svg {
   height: 15px;
   width: auto;
-  fill: currentColor;
+  fill: currentcolor;
   margin-right: 5px;
 }
 
@@ -1099,7 +1083,7 @@ a {
   margin-left: 0;
   background-color: #fff;
   border-radius: 5px;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 10%);
   overflow: hidden;
 }
 
@@ -1187,7 +1171,6 @@ a {
 .mainPage-main-components-infoCard-table-member-username {
   flex: 1 1 auto;
   margin-right: 0;
-  margin-left: 10px;
   white-space: normal;
   color: #4f5660;
   font-size: 16px;
@@ -1275,7 +1258,7 @@ a {
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
-  padding: 10px 10px;
+  padding: 10px;
   text-transform: uppercase;
   vertical-align: middle;
   display: flex;
@@ -1308,7 +1291,7 @@ th {
   border-radius: 4px;
   padding: 10px;
   width: 100%;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 10%);
   text-align: center;
 }
 
@@ -1334,7 +1317,7 @@ th {
 }
 
 .update-available svg {
-  fill: currentColor;
+  fill: currentcolor;
   width: 24px;
   height: auto;
   margin-right: 5px;
@@ -1349,11 +1332,11 @@ th {
 .update-available-commit p,
 .update-available-instructions p,
 .update-available-instructions li {
-  margin: 5px 0 5px 0;
+  margin: 5px 0;
 }
 
 .block {
   display: inline-block;
   font-family: 'Courier New', Courier, monospace;
-  margin: 0 5px 0 5px;
+  margin: 0 5px;
 }
