@@ -8,11 +8,11 @@ router.param('applicationid', async (req, res, next, applicationid) => {
   req.application = await global.database.getApplicationById(applicationid);
 
   if (req.application) {
-    let bot = await global.database.getBotByApplicationId(applicationid);
+    const bot = await global.database.getBotByApplicationId(applicationid);
 
     if (bot) {
-      let is_public = bot.public;
-      let requires_code_grant = bot.require_code_grant;
+      const is_public = bot.public;
+      const requires_code_grant = bot.require_code_grant;
 
       delete bot.public;
       delete bot.require_code_grant;
@@ -29,21 +29,21 @@ router.param('applicationid', async (req, res, next, applicationid) => {
 
 router.get('/', async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (!account) {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
-    let applications = await global.database.getUsersApplications(req.account);
+    const applications = await global.database.getUsersApplications(req.account);
 
     for (var application of applications) {
-      let bot = await global.database.getBotByApplicationId(application.id);
+      const bot = await global.database.getBotByApplicationId(application.id);
 
       if (!bot) continue;
 
-      let is_public = bot.public;
-      let requires_code_grant = bot.requires_code_grant;
+      const is_public = bot.public;
+      const requires_code_grant = bot.requires_code_grant;
 
       delete bot.public;
       delete bot.require_code_grant;
@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    let name = req.body.name;
+    const name = req.body.name;
 
     if (!name) {
       return res.status(400).json({
@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
       }); //move to its own response
     }
 
-    let application = await global.database.createUserApplication(req.account, name);
+    const application = await global.database.createUserApplication(req.account, name);
 
     if (!application) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
 
 router.get('/:applicationid', async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (!req.application) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
@@ -116,8 +116,8 @@ router.get('/:applicationid', async (req, res) => {
 
 router.patch('/:applicationid', async (req, res) => {
   try {
-    let account = req.account;
-    let application = req.application;
+    const account = req.account;
+    const application = req.application;
 
     if (!application || application.owner.id !== account.id) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
@@ -169,14 +169,14 @@ router.patch('/:applicationid', async (req, res) => {
       }); //to-do
     }
 
-    let tryUpdateApplication = await global.database.updateUserApplication(application);
+    const tryUpdateApplication = await global.database.updateUserApplication(application);
 
     if (!tryUpdateApplication) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
     if (send_update_bot) {
-      let tryUpdateBot = await global.database.updateBot(application.bot);
+      const tryUpdateBot = await global.database.updateBot(application.bot);
 
       if (!tryUpdateBot) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -201,8 +201,8 @@ router.patch('/:applicationid', async (req, res) => {
 //I don't know if this is even necessary, yolo
 router.delete('/:applicationid', async (req, res) => {
   try {
-    let account = req.account;
-    let application = req.application;
+    const account = req.account;
+    const application = req.application;
 
     if (!application || application.owner.id != account.id) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
@@ -220,8 +220,8 @@ router.delete('/:applicationid', async (req, res) => {
 
 router.post('/:applicationid/bot', async (req, res) => {
   try {
-    let account = req.account;
-    let application = req.application;
+    const account = req.account;
+    const application = req.application;
 
     if (!application || application.owner.id != account.id) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
@@ -234,7 +234,7 @@ router.post('/:applicationid/bot', async (req, res) => {
       }); //figure this one out aswell
     }
 
-    let tryCreateBot = await global.database.abracadabraApplication(application);
+    const tryCreateBot = await global.database.abracadabraApplication(application);
 
     if (!tryCreateBot) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -250,8 +250,8 @@ router.post('/:applicationid/bot', async (req, res) => {
 
 router.post('/:applicationid/delete', async (req, res) => {
   try {
-    let account = req.account;
-    let application = req.application;
+    const account = req.account;
+    const application = req.application;
 
     if (!application || application.owner.id != account.id) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);

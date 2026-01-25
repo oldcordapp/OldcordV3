@@ -20,7 +20,7 @@ const router = Router({ mergeParams: true });
 const config = globalUtils.config;
 
 router.param('channelid', async (req, res, next, channelid) => {
-  let guild = req.guild;
+  const guild = req.guild;
 
   if (!guild) {
     //fallback for dm channels & group dms & legacy clients
@@ -189,16 +189,16 @@ router.patch(
           channel.topic = req.body.topic ?? channel.topic;
           channel.nsfw = req.body.nsfw ?? channel.nsfw;
 
-          let rateLimit = req.body.rate_limit_per_user ?? channel.rate_limit_per_user;
+          const rateLimit = req.body.rate_limit_per_user ?? channel.rate_limit_per_user;
 
           channel.rate_limit_per_user = Math.min(Math.max(rateLimit, 0), 120);
         }
 
         if (channel.type === 2) {
-          let userLimit = req.body.user_limit ?? channel.user_limit;
+          const userLimit = req.body.user_limit ?? channel.user_limit;
           channel.user_limit = Math.min(Math.max(userLimit, 0), 99);
 
-          let bitrate = req.body.bitrate ?? channel.bitrate;
+          const bitrate = req.body.bitrate ?? channel.bitrate;
           channel.bitrate = Math.min(Math.max(bitrate, 8000), 96000);
         }
       } //do this for only guild channels
@@ -294,7 +294,7 @@ router.post(
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
       }
 
-      let call_msg = await global.database.createSystemMessage(null, req.channel.id, 3, [
+      const call_msg = await global.database.createSystemMessage(null, req.channel.id, 3, [
         req.account,
       ]);
 
@@ -325,7 +325,7 @@ router.post(
         });
       } //make an error code
 
-      let invites = await global.database.getChannelInvites(req.params.channelid);
+      const invites = await global.database.getChannelInvites(req.params.channelid);
 
       if (invites.length >= global.config.limits['invites_per_guild'].max) {
         return res.status(400).json({
@@ -394,13 +394,13 @@ router.get(
   quickcache.cacheFor(60 * 5, true),
   async (req, res) => {
     try {
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (!guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
       }
 
-      let webhooks = guild.webhooks.filter((x) => x.channel_id === req.channel.id);
+      const webhooks = guild.webhooks.filter((x) => x.channel_id === req.channel.id);
 
       return res.status(200).json(webhooks);
     } catch (error) {
@@ -418,8 +418,8 @@ router.post(
   channelPermissionsMiddleware('MANAGE_WEBHOOKS'),
   async (req, res) => {
     try {
-      let account = req.account;
-      let guild = req.guild;
+      const account = req.account;
+      const guild = req.guild;
 
       if (!guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
@@ -429,9 +429,15 @@ router.post(
         req.body.name = 'Captain Hook';
       }
 
-      let name = req.body.name;
+      const name = req.body.name;
 
-      let webhook = await global.database.createWebhook(guild, account, req.channel.id, name, null);
+      const webhook = await global.database.createWebhook(
+        guild,
+        account,
+        req.channel.id,
+        name,
+        null,
+      );
 
       if (!webhook) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -453,7 +459,7 @@ router.put(
   guildPermissionsMiddleware('MANAGE_ROLES'),
   async (req, res) => {
     try {
-      let id = req.params.id;
+      const id = req.params.id;
       let type = req.body.type;
 
       if (!type) {
@@ -468,20 +474,20 @@ router.put(
       } //figure out this response
 
       let channel = req.channel;
-      let channel_overwrites = await global.database.getChannelPermissionOverwrites(
+      const channel_overwrites = await global.database.getChannelPermissionOverwrites(
         req.guild,
         channel.id,
       );
-      let overwrites = channel_overwrites;
-      let overwriteIndex = channel_overwrites.findIndex((x) => x.id == id);
+      const overwrites = channel_overwrites;
+      const overwriteIndex = channel_overwrites.findIndex((x) => x.id == id);
       let allow = 0;
       let deny = 0;
 
-      let permissionValuesObject = global.permissions.toObject();
-      let permissionKeys = Object.keys(permissionValuesObject);
-      let keys = permissionKeys.map((key) => permissionValuesObject[key]);
+      const permissionValuesObject = global.permissions.toObject();
+      const permissionKeys = Object.keys(permissionValuesObject);
+      const keys = permissionKeys.map((key) => permissionValuesObject[key]);
 
-      for (let permValue of keys) {
+      for (const permValue of keys) {
         if (req.body.allow & permValue) {
           allow |= permValue;
         }
@@ -508,13 +514,13 @@ router.put(
       }
 
       if (type == 'member') {
-        let member = req.guild.members.find((x) => x.id === id);
+        const member = req.guild.members.find((x) => x.id === id);
 
         if (member == null) {
           return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
         }
       } else if (type == 'role') {
-        let role = req.guild.roles.find((x) => x.id === id);
+        const role = req.guild.roles.find((x) => x.id === id);
 
         if (role == null) {
           return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
@@ -547,15 +553,15 @@ router.delete(
   guildPermissionsMiddleware('MANAGE_ROLES'),
   async (req, res) => {
     try {
-      let id = req.params.id;
-      let channel_id = req.params.channelid;
+      const id = req.params.id;
+      const channel_id = req.params.channelid;
 
       let channel = req.channel;
-      let channel_overwrites = await global.database.getChannelPermissionOverwrites(
+      const channel_overwrites = await global.database.getChannelPermissionOverwrites(
         req.guild,
         channel.id,
       );
-      let overwriteIndex = channel_overwrites.findIndex((x) => x.id == id);
+      const overwriteIndex = channel_overwrites.findIndex((x) => x.id == id);
 
       if (!req.channel_types_are_ints) {
         channel.type = channel.type == 2 ? 'voice' : 'text';
@@ -612,7 +618,7 @@ router.put(
     try {
       const sender = req.account;
 
-      let channel = req.channel;
+      const channel = req.channel;
 
       if (channel.type !== 3) {
         return res.status(403).json({
@@ -659,7 +665,7 @@ router.put(
       //Notify new recipient
       await globalUtils.pingPrivateChannelUser(channel, recipient.id);
 
-      let add_msg = await global.database.createSystemMessage(null, channel.id, 1, [
+      const add_msg = await global.database.createSystemMessage(null, channel.id, 1, [
         sender,
         recipient,
       ]);
@@ -692,7 +698,7 @@ router.delete(
     try {
       const sender = req.account;
 
-      let channel = req.channel;
+      const channel = req.channel;
 
       if (channel.type !== 3) {
         return res.status(403).json({
@@ -722,7 +728,9 @@ router.delete(
         return globalUtils.personalizeChannelObject(this.socket, channel);
       });
 
-      let remove_msg = await global.database.createSystemMessage(null, channel.id, 2, [recipient]);
+      const remove_msg = await global.database.createSystemMessage(null, channel.id, 2, [
+        recipient,
+      ]);
 
       await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', remove_msg);
 
@@ -753,7 +761,7 @@ router.delete(
     try {
       const sender = req.account;
 
-      let channel = req.channel;
+      const channel = req.channel;
 
       if (channel.type !== 3 && channel.type !== 1) {
         if (req.guild && req.guild.channels.length === 1) {
@@ -766,20 +774,23 @@ router.delete(
 
       if (channel.type == 1 || channel.type == 3) {
         //Leaving a private channel
-        let userPrivateChannels = await global.database.getPrivateChannels(sender.id);
+        const userPrivateChannels = await global.database.getPrivateChannels(sender.id);
 
         if (!userPrivateChannels) {
           return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
         //TODO: Elegant but inefficient
-        let newUserPrivateChannels = userPrivateChannels.filter((id) => id != channel.id);
+        const newUserPrivateChannels = userPrivateChannels.filter((id) => id != channel.id);
 
         if (newUserPrivateChannels.length == userPrivateChannels.length) {
           return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
-        let tryUpdate = await global.database.setPrivateChannels(sender.id, newUserPrivateChannels);
+        const tryUpdate = await global.database.setPrivateChannels(
+          sender.id,
+          newUserPrivateChannels,
+        );
 
         if (!tryUpdate) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -791,7 +802,7 @@ router.delete(
         });
 
         if (channel.type == 3) {
-          let newRecipientsList = channel.recipients.filter(
+          const newRecipientsList = channel.recipients.filter(
             (recipientObject) => recipientObject.id !== sender.id,
           );
 
@@ -799,7 +810,7 @@ router.delete(
 
           //handover logic
           if (channel.owner_id === sender.id && newRecipientsList.length > 0) {
-            let newOwnerId = newRecipientsList[0].id;
+            const newOwnerId = newRecipientsList[0].id;
 
             channel.owner_id = newOwnerId;
 

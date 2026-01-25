@@ -42,7 +42,7 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req, res) => {
       return res.status(400).json(errors.response_400.ADMIN_USE_BOT_TAB);
     } //This is because it has application info, etc
 
-    let bots = await global.database.getUsersBots(userRet);
+    const bots = await global.database.getUsersBots(userRet);
 
     const userRetTotal = {
       ...userRet,
@@ -112,7 +112,7 @@ router.get('/guilds/:guildid', staffAccessMiddleware(3), async (req, res) => {
       return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
     }
 
-    let owner = await global.database.getAccountByUserId(guildRet.owner_id);
+    const owner = await global.database.getAccountByUserId(guildRet.owner_id);
 
     if (owner != null) {
       guildRet.owner = globalUtils.miniUserObject(owner);
@@ -128,7 +128,7 @@ router.get('/guilds/:guildid', staffAccessMiddleware(3), async (req, res) => {
 
 router.get('/@me', staffAccessMiddleware(1), async (req, res) => {
   try {
-    let ret = req.account;
+    const ret = req.account;
 
     ret.staff_details = req.staff_details;
     ret.needs_mfa = global.config.mfa_required_for_admin;
@@ -154,7 +154,7 @@ router.get('/@me', staffAccessMiddleware(1), async (req, res) => {
 
 router.get('/reports', staffAccessMiddleware(1), async (req, res) => {
   try {
-    let reports = await global.database.getInstanceReports();
+    const reports = await global.database.getInstanceReports();
 
     return res.status(200).json(reports);
   } catch (error) {
@@ -166,13 +166,13 @@ router.get('/reports', staffAccessMiddleware(1), async (req, res) => {
 
 router.patch('/reports/:reportid', staffAccessMiddleware(1), async (req, res) => {
   try {
-    let reportid = req.params.reportid;
+    const reportid = req.params.reportid;
 
     if (!reportid) {
       return res.status(404).json(errors.response_404.UNKNOWN_REPORT); // make our own error codes for these
     }
 
-    let action = req.body.action;
+    const action = req.body.action;
 
     if (!action) {
       return res.status(400).json({
@@ -181,13 +181,13 @@ router.patch('/reports/:reportid', staffAccessMiddleware(1), async (req, res) =>
       });
     }
 
-    let valid_states = ['approved', 'discarded'];
+    const valid_states = ['approved', 'discarded'];
 
     if (!valid_states.includes(action.toLowerCase())) {
       return res.status(400).json(errors.response_400.INVALID_ACTION_STATE);
     }
 
-    let tryUpdateReport = await global.database.updateReport(reportid, action.toUpperCase());
+    const tryUpdateReport = await global.database.updateReport(reportid, action.toUpperCase());
 
     if (!tryUpdateReport) {
       return res.status(404).json(errors.response_404.UNKNOWN_REPORT);
@@ -203,13 +203,13 @@ router.patch('/reports/:reportid', staffAccessMiddleware(1), async (req, res) =>
 
 router.delete('/guilds/:guildid', staffAccessMiddleware(3), async (req, res) => {
   try {
-    let guildid = req.params.guildid;
+    const guildid = req.params.guildid;
 
     if (!guildid) {
       return res.status(400).json(errors.response_404.UNKNOWN_GUILD);
     }
 
-    let guildRet = await global.database.getGuildById(guildid);
+    const guildRet = await global.database.getGuildById(guildid);
 
     if (!guildRet) {
       return res.status(400).json(errors.response_404.UNKNOWN_GUILD);
@@ -231,7 +231,7 @@ router.delete('/guilds/:guildid', staffAccessMiddleware(3), async (req, res) => 
 
 router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (req, res) => {
   try {
-    let user = req.user;
+    const user = req.user;
 
     if (!user) {
       return res
@@ -252,7 +252,7 @@ router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (
         .json(user.bot ? errors.response_403.BOT_DISABLED : errors.response_403.ACCOUNT_DISABLED);
     }
 
-    let until = req.body.disabled_until;
+    const until = req.body.disabled_until;
 
     if (!until) {
       return res.status(400).json({
@@ -261,7 +261,7 @@ router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (
       });
     }
 
-    let audit_log_reason = req.body.internal_reason;
+    const audit_log_reason = req.body.internal_reason;
 
     if (!audit_log_reason) {
       return res.status(400).json({
@@ -270,7 +270,7 @@ router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (
       });
     }
 
-    let tryDisable = await global.database.internalDisableAccount(
+    const tryDisable = await global.database.internalDisableAccount(
       req.staff_details,
       req.params.userid,
       until ?? 'FOREVER',
@@ -293,7 +293,7 @@ router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (
 
 router.get('/staff', staffAccessMiddleware(4), async (req, res) => {
   try {
-    let staff = await global.database.getInstanceStaff();
+    const staff = await global.database.getInstanceStaff();
 
     return res.status(200).json(staff);
   } catch (error) {
@@ -305,7 +305,7 @@ router.get('/staff', staffAccessMiddleware(4), async (req, res) => {
 
 router.get('/staff/audit-logs', staffAccessMiddleware(4), async (req, res) => {
   try {
-    let audit_logs = await global.database.getStaffAuditLogs();
+    const audit_logs = await global.database.getStaffAuditLogs();
 
     return res.status(200).json(audit_logs);
   } catch (error) {
@@ -317,8 +317,8 @@ router.get('/staff/audit-logs', staffAccessMiddleware(4), async (req, res) => {
 
 router.post('/staff', staffAccessMiddleware(4), async (req, res) => {
   try {
-    let user_id = req.body.user_id;
-    let privilege = req.body.privilege;
+    const user_id = req.body.user_id;
+    const privilege = req.body.privilege;
 
     if (!user_id) {
       return res.status(400).json({
@@ -353,13 +353,13 @@ router.post('/staff', staffAccessMiddleware(4), async (req, res) => {
       });
     }
 
-    let tryAddStaff = await global.database.addInstanceStaff(req.user, privilege);
+    const tryAddStaff = await global.database.addInstanceStaff(req.user, privilege);
 
     if (!tryAddStaff) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
-    let new_staff = await global.database.getInstanceStaff();
+    const new_staff = await global.database.getInstanceStaff();
 
     return res.status(200).json(new_staff);
   } catch (error) {
@@ -371,8 +371,8 @@ router.post('/staff', staffAccessMiddleware(4), async (req, res) => {
 
 router.post('/staff/:userid', staffAccessMiddleware(4), async (req, res) => {
   try {
-    let user = req.user;
-    let privilege = req.body.privilege;
+    const user = req.user;
+    const privilege = req.body.privilege;
 
     if (!user) {
       return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -382,13 +382,13 @@ router.post('/staff/:userid', staffAccessMiddleware(4), async (req, res) => {
       return res.status(404).json(errors.response_404.UNKNOWN_USER);
     }
 
-    let tryUpdateStaff = await global.database.updateInstanceStaff(user, privilege);
+    const tryUpdateStaff = await global.database.updateInstanceStaff(user, privilege);
 
     if (!tryUpdateStaff) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
-    let new_staff = await global.database.getInstanceStaff();
+    const new_staff = await global.database.getInstanceStaff();
 
     return res.status(200).json(new_staff);
   } catch (error) {
@@ -400,7 +400,7 @@ router.post('/staff/:userid', staffAccessMiddleware(4), async (req, res) => {
 
 router.delete('/staff/:userid', staffAccessMiddleware(4), async (req, res) => {
   try {
-    let user = req.user;
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -422,7 +422,7 @@ router.delete('/staff/:userid', staffAccessMiddleware(4), async (req, res) => {
 
 router.delete('/staff/:userid/audit-logs', staffAccessMiddleware(4), async (req, res) => {
   try {
-    let user = req.user;
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -450,7 +450,7 @@ router.get('/messages', staffAccessMiddleware(2), async (req, res) => {
     let cdnLink = req.query.cdnLink;
     let message;
 
-    let normalizeParam = (param) => {
+    const normalizeParam = (param) => {
       if (param === 'null' || param === 'undefined' || param === '') {
         return null;
       }
@@ -499,17 +499,17 @@ router.get('/messages', staffAccessMiddleware(2), async (req, res) => {
       });
     }
 
-    let channel = await global.database.getChannelById(channelId);
+    const channel = await global.database.getChannelById(channelId);
 
     if (!channel) {
       return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
     }
 
-    let retMessages = [];
+    const retMessages = [];
 
-    let targetMessageId = messageId || null;
+    const targetMessageId = messageId || null;
 
-    let messagesBefore = await global.database.getChannelMessages(
+    const messagesBefore = await global.database.getChannelMessages(
       channelId,
       '',
       25,
@@ -524,7 +524,7 @@ router.get('/messages', staffAccessMiddleware(2), async (req, res) => {
       retMessages.push(message);
     }
 
-    let messagesAfter = await global.database.getChannelMessages(
+    const messagesAfter = await global.database.getChannelMessages(
       channelId,
       '',
       25,
@@ -535,13 +535,13 @@ router.get('/messages', staffAccessMiddleware(2), async (req, res) => {
 
     retMessages.push(...messagesAfter);
 
-    let uniqueMessagesMap = new Map();
+    const uniqueMessagesMap = new Map();
 
     for (const msg of retMessages) {
       uniqueMessagesMap.set(msg.id, msg);
     }
 
-    let finalMessages = Array.from(uniqueMessagesMap.values());
+    const finalMessages = Array.from(uniqueMessagesMap.values());
 
     finalMessages.sort((a, b) => a.id.localeCompare(b.id));
 
@@ -555,19 +555,19 @@ router.get('/messages', staffAccessMiddleware(2), async (req, res) => {
 
 router.delete('/messages/:messageid', staffAccessMiddleware(2), async (req, res) => {
   try {
-    let messageid = req.params.messageid;
+    const messageid = req.params.messageid;
 
     if (!messageid) {
       return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
     }
 
-    let msgRet = await global.database.getMessageById(messageid);
+    const msgRet = await global.database.getMessageById(messageid);
 
     if (!msgRet) {
       return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
     }
 
-    let guildRet = await global.database.getGuildById(msgRet.guild_id);
+    const guildRet = await global.database.getGuildById(msgRet.guild_id);
 
     if (!guildRet) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -591,7 +591,7 @@ router.delete('/messages/:messageid', staffAccessMiddleware(2), async (req, res)
 
 router.post('/users/:userid/moderate/delete', staffAccessMiddleware(3), async (req, res) => {
   try {
-    let user = req.user;
+    const user = req.user;
 
     if (!user) {
       return res
@@ -605,7 +605,7 @@ router.post('/users/:userid/moderate/delete', staffAccessMiddleware(3), async (r
         .json(user.bot ? errors.response_404.UNKNOWN_BOT : errors.response_404.UNKNOWN_USER);
     }
 
-    let audit_log_reason = req.body.internal_reason;
+    const audit_log_reason = req.body.internal_reason;
 
     if (!audit_log_reason) {
       return res
@@ -620,7 +620,7 @@ router.post('/users/:userid/moderate/delete', staffAccessMiddleware(3), async (r
       return res.status(204).send();
     }
 
-    let tryDisable = await global.database.internalDeleteAccount(
+    const tryDisable = await global.database.internalDeleteAccount(
       req.staff_details,
       req.params.userid,
       audit_log_reason,
@@ -662,7 +662,7 @@ router.post('/settings', staffAccessMiddleware(4), async (req, res) => {
 
     const configFile = join(process.cwd(), 'config.json');
 
-    let configJson = JSON.parse(readFileSync(configFile, { encoding: 'utf-8' }));
+    const configJson = JSON.parse(readFileSync(configFile, { encoding: 'utf-8' }));
 
     for (const key in settingsToChange) {
       if (settingsToChange.hasOwnProperty(key)) {

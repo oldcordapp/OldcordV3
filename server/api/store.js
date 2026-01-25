@@ -12,9 +12,9 @@ router.param('id', async (req, _, next, id) => {
 });
 
 router.get('/directory/:id', (req, res) => {
-  let id = req.params.id;
-  let SKU_ID = generate();
-  let APP_ID = generate();
+  const id = req.params.id;
+  const SKU_ID = generate();
+  const APP_ID = generate();
 
   return res.status(200).json({
     id: id,
@@ -59,7 +59,7 @@ router.get('/directory/:id', (req, res) => {
 });
 
 router.get('/published-listings/skus/:skuId', async (req, res) => {
-  let id = req.params.skuId;
+  const id = req.params.skuId;
 
   return res.status(200).json({
     benefits: [],

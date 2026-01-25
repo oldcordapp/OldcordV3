@@ -17,8 +17,8 @@ router.get(
   quickcache.cacheFor(60 * 5, true),
   async (req, res) => {
     try {
-      let guild = req.guild;
-      let emojis = guild.emojis;
+      const guild = req.guild;
+      const emojis = guild.emojis;
 
       return res.status(200).json(emojis);
     } catch (error) {
@@ -31,8 +31,8 @@ router.get(
 
 router.post('/', guildMiddleware, guildPermissionsMiddleware('MANAGE_EMOJIS'), async (req, res) => {
   try {
-    let account = req.account;
-    let guild = req.guild;
+    const account = req.account;
+    const guild = req.guild;
 
     if (guild.emojis.length >= global.config.limits['emojis_per_guild'].max) {
       return res.status(404).json({
@@ -62,7 +62,7 @@ router.post('/', guildMiddleware, guildPermissionsMiddleware('MANAGE_EMOJIS'), a
     const mimeType = req.body.image.split(';')[0].split(':')[1];
     const extension = mimeType.split('/')[1];
 
-    let emoji_id = Snowflake.generate();
+    const emoji_id = Snowflake.generate();
 
     if (!existsSync(`./www_dynamic/emojis`)) {
       mkdirSync(`./www_dynamic/emojis`, { recursive: true });
@@ -74,7 +74,7 @@ router.post('/', guildMiddleware, guildPermissionsMiddleware('MANAGE_EMOJIS'), a
 
     writeFileSync(filePath, imageBuffer);
 
-    let tryCreateEmoji = await global.database.createCustomEmoji(
+    const tryCreateEmoji = await global.database.createCustomEmoji(
       guild,
       account,
       emoji_id,
@@ -85,7 +85,7 @@ router.post('/', guildMiddleware, guildPermissionsMiddleware('MANAGE_EMOJIS'), a
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
-    let currentEmojis = guild.emojis;
+    const currentEmojis = guild.emojis;
 
     for (var emoji of currentEmojis) {
       emoji.roles = [];
@@ -137,9 +137,9 @@ router.patch(
   guildPermissionsMiddleware('MANAGE_EMOJIS'),
   async (req, res) => {
     try {
-      let guild = req.guild;
-      let emoji_id = req.params.emoji;
-      let emoji = req.guild.emojis.find((x) => x.id === emoji_id);
+      const guild = req.guild;
+      const emoji_id = req.params.emoji;
+      const emoji = req.guild.emojis.find((x) => x.id === emoji_id);
 
       if (emoji == null) {
         return res.status(404).json(errors.response_404.UNKNOWN_EMOJI);
@@ -162,13 +162,13 @@ router.patch(
         });
       }
 
-      let tryUpdate = await global.database.updateCustomEmoji(guild, emoji_id, req.body.name);
+      const tryUpdate = await global.database.updateCustomEmoji(guild, emoji_id, req.body.name);
 
       if (!tryUpdate) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       }
 
-      let currentEmojis = guild.emojis;
+      const currentEmojis = guild.emojis;
 
       for (var emoji2 of currentEmojis) {
         emoji2.roles = [];
@@ -212,21 +212,21 @@ router.delete(
   guildPermissionsMiddleware('MANAGE_EMOJIS'),
   async (req, res) => {
     try {
-      let guild = req.guild;
-      let emoji_id = req.params.emoji;
-      let emoji = req.guild.emojis.find((x) => x.id === emoji_id);
+      const guild = req.guild;
+      const emoji_id = req.params.emoji;
+      const emoji = req.guild.emojis.find((x) => x.id === emoji_id);
 
       if (emoji == null) {
         return res.status(404).json(errors.response_404.UNKNOWN_EMOJI);
       }
 
-      let tryDelete = await global.database.deleteCustomEmoji(guild, emoji_id);
+      const tryDelete = await global.database.deleteCustomEmoji(guild, emoji_id);
 
       if (!tryDelete) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       }
 
-      let currentEmojis = guild.emojis;
+      const currentEmojis = guild.emojis;
 
       for (var emoji2 of currentEmojis) {
         emoji2.roles = [];

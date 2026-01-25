@@ -30,7 +30,7 @@ const globalUtils = {
   generateGatewayURL: (req) => {
     let host = req.headers['host'];
     if (host) host = host.split(':', 2)[0];
-    let baseUrl = _config.gateway_url == '' ? (host ?? _config.base_url) : _config.gateway_url;
+    const baseUrl = _config.gateway_url == '' ? (host ?? _config.base_url) : _config.gateway_url;
     return `${_config.secure ? 'wss' : 'ws'}://${baseUrl}${_config.includePortInWsUrl && (_config.secure ? _config.ws_port != 443 : _config.ws_port != 80) ? `:${_config.ws_port}` : ''}`;
   },
   generateRTCServerURL: () => {
@@ -41,9 +41,9 @@ const globalUtils = {
   unavailableGuildsStore: [],
   generateString: (length) => {
     let result = '';
-    let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let charactersLength = characters.length;
-    let bytes = randomBytes(length);
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    const bytes = randomBytes(length);
 
     for (let i = 0; i < length; i++) {
       result += characters.charAt(bytes[i] % charactersLength);
@@ -71,7 +71,7 @@ const globalUtils = {
         finalStatus = 'idle';
       }
 
-      let primarySession =
+      const primarySession =
         activeSessions.find((s) => s.presence.activities?.length > 0) || activeSessions[0];
 
       return {
@@ -90,10 +90,10 @@ const globalUtils = {
     };
   },
   getGuildPresences: (guild) => {
-    let presences = [];
+    const presences = [];
 
     for (var member of guild.members) {
-      let presence = globalUtils.getUserPresence(member);
+      const presence = globalUtils.getUserPresence(member);
 
       presences.push(presence);
     }
@@ -101,10 +101,10 @@ const globalUtils = {
     return presences;
   },
   getGuildOnlineUserIds: (guild_id) => {
-    let user_ids = new Set();
+    const user_ids = new Set();
 
-    for (let [userId, sessions] of global.userSessions) {
-      let isOnlineAndVisible = sessions.some((s) => {
+    for (const [userId, sessions] of global.userSessions) {
+      const isOnlineAndVisible = sessions.some((s) => {
         return !s.dead && s.presence?.status !== 'offline' && s.presence?.status !== 'invisible';
       });
 
@@ -151,10 +151,10 @@ const globalUtils = {
       'meepo',
     ];
 
-    let selected = [];
+    const selected = [];
 
     while (selected.length < 3) {
-      let word = words[Math.floor(Math.random() * words.length)];
+      const word = words[Math.floor(Math.random() * words.length)];
 
       if (!selected.includes(word)) {
         selected.push(word);
@@ -182,7 +182,7 @@ const globalUtils = {
       ];
       client_build = `${months[now.getMonth()]}_${now.getDate()}_${now.getFullYear()}`;
     }
-    let parts = client_build ? client_build.split('_') : null;
+    const parts = client_build ? client_build.split('_') : null;
     if (!parts || parts.length < 3) {
       //Invalid release date format. Use defaults.
       obj.client_build = '';
@@ -190,10 +190,10 @@ const globalUtils = {
       obj.channel_types_are_ints = false;
       return false;
     } else {
-      let month = parts[0];
-      let day = parts[1];
-      let year = parts[2];
-      let date = new Date(`${month} ${day} ${year}`);
+      const month = parts[0];
+      const day = parts[1];
+      const year = parts[2];
+      const date = new Date(`${month} ${day} ${year}`);
 
       obj.client_build = client_build;
       obj.client_build_date = date;
@@ -264,13 +264,13 @@ const globalUtils = {
       : 'everything';
   },
   canUseServer: (year, region) => {
-    let serverRegion = globalUtils.serverRegionToYear(region);
+    const serverRegion = globalUtils.serverRegionToYear(region);
 
     if (serverRegion.toLowerCase() === 'everything') {
       return true;
     }
 
-    let [firstYear, lastYear] = serverRegion.split('-').map((year) => parseInt(year));
+    const [firstYear, lastYear] = serverRegion.split('-').map((year) => parseInt(year));
 
     if (year >= firstYear && year <= lastYear) {
       return true;
@@ -345,17 +345,17 @@ const globalUtils = {
       req.client_build_date &&
       req.client_build_date.getFullYear() != parseInt(guild.region)
     ) {
-      let sessions = global.userSessions.get(req.account.id);
+      const sessions = global.userSessions.get(req.account.id);
 
       if (!sessions) return guild; //fallback ig
 
-      let session = sessions.find(
+      const session = sessions.find(
         (x) => x.socket != null && x.socket.client_build === req.client_build,
       );
 
       if (!session) return guild;
 
-      let proper_guild = session.guilds.find((x) => x.id === guild.id);
+      const proper_guild = session.guilds.find((x) => x.id === guild.id);
 
       if (!session.guilds || !proper_guild) return guild; //man wtf
 
@@ -365,7 +365,7 @@ const globalUtils = {
     return guild;
   },
   checkUsername: (username) => {
-    let allowed = /^[A-Za-z0-9А-Яа-яЁё\s.]+$/;
+    const allowed = /^[A-Za-z0-9А-Яа-яЁё\s.]+$/;
 
     if (!username) {
       return {
@@ -417,7 +417,7 @@ const globalUtils = {
   badEmail: async (email) => {
     try {
       if (!globalUtils.badEmails) {
-        let response = await fetch(
+        const response = await fetch(
           'https://raw.githubusercontent.com/oldcordapp/disposable-email-domain-list/refs/heads/main/domains.txt',
         );
 
@@ -433,7 +433,7 @@ const globalUtils = {
         globalUtils.badEmails = domains;
       }
 
-      let domain = email.split('@')[1];
+      const domain = email.split('@')[1];
 
       return globalUtils.badEmails.has(domain);
     } catch (error) {
@@ -463,16 +463,16 @@ const globalUtils = {
         return false;
       }
 
-      let decodedProperties = Buffer.from(superprops, 'base64').toString('utf-8');
+      const decodedProperties = Buffer.from(superprops, 'base64').toString('utf-8');
 
       if (!decodedProperties || decodedProperties.length < 5) {
         return false;
       }
 
-      let obj = JSON.parse(decodedProperties);
+      const obj = JSON.parse(decodedProperties);
 
       let points = 0;
-      let to_check = [
+      const to_check = [
         'os',
         'browser',
         'device',
@@ -482,7 +482,7 @@ const globalUtils = {
       ];
 
       for (var check of to_check) {
-        let val = obj[check];
+        const val = obj[check];
 
         if (obj && val) {
           points++;
@@ -538,8 +538,8 @@ const globalUtils = {
     if (user1.bot || user2.bot) {
       return false;
     }
-    let ourRelationships = user1.relationships;
-    let theirRelationships = user2.relationships;
+    const ourRelationships = user1.relationships;
+    const theirRelationships = user2.relationships;
 
     let relationshipState = theirRelationships.find((x) => x.id === user1.id);
     let ourRelationshipState = ourRelationships.find((x) => x.id === user2.id);
@@ -567,7 +567,7 @@ const globalUtils = {
     return relationshipState.type === 1 && ourRelationshipState.type === 1;
   },
   parseMentions: (text) => {
-    let result = {
+    const result = {
       mentions: [],
       mention_roles: [],
       mention_everyone: false,
@@ -647,7 +647,7 @@ const globalUtils = {
 
         case '`':
           let startTicks = 1;
-          let startIndex = i;
+          const startIndex = i;
           if (text[i++] == '`') {
             startTicks++;
             if (text[i++] == '`') {
@@ -751,7 +751,7 @@ const globalUtils = {
     }
   },
   personalizeMessageObject: (msg, guild, client_build_date) => {
-    let boostLvlConversion = {
+    const boostLvlConversion = {
       9: 1,
       10: 2,
       11: 3,
@@ -799,7 +799,7 @@ const globalUtils = {
 
     if (!req.plural_recipients && channel.type >= 2) return null;
 
-    let clone = {};
+    const clone = {};
     Object.assign(clone, channel);
 
     if (channel.recipients)
@@ -818,11 +818,11 @@ const globalUtils = {
     return clone;
   },
   usersToIDs: (array) => {
-    let IDs = [];
+    const IDs = [];
 
     for (let i = 0; i < array.length; i++)
       if (array[i].id) IDs.push(array[i].id);
-      else if (typeof array[i] == 'string') IDs.push(array[i]);
+      else if (typeof array[i] === 'string') IDs.push(array[i]);
 
     return IDs;
   },

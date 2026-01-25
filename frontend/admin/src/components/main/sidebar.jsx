@@ -17,8 +17,8 @@ import SidebarMenuItem from './sidebarMenuItem';
 import SidebarMenuList from './sidebarMenuList';
 
 const Sidebar = ({ active }) => {
-  let user_data = JSON.parse(localStorage.getItem('user_data'));
-  let privilege = user_data?.staff_details?.privilege ?? 0;
+  const user_data = JSON.parse(localStorage.getItem('user_data'));
+  const privilege = user_data?.staff_details?.privilege ?? 0;
 
   return (
     <div className="mainPage-sidebar">

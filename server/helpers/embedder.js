@@ -19,7 +19,7 @@ const embedder = {
   embed_cache: [],
   getEmbedInfo: async (url) => {
     try {
-      let content = await fetch(url, {
+      const content = await fetch(url, {
         headers: {
           'User-Agent': 'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)',
         },
@@ -54,48 +54,48 @@ const embedder = {
         };
       }
 
-      let text = await content.text();
-      let $ = load(text);
-      let videoUrl =
+      const text = await content.text();
+      const $ = load(text);
+      const videoUrl =
         $('meta[property="og:video"]').attr('content') ||
         $('meta[property="twitter:player:stream"]').attr('content');
-      let videoWidth =
+      const videoWidth =
         parseInt(
           $('meta[property="og:video:width"]').attr('content') ||
             $('meta[property="twitter:player:width"]').attr('content'),
         ) || 480;
-      let videoHeight =
+      const videoHeight =
         parseInt(
           $('meta[property="og:video:height"]').attr('content') ||
             $('meta[property="twitter:player:height"]').attr('content'),
         ) || 270;
-      let description = $('meta[name="description"]').attr('content');
-      let themeColor = $('meta[name="theme-color"]').attr('content');
-      let ogTitle = $('meta[property="og:title"]').attr('content');
+      const description = $('meta[name="description"]').attr('content');
+      const themeColor = $('meta[name="theme-color"]').attr('content');
+      const ogTitle = $('meta[property="og:title"]').attr('content');
       let ogImage = $('meta[property="og:image"]').attr('content');
-      let twitterImage = $('meta[property="twitter:image"]').attr('content');
+      const twitterImage = $('meta[property="twitter:image"]').attr('content');
 
       if (!ogImage && twitterImage) {
         ogImage = twitterImage;
       }
 
-      let should_embed = !!(description || themeColor || ogTitle || ogImage);
+      const should_embed = !!(description || themeColor || ogTitle || ogImage);
 
       if (!should_embed) {
         return null;
       }
 
-      let color = themeColor ? hexToDecimal(themeColor) : 7506394;
-      let title = ogTitle || $('title').text() || '';
+      const color = themeColor ? hexToDecimal(themeColor) : 7506394;
+      const title = ogTitle || $('title').text() || '';
 
-      let embedObj = {
+      const embedObj = {
         color: color,
         title: title,
         description: description,
       };
 
       if (ogImage) {
-        let full_img = new URL(ogImage, url).href;
+        const full_img = new URL(ogImage, url).href;
 
         fetch2 = await fetch(full_img, {
           headers: {
@@ -122,7 +122,7 @@ const embedder = {
       }
 
       if (ogImage && image_data) {
-        let full_img = new URL(ogImage, url).href;
+        const full_img = new URL(ogImage, url).href;
 
         embedObj.image = {
           url: full_img,
@@ -147,10 +147,10 @@ const embedder = {
     }
   },
   embedAttachedVideo: (url, thumbnail_url, width, height) => {
-    let videoFilename = url.split('/').pop();
-    let thumbFilename = thumbnail_url.split('/').pop();
-    let attachmentVideoUrl = `attachment://${videoFilename}`;
-    let attachmentThumbUrl = `attachment://${thumbFilename}`;
+    const videoFilename = url.split('/').pop();
+    const thumbFilename = thumbnail_url.split('/').pop();
+    const attachmentVideoUrl = `attachment://${videoFilename}`;
+    const attachmentThumbUrl = `attachment://${thumbFilename}`;
 
     return {
       type: 'video',
@@ -222,11 +222,11 @@ const embedder = {
     }
   },
   generateMsgEmbeds: async (content, attachments, force) => {
-    let ret = [];
+    const ret = [];
 
     if (attachments && Array.isArray(attachments)) {
-      for (let attachment of attachments) {
-        let isVideo = attachment.name.endsWith('.mp4') || attachment.name.endsWith('.webm');
+      for (const attachment of attachments) {
+        const isVideo = attachment.name.endsWith('.mp4') || attachment.name.endsWith('.webm');
 
         if (isVideo && attachment.thumbnail_url) {
           ret.push(
@@ -245,14 +245,14 @@ const embedder = {
       return ret;
     }
 
-    let urls = content.match(/https?:\/\/[^\s]+/g);
+    const urls = content.match(/https?:\/\/[^\s]+/g);
 
     if (urls == null || urls.length > 5 || urls.length == 0) {
       return ret;
     }
 
     for (var url of urls) {
-      let checkCache = embedder.embed_cache.find((x) => x.url == url);
+      const checkCache = embedder.embed_cache.find((x) => x.url == url);
 
       if (checkCache && !force) {
         ret.push(checkCache.embed);
@@ -275,14 +275,14 @@ const embedder = {
       }
 
       if (!embed.title) {
-        let urlObj = new URL(url);
+        const urlObj = new URL(url);
 
         urlObj.search = '';
         urlObj.hash = '';
 
         url = urlObj.toString(); //im lazy ok
 
-        let result = await embedder.getEmbedInfo(url);
+        const result = await embedder.getEmbedInfo(url);
 
         if (result == null) {
           continue;

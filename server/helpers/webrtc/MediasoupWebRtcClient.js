@@ -67,7 +67,7 @@ class MediasoupWebRtcClient {
   async onJoinedRoom() {
     if (!this.webrtcConnected || !this.voiceRoomId || !this.room) return;
 
-    let clients = new Set(this.room._clients.values());
+    const clients = new Set(this.room._clients.values());
 
     await Promise.all(
       Array.from(clients).map(async (client) => {
@@ -260,7 +260,7 @@ class MediasoupWebRtcClient {
 
     if (!producer) return;
 
-    let existingConsumer = this.consumers?.find((x) => x.producerId === producer?.id);
+    const existingConsumer = this.consumers?.find((x) => x.producerId === producer?.id);
 
     if (existingConsumer) return;
 

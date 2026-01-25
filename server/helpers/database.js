@@ -25,11 +25,11 @@ import {
 import { logText } from './logger.js';
 import { deconstruct, generate } from './snowflake.js';
 
-let db_config = config.db_config;
+const db_config = config.db_config;
 
 const pool = new Pool(db_config);
 
-let cache = {};
+const cache = {};
 
 async function runQuery(queryString, values = []) {
   //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
@@ -98,7 +98,7 @@ async function runQuery(queryString, values = []) {
 }
 
 async function doescolumnExist(column, table) {
-  let check = await database.runQuery(
+  const check = await database.runQuery(
     `SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2) AS column_exists;`,
     [table, column],
   );
@@ -111,7 +111,7 @@ async function performMigrations() {
 
   if (v[0].version != database.version) {
     //auto migrate for the time being
-    let value = await database.runQuery(`SELECT * FROM users;`, [], true);
+    const value = await database.runQuery(`SELECT * FROM users;`, [], true);
 
     if (value === null) {
       return;
@@ -144,7 +144,7 @@ async function performMigrations() {
       })
       .filter((i) => i.rel.length != 0);
 
-    let ignore = [];
+    const ignore = [];
 
     relationships.map((i) => {
       i.rel.map((r) => {
@@ -172,7 +172,7 @@ async function performMigrations() {
 
     relationships = relationships.filter((i) => i.rel.length != 0);
 
-    let insert = [];
+    const insert = [];
 
     relationships.map((i) => i.rel.map((r) => insert.push([i.id, r.type, r.id])));
 
@@ -565,7 +565,7 @@ const database = {
         [],
       );
 
-      let instance_reports_exists = await database.doescolumnExist('action', 'instance_reports');
+      const instance_reports_exists = await database.doescolumnExist('action', 'instance_reports');
 
       if (!instance_reports_exists) {
         await database.runQuery(
@@ -580,20 +580,23 @@ const database = {
         ); //Remove reports older than 1 month to free up db
       }
 
-      let mfa_exists = await database.doescolumnExist('mfa_secret', 'users');
+      const mfa_exists = await database.doescolumnExist('mfa_secret', 'users');
 
       if (!mfa_exists) {
         await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_secret TEXT DEFAULT NULL`);
         await database.runQuery(`ALTER TABLE users ADD COLUMN mfa_enabled BOOLEAN DEFAULT FALSE`);
       }
 
-      let msg_type_exists = await database.doescolumnExist('type', 'messages');
+      const msg_type_exists = await database.doescolumnExist('type', 'messages');
 
       if (!msg_type_exists) {
         await database.runQuery(`ALTER TABLE messages ADD COLUMN type INTEGER DEFAULT 0`);
       } //Can you really believe we've had no type property for over 4 years?
 
-      let system_channel_id_exists = await database.doescolumnExist('system_channel_id', 'guilds');
+      const system_channel_id_exists = await database.doescolumnExist(
+        'system_channel_id',
+        'guilds',
+      );
 
       if (!system_channel_id_exists) {
         await database.runQuery(
@@ -604,7 +607,7 @@ const database = {
         );
       }
 
-      let rate_limit_exists_and_user_limit = await database.doescolumnExist(
+      const rate_limit_exists_and_user_limit = await database.doescolumnExist(
         'rate_limit_per_user',
         'channels',
       );
@@ -617,7 +620,7 @@ const database = {
         await database.runQuery(`ALTER TABLE channels ADD COLUMN bitrate INTEGER DEFAULT 64000`);
       }
 
-      let last_pin_timestamp_exists = await database.doescolumnExist(
+      const last_pin_timestamp_exists = await database.doescolumnExist(
         'last_pin_timestamp',
         'acknowledgements',
       );
@@ -651,7 +654,7 @@ const database = {
         await database.runQuery(`DROP TABLE acknowledgements_old`, []);
       }
 
-      let premium_tier_exists = await database.doescolumnExist('premium_tier', 'guilds');
+      const premium_tier_exists = await database.doescolumnExist('premium_tier', 'guilds');
 
       if (!premium_tier_exists) {
         await database.runQuery(`ALTER TABLE guilds ADD COLUMN premium_tier INTEGER DEFAULT 0`);
@@ -972,7 +975,7 @@ const database = {
       //#endregion
 
       //#region Change INTEGER to BOOLEAN where deemed fit
-      let booleanMigrationStuff = [
+      const booleanMigrationStuff = [
         { table: 'users', column: 'verified', default: false },
         { table: 'users', column: 'claimed', default: true },
         { table: 'users', column: 'mfa_enabled', default: false },
@@ -997,8 +1000,8 @@ const database = {
         { table: 'widgets', column: 'enabled', default: false },
       ];
 
-      for (let item of booleanMigrationStuff) {
-        let res = await database.runQuery(
+      for (const item of booleanMigrationStuff) {
+        const res = await database.runQuery(
           `SELECT data_type FROM information_schema.columns WHERE table_name = $1 AND column_name = $2;`,
           [item.table, item.column],
         );
@@ -1116,12 +1119,12 @@ const database = {
         [disabled_until, 'Spam', user_id],
       ); //to-do actually do this properly
 
-      let audit_log = staff.audit_log;
-      let moderation_id = generate();
-      let deconstructed = deconstruct(moderation_id);
-      let timestamp = deconstructed.date.toISOString();
+      const audit_log = staff.audit_log;
+      const moderation_id = generate();
+      const deconstructed = deconstruct(moderation_id);
+      const timestamp = deconstructed.date.toISOString();
 
-      let audit_entry = {
+      const audit_entry = {
         moderation_id: moderation_id,
         timestamp: timestamp,
         action: 'disable_user',
@@ -1145,7 +1148,7 @@ const database = {
   },
   getInstanceReports: async (filter = 'PENDING') => {
     try {
-      let rows = await database.runQuery(`SELECT * FROM instance_reports WHERE action = $1`, [
+      const rows = await database.runQuery(`SELECT * FROM instance_reports WHERE action = $1`, [
         filter,
       ]);
 
@@ -1153,7 +1156,7 @@ const database = {
         return [];
       }
 
-      let ret = [];
+      const ret = [];
 
       for (var row of rows) {
         ret.push({
@@ -1173,16 +1176,16 @@ const database = {
   },
   getUserSubscriptions: async (user_id) => {
     try {
-      let query = `SELECT * FROM guild_subscriptions WHERE user_id = $1`;
-      let params = [user_id];
+      const query = `SELECT * FROM guild_subscriptions WHERE user_id = $1`;
+      const params = [user_id];
 
-      let rows = await database.runQuery(query, params);
+      const rows = await database.runQuery(query, params);
 
       if (rows === null || rows.length === 0) {
         return [];
       }
 
-      let ret = [];
+      const ret = [];
 
       for (var row of rows) {
         ret.push({
@@ -1201,7 +1204,7 @@ const database = {
   },
   getSubscription: async (subscription_id) => {
     try {
-      let rows = await database.runQuery(
+      const rows = await database.runQuery(
         `SELECT * FROM guild_subscriptions WHERE subscription_id = $1`,
         [subscription_id],
       );
@@ -1223,7 +1226,7 @@ const database = {
   },
   removeSubscription: async (subscription) => {
     try {
-      let guild = await database.getGuildById(subscription.guild_id);
+      const guild = await database.getGuildById(subscription.guild_id);
 
       if (!guild) {
         return false;
@@ -1233,10 +1236,10 @@ const database = {
         subscription.id,
       ]);
 
-      let new_sub_count = guild.premium_subscription_count - 1;
+      const new_sub_count = guild.premium_subscription_count - 1;
       let new_level = guild.premium_tier;
-      let boostFeatures = ['ANIMATED_ICON', 'INVITE_SPLASH', 'BANNER', 'VANITY_URL'];
-      let baseFeatures = (guild.features || []).filter((f) => !boostFeatures.includes(f));
+      const boostFeatures = ['ANIMATED_ICON', 'INVITE_SPLASH', 'BANNER', 'VANITY_URL'];
+      const baseFeatures = (guild.features || []).filter((f) => !boostFeatures.includes(f));
 
       let earnedFeatures = [];
 
@@ -1273,17 +1276,17 @@ const database = {
   },
   createGuildSubscription: async (user, guild) => {
     try {
-      let subscription_id = generate();
+      const subscription_id = generate();
 
       await database.runQuery(
         `INSERT INTO guild_subscriptions (guild_id, user_id, subscription_id, ended) VALUES ($1, $2, $3, $4)`,
         [guild.id, user.id, subscription_id, false],
       );
 
-      let new_sub_count = guild.premium_subscription_count + 1;
+      const new_sub_count = guild.premium_subscription_count + 1;
       let new_level = guild.premium_tier;
       let msg_type = 8;
-      let new_features = guild.features;
+      const new_features = guild.features;
 
       const addFeatures = (newFeats) => {
         newFeats.forEach((f) => {
@@ -1320,7 +1323,7 @@ const database = {
         [new_sub_count, new_level, JSON.stringify(new_features), guild.id],
       );
 
-      let system_msg = await global.database.createSystemMessage(
+      const system_msg = await global.database.createSystemMessage(
         guild.id,
         guild.system_channel_id,
         msg_type,
@@ -1344,18 +1347,19 @@ const database = {
   },
   getGuildSubscriptions: async (guild) => {
     try {
-      let rows = await database.runQuery(`SELECT * FROM guild_subscriptions WHERE guild_id = $1`, [
-        guild.id,
-      ]);
+      const rows = await database.runQuery(
+        `SELECT * FROM guild_subscriptions WHERE guild_id = $1`,
+        [guild.id],
+      );
 
       if (rows === null || rows.length === 0) {
         return [];
       }
 
-      let ret = [];
+      const ret = [];
 
       for (var row of rows) {
-        let member = guild.members.find((x) => x.id === row.user_id).user;
+        const member = guild.members.find((x) => x.id === row.user_id).user;
 
         ret.push({
           guild_id: guild.id,
@@ -1374,7 +1378,7 @@ const database = {
   },
   getReportById: async (reportId) => {
     try {
-      let rows = await database.runQuery(`SELECT * FROM instance_reports WHERE id = $1`, [
+      const rows = await database.runQuery(`SELECT * FROM instance_reports WHERE id = $1`, [
         reportId,
       ]);
 
@@ -1382,7 +1386,7 @@ const database = {
         return null;
       }
 
-      let row = rows[0];
+      const row = rows[0];
 
       return {
         id: row.id,
@@ -1399,7 +1403,7 @@ const database = {
   },
   updateReport: async (reportId, action) => {
     try {
-      let report = await database.getReportById(reportId);
+      const report = await database.getReportById(reportId);
 
       if (report == null || report.action !== 'PENDING') {
         return false;
@@ -1437,12 +1441,12 @@ const database = {
 
       await database.runQuery(`DELETE FROM users WHERE id = $1`, [user_id]); //figure out messages
 
-      let audit_log = staff.audit_log;
-      let moderation_id = generate();
-      let deconstructed = deconstruct(moderation_id);
-      let timestamp = deconstructed.date.toISOString();
+      const audit_log = staff.audit_log;
+      const moderation_id = generate();
+      const deconstructed = deconstruct(moderation_id);
+      const timestamp = deconstructed.date.toISOString();
 
-      let audit_entry = {
+      const audit_entry = {
         moderation_id: moderation_id,
         timestamp: timestamp,
         action: 'delete_user',
@@ -1480,7 +1484,7 @@ const database = {
   },
   addToGuildAuditLogs: async (guild_id, action_type, target_id, user_id, changes) => {
     try {
-      let audit_log_id = generate();
+      const audit_log_id = generate();
 
       await database.runQuery(
         `
@@ -1569,8 +1573,8 @@ const database = {
         return { members: [], presences: [] };
       }
 
-      let members = [];
-      let presences = [];
+      const members = [];
+      const presences = [];
       let offlineCount = 0;
 
       const guildRoles = guild.roles;
@@ -1608,7 +1612,7 @@ const database = {
           user: miniUser,
         };
 
-        let sessions = global.userSessions.get(member.id);
+        const sessions = global.userSessions.get(member.id);
         let presenceStatus = 'offline';
         let presence = {
           game_id: null,
@@ -1618,7 +1622,7 @@ const database = {
         };
 
         if (sessions && sessions.length > 0) {
-          let session = sessions[sessions.length - 1];
+          const session = sessions[sessions.length - 1];
 
           if (session.presence) {
             presenceStatus = session.presence.status;
@@ -1739,7 +1743,7 @@ const database = {
       let userIds = [];
 
       if (mentionType === 'everyone') {
-        let members = await database.runQuery(`SELECT user_id FROM members WHERE guild_id = $1`, [
+        const members = await database.runQuery(`SELECT user_id FROM members WHERE guild_id = $1`, [
           guild_id,
         ]);
 
@@ -1750,7 +1754,7 @@ const database = {
 
       if (userIds.length === 0) return false;
 
-      for (let uid of userIds) {
+      for (const uid of userIds) {
         await database.runQuery(
           `INSERT INTO acknowledgements (user_id, channel_id, mention_count, message_id) VALUES ($1, $2, 1, '0') ON CONFLICT (user_id, channel_id) DO UPDATE SET mention_count = acknowledgements.mention_count + 1`,
           [uid, channel_id],
@@ -1907,7 +1911,7 @@ const database = {
         };
       }
 
-      let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
+      const relationships = await global.database.getRelationshipsByUserId(rows[0].id);
 
       return prepareAccountObject(rows, relationships); //to-do fix
     } catch (error) {
@@ -1931,7 +1935,7 @@ const database = {
         return null;
       }
 
-      let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
+      const relationships = await global.database.getRelationshipsByUserId(rows[0].id);
       return await prepareAccountObject(rows, relationships); //to-do fix
     } catch (error) {
       logText(error, 'error');
@@ -1945,7 +1949,7 @@ const database = {
         return null;
       }
 
-      let rows = await database.runQuery(`SELECT * FROM users WHERE email_token = $1`, [token]);
+      const rows = await database.runQuery(`SELECT * FROM users WHERE email_token = $1`, [token]);
 
       if (rows === null || rows.length === 0) {
         return null;
@@ -1964,7 +1968,7 @@ const database = {
   },
   getEmailToken: async (id) => {
     try {
-      let rows = await database.runQuery(`SELECT * FROM users WHERE id = $1`, [id]);
+      const rows = await database.runQuery(`SELECT * FROM users WHERE id = $1`, [id]);
 
       if (rows === null || rows.length === 0) {
         return null;
@@ -1990,7 +1994,7 @@ const database = {
   },
   useEmailToken: async (id, token) => {
     try {
-      let check = await database.checkEmailToken(token);
+      const check = await database.checkEmailToken(token);
 
       if (!check) {
         return false;
@@ -2017,7 +2021,7 @@ const database = {
     try {
       if (!id) return null;
 
-      let rows = await database.runQuery(
+      const rows = await database.runQuery(
         `
                     SELECT * FROM bots WHERE id = $1
                 `,
@@ -2028,7 +2032,7 @@ const database = {
         return null;
       }
 
-      let application = await database.getApplicationById(rows[0].application_id);
+      const application = await database.getApplicationById(rows[0].application_id);
 
       if (application === null) {
         return null;
@@ -2119,7 +2123,7 @@ const database = {
           username: rows[0].username,
         };
       } else {
-        let relationships = await global.database.getRelationshipsByUserId(rows[0].id);
+        const relationships = await global.database.getRelationshipsByUserId(rows[0].id);
 
         return await prepareAccountObject(rows, relationships);
       }
@@ -2167,7 +2171,7 @@ const database = {
   },
   createCustomEmoji: async (guild, user, emoji_id, emoji_name) => {
     try {
-      let custom_emojis = guild.emojis;
+      const custom_emojis = guild.emojis;
 
       custom_emojis.push({
         id: emoji_id,
@@ -2189,9 +2193,9 @@ const database = {
   },
   updateCustomEmoji: async (guild, emoji_id, new_name) => {
     try {
-      let custom_emojis = guild.emojis;
+      const custom_emojis = guild.emojis;
 
-      let customEmoji = custom_emojis.find((x) => x.id == emoji_id);
+      const customEmoji = custom_emojis.find((x) => x.id == emoji_id);
 
       if (!customEmoji) {
         return false;
@@ -2217,11 +2221,11 @@ const database = {
 
       custom_emojis = custom_emojis.filter((x) => x.id != emoji_id);
 
-      let emojiPath = `./www_dynamic/emojis`;
+      const emojiPath = `./www_dynamic/emojis`;
 
       if (existsSync(emojiPath)) {
-        let files = readdirSync(emojiPath);
-        let emotes = files.filter((x) => x.startsWith(`${emoji_id}.`));
+        const files = readdirSync(emojiPath);
+        const emotes = files.filter((x) => x.startsWith(`${emoji_id}.`));
 
         emotes.forEach((emote) => {
           try {
@@ -2306,7 +2310,7 @@ const database = {
   },
   createWebhook: async (guild, user, channel_id, name, avatar) => {
     try {
-      let webhook_id = generate();
+      const webhook_id = generate();
       let avatarHash = null;
 
       if (avatar != null && avatar.includes('data:image/')) {
@@ -2332,7 +2336,7 @@ const database = {
         );
       }
 
-      let token = generateString(60);
+      const token = generateString(60);
 
       await database.runQuery(
         `INSERT INTO webhooks (guild_id, channel_id, id, token, avatar, name, creator_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -2366,7 +2370,7 @@ const database = {
       );
 
       if (rows != null && rows.length > 0) {
-        let row = rows[0];
+        const row = rows[0];
 
         return {
           guild_id: row.guild_id,
@@ -2432,13 +2436,13 @@ const database = {
   },
   validateTotpCode: async (user_id, code, overriden_secret = null) => {
     try {
-      let mfa_status = await database.getUserMfa(user_id);
+      const mfa_status = await database.getUserMfa(user_id);
 
       if (!mfa_status.mfa_secret && !overriden_secret) {
         return false;
       }
 
-      let valid = totp.verify({
+      const valid = totp.verify({
         secret: mfa_status.mfa_secret || overriden_secret,
         encoding: 'base32',
         token: code,
@@ -2453,7 +2457,7 @@ const database = {
   },
   generateMfaTicket: async (user_id) => {
     try {
-      let ticket = generateString(40);
+      const ticket = generateString(40);
 
       await database.runQuery(
         `INSERT INTO mfa_login_tickets (user_id, mfa_ticket) VALUES ($1, $2)`,
@@ -2692,7 +2696,7 @@ const database = {
         return [];
       }
 
-      let ret = [];
+      const ret = [];
 
       for (var relationship of rows) {
         if (relationship.user_id_1 === user_id && relationship.type === 3) {
@@ -2850,7 +2854,7 @@ const database = {
         //create dm channel / group dm
 
         //Convert recipients to user snowflakes, discard other data
-        let recipientIDs = usersToIDs(recipients);
+        const recipientIDs = usersToIDs(recipients);
 
         await database.runQuery(
           `INSERT INTO channels (id, type, guild_id, topic, last_message_id, permission_overwrites, name, position) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -2858,14 +2862,14 @@ const database = {
         );
 
         //Convert recipient snowflakes to users
-        let recipientUsers = [];
+        const recipientUsers = [];
 
         for (let i = 0; i < recipients.length; i++) {
           if (!recipients) continue;
 
           let user;
 
-          if (typeof recipients[i] == 'string') {
+          if (typeof recipients[i] === 'string') {
             user = await database.getAccountByUserId(recipients[i]);
 
             if (!user) continue;
@@ -2951,7 +2955,7 @@ const database = {
   }, //rewrite asap
   updateGuildMemberNick: async (guild_id, member_id, new_nick) => {
     try {
-      let nick =
+      const nick =
         new_nick == null || new_nick.length > config.limits['nickname'].max ? null : new_nick;
 
       await database.runQuery(`UPDATE members SET nick = $1 WHERE guild_id = $2 AND user_id = $3`, [
@@ -2969,17 +2973,17 @@ const database = {
   },
   updateChannel: async (channel_id, channel, groupOwnerPassOver = false) => {
     try {
-      let type = parseInt(channel.type);
+      const type = parseInt(channel.type);
 
       //text, voice, category, news
       if ([0, 2, 4, 5].includes(type)) {
-        let queryFields = [
+        const queryFields = [
           'name = $1',
           'parent_id = $2',
           'position = $3',
           'permission_overwrites = $4',
         ];
-        let params = [
+        const params = [
           channel.name,
           channel.parent_id,
           channel.position,
@@ -3008,7 +3012,7 @@ const database = {
           params.push(channel.bitrate, channel.user_limit);
         }
 
-        let query = `UPDATE channels SET ${queryFields.join(', ')} WHERE id = $${params.length + 1}`;
+        const query = `UPDATE channels SET ${queryFields.join(', ')} WHERE id = $${params.length + 1}`;
 
         params.push(channel_id);
 
@@ -3045,15 +3049,15 @@ const database = {
           ]);
         }
 
-        let groupFields = ['name = $1'];
-        let groupParams = [channel.name ?? ''];
+        const groupFields = ['name = $1'];
+        const groupParams = [channel.name ?? ''];
 
         if (groupOwnerPassOver) {
           groupFields.push('owner_id = $2');
           groupParams.push(channel.owner_id);
         }
 
-        let query = `UPDATE group_channels SET ${groupFields.join(', ')} WHERE id = $${groupParams.length + 1}`;
+        const query = `UPDATE group_channels SET ${groupFields.join(', ')} WHERE id = $${groupParams.length + 1}`;
 
         groupParams.push(channel_id);
 
@@ -3072,7 +3076,7 @@ const database = {
     try {
       if (!recipients) return false;
 
-      let recipientIDs = usersToIDs(recipients);
+      const recipientIDs = usersToIDs(recipients);
 
       await database.runQuery(`UPDATE group_channels SET recipients = $1 WHERE id = $2`, [
         JSON.stringify(recipientIDs),
@@ -3129,7 +3133,7 @@ const database = {
         return null;
       }
 
-      let isWebhook = rows[0].author_id.includes('WEBHOOK_');
+      const isWebhook = rows[0].author_id.includes('WEBHOOK_');
       let author = null;
 
       if (isWebhook) {
@@ -3287,15 +3291,15 @@ const database = {
   },
   abracadabraApplication: async (application) => {
     try {
-      let salt = await genSalt(10);
-      let pwHash = await hash(generateString(30), salt);
+      const salt = await genSalt(10);
+      const pwHash = await hash(generateString(30), salt);
       let discriminator = Math.round(Math.random() * 9999);
 
       while (discriminator < 1000) {
         discriminator = Math.round(Math.random() * 9999);
       }
 
-      let token = generateToken(application.id, pwHash);
+      const token = generateToken(application.id, pwHash);
 
       await database.runQuery(
         `INSERT INTO bots (id, application_id, username, discriminator, avatar, token) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -3470,8 +3474,8 @@ const database = {
   },
   createUserApplication: async (user, name) => {
     try {
-      let id = generate();
-      let secret = generateString(20);
+      const id = generate();
+      const secret = generateString(20);
 
       await database.runQuery(
         `INSERT INTO applications (id, owner_id, name, icon, secret, description) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -3505,7 +3509,7 @@ const database = {
         return null;
       }
 
-      let owner = await database.getAccountByUserId(rows[0].owner_id);
+      const owner = await database.getAccountByUserId(rows[0].owner_id);
 
       if (!owner) return null;
 
@@ -3646,7 +3650,7 @@ const database = {
         params.push(before_id);
       }
 
-      let mentionConditions = [];
+      const mentionConditions = [];
 
       mentionConditions.push(`m.content LIKE '%<@${user_id}>%'`);
 
@@ -3712,7 +3716,7 @@ const database = {
 
       for (const row of messageRows) {
         let author = null;
-        let isWebhook = row.author_id.includes('WEBHOOK_');
+        const isWebhook = row.author_id.includes('WEBHOOK_');
 
         if (isWebhook) {
           const parts = row.author_id.split('_');
@@ -3795,7 +3799,7 @@ const database = {
         return null;
       }
 
-      let message = await database.getMessageById(rows[0].message_id);
+      const message = await database.getMessageById(rows[0].message_id);
 
       return message; //to-do clean this up
     } catch (error) {
@@ -3935,7 +3939,7 @@ const database = {
         const messageAttachments = attachmentsMap.get(row.message_id) || [];
         const msgReactions = JSON.parse(row.reactions) || [];
 
-        let rawReactions = [];
+        const rawReactions = [];
 
         for (const reactionRow of msgReactions) {
           const reactionKey = JSON.stringify(reactionRow.emoji);
@@ -4153,8 +4157,8 @@ const database = {
   },
   getMessagesAround: async (channel_id, message_id, limit = 50) => {
     try {
-      let actualLimit = Math.floor(limit / 2);
-      let messageRows = await database.runQuery(
+      const actualLimit = Math.floor(limit / 2);
+      const messageRows = await database.runQuery(
         `
                 SELECT * FROM (
                     (SELECT * FROM messages WHERE channel_id = $1 AND message_id <= $2 ORDER BY message_id DESC LIMIT $3)
@@ -4206,7 +4210,7 @@ const database = {
 
       return await Promise.all(
         messageRows.map(async (row) => {
-          let isWebhook = row.author_id.includes('WEBHOOK_');
+          const isWebhook = row.author_id.includes('WEBHOOK_');
 
           if (isWebhook) {
             const webhookId = row.author_id.split('_')[1];
@@ -4277,13 +4281,13 @@ const database = {
     offset,
   ) => {
     try {
-      let whereClause = ` WHERE m.guild_id = $1 `;
-      let params = [guild_id];
-      let paramIndex = 2;
+      const whereClause = ` WHERE m.guild_id = $1 `;
+      const params = [guild_id];
+      const paramIndex = 2;
 
       const buildWhere = (pIndex) => {
         let clause = '';
-        let p = [...params];
+        const p = [...params];
 
         if (author_id) {
           clause += ` AND m.author_id = $${pIndex++}`;
@@ -4333,7 +4337,7 @@ const database = {
         return { messages: [], totalCount: 0 };
       }
 
-      let dataQuery = `SELECT m.* FROM messages AS m INNER JOIN channels AS ch ON m.channel_id = ch.id ${whereClause} ${clause} ORDER BY m.message_id DESC LIMIT $${finalIndex} OFFSET $${finalIndex + 1}`;
+      const dataQuery = `SELECT m.* FROM messages AS m INNER JOIN channels AS ch ON m.channel_id = ch.id ${whereClause} ${clause} ORDER BY m.message_id DESC LIMIT $${finalIndex} OFFSET $${finalIndex + 1}`;
 
       mainParams.push(parseInt(limit), parseInt(offset));
 
@@ -4478,7 +4482,7 @@ const database = {
       if (row.guild_id === null) {
         //dm channel / group dm
 
-        let privChannel = {
+        const privChannel = {
           id: row.id,
           guild_id: null,
           type: row.type,
@@ -4486,12 +4490,12 @@ const database = {
         };
 
         if (privChannel.type === 1) {
-          let dm_info = await database.getDMInfo(privChannel.id);
+          const dm_info = await database.getDMInfo(privChannel.id);
 
-          let recipientIDs = dm_info.recipients;
-          let recipients = [];
+          const recipientIDs = dm_info.recipients;
+          const recipients = [];
           for (let i = 0; i < dm_info.recipients.length; i++) {
-            let user = await database.getAccountByUserId(recipientIDs[i]);
+            const user = await database.getAccountByUserId(recipientIDs[i]);
             if (user) recipients.push(miniUserObject(user));
           }
 
@@ -4501,12 +4505,12 @@ const database = {
         }
 
         if (privChannel.type === 3) {
-          let group_info = await database.getGroupDMInfo(privChannel.id);
+          const group_info = await database.getGroupDMInfo(privChannel.id);
           if (group_info != null) {
-            let recipientIDs = JSON.parse(group_info.recipients);
-            let recipients = [];
+            const recipientIDs = JSON.parse(group_info.recipients);
+            const recipients = [];
             for (let i = 0; i < group_info.recipients.length; i++) {
-              let user = await database.getAccountByUserId(recipientIDs[i]);
+              const user = await database.getAccountByUserId(recipientIDs[i]);
               if (user) recipients.push(miniUserObject(user));
             }
 
@@ -4522,13 +4526,13 @@ const database = {
         return privChannel;
       }
 
-      let overwrites = [];
+      const overwrites = [];
 
       if (row.permission_overwrites && row.permission_overwrites.includes(':')) {
         for (var overwrite of row.permission_overwrites.split(':')) {
-          let role_id = overwrite.split('_')[0];
-          let allow_value = overwrite.split('_')[1];
-          let deny_value = overwrite.split('_')[2];
+          const role_id = overwrite.split('_')[0];
+          const allow_value = overwrite.split('_')[1];
+          const deny_value = overwrite.split('_')[2];
 
           overwrites.push({
             id: role_id,
@@ -4538,10 +4542,10 @@ const database = {
           });
         }
       } else if (row.permission_overwrites && row.permission_overwrites != null) {
-        let overwrite = rows[0].permission_overwrites;
-        let role_id = overwrite.split('_')[0];
-        let allow_value = overwrite.split('_')[1];
-        let deny_value = overwrite.split('_')[2];
+        const overwrite = rows[0].permission_overwrites;
+        const role_id = overwrite.split('_')[0];
+        const allow_value = overwrite.split('_')[1];
+        const deny_value = overwrite.split('_')[2];
 
         overwrites.push({
           id: role_id,
@@ -4606,7 +4610,7 @@ const database = {
         database.runQuery(`SELECT * FROM audit_logs WHERE guild_id = $1`, [id]),
       ]);
 
-      let roles = [];
+      const roles = [];
 
       if (roleRows && roleRows.length > 0) {
         for (const row of roleRows) {
@@ -4622,7 +4626,7 @@ const database = {
         }
       }
 
-      let userIds = new Set();
+      const userIds = new Set();
 
       if (memberRows) {
         memberRows.forEach((row) => userIds.add(row.user_id));
@@ -4632,11 +4636,11 @@ const database = {
         webhookRows.forEach((row) => userIds.add(row.creator_id));
       }
 
-      let userIdsArr = [...userIds];
-      let userAccounts = await database.getAccountsByIds(userIdsArr);
-      let usersMap = new Map(userAccounts.map((user) => [user.id, user]));
+      const userIdsArr = [...userIds];
+      const userAccounts = await database.getAccountsByIds(userIdsArr);
+      const usersMap = new Map(userAccounts.map((user) => [user.id, user]));
 
-      let members = [];
+      const members = [];
 
       if (memberRows && memberRows.length > 0) {
         for (const row of memberRows) {
@@ -4663,7 +4667,7 @@ const database = {
         }
       }
 
-      let webhooks = [];
+      const webhooks = [];
 
       if (webhookRows !== null) {
         for (const row of webhookRows) {
@@ -4685,19 +4689,19 @@ const database = {
         }
       }
 
-      let channels = [];
+      const channels = [];
 
       if (channelRows && channelRows.length > 0) {
         for (var row of channelRows) {
           if (!row) continue;
 
-          let overwrites = [];
+          const overwrites = [];
 
           if (row.permission_overwrites && row.permission_overwrites.includes(':')) {
             for (var overwrite of row.permission_overwrites.split(':')) {
-              let role_id = overwrite.split('_')[0];
-              let allow_value = overwrite.split('_')[1];
-              let deny_value = overwrite.split('_')[2];
+              const role_id = overwrite.split('_')[0];
+              const allow_value = overwrite.split('_')[1];
+              const deny_value = overwrite.split('_')[2];
 
               overwrites.push({
                 id: role_id,
@@ -4711,10 +4715,10 @@ const database = {
             row.permission_overwrites != null &&
             row.permission_overwrites != 'NULL'
           ) {
-            let overwrite = row.permission_overwrites;
-            let role_id = overwrite.split('_')[0];
-            let allow_value = overwrite.split('_')[1];
-            let deny_value = overwrite.split('_')[2];
+            const overwrite = row.permission_overwrites;
+            const role_id = overwrite.split('_')[0];
+            const allow_value = overwrite.split('_')[1];
+            const deny_value = overwrite.split('_')[2];
 
             overwrites.push({
               id: role_id,
@@ -4724,7 +4728,7 @@ const database = {
             });
           }
 
-          let channel_obj = {
+          const channel_obj = {
             id: row.id,
             name: row.name,
             ...((parseInt(row.type) === 0 ||
@@ -4774,7 +4778,7 @@ const database = {
         }));
       }
 
-      let emojis = JSON.parse(guildRow.custom_emojis); //make this jsonb in the future
+      const emojis = JSON.parse(guildRow.custom_emojis); //make this jsonb in the future
 
       for (var emoji of emojis) {
         emoji.roles = [];
@@ -4783,10 +4787,10 @@ const database = {
         emoji.allNamesString = `:${emoji.name}:`;
       }
 
-      let presences = [];
+      const presences = [];
 
       for (var member of members) {
-        let sessions = global.userSessions.get(member.id);
+        const sessions = global.userSessions.get(member.id);
         if (global.userSessions.size === 0 || !sessions) {
           presences.push({
             game_id: null,
@@ -4795,7 +4799,7 @@ const database = {
             user: miniUserObject(member.user),
           });
         } else {
-          let session = sessions[sessions.length - 1];
+          const session = sessions[sessions.length - 1];
           if (!session.presence) {
             presences.push({
               game_id: null,
@@ -4891,7 +4895,7 @@ const database = {
         }
       }
 
-      let userIds = new Set();
+      const userIds = new Set();
 
       if (memberRows) {
         memberRows.forEach((row) => userIds.add(row.user_id));
@@ -4901,8 +4905,8 @@ const database = {
         webhookRows.forEach((row) => userIds.add(row.creator_id));
       }
 
-      let userAccounts = await database.getAccountsByIds([...userIds]);
-      let usersMap = new Map(userAccounts.map((user) => [user.id, user]));
+      const userAccounts = await database.getAccountsByIds([...userIds]);
+      const usersMap = new Map(userAccounts.map((user) => [user.id, user]));
 
       const membersByGuild = new Map();
 
@@ -4970,13 +4974,13 @@ const database = {
 
           if (!row) continue;
 
-          let overwrites = [];
+          const overwrites = [];
 
           if (row.permission_overwrites && row.permission_overwrites.includes(':')) {
             for (var overwrite of row.permission_overwrites.split(':')) {
-              let role_id = overwrite.split('_')[0];
-              let allow_value = overwrite.split('_')[1];
-              let deny_value = overwrite.split('_')[2];
+              const role_id = overwrite.split('_')[0];
+              const allow_value = overwrite.split('_')[1];
+              const deny_value = overwrite.split('_')[2];
               overwrites.push({
                 id: role_id,
                 allow: parseInt(allow_value),
@@ -4985,10 +4989,10 @@ const database = {
               });
             }
           } else if (row.permission_overwrites && row.permission_overwrites != null) {
-            let overwrite = row.permission_overwrites;
-            let role_id = overwrite.split('_')[0];
-            let allow_value = overwrite.split('_')[1];
-            let deny_value = overwrite.split('_')[2];
+            const overwrite = row.permission_overwrites;
+            const role_id = overwrite.split('_')[0];
+            const allow_value = overwrite.split('_')[1];
+            const deny_value = overwrite.split('_')[2];
             overwrites.push({
               id: role_id,
               allow: parseInt(allow_value),
@@ -4997,7 +5001,7 @@ const database = {
             });
           }
 
-          let channel_obj = {
+          const channel_obj = {
             id: row.id,
             name: row.name,
             ...((parseInt(row.type) === 0 ||
@@ -5070,7 +5074,7 @@ const database = {
         const channels = channelsByGuild.get(guildId) || [];
         const audit_logs = auditLogsByGuild.get(guildId) || [];
 
-        let emojis = JSON.parse(guildRow.custom_emojis);
+        const emojis = JSON.parse(guildRow.custom_emojis);
 
         for (var emoji of emojis) {
           emoji.roles = [];
@@ -5079,10 +5083,10 @@ const database = {
           emoji.allNamesString = `:${emoji.name}:`;
         }
 
-        let presences = [];
+        const presences = [];
 
         for (var member of members) {
-          let sessions = global.userSessions.get(member.id);
+          const sessions = global.userSessions.get(member.id);
           if (global.userSessions.size === 0 || !sessions) {
             presences.push({
               game_id: null,
@@ -5091,7 +5095,7 @@ const database = {
               user: miniUserObject(member.user),
             });
           } else {
-            let session = sessions[sessions.length - 1];
+            const session = sessions[sessions.length - 1];
             if (!session.presence) {
               presences.push({
                 game_id: null,
@@ -5260,7 +5264,7 @@ const database = {
 
       //Since we forced vanity urls to force back at max age 0, check if its above before doing any further logic
       if (data.maxage > 0) {
-        let expiryTime = new Date(data.createdat).getTime() + data.maxage * 1000;
+        const expiryTime = new Date(data.createdat).getTime() + data.maxage * 1000;
         expiration_date = new Date(expiryTime).toISOString();
 
         if (Date.now() >= expiryTime) {
@@ -5269,7 +5273,7 @@ const database = {
         }
       }
 
-      let retObject = {
+      const retObject = {
         code: data.code,
         inviter: data.inviter_id
           ? {
@@ -5388,9 +5392,9 @@ const database = {
     try {
       if (!user_id || !guild.id) return false;
 
-      let guild_id = guild.id;
+      const guild_id = guild.id;
 
-      let saveRoles = [];
+      const saveRoles = [];
 
       for (var role of role_ids) {
         if (!guild.roles.find((x) => x.id === role)) {
@@ -5605,7 +5609,7 @@ const database = {
     try {
       const role_id = generate();
 
-      let default_permissions = 73468929; //READ, SEND, READ MSG HISTORY, CREATE INSTANT INVITE, SPEAK, MUTE_MEMBERS, CHANGE_NICKNAME
+      const default_permissions = 73468929; //READ, SEND, READ MSG HISTORY, CREATE INSTANT INVITE, SPEAK, MUTE_MEMBERS, CHANGE_NICKNAME
 
       await database.runQuery(
         `INSERT INTO roles (guild_id, role_id, name, permissions, position) VALUES ($1, $2, $3, $4, $5)`,
@@ -5651,9 +5655,9 @@ const database = {
   },
   deleteChannelPermissionOverwrite: async (guild, channel_id, overwrite) => {
     try {
-      let current_overwrites = await database.getChannelPermissionOverwrites(guild, channel_id);
+      const current_overwrites = await database.getChannelPermissionOverwrites(guild, channel_id);
 
-      let findOverwrite = current_overwrites.findIndex((x) => x.id == overwrite.id);
+      const findOverwrite = current_overwrites.findIndex((x) => x.id == overwrite.id);
 
       if (findOverwrite === -1) {
         return false;
@@ -5661,7 +5665,7 @@ const database = {
 
       current_overwrites.splice(findOverwrite, 1);
 
-      let serialized = SerializeOverwritesToString(current_overwrites);
+      const serialized = SerializeOverwritesToString(current_overwrites);
 
       await database.runQuery(
         `
@@ -5679,11 +5683,11 @@ const database = {
   }, //rewrite
   updateChannelPermissionOverwrites: async (guild, channel_id, overwrites) => {
     try {
-      let current_overwrites = await database.getChannelPermissionOverwrites(guild, channel_id);
+      const current_overwrites = await database.getChannelPermissionOverwrites(guild, channel_id);
 
       for (var i = 0; i < overwrites.length; i++) {
-        let overwrite = overwrites[i];
-        let old_overwrite = current_overwrites.findIndex((x) => x.id == overwrite.id);
+        const overwrite = overwrites[i];
+        const old_overwrite = current_overwrites.findIndex((x) => x.id == overwrite.id);
 
         if (old_overwrite === -1) {
           current_overwrites.push(overwrite);
@@ -5692,7 +5696,7 @@ const database = {
         }
       }
 
-      let serialized = SerializeOverwritesToString(current_overwrites);
+      const serialized = SerializeOverwritesToString(current_overwrites);
 
       await database.runQuery(
         `
@@ -5724,7 +5728,7 @@ const database = {
   },
   deleteChannel: async (channel_id) => {
     try {
-      let [_, messages] = await Promise.all([
+      const [_, messages] = await Promise.all([
         database.runQuery(`DELETE FROM invites WHERE channel_id = $1`, [channel_id]),
         database.runQuery(`SELECT * FROM messages WHERE channel_id = $1`, [channel_id]),
       ]);
@@ -5814,11 +5818,11 @@ const database = {
   }, //rewrite asap
   deleteGuild: async (guild_id) => {
     try {
-      let assetTypes = ['banners', 'icons', 'splashes'];
+      const assetTypes = ['banners', 'icons', 'splashes'];
 
       await Promise.all(
         assetTypes.map(async (type) => {
-          let dirPath = join('./www_dynamic', type, guild_id.toString());
+          const dirPath = join('./www_dynamic', type, guild_id.toString());
 
           try {
             await fsPromises.rm(dirPath, {
@@ -5836,7 +5840,7 @@ const database = {
 
       await database.runQuery(`DELETE FROM guilds WHERE id = $1`, [guild_id]);
 
-      let channelRows = await database.runQuery(`SELECT id FROM channels WHERE guild_id = $1`, [
+      const channelRows = await database.runQuery(`SELECT id FROM channels WHERE guild_id = $1`, [
         guild_id,
       ]);
 
@@ -5968,7 +5972,7 @@ const database = {
         return [];
       }
 
-      let notes = {};
+      const notes = {};
 
       for (var row of rows) {
         notes[row.user_id] = row.note;
@@ -5983,7 +5987,7 @@ const database = {
   },
   updateNoteForUserId: async (requester_id, user_id, new_note) => {
     try {
-      let notes = await database.getNoteForUserId(requester_id, user_id);
+      const notes = await database.getNoteForUserId(requester_id, user_id);
 
       if (!notes) {
         await database.runQuery(
@@ -6055,7 +6059,7 @@ const database = {
         channel_id,
       ]);
 
-      let msg = await database.getMessageById(id);
+      const msg = await database.getMessageById(id);
 
       if (type === 1) {
         msg.mentions = [miniUserObject(props[1])];
@@ -6090,7 +6094,7 @@ const database = {
 
       //validate snowflakes
 
-      let isWebhook = author_id.includes('WEBHOOK_');
+      const isWebhook = author_id.includes('WEBHOOK_');
 
       if (content == undefined) {
         content = '';
@@ -6141,7 +6145,7 @@ const database = {
         }
       }
 
-      let msg = await database.getMessageById(id);
+      const msg = await database.getMessageById(id);
 
       const mentions = [];
 
@@ -6178,7 +6182,7 @@ const database = {
         send_vanity = vanity_url;
       }
 
-      let checkRows = await database.runQuery(
+      const checkRows = await database.runQuery(
         `
                 SELECT EXISTS (
                     SELECT 1 FROM guilds WHERE vanity_url = $1
@@ -6459,7 +6463,7 @@ const database = {
         ];
       } else {
         // Legacy 2017
-        let voiceId = generate();
+        const voiceId = generate();
 
         await database.runQuery(
           `INSERT INTO channels (id, type, guild_id, name, position) VALUES ($1, 0, $2, $3, 0)`,
@@ -6569,7 +6573,7 @@ const database = {
   createAccount: async (username, email, password, ip, email_token = null) => {
     // New accounts via invite (unclaimed account) have null email and null password.
     try {
-      let isEmailTaken = await database.runQuery(
+      const isEmailTaken = await database.runQuery(
         `
             SELECT EXISTS (
                 SELECT 1 FROM users WHERE email = $1
@@ -6584,7 +6588,7 @@ const database = {
         };
       }
 
-      let usersRows =
+      const usersRows =
         (await database.runQuery(`SELECT COUNT(*) as user_count FROM users WHERE username = $1`, [
           username,
         ])) ?? [];
@@ -6596,18 +6600,18 @@ const database = {
         };
       }
 
-      let salt = await genSalt(10);
-      let pwHash = await hash(password ?? generateString(20), salt);
-      let id = generate();
-      let deconstructed = deconstruct(id);
-      let date = deconstructed.date.toISOString();
+      const salt = await genSalt(10);
+      const pwHash = await hash(password ?? generateString(20), salt);
+      const id = generate();
+      const deconstructed = deconstruct(id);
+      const date = deconstructed.date.toISOString();
       let discriminator = Math.round(Math.random() * 9999);
 
       while (discriminator < 1000) {
         discriminator = Math.round(Math.random() * 9999);
       }
 
-      let token = generateToken(id, pwHash);
+      const token = generateToken(id, pwHash);
 
       await database.runQuery(
         `INSERT INTO users (id,username,discriminator,email,password,token,created_at,avatar,registration_ip,verified,email_token) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
@@ -6640,7 +6644,7 @@ const database = {
   },
   doesThisMatchPassword: async (password_raw, password_hash) => {
     try {
-      let comparison = compareSync(password_raw, password_hash);
+      const comparison = compareSync(password_raw, password_hash);
 
       if (!comparison) {
         return false;
@@ -6743,7 +6747,7 @@ const database = {
   },
   getStaffAuditLogs: async () => {
     try {
-      let rows = await database.runQuery(
+      const rows = await database.runQuery(
         `SELECT u.id, u.username, u.discriminator, s.audit_log, s.user_id FROM users AS u INNER JOIN staff AS s ON s.user_id = u.id`,
         [],
       );
@@ -6752,13 +6756,13 @@ const database = {
         return [];
       }
 
-      let ret = [];
+      const ret = [];
 
-      for (let row of rows) {
-        let entries = JSON.parse(row.audit_log) ?? [];
+      for (const row of rows) {
+        const entries = JSON.parse(row.audit_log) ?? [];
 
         if (entries.length > 0) {
-          let completeEntries = entries.map((logEntry) => ({
+          const completeEntries = entries.map((logEntry) => ({
             ...logEntry,
             actioned_by: {
               username: row.username,
@@ -6780,11 +6784,11 @@ const database = {
   },
   getInstanceStaff: async () => {
     try {
-      let rows = await database.runQuery(
+      const rows = await database.runQuery(
         `SELECT s.user_id, s.privilege, s.audit_log, u.username, u.discriminator, u.id, u.avatar FROM staff AS s INNER JOIN users AS u ON u.id = s.user_id`,
         [],
       );
-      let ret = [];
+      const ret = [];
 
       if (!rows || rows.length === 0) {
         return [];
@@ -6842,9 +6846,9 @@ const database = {
   },
   updateMessage: async (message_id, new_content) => {
     try {
-      let embeds = await generateMsgEmbeds(new_content);
+      const embeds = await generateMsgEmbeds(new_content);
 
-      let date = new Date().toISOString();
+      const date = new Date().toISOString();
 
       await database.runQuery(
         `UPDATE messages SET content = $1, edited_timestamp = $2, embeds = $3 WHERE message_id = $4`,
@@ -6915,7 +6919,7 @@ const database = {
         new_avatar = avatar;
       }
 
-      let usersRows =
+      const usersRows =
         (await database.runQuery(`SELECT COUNT(*) as user_count FROM users WHERE username = $1`, [
           new_username,
         ])) ?? [];
@@ -6941,7 +6945,7 @@ const database = {
           return 0;
         }
 
-        let existsAlready = await global.database.runQuery(
+        const existsAlready = await global.database.runQuery(
           `
                     SELECT EXISTS (
                         SELECT 1 FROM users WHERE username = $1 AND discriminator = $2 AND id != $3
@@ -7066,7 +7070,7 @@ const database = {
   },
   checkAccount: async (email, password, ip) => {
     try {
-      let user = await database.getAccountByEmail(email);
+      const user = await database.getAccountByEmail(email);
 
       // IHATE TYPESCRIPT I HATE TYPESCRIPT I HATE TYPESCRIPT
       if (user == null || !user?.email || !user?.password || !user?.token || !user?.settings) {
@@ -7083,7 +7087,7 @@ const database = {
         };
       }
 
-      let comparison = compareSync(password, user.password);
+      const comparison = compareSync(password, user.password);
 
       if (!comparison) {
         return {

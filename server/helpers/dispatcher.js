@@ -3,7 +3,7 @@ import { logText } from './logger.js';
 
 const dispatcher = {
   dispatchEventTo: async (user_id, type, payload) => {
-    let sessions = global.userSessions.get(user_id);
+    const sessions = global.userSessions.get(user_id);
 
     if (!sessions || sessions.size === 0) return false;
 
@@ -12,7 +12,7 @@ const dispatcher = {
     }
   },
   dispatchLogoutTo: async (user_id) => {
-    let sessions = global.userSessions.get(user_id);
+    const sessions = global.userSessions.get(user_id);
 
     if (!sessions || sessions.size === 0) return false;
 
@@ -29,7 +29,7 @@ const dispatcher = {
     });
   },
   dispatchGuildMemberUpdateToAllTheirGuilds: async (user_id, new_user) => {
-    let sessions = global.userSessions.get(user_id);
+    const sessions = global.userSessions.get(user_id);
 
     if (!sessions || sessions.size === 0) return false;
 
@@ -57,18 +57,18 @@ const dispatcher = {
     if (members.length == 0) return false;
 
     for (let i = 0; i < members.length; i++) {
-      let member = members[i];
+      const member = members[i];
 
-      let uSessions = global.userSessions.get(member.id);
+      const uSessions = global.userSessions.get(member.id);
 
       if (!uSessions) continue;
 
       for (let z = 0; z < uSessions.length; z++) {
-        let uSession = uSessions[z];
+        const uSession = uSessions[z];
 
         if (guild.owner_id != member.id && uSession && uSession.socket) {
           //Skip checks if owner
-          let guildPermCheck = global.permissions.hasGuildPermissionTo(
+          const guildPermCheck = global.permissions.hasGuildPermissionTo(
             guild,
             member.id,
             permission_check,
@@ -110,12 +110,12 @@ const dispatcher = {
   ) => {
     if (!guild?.id) return;
 
-    let activeSessions = Array.from(global.userSessions.values()).flat();
-    let updatePromises = activeSessions.map(async (session) => {
-      let guildInSession = session.guilds?.find((g) => g.id === guild.id);
+    const activeSessions = Array.from(global.userSessions.values()).flat();
+    const updatePromises = activeSessions.map(async (session) => {
+      const guildInSession = session.guilds?.find((g) => g.id === guild.id);
       if (!guildInSession) return;
 
-      let socket = session.socket;
+      const socket = session.socket;
       let finalPayload = payload;
       let finalType = typeOverride || type;
 
@@ -135,20 +135,20 @@ const dispatcher = {
       } else if (type === 'PRESENCE_UPDATE' && payload && payload.user) {
         finalPayload = { ...payload };
 
-        let member = guild.members.find((m) => m.user.id === finalPayload.user.id);
+        const member = guild.members.find((m) => m.user.id === finalPayload.user.id);
 
         if (member) {
           finalPayload.nick = member.nick;
           finalPayload.roles = member.roles;
         }
 
-        let isLegacy =
+        const isLegacy =
           socket &&
           (socket.client_build_date.getFullYear() < 2016 ||
             (socket.client_build_date.getFullYear() === 2016 &&
               socket.client_build_date.getMonth() < 8));
 
-        let current_status = finalPayload.status.toLowerCase();
+        const current_status = finalPayload.status.toLowerCase();
 
         if (isLegacy) {
           if (['offline', 'invisible'].includes(current_status)) {
@@ -159,10 +159,10 @@ const dispatcher = {
         }
       }
 
-      let sub = session.subscriptions?.[guild.id];
+      const sub = session.subscriptions?.[guild.id];
 
       if (sub) {
-        let channel = guild.channels.find((x) => x.id === sub.channel_id);
+        const channel = guild.channels.find((x) => x.id === sub.channel_id);
 
         if (channel) {
           await handleMembersSync(session, channel, guild, sub);
@@ -181,18 +181,18 @@ const dispatcher = {
     return true;
   },
   getSessionsInGuild: (guild) => {
-    let sessions = [];
+    const sessions = [];
 
     if (!guild || !guild.members) {
       return [];
     }
 
     for (let i = 0; i < guild.members.length; i++) {
-      let member = guild.members[i];
+      const member = guild.members[i];
 
       if (!member) continue;
 
-      let uSessions = global.userSessions.get(member.id);
+      const uSessions = global.userSessions.get(member.id);
 
       if (!uSessions || uSessions.length === 0) continue;
 
@@ -202,7 +202,7 @@ const dispatcher = {
     return sessions;
   },
   getAllActiveSessions: () => {
-    let usessions = [];
+    const usessions = [];
 
     global.userSessions.forEach((sessions, userId) => {
       for (let z = 0; z < sessions.length; z++) {
@@ -220,19 +220,19 @@ const dispatcher = {
     }
 
     for (let i = 0; i < guild.members.length; i++) {
-      let member = guild.members[i];
+      const member = guild.members[i];
 
       if (!member) continue;
 
-      let uSessions = global.userSessions.get(member.user.id);
+      const uSessions = global.userSessions.get(member.user.id);
 
       if (!uSessions || uSessions.length === 0) continue;
 
       for (let z = 0; z < uSessions.length; z++) {
-        let session = uSessions[z];
-        let socket = session.socket;
-        let finalPayload = typeof payload === 'function' ? payload : { ...payload };
-        let isLegacyClient =
+        const session = uSessions[z];
+        const socket = session.socket;
+        const finalPayload = typeof payload === 'function' ? payload : { ...payload };
+        const isLegacyClient =
           (socket && socket.client_build_date.getFullYear() === 2015) ||
           (socket &&
             socket.client_build_date.getFullYear() === 2016 &&
@@ -243,7 +243,7 @@ const dispatcher = {
             socket.client_build_date.getDate() < 26);
 
         if (type == 'PRESENCE_UPDATE' && isLegacyClient) {
-          let current_status = payload.status.toLowerCase();
+          const current_status = payload.status.toLowerCase();
 
           if (['offline', 'invisible'].includes(current_status)) {
             finalPayload.status = 'offline';
@@ -264,9 +264,9 @@ const dispatcher = {
     if (channel === null || !channel.recipients) return false;
 
     for (let i = 0; i < channel.recipients.length; i++) {
-      let recipient = channel.recipients[i].id;
+      const recipient = channel.recipients[i].id;
 
-      let uSessions = global.userSessions.get(recipient);
+      const uSessions = global.userSessions.get(recipient);
 
       if (!uSessions || uSessions.length === 0) continue;
 
@@ -287,11 +287,11 @@ const dispatcher = {
     if (channel == null) return false;
 
     for (let i = 0; i < guild.members.length; i++) {
-      let member = guild.members[i];
+      const member = guild.members[i];
 
       if (!member) continue;
 
-      let permissions = global.permissions.hasChannelPermissionTo(
+      const permissions = global.permissions.hasChannelPermissionTo(
         channel,
         guild,
         member.id,
@@ -300,7 +300,7 @@ const dispatcher = {
 
       if (!permissions) continue;
 
-      let uSessions = global.userSessions.get(member.id);
+      const uSessions = global.userSessions.get(member.id);
 
       if (!uSessions || uSessions.length === 0) continue;
 

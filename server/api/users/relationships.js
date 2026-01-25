@@ -18,13 +18,13 @@ router.param('userid', async (req, _, next, userid) => {
 
 router.get('/', quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (account.bot) {
       return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT); //bots.. ermm
     }
 
-    let relationships = account.relationships;
+    const relationships = account.relationships;
 
     return res.status(200).json(relationships);
   } catch (error) {
@@ -36,13 +36,13 @@ router.get('/', quickcache.cacheFor(60 * 5), async (req, res) => {
 
 router.delete('/:userid', async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (account.bot) {
       return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS); //bots cannot add users
     }
 
-    let user = req.user;
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -52,7 +52,7 @@ router.delete('/:userid', async (req, res) => {
       return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS); //bots cannot add users
     }
 
-    let relationship = account.relationships.find((item) => item.id === req.user.id);
+    const relationship = account.relationships.find((item) => item.id === req.user.id);
 
     if (!relationship) {
       return res.status(404).json(errors.response_404.UNKNOWN_USER); //relationship was not found, is this the correct response?
@@ -83,13 +83,13 @@ router.delete('/:userid', async (req, res) => {
 
 router.put('/:userid', async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (account.bot) {
       return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS);
     }
 
-    let user = req.user;
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -99,10 +99,12 @@ router.put('/:userid', async (req, res) => {
       return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS);
     }
 
-    let body = req.body;
+    const body = req.body;
     let action = 'SEND_FR';
-    let relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
-    let targetRelationship = user.relationships.find((item) => item.id === account.id) ?? { type: 0 };
+    const relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
+    const targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
+      type: 0,
+    };
 
     if (relationship.type === 3) action = 'ACCEPT_FR';
     if (body.type === 2) action = 'BLOCK';
@@ -119,8 +121,16 @@ router.put('/:userid', async (req, res) => {
       if (relationship.type !== 0 || targetRelationship.type === 2) {
         return res.status(403).json({ code: 403, message: 'Failed to send friend request' });
       }
-      
-      if (relationship.type === 2 || relationship.type === 1 || targetRelationship.type === 2 || !user.settings.friend_source_flags || (!user.settings.friend_source_flags.all && !user.settings.friend_source_flags.mutual_friends && !user.settings.friend_source_flags.mutual_guilds)) {
+
+      if (
+        relationship.type === 2 ||
+        relationship.type === 1 ||
+        targetRelationship.type === 2 ||
+        !user.settings.friend_source_flags ||
+        (!user.settings.friend_source_flags.all &&
+          !user.settings.friend_source_flags.mutual_friends &&
+          !user.settings.friend_source_flags.mutual_guilds)
+      ) {
         return res.status(403).json({
           code: 403,
           message: 'Failed to send friend request',
@@ -131,7 +141,7 @@ router.put('/:userid', async (req, res) => {
         //to-do: handle mutual_guilds, mutual_friends case
 
         if (user.settings.friend_source_flags.mutual_guilds) {
-          let ourGuilds = await global.database.getUsersGuilds(account.id);
+          const ourGuilds = await global.database.getUsersGuilds(account.id);
 
           if (!ourGuilds) {
             return res.status(403).json({
@@ -151,7 +161,7 @@ router.put('/:userid', async (req, res) => {
             });
           }
 
-          let sharedGuilds = [];
+          const sharedGuilds = [];
 
           for (var guild of ourGuilds) {
             if (compareWith.includes(guild.id)) {
@@ -168,7 +178,7 @@ router.put('/:userid', async (req, res) => {
         }
 
         if (user.settings.friend_source_flags.mutual_friends) {
-          let sharedFriends = [];
+          const sharedFriends = [];
 
           for (var friend of account.relationships.find((item) => item.type === 1)) {
             if (user.relationships.map((i) => i.id).includes(friend.id)) {
@@ -256,7 +266,7 @@ router.put('/:userid', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (account.bot) {
       return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS);
@@ -288,7 +298,7 @@ router.post('/', async (req, res) => {
     }
 
     if (email) {
-      let user = await global.database.getAccountByEmail(email);
+      const user = await global.database.getAccountByEmail(email);
 
       if (!user) {
         return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -301,9 +311,9 @@ router.post('/', async (req, res) => {
         return res.status(404).json(errors.response_404.UNKNOWN_USER);
       } //be very vague to protect the users privacy
 
-      let relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
+      const relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
 
-      let targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
+      const targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
         type: 0,
       };
 
@@ -332,7 +342,7 @@ router.post('/', async (req, res) => {
     }
 
     if (username && discriminator) {
-      let user = await global.database.getAccountByUsernameTag(username, discriminator);
+      const user = await global.database.getAccountByUsernameTag(username, discriminator);
 
       if (!user) {
         return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -342,9 +352,9 @@ router.post('/', async (req, res) => {
         return res.status(403).json(errors.response_403.BOTS_CANNOT_HAVE_FRIENDS);
       }
 
-      let relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
+      const relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
 
-      let targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
+      const targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
         type: 0,
       };
 
@@ -377,7 +387,7 @@ router.post('/', async (req, res) => {
         //to-do: handle mutual_guilds, mutual_friends case
 
         if (user.settings.friend_source_flags.mutual_guilds) {
-          let ourGuilds = await global.database.getUsersGuilds(account.id);
+          const ourGuilds = await global.database.getUsersGuilds(account.id);
 
           if (!ourGuilds) {
             return res.status(403).json({
@@ -397,7 +407,7 @@ router.post('/', async (req, res) => {
             });
           }
 
-          let sharedGuilds = [];
+          const sharedGuilds = [];
 
           for (var guild of ourGuilds) {
             if (compareWith.includes(guild.id)) {
@@ -414,7 +424,7 @@ router.post('/', async (req, res) => {
         }
 
         if (user.settings.friend_source_flags.mutual_friends) {
-          let sharedFriends = [];
+          const sharedFriends = [];
 
           for (var friend of account.relationships.find((item) => item.type === 1)) {
             if (user.relationships.map((i) => i.id).includes(friend.id)) {

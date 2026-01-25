@@ -11,14 +11,14 @@ const integrationConfig = globalUtils.config.integration_config;
 let pendingCallback = [];
 
 router.get('/:platform/authorize', async (req, res) => {
-  let token = req.query.token;
-  let platform = req.params.platform;
+  const token = req.query.token;
+  const platform = req.params.platform;
 
   if (!token) {
     return res.status(401).json(errors.response_401.UNAUTHORIZED);
   }
 
-  let checkPlatform = integrationConfig.find((x) => x.platform == platform);
+  const checkPlatform = integrationConfig.find((x) => x.platform == platform);
 
   if (!checkPlatform) {
     return res.status(400).json({
@@ -40,10 +40,10 @@ router.get('/:platform/authorize', async (req, res) => {
 });
 
 router.get('/:platform/callback', async (req, res) => {
-  let code = req.query.code;
-  let platform = req.params.platform;
+  const code = req.query.code;
+  const platform = req.params.platform;
   //let state = req.params.state;
-  let pending = pendingCallback.find(
+  const pending = pendingCallback.find(
     (x) => x.user_agent == req.headers['user-agent'] && x.release_date == req.client_build,
   );
 
@@ -51,13 +51,13 @@ router.get('/:platform/callback', async (req, res) => {
     return res.status(401).json(errors.response_401.UNAUTHORIZED);
   }
 
-  let token = pending.token;
+  const token = pending.token;
 
   if (!token) {
     return res.status(401).json(errors.response_401.UNAUTHORIZED);
   }
 
-  let account = await global.database.getAccountByToken(token);
+  const account = await global.database.getAccountByToken(token);
 
   if (!account) {
     return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -77,9 +77,9 @@ router.get('/:platform/callback', async (req, res) => {
     });
   }
 
-  let twitch = new Twitch(code);
+  const twitch = new Twitch(code);
 
-  let access_token = await twitch.getAccessToken();
+  const access_token = await twitch.getAccessToken();
 
   if (access_token == null) {
     return res.status(400).json({
@@ -88,7 +88,7 @@ router.get('/:platform/callback', async (req, res) => {
     });
   }
 
-  let user = await twitch.getUser(access_token);
+  const user = await twitch.getUser(access_token);
 
   if (user == null) {
     return res.status(400).json({
@@ -97,7 +97,7 @@ router.get('/:platform/callback', async (req, res) => {
     });
   }
 
-  let attemptAddConnection = await global.database.addConnectedAccount(
+  const attemptAddConnection = await global.database.addConnectedAccount(
     account.id,
     platform,
     user.id,

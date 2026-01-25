@@ -14,14 +14,14 @@ router.use('/applications', applications);
 router.use('/tokens', tokens);
 router.get('/authorize', async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (account.bot) {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
-    let client_id = req.query.client_id;
-    let scope = req.query.scope;
+    const client_id = req.query.client_id;
+    const scope = req.query.scope;
 
     if (!client_id) {
       return res.status(400).json({
@@ -37,18 +37,18 @@ router.get('/authorize', async (req, res) => {
       }); // citation 2
     }
 
-    let return_obj = {
+    const return_obj = {
       authorized: false,
     };
 
-    let application = await global.database.getApplicationById(client_id);
+    const application = await global.database.getApplicationById(client_id);
 
     if (!application) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
     }
 
     if (scope.includes('bot')) {
-      let bot = await global.database.getBotByApplicationId(application.id);
+      const bot = await global.database.getBotByApplicationId(application.id);
 
       if (!bot) {
         return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
@@ -58,8 +58,8 @@ router.get('/authorize', async (req, res) => {
         return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
       }
 
-      let is_public = bot.public;
-      let requires_code_grant = bot.require_code_grant;
+      const is_public = bot.public;
+      const requires_code_grant = bot.require_code_grant;
 
       delete bot.public;
       delete bot.require_code_grant;
@@ -86,15 +86,15 @@ router.get('/authorize', async (req, res) => {
 
     return_obj.user = globalUtils.miniUserObject(account);
 
-    let guilds = await global.database.getUsersGuilds(account.id);
+    const guilds = await global.database.getUsersGuilds(account.id);
 
-    let guilds_array = [];
+    const guilds_array = [];
 
     if (guilds.length > 0) {
       for (var guild of guilds) {
-        let isOwner = guild.owner_id === account.id;
-        let isStaffOverride = req.is_staff && req.staff_details.privilege >= 3;
-        let hasPermission =
+        const isOwner = guild.owner_id === account.id;
+        const isStaffOverride = req.is_staff && req.staff_details.privilege >= 3;
+        const hasPermission =
           isOwner ||
           isStaffOverride ||
           global.permissions.hasGuildPermissionTo(guild, account.id, 'ADMINISTRATOR', null) ||
@@ -124,14 +124,14 @@ router.get('/authorize', async (req, res) => {
 
 router.post('/authorize', async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (account.bot) {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
-    let client_id = req.query.client_id;
-    let scope = req.query.scope;
+    const client_id = req.query.client_id;
+    const scope = req.query.scope;
     let permissions = parseInt(req.query.permissions);
 
     if (!client_id) {
@@ -152,7 +152,7 @@ router.post('/authorize', async (req, res) => {
       permissions = 0;
     }
 
-    let application = await global.database.getApplicationById(client_id);
+    const application = await global.database.getApplicationById(client_id);
 
     if (!application) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
@@ -163,7 +163,7 @@ router.post('/authorize', async (req, res) => {
     if (scope === 'bot') {
       guild_id = req.body.bot_guild_id || req.body.guild_id;
 
-      let bot = await global.database.getBotByApplicationId(application.id);
+      const bot = await global.database.getBotByApplicationId(application.id);
 
       if (!bot) {
         return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
@@ -176,40 +176,40 @@ router.post('/authorize', async (req, res) => {
       application.bot = bot;
     }
 
-    let guilds = await global.database.getUsersGuilds(account.id);
+    const guilds = await global.database.getUsersGuilds(account.id);
 
     if (!guilds || guild_id === null) {
       return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
-    let guild = guilds.find((x) => x.id === guild_id);
+    const guild = guilds.find((x) => x.id === guild_id);
 
     if (!guild) {
       return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
-    let member = guild.members.find((x) => x.id === account.id);
+    const member = guild.members.find((x) => x.id === account.id);
 
     if (!member) {
       return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
-    let botAlrThere = guild.members.find((x) => x.id === application.bot.id);
+    const botAlrThere = guild.members.find((x) => x.id === application.bot.id);
 
     if (botAlrThere) {
       return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
-    let isOwner = guild.owner_id === account.id;
-    let isStaffOverride = req.is_staff && req.staff_details.privilege >= 3;
-    let hasPermission =
+    const isOwner = guild.owner_id === account.id;
+    const isStaffOverride = req.is_staff && req.staff_details.privilege >= 3;
+    const hasPermission =
       isOwner ||
       isStaffOverride ||
       global.permissions.hasGuildPermissionTo(guild, account.id, 'ADMINISTRATOR', null) ||
       global.permissions.hasGuildPermissionTo(guild, account.id, 'MANAGE_GUILD', null);
 
     if (hasPermission) {
-      let isBanned = await database.isBannedFromGuild(guild.id, application.bot.id);
+      const isBanned = await database.isBannedFromGuild(guild.id, application.bot.id);
 
       if (isBanned) {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
@@ -230,9 +230,9 @@ router.post('/authorize', async (req, res) => {
           nick: null,
         });
 
-        let activeSessions = dispatcher.getAllActiveSessions();
+        const activeSessions = dispatcher.getAllActiveSessions();
 
-        for (let session of activeSessions) {
+        for (const session of activeSessions) {
           if (session.subscriptions && session.subscriptions[guild.id]) {
             //if (session.user.id === application.bot.id) continue;
 

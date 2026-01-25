@@ -82,7 +82,7 @@ class session {
         return;
       }
 
-      let valid_status = ['online', 'idle', 'invisible', 'offline', 'dnd'];
+      const valid_status = ['online', 'idle', 'invisible', 'offline', 'dnd'];
 
       if (!valid_status.includes(status.toLowerCase())) return;
 
@@ -99,7 +99,8 @@ class session {
       this.presence.status = status.toLowerCase();
       this.presence.game_id = game_id;
 
-      let broadcastStatus = status.toLowerCase() === 'invisible' ? 'offline' : status.toLowerCase(); //this works i think
+      const broadcastStatus =
+        status.toLowerCase() === 'invisible' ? 'offline' : status.toLowerCase(); //this works i think
 
       await this.dispatchPresenceUpdate(broadcastStatus);
     } catch (error) {
@@ -112,16 +113,16 @@ class session {
     }
 
     //Evaluate dynamic payload
-    if (typeof payload == 'function') {
+    if (typeof payload === 'function') {
       payload = await payload.call(this);
     }
 
-    let userBitfield = global.gatewayIntentMap.get(this.user.id);
+    const userBitfield = global.gatewayIntentMap.get(this.user.id);
     let requiredBit;
-    let DEFAULT_BOT_INTENTS = global.config.default_bot_intents ?? {
+    const DEFAULT_BOT_INTENTS = global.config.default_bot_intents ?? {
       value: 46847,
     };
-    let DEFAULT_USER_INTENTS = global.config.default_user_intents ?? {
+    const DEFAULT_USER_INTENTS = global.config.default_user_intents ?? {
       value: 67108863,
     };
 
@@ -129,7 +130,7 @@ class session {
       return;
     }
 
-    let activeBitfield =
+    const activeBitfield =
       userBitfield !== undefined
         ? userBitfield
         : this.user.bot
@@ -148,7 +149,7 @@ class session {
       }
     } //gateway intents of course
 
-    let hasContentIntent = (activeBitfield & (1 << 15)) !== 0;
+    const hasContentIntent = (activeBitfield & (1 << 15)) !== 0;
 
     if (!hasContentIntent && (type === 'MESSAGE_CREATE' || type === 'MESSAGE_UPDATE')) {
       payload = {
@@ -159,7 +160,7 @@ class session {
       };
     } //scrub message contents from update/edit if they arent subscribed
 
-    let sequence = ++this.seq;
+    const sequence = ++this.seq;
 
     if (this.eventsBuffer.length > BUFFER_LIMIT) {
       this.eventsBuffer.shift();
@@ -188,20 +189,20 @@ class session {
   async dispatchPresenceUpdate(presenceOverride = null) {
     if (this.type !== 'gateway') return;
 
-    let presence = this.presence;
+    const presence = this.presence;
     if (presenceOverride != null) {
       presence.status = presenceOverride;
     }
 
-    let current_guilds = await global.database.getUsersGuilds(this.user.id);
+    const current_guilds = await global.database.getUsersGuilds(this.user.id);
 
     this.guilds = current_guilds;
 
     for (let i = 0; i < current_guilds.length; i++) {
-      let guild = current_guilds[i];
-      let broadcastStatus = presence.status === 'invisible' ? 'offline' : presence.status;
+      const guild = current_guilds[i];
+      const broadcastStatus = presence.status === 'invisible' ? 'offline' : presence.status;
 
-      let guildSpecificPresence = {
+      const guildSpecificPresence = {
         status: broadcastStatus,
         game_id: presence.game_id || null,
         activities: [],
@@ -219,16 +220,16 @@ class session {
       return;
     }
 
-    let current_guilds = await global.database.getUsersGuilds(this.user.id);
+    const current_guilds = await global.database.getUsersGuilds(this.user.id);
 
     this.guilds = current_guilds;
 
     if (current_guilds.length == 0) return;
 
     for (let i = 0; i < current_guilds.length; i++) {
-      let guild = current_guilds[i];
+      const guild = current_guilds[i];
 
-      let our_member = guild.members.find((x) => x.id === this.user.id);
+      const our_member = guild.members.find((x) => x.id === this.user.id);
 
       if (!our_member) continue;
 
@@ -332,7 +333,7 @@ class session {
     this.dead = false;
 
     if (this.type === 'gateway') {
-      let items = this.eventsBuffer.filter((s) => s.seq > seq);
+      const items = this.eventsBuffer.filter((s) => s.seq > seq);
 
       for (const k of items) {
         this.dispatch(k.type, k.payload);
@@ -350,11 +351,11 @@ class session {
       return;
     }
 
-    let merged_members = [];
+    const merged_members = [];
 
     try {
-      let month = this.socket.client_build_date.getMonth();
-      let year = this.socket.client_build_date.getFullYear();
+      const month = this.socket.client_build_date.getMonth();
+      const year = this.socket.client_build_date.getFullYear();
 
       this.guilds = await global.database.getUsersGuilds(this.user.id);
 
@@ -387,7 +388,7 @@ class session {
 
           if (guild.webhooks && Array.isArray(guild.webhooks)) {
             guild.webhooks = guild.webhooks.map((webhook) => {
-              let { token, ...sanitizedWebhook } = webhook;
+              const { token, ...sanitizedWebhook } = webhook;
 
               return sanitizedWebhook;
             });
@@ -514,7 +515,7 @@ class session {
               channel.type = channel.type == 2 ? 'voice' : 'text';
             }
 
-            let can_see = global.permissions.hasChannelPermissionTo(
+            const can_see = global.permissions.hasChannelPermissionTo(
               channel,
               guild,
               this.user.id,
@@ -527,7 +528,7 @@ class session {
               continue;
             }
 
-            let getLatestAcknowledgement = await global.database.getLatestAcknowledgement(
+            const getLatestAcknowledgement = await global.database.getLatestAcknowledgement(
               this.user.id,
               channel.id,
             );
@@ -550,7 +551,7 @@ class session {
         }
       }
 
-      let tutorial = {
+      const tutorial = {
         indicators_suppressed: true,
         indicators_confirmed: [
           'direct-messages',
@@ -566,10 +567,10 @@ class session {
         ],
       };
 
-      let chans = this.user.bot
+      const chans = this.user.bot
         ? await database.getBotPrivateChannels(this.user.id)
         : await database.getPrivateChannels(this.user.id);
-      let filteredDMs = [];
+      const filteredDMs = [];
 
       const users = new Set();
 
@@ -592,9 +593,9 @@ class session {
         filteredDMs.push(chan);
       }
 
-      let connectedAccounts = await global.database.getConnectedAccounts(this.user.id);
-      let guildSettings = await global.database.getUsersGuildSettings(this.user.id);
-      let notes = await global.database.getNotesByAuthorId(this.user.id);
+      const connectedAccounts = await global.database.getConnectedAccounts(this.user.id);
+      const guildSettings = await global.database.getUsersGuildSettings(this.user.id);
+      const notes = await global.database.getNotesByAuthorId(this.user.id);
 
       this.relationships = this.user.relationships;
 

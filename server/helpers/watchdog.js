@@ -24,8 +24,8 @@ const Watchdog = {
       };
     }
 
-    let xSuperProps = headers['x-super-properties'];
-    let userAgent = headers['user-agent'];
+    const xSuperProps = headers['x-super-properties'];
+    const userAgent = headers['user-agent'];
 
     if (!userAgent) {
       return {
@@ -35,7 +35,7 @@ const Watchdog = {
     }
 
     if (xSuperProps) {
-      let outcome = globalUtils.validSuperPropertiesObject(xSuperProps, url, baseUrl, userAgent);
+      const outcome = globalUtils.validSuperPropertiesObject(xSuperProps, url, baseUrl, userAgent);
 
       if (!outcome) {
         return {
@@ -45,7 +45,7 @@ const Watchdog = {
       }
     }
 
-    let relevantHeaders = [
+    const relevantHeaders = [
       'user-agent',
       'accept',
       'accept-encoding',
@@ -55,15 +55,15 @@ const Watchdog = {
       'x-super-properties',
     ];
 
-    let presentHeaders = Object.keys(headers)
+    const presentHeaders = Object.keys(headers)
       .map(Watchdog.normalizeHeader)
       .filter((name) => relevantHeaders.includes(name))
       .sort();
     let to_fingerprint = `ORDER=${presentHeaders.join(',')};`;
 
-    for (let name of presentHeaders) {
-      let value = headers[name];
-      let normalizedValue = (Array.isArray(value) ? value.join(',') : value || '').trim();
+    for (const name of presentHeaders) {
+      const value = headers[name];
+      const normalizedValue = (Array.isArray(value) ? value.join(',') : value || '').trim();
 
       if (['user-agent', 'accept', 'accept-language', 'x-super-properties'].includes(name)) {
         to_fingerprint += `${name}=${normalizedValue};`;
@@ -72,7 +72,7 @@ const Watchdog = {
 
     to_fingerprint += `PROTOCOL=${protocol};`;
 
-    let hash = createHash('sha256').update(to_fingerprint).digest('hex');
+    const hash = createHash('sha256').update(to_fingerprint).digest('hex');
 
     return {
       fingerprint: hash,
@@ -107,7 +107,7 @@ const Watchdog = {
       }
 
       if (!req.fingerprint) {
-        let fingerprint_outcome = Watchdog.getFingerprint(
+        const fingerprint_outcome = Watchdog.getFingerprint(
           req.originalUrl,
           req.baseUrl,
           req.headers['x-forwarded-proto'] || req.protocol,
@@ -115,7 +115,7 @@ const Watchdog = {
           req.account,
           null,
         );
-        let fingerprint = fingerprint_outcome.fingerprint;
+        const fingerprint = fingerprint_outcome.fingerprint;
 
         if (fingerprint === null) {
           logText(
@@ -133,7 +133,7 @@ const Watchdog = {
         req.fingerprint = fingerprint;
       }
 
-      let { fingerprint } = req;
+      const { fingerprint } = req;
 
       if (!fingerprint) {
         return res.status(429).json({
@@ -156,7 +156,7 @@ const Watchdog = {
 
         Watchdog.setSusScoreDecay(fingerprint);
 
-        let timeRemaining = entry.windowStart + timeFrame - Date.now();
+        const timeRemaining = entry.windowStart + timeFrame - Date.now();
         let retryAfterSeconds = Math.max(0, Math.ceil(timeRemaining / 1000));
 
         logText(
@@ -194,7 +194,7 @@ const Watchdog = {
             global: true,
           });
         } else {
-          let block = Watchdog.getRandomRange(600, 10000);
+          const block = Watchdog.getRandomRange(600, 10000);
 
           logText(
             `Fingerprint: ${fingerprint} is scoring high. Blocking them from proceeding for ~${block / 1000} seconds.`,
@@ -211,7 +211,7 @@ const Watchdog = {
         entry.timer = setTimeout(() => {
           logText(`Resetting count for ${fingerprint}. Sus score: ${entry.sus_score}`, 'watchdog');
 
-          let existingEntry = Watchdog.rateLimitStore.get(fingerprint);
+          const existingEntry = Watchdog.rateLimitStore.get(fingerprint);
 
           if (existingEntry) {
             existingEntry.count = 0;
@@ -237,13 +237,13 @@ const Watchdog = {
     };
   },
   setSusScoreDecay: (fingerprint) => {
-    let existingTimer = Watchdog.susScoreDecayStore.get(fingerprint);
+    const existingTimer = Watchdog.susScoreDecayStore.get(fingerprint);
 
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
 
-    let decayTimer = setTimeout(() => {
+    const decayTimer = setTimeout(() => {
       logText(
         `Clearing sus_score and entry for ${fingerprint} after ${Watchdog.susScoreDecayTime}ms.`,
         'watchdog',

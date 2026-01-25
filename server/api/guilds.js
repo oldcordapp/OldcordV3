@@ -80,12 +80,12 @@ router.post(
         });
       }
 
-      let client_date = req.client_build_date;
+      const client_date = req.client_build_date;
       let selected_region = req.body.region;
-      let exclusions = [];
+      const exclusions = [];
 
-      let month = client_date.getMonth();
-      let year = client_date.getFullYear();
+      const month = client_date.getMonth();
+      const year = client_date.getFullYear();
 
       if (selected_region == '2016') {
         if (month > 3 && month <= 10 && year == 2016) {
@@ -113,13 +113,13 @@ router.post(
           guild.channels[0].type = 'text';
         }
 
-        let presence = guild.presences[0];
-        let isOnline = presence.status !== 'offline';
+        const presence = guild.presences[0];
+        const isOnline = presence.status !== 'offline';
 
-        let onlineCount = isOnline ? 1 : 0;
-        let offlineCount = isOnline ? 0 : 1;
+        const onlineCount = isOnline ? 1 : 0;
+        const offlineCount = isOnline ? 0 : 1;
 
-        let listItems = [];
+        const listItems = [];
 
         listItems.push({ group: { id: 'online', count: onlineCount } });
 
@@ -195,10 +195,10 @@ async function guildDeleteRequest(req, res) {
     const guild = req.guild;
 
     if (guild.owner_id == user.id) {
-      let code = req.body.code;
+      const code = req.body.code;
 
       if (code) {
-        let valid = await global.database.validateTotpCode(req.account.id, code);
+        const valid = await global.database.validateTotpCode(req.account.id, code);
 
         if (!valid) {
           return res.status(400).json({
@@ -230,9 +230,9 @@ async function guildDeleteRequest(req, res) {
         id: req.params.guildid,
       });
 
-      let activeSessions = dispatcher.getAllActiveSessions();
+      const activeSessions = dispatcher.getAllActiveSessions();
 
-      for (let session of activeSessions) {
+      for (const session of activeSessions) {
         if (session.subscriptions && session.subscriptions[req.guild.id]) {
           if (session.user.id === user.id) continue;
 
@@ -305,32 +305,32 @@ router.get(
     try {
       const account = req.account;
 
-      let guild = req.guild;
-      let channelsMap = new Map();
+      const guild = req.guild;
+      const channelsMap = new Map();
 
-      for (let channel of guild.channels) {
+      for (const channel of guild.channels) {
         channelsMap.set(channel.id, channel);
       }
 
-      let content = req.query.content;
-      let channel_id = req.query.channel_id;
+      const content = req.query.content;
+      const channel_id = req.query.channel_id;
 
       if (channel_id && !channelsMap.get(channel_id)) {
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      let offset = parseInt(req.query.offset) || 0;
-      let limit =
+      const offset = parseInt(req.query.offset) || 0;
+      const limit =
         req.query.limit && req.query.limit > 0 && req.query.limit <= 50 ? req.query.limit : 50;
-      let author_id = req.query.author_id;
-      let before_id = req.query.max_id;
-      let after_id = req.query.min_id;
-      let mentions = req.query.mentions; //user_id
-      let include_nsfw = req.query.include_nsfw === 'true' ?? false;
-      let has = req.query.has; //fuck this i cant be fucked today
+      const author_id = req.query.author_id;
+      const before_id = req.query.max_id;
+      const after_id = req.query.min_id;
+      const mentions = req.query.mentions; //user_id
+      const include_nsfw = req.query.include_nsfw === 'true' ?? false;
+      const has = req.query.has; //fuck this i cant be fucked today
       //need to do during too
 
-      let results = await global.database.getGuildMessages(
+      const results = await global.database.getGuildMessages(
         guild.id,
         author_id,
         content,
@@ -343,18 +343,18 @@ router.get(
         offset,
       );
 
-      let ret_results = [];
+      const ret_results = [];
       let minus = 0;
 
       for (var result of results.messages) {
-        let chan_id = result.channel_id;
-        let channel = channelsMap.get(chan_id);
+        const chan_id = result.channel_id;
+        const channel = channelsMap.get(chan_id);
 
         if (!channel) {
           continue;
         }
 
-        let canReadChannel = global.permissions.hasChannelPermissionTo(
+        const canReadChannel = global.permissions.hasChannelPermissionTo(
           channel,
           guild,
           account.id,
@@ -459,13 +459,13 @@ router.patch(
           });
         } //Response??
 
-        let new_owner = what.members.find((x) => x.id == req.body.owner_id);
+        const new_owner = what.members.find((x) => x.id == req.body.owner_id);
 
         if (!new_owner) {
           return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
         }
 
-        let tryTransferOwner = await global.database.transferGuildOwnership(
+        const tryTransferOwner = await global.database.transferGuildOwnership(
           what.id,
           req.body.owner_id,
         );
@@ -551,7 +551,7 @@ router.put(
     1,
   ),
   async (req, res) => {
-    let tryBoostServer = await global.database.createGuildSubscription(req.account, req.guild);
+    const tryBoostServer = await global.database.createGuildSubscription(req.account, req.guild);
 
     if (!tryBoostServer) {
       return res.status(400).json({
@@ -598,7 +598,7 @@ router.get(
   guildMiddleware,
   quickcache.cacheFor(60 * 5, true),
   async (req, res) => {
-    let guild_subscriptions = await global.database.getGuildSubscriptions(req.guild);
+    const guild_subscriptions = await global.database.getGuildSubscriptions(req.guild);
 
     return res.status(200).json(guild_subscriptions);
   },
@@ -693,10 +693,10 @@ router.get(
             MESSAGE_DELETE: 72
         */ //action_type for audit log
 
-      let limit = (req.query.limit > 50 ? 50 : req.query.limit) || 50;
+      const limit = (req.query.limit > 50 ? 50 : req.query.limit) || 50;
 
-      let audit_log_entries = req.guild.audit_logs;
-      let audit_log_user_ids = [
+      const audit_log_entries = req.guild.audit_logs;
+      const audit_log_user_ids = [
         ...new Set(audit_log_entries.map((entry) => entry.user_id).filter((id) => id)),
       ];
       let audit_log_users = await global.database.getAccountsByIds(audit_log_user_ids);
@@ -814,7 +814,7 @@ router.post(
         send_parent_id = req.body.parent_id;
       }
 
-      let channel = await global.database.createChannel(
+      const channel = await global.database.createChannel(
         req.params.guildid,
         req.body.name,
         number_type,
@@ -858,7 +858,7 @@ router.patch(
   ),
   async (req, res) => {
     try {
-      let ret = [];
+      const ret = [];
 
       for (var shit of req.body) {
         var channel_id = shit.id;
@@ -927,8 +927,8 @@ router.get(
   quickcache.cacheFor(60 * 5, true),
   async (req, res) => {
     try {
-      let guild = req.guild;
-      let webhooks = guild.webhooks;
+      const guild = req.guild;
+      const webhooks = guild.webhooks;
 
       return res.status(200).json(webhooks);
     } catch (error) {
@@ -987,7 +987,7 @@ router.patch(
         code = null;
       }
 
-      let tryUpdate = await global.database.updateGuildVanity(req.guild.id, code);
+      const tryUpdate = await global.database.updateGuildVanity(req.guild.id, code);
 
       if (tryUpdate === 0) {
         return res.status(400).json({

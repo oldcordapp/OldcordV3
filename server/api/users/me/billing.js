@@ -9,7 +9,7 @@ router.param('guildid', async (req, _, next, guildid) => {
 });
 
 router.get('/subscriptions', async (req, res) => {
-  let subscriptions = await global.database.getUserSubscriptions(req.account.id);
+  const subscriptions = await global.database.getUserSubscriptions(req.account.id);
 
   return res.status(200).json(subscriptions);
 });

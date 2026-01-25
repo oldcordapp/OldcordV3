@@ -17,9 +17,9 @@ const OPCODES = {
 };
 
 async function handleIdentify(socket, packet) {
-  let public_ip = packet.d.public_ip;
-  let public_port = packet.d.public_port;
-  let timestamp = packet.d.timestamp;
+  const public_ip = packet.d.public_ip;
+  const public_port = packet.d.public_port;
+  const timestamp = packet.d.timestamp;
 
   global.mrServer.debug(`New media server has connected! Added to internal store.`);
 

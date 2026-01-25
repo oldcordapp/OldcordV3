@@ -74,7 +74,7 @@ const Staff = () => {
   }, [data, selectedId]);
 
   const checkAndAddStaffUser = (fieldValues) => {
-    let user_id = fieldValues['User ID'];
+    const user_id = fieldValues['User ID'];
     let privilege = fieldValues['Privilege'];
 
     if (user_id === '' || privilege === '') {
@@ -174,8 +174,8 @@ const Staff = () => {
         if (data.code >= 400) {
           setError(data.message);
         } else {
-          let data1 = data;
-          let staff = data1.find((x) => x.id === selectedStaff.id);
+          const data1 = data;
+          const staff = data1.find((x) => x.id === selectedStaff.id);
 
           if (staff) {
             staff.staff_details.audit_log = [];

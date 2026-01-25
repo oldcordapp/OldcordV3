@@ -187,7 +187,7 @@ export default async () => {
     features: DiscordNative.features,
   };
 
-  let preloadedPaths = {};
+  const preloadedPaths = {};
   try {
     preloadedPaths.appData = await DiscordNative.app.getPath('appData');
   } catch (err) {

@@ -41,7 +41,7 @@ router.post(
   async (req, res) => {
     try {
       let recipients = req.body.recipients;
-      let account = req.account;
+      const account = req.account;
 
       if (req.body.recipient_id) {
         recipients = [req.body.recipient_id];
@@ -64,14 +64,14 @@ router.post(
       }
 
       let validRecipientIDs = [];
-      let map = {};
+      const map = {};
 
       validRecipientIDs.push(account.id);
 
       for (var recipient of recipients) {
         if (validRecipientIDs.includes(recipient)) continue;
 
-        let userObject = await global.database.getAccountByUserId(recipient);
+        const userObject = await global.database.getAccountByUserId(recipient);
 
         if (!userObject) continue;
 
@@ -95,7 +95,7 @@ router.post(
             continue;
           }
 
-          let userObject = map[validRecipientId];
+          const userObject = map[validRecipientId];
 
           if (!globalUtils.areWeFriends(account, userObject)) {
             validRecipientIDs = validRecipientIDs.filter((x) => x !== validRecipientId);
@@ -115,7 +115,7 @@ router.post(
         account.id,
       );
 
-      let pChannel = globalUtils.personalizeChannelObject(req, channel);
+      const pChannel = globalUtils.personalizeChannelObject(req, channel);
 
       if (type == 3) await globalUtils.pingPrivateChannel(channel);
       else await dispatcher.dispatchEventTo(account, 'CHANNEL_CREATE', pChannel);
@@ -131,27 +131,27 @@ router.post(
 
 router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
-    let user = req.user;
-    let ret = {};
+    const account = req.account;
+    const user = req.user;
+    const ret = {};
 
-    let guilds = await global.database.getUsersGuilds(user.id);
+    const guilds = await global.database.getUsersGuilds(user.id);
 
-    let sharedGuilds = guilds.filter(
+    const sharedGuilds = guilds.filter(
       (guild) =>
         guild.members != null &&
         guild.members.length > 0 &&
         guild.members.some((member) => member.id === account.id),
     );
-    let mutualGuilds = [];
+    const mutualGuilds = [];
 
     for (var sharedGuild of sharedGuilds) {
-      let id = sharedGuild.id;
-      let member = sharedGuild.members.find((y) => y.id == user.id);
+      const id = sharedGuild.id;
+      const member = sharedGuild.members.find((y) => y.id == user.id);
 
       if (!member) continue;
 
-      let nick = member.nick;
+      const nick = member.nick;
 
       mutualGuilds.push({
         id: id,
@@ -162,18 +162,18 @@ router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), asyn
 
     ret.mutual_guilds = req.query.with_mutual_guilds === 'false' ? undefined : mutualGuilds;
 
-    let sharedFriends = [];
+    const sharedFriends = [];
 
     if (!user.bot) {
-      let ourFriends = account.relationships;
-      let theirFriends = user.relationships;
+      const ourFriends = account.relationships;
+      const theirFriends = user.relationships;
 
       if (ourFriends.length > 0 && theirFriends.length > 0) {
-        let theirFriendsSet = new Set(
+        const theirFriendsSet = new Set(
           theirFriends.map((friend) => friend.user.id && friend.type == 1),
         );
 
-        for (let ourFriend of ourFriends) {
+        for (const ourFriend of ourFriends) {
           if (theirFriendsSet.has(ourFriend.user.id) && ourFriend.type == 1) {
             sharedFriends.push(globalUtils.miniUserObject(ourFriend.user));
           }
@@ -220,7 +220,7 @@ router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), asyn
 //We're gonna remove the userMiddleware from this since it needs to work on users we're friends with without any guilds in common
 router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (account.bot) {
       return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
@@ -230,7 +230,7 @@ router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req, re
       return res.status(200).json([]);
     } //Return [] for the deleted user account
 
-    let user = req.user;
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -240,10 +240,10 @@ router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req, re
       return res.status(403).json(errors.response_403.BOTS_CANNOT_USE_THIS_ENDPOINT);
     } // I think this is more professional
 
-    let ourFriends = account.relationships;
-    let theirFriends = user.relationships;
+    const ourFriends = account.relationships;
+    const theirFriends = user.relationships;
 
-    let sharedFriends = [];
+    const sharedFriends = [];
 
     for (var ourFriend of ourFriends) {
       for (var theirFriend of theirFriends) {

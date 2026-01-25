@@ -135,7 +135,7 @@ const Server = ({ data }) => {
   ];
 
   const toChannelType = (type) => {
-    let map = {
+    const map = {
       0: 'Text',
       2: 'Voice',
       4: 'Category',

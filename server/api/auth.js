@@ -25,7 +25,7 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let release_date = req.client_build;
+      const release_date = req.client_build;
 
       if (req.header('referer').includes('/invite/')) {
         req.body.email = null;
@@ -49,7 +49,7 @@ router.post(
           });
         }
 
-        let emailAddr = req.body.email.split('@')[0];
+        const emailAddr = req.body.email.split('@')[0];
 
         if (
           emailAddr.length < global.config.limits['email'].min ||
@@ -61,7 +61,7 @@ router.post(
           });
         }
 
-        let badEmail = await globalUtils.badEmail(req.body.email); //WHO THE FUCK MOVED THIS??
+        const badEmail = await globalUtils.badEmail(req.body.email); //WHO THE FUCK MOVED THIS??
 
         if (badEmail) {
           return res.status(400).json({
@@ -110,7 +110,7 @@ router.post(
         });
       }
 
-      let goodUsername = globalUtils.checkUsername(req.body.username);
+      const goodUsername = globalUtils.checkUsername(req.body.username);
 
       if (goodUsername.code !== 200) {
         return res.status(goodUsername.code).json(goodUsername);
@@ -126,7 +126,7 @@ router.post(
           });
         }
 
-        let verifyAnswer = await verify(req.body.captcha_key);
+        const verifyAnswer = await verify(req.body.captcha_key);
 
         if (!verifyAnswer) {
           return res.status(400).json({
@@ -156,7 +156,7 @@ router.post(
         });
       }
 
-      let account = await global.database.getAccountByToken(registrationAttempt.token);
+      const account = await global.database.getAccountByToken(registrationAttempt.token);
 
       if (account == null) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -167,12 +167,12 @@ router.post(
       }
 
       if (req.body.invite) {
-        let code = req.body.invite;
+        const code = req.body.invite;
 
-        let invite = await global.database.getInvite(code);
+        const invite = await global.database.getInvite(code);
 
         if (invite) {
-          let guild = await global.database.getGuildById(invite.guild.id);
+          const guild = await global.database.getGuildById(invite.guild.id);
 
           if (guild) {
             await global.database.joinGuild(account.id, guild);
@@ -189,9 +189,9 @@ router.post(
               nick: null,
             });
 
-            let activeSessions = dispatcher.getAllActiveSessions();
+            const activeSessions = dispatcher.getAllActiveSessions();
 
-            for (let session of activeSessions) {
+            for (const session of activeSessions) {
               if (session.subscriptions && session.subscriptions[guild.id]) {
                 //if (session.user.id === account.id) continue;
 
@@ -216,7 +216,7 @@ router.post(
             });
 
             if (guild.system_channel_id != null) {
-              let join_msg = await global.database.createSystemMessage(
+              const join_msg = await global.database.createSystemMessage(
                 guild.id,
                 guild.system_channel_id,
                 7,
@@ -239,9 +239,9 @@ router.post(
       );
 
       if (autoJoinGuild.length > 0) {
-        let guildId = autoJoinGuild[0].split(':')[1];
+        const guildId = autoJoinGuild[0].split(':')[1];
 
-        let guild = await global.database.getGuildById(guildId);
+        const guild = await global.database.getGuildById(guildId);
 
         if (guild != null) {
           await global.database.joinGuild(account.id, guild);
@@ -258,9 +258,9 @@ router.post(
             nick: null,
           });
 
-          let activeSessions = dispatcher.getAllActiveSessions();
+          const activeSessions = dispatcher.getAllActiveSessions();
 
-          for (let session of activeSessions) {
+          for (const session of activeSessions) {
             if (session.subscriptions && session.subscriptions[guild.id]) {
               //if (session.user.id === account.id) continue;
 
@@ -285,7 +285,7 @@ router.post(
           });
 
           if (guild.system_channel_id != null) {
-            let join_msg = await global.database.createSystemMessage(
+            const join_msg = await global.database.createSystemMessage(
               guild.id,
               guild.system_channel_id,
               7,
@@ -366,13 +366,13 @@ router.post(
       }
 
       if (req.headers['referer'] && req.headers['referer'].includes('redirect_to=%2Fadmin')) {
-        let tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
+        const tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
 
         if (!tryGetAcc) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        let tryGetStaffDetails = await global.database.getStaffDetails(tryGetAcc.id);
+        const tryGetStaffDetails = await global.database.getStaffDetails(tryGetAcc.id);
 
         if (tryGetStaffDetails === null) {
           console.log(
@@ -388,16 +388,16 @@ router.post(
         req.staff_details = tryGetStaffDetails;
       }
 
-      let mfa_status = await global.database.getUserMfaByToken(loginAttempt.token);
+      const mfa_status = await global.database.getUserMfaByToken(loginAttempt.token);
 
       if (mfa_status.mfa_enabled) {
-        let tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
+        const tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
 
         if (!tryGetAcc) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         } //fuck? how do we make this work better?
 
-        let ticket = await global.database.generateMfaTicket(tryGetAcc.id);
+        const ticket = await global.database.generateMfaTicket(tryGetAcc.id);
 
         if (!ticket) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -435,8 +435,8 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let ticket = req.body.ticket;
-      let code = req.body.code;
+      const ticket = req.body.ticket;
+      const code = req.body.code;
 
       if (!code || !ticket) {
         return res.status(400).json({
@@ -445,7 +445,7 @@ router.post(
         });
       }
 
-      let user_mfa = await global.database.getUserMfaByTicket(ticket);
+      const user_mfa = await global.database.getUserMfaByTicket(ticket);
 
       if (!user_mfa.mfa_secret || !user_mfa.mfa_enabled) {
         return res.status(400).json({
@@ -454,19 +454,19 @@ router.post(
         });
       }
 
-      let token = await global.database.getLoginTokenByMfaTicket(ticket);
+      const token = await global.database.getLoginTokenByMfaTicket(ticket);
 
       if (!token) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       } //???
 
-      let account = await global.database.getAccountByToken(token);
+      const account = await global.database.getAccountByToken(token);
 
       if (!account) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       } // ihate this so fucking much
 
-      let valid = await global.database.validateTotpCode(account.id, code);
+      const valid = await global.database.validateTotpCode(account.id, code);
 
       if (!valid) {
         return res.status(400).json({
@@ -517,7 +517,7 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let email = req.body.email;
+      const email = req.body.email;
 
       if (!email) {
         return res.status(400).json({
@@ -526,7 +526,7 @@ router.post(
         });
       }
 
-      let account = await global.database.getAccountByEmail(email);
+      const account = await global.database.getAccountByEmail(email);
 
       if (!account) {
         return res.status(400).json({
@@ -555,7 +555,7 @@ router.post(
 );
 
 router.post('/fingerprint', (req, res) => {
-  let fingerprint = Watchdog.getFingerprint(
+  const fingerprint = Watchdog.getFingerprint(
     req.originalUrl,
     req.baseUrl,
     req.headers['x-forwarded-proto'] || req.protocol,
@@ -582,19 +582,19 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let auth_token = req.headers['authorization'];
+      const auth_token = req.headers['authorization'];
 
       if (!auth_token) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
-      let account = await global.database.getAccountByToken(auth_token);
+      const account = await global.database.getAccountByToken(auth_token);
 
       if (!account) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
-      let token = req.body.token;
+      const token = req.body.token;
 
       if (!token) {
         return res.status(400).json({
@@ -610,7 +610,7 @@ router.post(
           });
         }
 
-        let verifyAnswer = await verify(req.body.captcha_key);
+        const verifyAnswer = await verify(req.body.captcha_key);
 
         if (!verifyAnswer) {
           return res.status(400).json({
@@ -619,7 +619,7 @@ router.post(
         }
       }
 
-      let tryUseEmailToken = await global.database.useEmailToken(account.id, token);
+      const tryUseEmailToken = await global.database.useEmailToken(account.id, token);
 
       if (!tryUseEmailToken) {
         return res.status(400).json({
@@ -651,13 +651,13 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let auth_token = req.headers['authorization'];
+      const auth_token = req.headers['authorization'];
 
       if (!auth_token) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
-      let account = await global.database.getAccountByToken(auth_token);
+      const account = await global.database.getAccountByToken(auth_token);
 
       if (!account) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -679,7 +679,7 @@ router.post(
         newEmailToken = true;
       }
 
-      let trySendRegEmail = await global.emailer.sendRegistrationEmail(
+      const trySendRegEmail = await global.emailer.sendRegistrationEmail(
         account.email,
         emailToken,
         account,
@@ -690,7 +690,7 @@ router.post(
       }
 
       if (newEmailToken) {
-        let tryUpdate = await global.database.updateEmailToken(account.id, emailToken);
+        const tryUpdate = await global.database.updateEmailToken(account.id, emailToken);
 
         if (!tryUpdate) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);

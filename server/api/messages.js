@@ -61,11 +61,11 @@ router.get(
         limit = 200;
       }
 
-      let includeReactions =
+      const includeReactions =
         (req.guild && !req.guild.exclusions.includes('reactions')) ||
         channel.type === 1 ||
         channel.type === 3; //to-do get rid of magic numbers
-      let around = req.query.around;
+      const around = req.query.around;
       let messages = [];
 
       if (around) {
@@ -164,14 +164,14 @@ router.post(
         return res.status(400).json(errors.response_400.CANNOT_SEND_EMPTY_MESSAGE);
       }
 
-      let MAX_EMBEDS = 10; //to-do make this configurable
-      let proxyUrl = (url) => {
+      const MAX_EMBEDS = 10; //to-do make this configurable
+      const proxyUrl = (url) => {
         return url ? `/proxy/${encodeURIComponent(url)}` : null;
       };
 
       if (Array.isArray(req.body.embeds)) {
         embeds = req.body.embeds.slice(0, MAX_EMBEDS).map((embed) => {
-          let embedObj = {
+          const embedObj = {
             type: 'rich',
             color: embed.color ?? 7506394,
           };
@@ -182,7 +182,7 @@ router.post(
           if (embed.timestamp) embedObj.timestamp = embed.timestamp;
 
           if (embed.author) {
-            let icon = proxyUrl(embed.author.icon_url);
+            const icon = proxyUrl(embed.author.icon_url);
 
             embedObj.author = {
               name: embed.author.name ?? null,
@@ -193,10 +193,10 @@ router.post(
           }
 
           if (embed.thumbnail?.url) {
-            let thumb = proxyUrl(embed.thumbnail.url);
+            const thumb = proxyUrl(embed.thumbnail.url);
 
-            let raw_width = embed.thumbnail.width ?? 400;
-            let raw_height = embed.thumbnail.height ?? 400;
+            const raw_width = embed.thumbnail.width ?? 400;
+            const raw_height = embed.thumbnail.height ?? 400;
 
             embedObj.thumbnail = {
               url: thumb,
@@ -207,10 +207,10 @@ router.post(
           }
 
           if (embed.image?.url) {
-            let img = proxyUrl(embed.image.url);
+            const img = proxyUrl(embed.image.url);
 
-            let raw_width = embed.image.width ?? 400;
-            let raw_height = embed.image.height ?? 400;
+            const raw_width = embed.image.width ?? 400;
+            const raw_height = embed.image.height ?? 400;
 
             embedObj.image = {
               url: img,
@@ -221,7 +221,7 @@ router.post(
           }
 
           if (embed.footer) {
-            let footerIcon = proxyUrl(embed.footer.icon_url);
+            const footerIcon = proxyUrl(embed.footer.icon_url);
 
             embedObj.footer = {
               text: embed.footer.text ?? null,
@@ -290,16 +290,16 @@ router.post(
           //DM channel
 
           //Need a complete user object for the relationships
-          let recipientID =
+          const recipientID =
             req.channel.recipients[req.channel.recipients[0].id == author.id ? 1 : 0].id;
-          let recipient = await global.database.getAccountByUserId(recipientID);
+          const recipient = await global.database.getAccountByUserId(recipientID);
 
           if (!recipient) {
             return res.status(404).json(errors.response_404.UNKNOWN_USER);
           }
 
-          let ourFriends = account.relationships;
-          let theirFriends = recipient.relationships;
+          const ourFriends = account.relationships;
+          const theirFriends = recipient.relationships;
           let ourRelationshipState = ourFriends?.find((x) => x.user.id == recipient.id);
           let theirRelationshipState = theirFriends?.find((x) => x.user.id == account.id);
 
@@ -327,20 +327,20 @@ router.post(
             return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
           }
 
-          let recipientGuilds = await global.database.getUsersGuilds(recipient.id);
-          let ourGuilds = await global.database.getUsersGuilds(account.id);
+          const recipientGuilds = await global.database.getUsersGuilds(recipient.id);
+          const ourGuilds = await global.database.getUsersGuilds(account.id);
 
-          let mutualGuilds = recipientGuilds.filter(rg => 
-            ourGuilds.some(og => og.id === rg.id)
+          const mutualGuilds = recipientGuilds.filter((rg) =>
+            ourGuilds.some((og) => og.id === rg.id),
           );
 
-          let hasAllowedSharedGuild = mutualGuilds.some((guild) => {
+          const hasAllowedSharedGuild = mutualGuilds.some((guild) => {
             const senderAllows = !account.settings.restricted_guilds.includes(guild.id);
             const recipientAllows = !recipient.settings.restricted_guilds.includes(guild.id);
 
             return senderAllows && recipientAllows;
           });
-          
+
           if (!globalUtils.areWeFriends(account, recipient)) {
             if (global.config.require_friendship_for_dm) {
               return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
@@ -353,7 +353,7 @@ router.post(
         }
       } else {
         //Guild rules
-        let canUseEmojis = !req.guild.exclusions.includes('custom_emoji');
+        const canUseEmojis = !req.guild.exclusions.includes('custom_emoji');
 
         const emojiPattern = /<:[\w-]+:\d+>/g;
 
@@ -394,14 +394,14 @@ router.post(
             'MANAGE_MESSAGES',
           )
         ) {
-          let key = `${author.id}-${req.channel.id}`;
-          let ratelimit = req.channel.rate_limit_per_user * 1000;
-          let currentTime = Date.now();
-          let lastMessageTimestamp = global.slowmodeCache.get(key) || 0;
-          let difference = currentTime - lastMessageTimestamp;
+          const key = `${author.id}-${req.channel.id}`;
+          const ratelimit = req.channel.rate_limit_per_user * 1000;
+          const currentTime = Date.now();
+          const lastMessageTimestamp = global.slowmodeCache.get(key) || 0;
+          const difference = currentTime - lastMessageTimestamp;
 
           if (difference < ratelimit) {
-            let waitTime = ratelimit - difference;
+            const waitTime = ratelimit - difference;
 
             return res.status(429).json({
               ...errors.response_429.SLOWMODE_RATE_LIMIT,
@@ -413,7 +413,7 @@ router.post(
         } //Slowmode implementation
       }
 
-      let file_details = [];
+      const file_details = [];
 
       if (req.files) {
         for (var file of req.files) {
@@ -424,7 +424,7 @@ router.post(
             });
           }
 
-          let file_detail = {
+          const file_detail = {
             id: Snowflake.generate(),
             size: file.size,
           };
@@ -461,7 +461,7 @@ router.post(
                 ffmpeg(file_path)
                   .on('end', () => {
                     ffprobe(file_path, (err, metadata) => {
-                      let vid_metadata = metadata.streams.find((x) => x.codec_type === 'video');
+                      const vid_metadata = metadata.streams.find((x) => x.codec_type === 'video');
 
                       if (!err && vid_metadata) {
                         file_detail.width = vid_metadata.width;
@@ -673,7 +673,7 @@ router.patch(
       //TODO:
       //FIXME: this needs to use globalUtils.parseMentions
       if (req.body.content && req.body.content.includes('@everyone')) {
-        let pCheck = global.permissions.hasChannelPermissionTo(
+        const pCheck = global.permissions.hasChannelPermissionTo(
           req.channel,
           req.guild,
           message.author.id,
@@ -732,7 +732,7 @@ router.post(
 
       const channel = req.channel;
 
-      let msgAlreadyAcked = await global.database.isMessageAcked(guy.id, channel.id, message.id);
+      const msgAlreadyAcked = await global.database.isMessageAcked(guy.id, channel.id, message.id);
 
       if (msgAlreadyAcked) {
         return res.status(200).json({
@@ -740,7 +740,7 @@ router.post(
         });
       }
 
-      let tryAck = await global.database.acknowledgeMessage(guy.id, channel.id, message.id, 0);
+      const tryAck = await global.database.acknowledgeMessage(guy.id, channel.id, message.id, 0);
 
       if (!tryAck) throw 'Message acknowledgement failed';
 

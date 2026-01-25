@@ -7,7 +7,7 @@ import { response_500 } from '../helpers/errors.js';
 import { cacheFor } from '../helpers/quickcache.js';
 
 router.param('code', async (req, _, next, code) => {
-  let id = '1279311572212178955';
+  const id = '1279311572212178955';
 
   req.gift = {
     code: req.params.code,

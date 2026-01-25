@@ -18,10 +18,10 @@ const OPCODES = {
 };
 
 async function handleIdentify(socket, packet) {
-  let userid = packet.d.user_id;
-  let server_id = packet.d.server_id;
-  let sessionid = packet.d.session_id;
-  let token = packet.d.token;
+  const userid = packet.d.user_id;
+  const server_id = packet.d.server_id;
+  const sessionid = packet.d.session_id;
+  const token = packet.d.token;
 
   if (socket.identified || socket.session) {
     return socket.close(4005, 'You have already identified.');
@@ -29,13 +29,13 @@ async function handleIdentify(socket, packet) {
 
   socket.identified = true;
 
-  let user = await global.database.getAccountByUserId(userid);
+  const user = await global.database.getAccountByUserId(userid);
 
   if (user == null || user.disabled_until) {
     return socket.close(4004, 'Authentication failed');
   }
 
-  let gatewaySession = global.sessions.get(sessionid);
+  const gatewaySession = global.sessions.get(sessionid);
 
   if (!gatewaySession || gatewaySession.user.id !== user.id) {
     return socket.close(4004, 'Authentication failed');
@@ -43,7 +43,7 @@ async function handleIdentify(socket, packet) {
 
   socket.user = user;
 
-  let sesh = new session(
+  const sesh = new session(
     `voice:${sessionid}`,
     socket,
     user,
@@ -78,7 +78,7 @@ async function handleIdentify(socket, packet) {
 
   global.rtcServer.debug(`Client ${socket.userid} has identified.`);
 
-  let roomId = `${socket.gatewaySession.guild_id}-${socket.gatewaySession.channel_id}`;
+  const roomId = `${socket.gatewaySession.guild_id}-${socket.gatewaySession.channel_id}`;
 
   socket.roomId = roomId;
 
@@ -110,7 +110,7 @@ async function handleIdentify(socket, packet) {
       }),
     );
   } else {
-    let mediaServer = global.mrServer.getRandomMediaServer();
+    const mediaServer = global.mrServer.getRandomMediaServer();
 
     if (mediaServer === null) {
       return;
@@ -128,7 +128,7 @@ async function handleIdentify(socket, packet) {
       );
     });
 
-    let identity_ssrc = generateSsrc();
+    const identity_ssrc = generateSsrc();
 
     mediaServer.socket.send(
       JSON.stringify({
@@ -167,19 +167,19 @@ async function handleHeartbeat(socket, packet) {
 }
 
 async function handleSelectProtocol(socket, packet) {
-  let protocol = packet.d.protocol;
+  const protocol = packet.d.protocol;
 
   global.rtcServer.protocolsMap.set(socket.userid, protocol ?? 'webrtc');
 
-  let keyBuffer = global.rtcServer.randomKeyBuffer();
+  const keyBuffer = global.rtcServer.randomKeyBuffer();
   global.udpServer.encryptionsMap.set(socket.ssrc, {
     mode: 'xsalsa20_poly1305',
     key: Array.from(keyBuffer),
   });
 
   if (protocol === 'webrtc') {
-    let sdp = packet.d.sdp || packet.d.data;
-    let codecs = packet.d.codecs || [
+    const sdp = packet.d.sdp || packet.d.data;
+    const codecs = packet.d.codecs || [
       {
         name: 'opus',
         type: 'audio',
@@ -188,11 +188,11 @@ async function handleSelectProtocol(socket, packet) {
       },
     ];
 
-    let client_build = socket.gatewaySession.socket.client_build;
-    let client_build_date = socket.gatewaySession.socket.client_build_date; //to-do add to underlying socket object
+    const client_build = socket.gatewaySession.socket.client_build;
+    const client_build_date = socket.gatewaySession.socket.client_build_date; //to-do add to underlying socket object
 
     if (!global.using_media_relay) {
-      let answer = await global.mediaserver.onOffer(
+      const answer = await global.mediaserver.onOffer(
         client_build,
         client_build_date,
         socket.client,
@@ -212,7 +212,7 @@ async function handleSelectProtocol(socket, packet) {
       );
     }
 
-    let mediaServer = socket.mediaServer;
+    const mediaServer = socket.mediaServer;
 
     if (!mediaServer) {
       return;
@@ -275,8 +275,8 @@ async function handleICECandidates(socket, packet) {
     return;
   }
 
-  let protocol = global.rtcServer.protocolsMap.get(socket.userid);
-  let theirProtocol = global.rtcServer.protocolsMap.get(packet.d.user_id);
+  const protocol = global.rtcServer.protocolsMap.get(socket.userid);
+  const theirProtocol = global.rtcServer.protocolsMap.get(packet.d.user_id);
 
   if (protocol !== 'webrtc-p2p' || theirProtocol !== 'webrtc-p2p') {
     global.rtcServer.debug(
@@ -303,8 +303,8 @@ async function handleICECandidates(socket, packet) {
 }
 
 async function handleSpeaking(socket, packet) {
-  let ssrc = packet.d.ssrc;
-  let protocol = global.rtcServer.protocolsMap.get(socket.userid);
+  const ssrc = packet.d.ssrc;
+  const protocol = global.rtcServer.protocolsMap.get(socket.userid);
 
   if (protocol === 'webrtc') {
     if (!global.using_media_relay) {
@@ -319,7 +319,7 @@ async function handleSpeaking(socket, packet) {
         return;
       }
 
-      let incomingSSRCs = socket.client.getIncomingStreamSSRCs();
+      const incomingSSRCs = socket.client.getIncomingStreamSSRCs();
 
       if (incomingSSRCs.audio_ssrc !== ssrc) {
         console.log(
@@ -393,7 +393,7 @@ async function handleSpeaking(socket, packet) {
         ),
       );
     } else {
-      let mediaServer = socket.mediaServer;
+      const mediaServer = socket.mediaServer;
 
       if (!mediaServer) {
         return;
@@ -443,17 +443,17 @@ async function handleSpeaking(socket, packet) {
 }
 
 async function handleVideo(socket, packet) {
-  let d = packet.d;
-  let video_ssrc = parseInt(d.video_ssrc ?? '0');
-  let rtx_ssrc = parseInt(d.rtx_ssrc ?? '0');
-  let audio_ssrc = parseInt(d.audio_ssrc ?? '0');
-  let response = {
+  const d = packet.d;
+  const video_ssrc = parseInt(d.video_ssrc ?? '0');
+  const rtx_ssrc = parseInt(d.rtx_ssrc ?? '0');
+  const audio_ssrc = parseInt(d.audio_ssrc ?? '0');
+  const response = {
     audio_ssrc: audio_ssrc,
     video_ssrc: video_ssrc,
     rtx_ssrc: rtx_ssrc,
   };
 
-  let protocol = global.rtcServer.protocolsMap.get(socket.userid);
+  const protocol = global.rtcServer.protocolsMap.get(socket.userid);
 
   if (protocol === 'webrtc') {
     if (!global.using_media_relay) {
@@ -524,7 +524,7 @@ async function handleVideo(socket, packet) {
         }),
       );
     } else {
-      let mediaServer = socket.mediaServer;
+      const mediaServer = socket.mediaServer;
 
       if (!mediaServer) {
         return;
@@ -571,9 +571,9 @@ async function handleVideo(socket, packet) {
 }
 
 async function handleResume(socket, packet) {
-  let token = packet.d.token;
-  let session_id = packet.d.session_id;
-  let server_id = packet.d.server_id;
+  const token = packet.d.token;
+  const session_id = packet.d.session_id;
+  const server_id = packet.d.server_id;
 
   if (!token || !session_id) return socket.close(4000, 'Invalid payload');
 
@@ -581,10 +581,10 @@ async function handleResume(socket, packet) {
 
   socket.resumed = true;
 
-  let session2 = global.sessions.get(`voice:${session_id}`);
+  const session2 = global.sessions.get(`voice:${session_id}`);
 
   if (!session2) {
-    let sesh = new session(
+    const sesh = new session(
       generateString(16),
       socket,
       socket.user,

@@ -52,9 +52,9 @@ router.delete(
         id: req.params.guildid,
       });
 
-      let activeSessions = dispatcher.getAllActiveSessions();
+      const activeSessions = dispatcher.getAllActiveSessions();
 
-      for (let session of activeSessions) {
+      for (const session of activeSessions) {
         if (session.subscriptions && session.subscriptions[req.guild.id]) {
           if (session.user.id === member.user.id) continue;
 
@@ -81,13 +81,13 @@ router.delete(
 async function updateMember(member, guild, roles, nick) {
   let rolesChanged = false;
   let nickChanged = false;
-  let guild_id = guild.id;
+  const guild_id = guild.id;
 
   if (roles) {
-    let newRoles = roles.map((r) => (typeof r === 'object' ? r.id : r));
+    const newRoles = roles.map((r) => (typeof r === 'object' ? r.id : r));
 
-    let currentRoles = [...member.roles].sort();
-    let incomingRoles = [...newRoles].sort();
+    const currentRoles = [...member.roles].sort();
+    const incomingRoles = [...newRoles].sort();
 
     if (JSON.stringify(currentRoles) !== JSON.stringify(incomingRoles)) {
       rolesChanged = true;
@@ -120,7 +120,7 @@ async function updateMember(member, guild, roles, nick) {
   }
 
   if (rolesChanged || nickChanged) {
-    let updatePayload = {
+    const updatePayload = {
       roles: member.roles,
       user: globalUtils.miniUserObject(member.user),
       guild_id: guild_id,
@@ -158,7 +158,7 @@ router.patch(
         return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
       }
 
-      let newMember = await updateMember(req.member, req.guild, req.body.roles, req.body.nick);
+      const newMember = await updateMember(req.member, req.guild, req.body.roles, req.body.nick);
 
       if (newMember.code) {
         return res.status(newMember.code).json(newMember);
@@ -195,14 +195,14 @@ router.patch(
   ),
   async (req, res) => {
     try {
-      let account = req.account;
-      let member = req.guild.members.find((y) => y.id == account.id);
+      const account = req.account;
+      const member = req.guild.members.find((y) => y.id == account.id);
 
       if (!member) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       }
 
-      let newMember = await updateMember(member, req.guild, null, req.body.nick);
+      const newMember = await updateMember(member, req.guild, null, req.body.nick);
 
       if (newMember.code) {
         return res.status(newMember.code).json(newMember);

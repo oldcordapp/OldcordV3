@@ -25,7 +25,7 @@ import { getRequire } from '.';
 const filterModules =
   (modules, single = false) =>
   (filter) => {
-    let foundModules = [];
+    const foundModules = [];
 
     for (const mod in modules) {
       if (modules.hasOwnProperty(mod)) {

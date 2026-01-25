@@ -14,23 +14,23 @@ router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {
       return res.status(200).json({ categories: [], gifs: [] });
     }
 
-    let catRes = await fetch(
+    const catRes = await fetch(
       `https://tenor.googleapis.com/v2/categories?key=${global.config.tenor_api_key}&type=featured`,
     );
-    let catData = await catRes.json();
+    const catData = await catRes.json();
 
-    let trendRes = await fetch(
+    const trendRes = await fetch(
       `https://tenor.googleapis.com/v2/featured?key=${global.config.tenor_api_key}&limit=10&media_filter=tinygif`,
     );
-    let trendData = await trendRes.json();
+    const trendData = await trendRes.json();
 
-    let categories = (catData.tags || []).map((tag) => ({
+    const categories = (catData.tags || []).map((tag) => ({
       name: tag.searchterm,
       src: tag.image,
       label: tag.searchterm,
     }));
 
-    let gifs = (trendData.results || []).map((gif) => ({
+    const gifs = (trendData.results || []).map((gif) => ({
       type: 'gif',
       id: gif.id,
       src: gif.media_formats.tinygif.url,
@@ -56,13 +56,13 @@ router.get('/trending-gifs', cacheFor(60 * 5, true), async (req, res) => {
       return res.status(200).json([]);
     }
 
-    let response = await fetch(
+    const response = await fetch(
       `https://tenor.googleapis.com/v2/featured?key=${global.config.tenor_api_key}&limit=50&media_filter=tinymp4,gif`,
     );
-    let data = await response.json();
+    const data = await response.json();
 
-    let gifs = (data.results || []).map((gif) => {
-      let video = gif.media_formats.tinymp4;
+    const gifs = (data.results || []).map((gif) => {
+      const video = gif.media_formats.tinymp4;
 
       return {
         type: 'gif',
@@ -89,10 +89,10 @@ router.get('/search', cacheFor(60 * 5, true), async (req, res) => {
       return res.status(200).json([]);
     }
 
-    let query = req.query.q;
-    let limit = req.query.limit || 50;
-    let mediaFilter = req.query.media_format?.includes('mp4') ? 'tinymp4,gif' : 'tinygif,gif';
-    let params = new URLSearchParams({
+    const query = req.query.q;
+    const limit = req.query.limit || 50;
+    const mediaFilter = req.query.media_format?.includes('mp4') ? 'tinymp4,gif' : 'tinygif,gif';
+    const params = new URLSearchParams({
       q: query,
       key: global.config.tenor_api_key,
       limit: limit,
@@ -100,12 +100,12 @@ router.get('/search', cacheFor(60 * 5, true), async (req, res) => {
       contentfilter: 'medium',
     });
 
-    let response = await fetch(`https://tenor.googleapis.com/v2/search?${params}`);
-    let data = await response.json();
+    const response = await fetch(`https://tenor.googleapis.com/v2/search?${params}`);
+    const data = await response.json();
 
-    let gifs = (data.results || []).map((gif) => {
-      let isMp4Req = req.query.media_format?.includes('mp4');
-      let media = isMp4Req ? gif.media_formats.tinymp4 : gif.media_formats.tinygif;
+    const gifs = (data.results || []).map((gif) => {
+      const isMp4Req = req.query.media_format?.includes('mp4');
+      const media = isMp4Req ? gif.media_formats.tinymp4 : gif.media_formats.tinygif;
 
       return {
         type: 'gif',

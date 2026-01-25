@@ -29,11 +29,11 @@ export async function getTimestamps(url) {
     let first_ts = '0';
     let last_ts = '0';
 
-    let responseTxt = await response.text();
+    const responseTxt = await response.text();
 
-    let lines = responseTxt.split('\n');
+    const lines = responseTxt.split('\n');
 
-    for (let line of lines) {
+    for (const line of lines) {
       if (line.toLowerCase().includes('first memento')) {
         first_ts = line.split('datetime=')[1].split('"')[1].split('"')[0];
       } else if (line.toLowerCase().includes('from=')) {

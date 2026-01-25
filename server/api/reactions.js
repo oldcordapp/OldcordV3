@@ -29,20 +29,20 @@ router.delete(
   ),
   async (req, res) => {
     try {
-      let account = req.account;
-      let channel = req.channel;
+      const account = req.account;
+      const channel = req.channel;
 
       if (!channel) {
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (channel.type != 1 && channel.type != 3 && !guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      let message = req.message;
+      const message = req.message;
 
       if (!message) {
         return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
@@ -65,7 +65,7 @@ router.delete(
         dispatch_name = encoded;
       }
 
-      let tryUnReact = await global.database.removeMessageReaction(
+      const tryUnReact = await global.database.removeMessageReaction(
         message,
         account.id,
         id,
@@ -119,25 +119,25 @@ router.delete(
   ),
   async (req, res) => {
     try {
-      let user = req.user;
+      const user = req.user;
 
       if (!user) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
-      let channel = req.channel;
+      const channel = req.channel;
 
       if (!channel) {
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (channel.type != 1 && channel.type != 3 && !guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      let message = req.message;
+      const message = req.message;
 
       if (!message) {
         return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
@@ -160,7 +160,7 @@ router.delete(
         dispatch_name = encoded;
       }
 
-      let tryUnReact = await global.database.removeMessageReaction(
+      const tryUnReact = await global.database.removeMessageReaction(
         message,
         user.id,
         id,
@@ -213,20 +213,20 @@ router.put(
   ),
   async (req, res) => {
     try {
-      let account = req.account;
-      let channel = req.channel;
+      const account = req.account;
+      const channel = req.channel;
 
       if (!channel) {
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (channel.type != 1 && channel.type != 3 && !guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      let message = req.message;
+      const message = req.message;
 
       if (!message) {
         return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
@@ -249,7 +249,7 @@ router.put(
         dispatch_name = encoded;
       }
 
-      let reactionKey = JSON.stringify({
+      const reactionKey = JSON.stringify({
         id: id,
         name: dispatch_name,
       });
@@ -262,10 +262,10 @@ router.put(
         return res.status(204).send(); //dont dispatch more than once
       }
 
-      let reactionExists = message.reactions.some((x) => JSON.stringify(x.emoji) === reactionKey);
+      const reactionExists = message.reactions.some((x) => JSON.stringify(x.emoji) === reactionKey);
 
       if (!reactionExists) {
-        let canAdd = global.permissions.hasChannelPermissionTo(
+        const canAdd = global.permissions.hasChannelPermissionTo(
           req.channel,
           req.guild,
           req.account.id,
@@ -277,7 +277,7 @@ router.put(
         }
       }
 
-      let tryReact = await global.database.addMessageReaction(message, account.id, id, encoded);
+      const tryReact = await global.database.addMessageReaction(message, account.id, id, encoded);
 
       if (!tryReact) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -313,19 +313,19 @@ router.put(
 
 router.get('/:urlencoded', quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let channel = req.channel;
+    const channel = req.channel;
 
     if (!channel) {
       return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
     }
 
-    let guild = req.guild;
+    const guild = req.guild;
 
     if (channel.type != 1 && channel.type != 3 && !guild) {
       return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
     }
 
-    let message = req.message;
+    const message = req.message;
 
     if (!message) {
       return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
@@ -354,16 +354,16 @@ router.get('/:urlencoded', quickcache.cacheFor(60 * 5), async (req, res) => {
       limit = 100;
     }
 
-    let reactions = message.reactions;
+    const reactions = message.reactions;
 
-    let filteredReactions = reactions.filter(
+    const filteredReactions = reactions.filter(
       (x) => x.emoji.name == dispatch_name && x.emoji.id == id,
     );
 
-    let return_users = [];
+    const return_users = [];
 
     for (var filteredReaction of filteredReactions) {
-      let user = await global.database.getAccountByUserId(filteredReaction.user_id);
+      const user = await global.database.getAccountByUserId(filteredReaction.user_id);
 
       if (user == null) continue;
 

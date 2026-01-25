@@ -25,13 +25,13 @@ async function handleIdentify(socket, packet) {
 
   socket.identified = true;
 
-  let user = await global.database.getAccountByToken(packet.d.token);
+  const user = await global.database.getAccountByToken(packet.d.token);
 
   if (user == null || user.disabled_until) {
     return socket.close(4004, 'Authentication failed');
   }
 
-  let providedIntents = packet.d.intents;
+  const providedIntents = packet.d.intents;
 
   global.gatewayIntentMap.delete(user.id);
 
@@ -51,7 +51,7 @@ async function handleIdentify(socket, packet) {
 
   socket.user = user;
 
-  let sesh = new session(
+  const sesh = new session(
     globalUtils.generateString(16),
     socket,
     user,
@@ -76,7 +76,7 @@ async function handleIdentify(socket, packet) {
 
   await socket.session.prepareReady();
 
-  let pastPresence = packet.d.presence;
+  const pastPresence = packet.d.presence;
   let finalStatus = savedStatus;
 
   if (pastPresence && pastPresence.status && pastPresence.status === savedStatus) {
@@ -102,14 +102,14 @@ async function handlePresence(socket, packet) {
 async function handleVoiceState(socket, packet) {
   if (!socket.session) return socket.close(4003, 'Not authenticated');
 
-  let guild_id = packet.d.guild_id;
-  let channel_id = packet.d.channel_id;
-  let self_mute = packet.d.self_mute;
-  let self_deaf = packet.d.self_deaf;
+  const guild_id = packet.d.guild_id;
+  const channel_id = packet.d.channel_id;
+  const self_mute = packet.d.self_mute;
+  const self_deaf = packet.d.self_deaf;
 
   if (guild_id === null && channel_id === null) {
     if (socket.current_guild && socket.current_guild.id && socket.user && socket.user.id) {
-      let voiceStates = global.guild_voice_states.get(socket.current_guild.id);
+      const voiceStates = global.guild_voice_states.get(socket.current_guild.id);
 
       voiceStates.splice(
         voiceStates.findIndex((x) => x.user_id === socket.user.id),
@@ -145,15 +145,15 @@ async function handleVoiceState(socket, packet) {
   }
 
   if (socket.session.channel_id != 0 && socket.current_guild) {
-    let channel = socket.current_guild.channels.find((x) => x.id === channel_id);
+    const channel = socket.current_guild.channels.find((x) => x.id === channel_id);
 
     if (!channel || channel.type != 2) {
       return;
     }
 
     if (channel && channel.type === 2 && channel.user_limit > 0) {
-      let testRoom = global.rooms.filter((x) => x.room_id === `${guild_id}:${channel_id}`);
-      let permissionCheck = global.permissions.hasChannelPermissionTo(
+      const testRoom = global.rooms.filter((x) => x.room_id === `${guild_id}:${channel_id}`);
+      const permissionCheck = global.permissions.hasChannelPermissionTo(
         channel,
         socket.current_guild,
         socket.user.id,
@@ -198,7 +198,7 @@ async function handleVoiceState(socket, packet) {
       ssrc: globalUtils.generateString(30),
     });
 
-    let voiceStates = global.guild_voice_states.get(guild_id);
+    const voiceStates = global.guild_voice_states.get(guild_id);
 
     if (!voiceStates.find((y) => y.user_id === socket.user.id)) {
       voiceStates.push({
@@ -230,20 +230,20 @@ async function handleVoiceState(socket, packet) {
 async function handleOp12GetGuildMembersAndPresences(socket, packet) {
   if (!socket.session) return;
 
-  let guild_ids = packet.d;
+  const guild_ids = packet.d;
 
   if (guild_ids.length === 0) return;
 
-  let usersGuilds = socket.session.guilds;
+  const usersGuilds = socket.session.guilds;
 
   if (usersGuilds.length === 0) return;
 
   for (var guild of guild_ids) {
-    let guildObj = usersGuilds.find((x) => x.id === guild);
+    const guildObj = usersGuilds.find((x) => x.id === guild);
 
     if (!guildObj) continue;
 
-    let op12 = await global.database.op12getGuildMembersAndPresences(guildObj);
+    const op12 = await global.database.op12getGuildMembersAndPresences(guildObj);
 
     if (op12 == null) continue;
 
@@ -263,8 +263,8 @@ async function handleOp14GetGuildMemberChunks(socket, packet) {
 }
 
 async function handleResume(socket, packet) {
-  let token = packet.d.token;
-  let session_id = packet.d.session_id;
+  const token = packet.d.token;
+  const session_id = packet.d.session_id;
 
   if (!token || !session_id) return socket.close(4000, 'Invalid payload');
 
@@ -272,7 +272,7 @@ async function handleResume(socket, packet) {
 
   socket.resumed = true;
 
-  let user2 = await global.database.getAccountByToken(token);
+  const user2 = await global.database.getAccountByToken(token);
 
   if (!user2) {
     return socket.close(4004, 'Authentication failed');
@@ -280,10 +280,10 @@ async function handleResume(socket, packet) {
 
   socket.user = user2;
 
-  let session2 = global.sessions.get(session_id);
+  const session2 = global.sessions.get(session_id);
 
   if (!session2) {
-    let sesh = new session(
+    const sesh = new session(
       globalUtils.generateString(16),
       socket,
       socket.user,

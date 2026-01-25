@@ -57,9 +57,9 @@ router.delete(
             id: req.params.guildid,
           });
 
-          let activeSessions = dispatcher.getAllActiveSessions();
+          const activeSessions = dispatcher.getAllActiveSessions();
 
-          for (let session of activeSessions) {
+          for (const session of activeSessions) {
             if (session.subscriptions && session.subscriptions[req.guild.id]) {
               if (session.user.id === user.id) continue;
 
@@ -108,7 +108,7 @@ router.patch(
       const user = req.account;
       const guild = req.guild;
 
-      let usersGuildSettings = await global.database.getUsersGuildSettings(user.id);
+      const usersGuildSettings = await global.database.getUsersGuildSettings(user.id);
       let guildSettings = usersGuildSettings.find((x) => x.guild_id == guild.id);
 
       if (!guildSettings) {
@@ -141,7 +141,7 @@ router.patch(
           guildSettings.channel_overrides = [];
         }
 
-        for (let [id, newChannelOverride] of Object.entries(req.body.channel_overrides)) {
+        for (const [id, newChannelOverride] of Object.entries(req.body.channel_overrides)) {
           let channelOverride = guildSettings.channel_overrides.find(
             (x) => x.channel_id == id || x.channel_id == newChannelOverride.channel_id,
           );
@@ -165,7 +165,10 @@ router.patch(
         }
       }
 
-      let updateSettings = await global.database.setUsersGuildSettings(user.id, usersGuildSettings);
+      const updateSettings = await global.database.setUsersGuildSettings(
+        user.id,
+        usersGuildSettings,
+      );
 
       if (!updateSettings) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -187,7 +190,7 @@ router.get('/premium/subscriptions', async (req, res) => {
     return res.status(200).json([]);
   }
 
-  let subscriptions = await global.database.getUserSubscriptions(req.account.id);
+  const subscriptions = await global.database.getUserSubscriptions(req.account.id);
 
   return res.status(200).json(subscriptions);
 });

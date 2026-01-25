@@ -62,7 +62,7 @@ class MediasoupSignalingDelegate {
 
     let existingClient;
     for (const room of rooms) {
-      let result = room.getClientById(userId);
+      const result = room.getClientById(userId);
       if (result) {
         existingClient = result;
         break;

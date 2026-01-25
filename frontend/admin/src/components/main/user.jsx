@@ -17,7 +17,7 @@ const User = ({ data }) => {
   const closeInputPopup = () => setInputPopup(null);
   const dropdownRef = useRef(null);
 
-  let user_data = JSON.parse(localStorage.getItem('user_data'));
+  const user_data = JSON.parse(localStorage.getItem('user_data'));
 
   const clearAvatar = () => {
     fetch(`${window.ADMIN_ENV.API_ENDPOINT}/admin/users/${data.id}`, {
@@ -165,7 +165,7 @@ const User = ({ data }) => {
   ];
 
   const toRelationshipType = (type) => {
-    let map = {
+    const map = {
       0: 'Not Friends',
       1: 'Friends',
       2: 'Blocked',

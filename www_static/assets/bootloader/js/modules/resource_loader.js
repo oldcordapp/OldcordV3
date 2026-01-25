@@ -171,7 +171,7 @@ export class ResourceLoader {
     } else {
       utils.loadLog(`Intercepted un-cached chunk: ${normalizedUrl}`, 'warning');
       this.loadScript(normalizedUrl);
-      let fallback = `${Config.assets_cdn_url}${normalizedUrl}`;
+      const fallback = `${Config.assets_cdn_url}${normalizedUrl}`;
 
       element.setAttribute('src', fallback);
       return fallback;

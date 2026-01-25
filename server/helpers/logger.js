@@ -1,4 +1,4 @@
-let properties = {
+const properties = {
   ignoreDebug: false,
   disabled: false,
   fullErrors: true,
@@ -34,7 +34,7 @@ const logText = (text, type) => {
     return;
   }
 
-  let restTags = ['oldcord', 'debug', 'emailer'];
+  const restTags = ['oldcord', 'debug', 'emailer'];
 
   if (!global.config.debug_logs['rest'] && restTags.includes(type.toLowerCase())) {
     return;
@@ -50,9 +50,9 @@ const logText = (text, type) => {
     return;
   }
 
-  let stack = text.stack;
-  let functionname = stack.split('\n')[1].trim().split(' ')[1] || '<anonymous>';
-  let message = text.toString();
+  const stack = text.stack;
+  const functionname = stack.split('\n')[1].trim().split(' ')[1] || '<anonymous>';
+  const message = text.toString();
 
   console.error(`[OLDCORDV3] ERROR @ ${functionname} -> ${message}`);
 };

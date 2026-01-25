@@ -10,7 +10,7 @@ const config = globalUtils.config;
 
 const spacebarApis = ['/.well-known/spacebar', '/policies/instance/domains'];
 
-let cached404s = {};
+const cached404s = {};
 
 function corsMiddleware(req, res, next) {
   // Stolen from spacebar because of allowing fermi/flicker support
@@ -223,7 +223,7 @@ async function assetsMiddleware(req, res) {
 
       logText(`[LOG] Saving ${req.params.asset} from ${snapshot_url}...`, 'debug');
 
-      let r = await fetch(snapshot_url);
+      const r = await fetch(snapshot_url);
 
       if (!r.ok) {
         cached404s[req.params.asset] = 1;
@@ -271,7 +271,7 @@ async function assetsMiddleware(req, res) {
 function staffAccessMiddleware(privilege_needed) {
   return async function (req, res, next) {
     try {
-      let account = req.account;
+      const account = req.account;
 
       if (!account) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -316,7 +316,7 @@ async function authMiddleware(req, res, next) {
       return next();
     } //bypass sending to webhooks
 
-    let token = req.headers['authorization'];
+    const token = req.headers['authorization'];
 
     req.cannot_pass = false;
 
@@ -324,7 +324,7 @@ async function authMiddleware(req, res, next) {
       return res.status(404).json(errors.response_404.NOT_FOUND); //discord's old api used to just return this if you tried it unauthenticated. so i guess, return that too?
     }
 
-    let account = await global.database.getAccountByToken(token);
+    const account = await global.database.getAccountByToken(token);
 
     if (!account) {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -334,7 +334,7 @@ async function authMiddleware(req, res, next) {
       req.cannot_pass = true;
     }
 
-    let staffDetails = await global.database.getStaffDetails(account.id);
+    const staffDetails = await global.database.getStaffDetails(account.id);
 
     if (staffDetails != null) {
       req.is_staff = true;
@@ -342,11 +342,11 @@ async function authMiddleware(req, res, next) {
     }
 
     if (!account.bot) {
-      let xSuperProperties = req.headers['X-Super-Properties'];
-      let userAgent = req.headers['User-Agent'];
+      const xSuperProperties = req.headers['X-Super-Properties'];
+      const userAgent = req.headers['User-Agent'];
 
       try {
-        let validSuperProps = globalUtils.validSuperPropertiesObject(
+        const validSuperProps = globalUtils.validSuperPropertiesObject(
           xSuperProperties,
           req.originalUrl,
           req.baseUrl,
@@ -373,7 +373,7 @@ async function authMiddleware(req, res, next) {
 
 function instanceMiddleware(flag_check) {
   return function (req, res, next) {
-    let check = config.instance.flags.includes(flag_check);
+    const check = config.instance.flags.includes(flag_check);
 
     if (check) {
       if (flag_check === 'VERIFIED_EMAIL_REQUIRED') {
@@ -399,7 +399,7 @@ async function guildMiddleware(req, res, next) {
     return next();
   }
 
-  let guild = req.guild;
+  const guild = req.guild;
 
   if (!guild) {
     return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
@@ -415,7 +415,7 @@ async function guildMiddleware(req, res, next) {
     return next();
   }
 
-  let member = guild.members.find((y) => y.id == sender.id);
+  const member = guild.members.find((y) => y.id == sender.id);
 
   if (!member) {
     return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
@@ -425,13 +425,13 @@ async function guildMiddleware(req, res, next) {
 }
 
 async function userMiddleware(req, res, next) {
-  let account = req.account;
+  const account = req.account;
 
   if (!account) {
     return res.status(401).json(errors.response_401.UNAUTHORIZED);
   }
 
-  let user = req.user;
+  const user = req.user;
 
   if (!user) {
     return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -441,13 +441,13 @@ async function userMiddleware(req, res, next) {
     return next();
   }
 
-  let guilds = await global.database.getUsersGuilds(user.id);
+  const guilds = await global.database.getUsersGuilds(user.id);
 
   if (guilds.length == 0) {
     return res.status(404).json(errors.response_404.UNKNOWN_USER);
   } //investigate later
 
-  let share = guilds.some(
+  const share = guilds.some(
     (guild) =>
       guild &&
       guild.members &&
@@ -463,7 +463,7 @@ async function userMiddleware(req, res, next) {
 }
 
 async function channelMiddleware(req, res, next) {
-  let channel = req.channel;
+  const channel = req.channel;
 
   if (!channel) {
     return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
@@ -493,13 +493,13 @@ async function channelMiddleware(req, res, next) {
     return next();
   }
 
-  let member = req.guild.members.find((y) => y.id == sender.id);
+  const member = req.guild.members.find((y) => y.id == sender.id);
 
   if (member == null) {
     return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
   }
 
-  let gCheck = global.permissions.hasGuildPermissionTo(
+  const gCheck = global.permissions.hasGuildPermissionTo(
     req.guild,
     member.id,
     'READ_MESSAGES',
@@ -510,7 +510,7 @@ async function channelMiddleware(req, res, next) {
     return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
   }
 
-  let pCheck = global.permissions.hasChannelPermissionTo(
+  const pCheck = global.permissions.hasChannelPermissionTo(
     req.channel,
     req.guild,
     member.id,
@@ -550,7 +550,7 @@ function guildPermissionsMiddleware(permission) {
       return next();
     }
 
-    let check = await global.permissions.hasGuildPermissionTo(
+    const check = await global.permissions.hasGuildPermissionTo(
       req.guild,
       sender.id,
       permission,
@@ -574,7 +574,7 @@ function channelPermissionsMiddleware(permission) {
     }
 
     if (permission == 'MANAGE_MESSAGES' && req.params.messageid) {
-      let message = req.message;
+      const message = req.message;
 
       if (message == null) {
         return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
@@ -619,14 +619,14 @@ function channelPermissionsMiddleware(permission) {
           //Permission to DM
 
           //Need a complete user object for the relationships
-          let otherID = channel.recipients[channel.recipients[0].id == sender.id ? 1 : 0].id;
-          let other = await global.database.getAccountByUserId(otherID);
+          const otherID = channel.recipients[channel.recipients[0].id == sender.id ? 1 : 0].id;
+          const other = await global.database.getAccountByUserId(otherID);
 
           if (!other) {
             return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
           }
 
-          let friends = !sender.bot && !other.bot && globalUtils.areWeFriends(sender, other);
+          const friends = !sender.bot && !other.bot && globalUtils.areWeFriends(sender, other);
 
           const guilds = await global.database.getUsersGuilds(other.id);
 
@@ -638,7 +638,7 @@ function channelPermissionsMiddleware(permission) {
           );
 
           if (!friends) {
-            let hasAllowedGuild = sharedGuilds.some((guild) => {
+            const hasAllowedGuild = sharedGuilds.some((guild) => {
               const senderAllows = !sender.settings.restricted_guilds.includes(guild.id);
               const recipientAllows = !other.settings.restricted_guilds.includes(guild.id);
 
@@ -660,7 +660,7 @@ function channelPermissionsMiddleware(permission) {
       return next();
     }
 
-    let check = global.permissions.hasChannelPermissionTo(
+    const check = global.permissions.hasChannelPermissionTo(
       channel,
       req.guild,
       sender.id,

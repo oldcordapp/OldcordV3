@@ -138,21 +138,21 @@ const patcher = {
                 return sdp.replace(`ICE/SDP`, `RTP/SAVPF ` + audioPayloadType).trim();
               }
 
-              let defaults = [0, 'default', !0];
+              const defaults = [0, 'default', !0];
 
               sdp = replaceSDP(sdp, audioPayloadType);
               unknown = [defaults].concat(unknown);
 
-              let formattedUnknown = unknown
+              const formattedUnknown = unknown
                 .map(function (e, t) {
                   return t;
                 })
                 .join(' ');
 
-              let u = unknown.map(function (e, t) {
-                let i = e[0];
-                let r = e[1];
-                let s = e[2];
+              const u = unknown.map(function (e, t) {
+                const i = e[0];
+                const r = e[1];
+                const s = e[2];
                 return s
                   ? sdp +
                       '\na=' +
@@ -259,7 +259,7 @@ const patcher = {
             }
 
             const previousMBlocks = getMediaBlocks(previousDescription.sdp);
-            let currentMBlocks = getMediaBlocks(description.sdp);
+            const currentMBlocks = getMediaBlocks(description.sdp);
 
             if (currentMBlocks.length === 0) {
               console.error('[SDP Patcher] The description has no media blocks.');
@@ -275,10 +275,10 @@ const patcher = {
                 const missingMBlock = previousMBlocks[i];
                 const missingMediaType = getMediaType(missingMBlock);
 
-                let templateBlock =
+                const templateBlock =
                   currentMBlocks.find((b) => getMediaType(b) === missingMediaType) ||
                   currentMBlocks[0];
-                let newBlockLines = templateBlock.split(/\r?\n/);
+                const newBlockLines = templateBlock.split(/\r?\n/);
 
                 const previousMDirection = getDirection(missingMBlock);
                 let currentMDirection = previousMDirection;

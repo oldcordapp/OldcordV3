@@ -6,10 +6,10 @@ import globalUtils from './globalutils.js';
 const lazyRequest = {
   getSortedList: (guild) => {
     return [...guild.members].sort((a, b) => {
-      let pA = globalUtils.getUserPresence(a);
-      let pB = globalUtils.getUserPresence(b);
-      let statusA = pA?.status && pA.status !== 'offline' ? 1 : 0;
-      let statusB = pB?.status && pB.status !== 'offline' ? 1 : 0;
+      const pA = globalUtils.getUserPresence(a);
+      const pB = globalUtils.getUserPresence(b);
+      const statusA = pA?.status && pA.status !== 'offline' ? 1 : 0;
+      const statusB = pB?.status && pB.status !== 'offline' ? 1 : 0;
 
       if (statusA !== statusB) return statusB - statusA;
       return a.user.username.localeCompare(b.user.username);
@@ -26,8 +26,8 @@ const lazyRequest = {
       return murmur3('', 0).toString();
     }
 
-    let READ_MESSAGES = global.permissions.toObject().READ_MESSAGES;
-    let everyoneOverwrite = channel.permission_overwrites.find((ov) => ov.id === everyoneRole.id);
+    const READ_MESSAGES = global.permissions.toObject().READ_MESSAGES;
+    const everyoneOverwrite = channel.permission_overwrites.find((ov) => ov.id === everyoneRole.id);
 
     let everyoneCanView = everyoneRole.permissions & READ_MESSAGES;
 
@@ -35,7 +35,7 @@ const lazyRequest = {
       everyoneCanView = false;
     }
 
-    let otherDenyRules = channel.permission_overwrites.some(
+    const otherDenyRules = channel.permission_overwrites.some(
       (ov) => ov.id !== everyoneRole.id && ov.deny & READ_MESSAGES,
     );
 
@@ -43,7 +43,7 @@ const lazyRequest = {
       return 'everyone';
     }
 
-    let perms = [];
+    const perms = [];
 
     channel.permission_overwrites.forEach((overwrite) => {
       if (overwrite.allow & READ_MESSAGES) {
@@ -70,7 +70,7 @@ const lazyRequest = {
     }
 
     function formatMemberItem(member, forcedStatus = null) {
-      let p = globalUtils.getUserPresence(member);
+      const p = globalUtils.getUserPresence(member);
       if (forcedStatus != null) p.status = forcedStatus;
 
       return {
@@ -81,41 +81,41 @@ const lazyRequest = {
       };
     }
 
-    let visibleMembers = guild.members.filter((m) => {
+    const visibleMembers = guild.members.filter((m) => {
       return (
         global.permissions.hasChannelPermissionTo(channel, guild, m.id, 'READ_MESSAGES') ||
         bypassPerms
       );
     });
 
-    let sortedMembers = [...visibleMembers].sort((a, b) => {
-      let pA = globalUtils.getUserPresence(a);
-      let pB = globalUtils.getUserPresence(b);
-      let statusA = pA?.status && pA.status !== 'offline' ? 1 : 0;
-      let statusB = pB?.status && pB.status !== 'offline' ? 1 : 0;
+    const sortedMembers = [...visibleMembers].sort((a, b) => {
+      const pA = globalUtils.getUserPresence(a);
+      const pB = globalUtils.getUserPresence(b);
+      const statusA = pA?.status && pA.status !== 'offline' ? 1 : 0;
+      const statusB = pB?.status && pB.status !== 'offline' ? 1 : 0;
       if (statusA !== statusB) return statusB - statusA;
       return a.user.username.localeCompare(b.user.username);
     });
 
-    let allItems = [];
-    let groups = [];
-    let placedUserIds = new Set();
+    const allItems = [];
+    const groups = [];
+    const placedUserIds = new Set();
     let remainingMembers = [...sortedMembers];
-    let hoistedRoles = (guild.roles || [])
+    const hoistedRoles = (guild.roles || [])
       .filter((r) => r.hoist)
       .sort((a, b) => b.position - a.position);
 
     hoistedRoles.forEach((role) => {
-      let [roleMembers, others] = arrayPartition(remainingMembers, (m) => {
+      const [roleMembers, others] = arrayPartition(remainingMembers, (m) => {
         if (placedUserIds.has(m.user.id)) return false;
 
-        let p = globalUtils.getUserPresence(m);
+        const p = globalUtils.getUserPresence(m);
 
         return p && p.status !== 'offline' && m.roles.includes(role.id);
       });
 
       if (roleMembers.length > 0) {
-        let group = { id: role.id, count: roleMembers.length };
+        const group = { id: role.id, count: roleMembers.length };
         groups.push(group);
         allItems.push({ group });
 
@@ -128,10 +128,10 @@ const lazyRequest = {
       remainingMembers = others;
     });
 
-    let [onlineLeft, others] = arrayPartition(remainingMembers, (m) => {
+    const [onlineLeft, others] = arrayPartition(remainingMembers, (m) => {
       if (placedUserIds.has(m.user.id)) return false;
 
-      let p = globalUtils.getUserPresence(m);
+      const p = globalUtils.getUserPresence(m);
       return p && p.status !== 'offline' && p.status !== 'invisible';
     });
 
@@ -147,7 +147,7 @@ const lazyRequest = {
 
     remainingMembers = others;
 
-    let offlineFinal = remainingMembers.filter((m) => !placedUserIds.has(m.user.id));
+    const offlineFinal = remainingMembers.filter((m) => !placedUserIds.has(m.user.id));
 
     if (offlineFinal.length > 0) {
       groups.push({ id: 'offline', count: offlineFinal.length });
@@ -159,8 +159,8 @@ const lazyRequest = {
       });
     }
 
-    let syncOps = ranges.map((range) => {
-      let [startIndex, endIndex] = range;
+    const syncOps = ranges.map((range) => {
+      const [startIndex, endIndex] = range;
 
       return {
         op: 'SYNC',
@@ -182,7 +182,7 @@ const lazyRequest = {
     }
 
     if (session.memberListCache) {
-      for (let key in session.memberListCache) {
+      for (const key in session.memberListCache) {
         if (key.startsWith(guildId) || key.includes(guildId)) {
           delete session.memberListCache[key];
         }
@@ -190,19 +190,19 @@ const lazyRequest = {
     }
   },
   handleMemberRemove: async (session, guild, memberId) => {
-    let guildSubs = session.subscriptions[guild.id];
+    const guildSubs = session.subscriptions[guild.id];
     if (!guildSubs) return;
 
-    let leaverSession = Array.from(global.sessions.values()).find((s) => s.user.id === memberId);
+    const leaverSession = Array.from(global.sessions.values()).find((s) => s.user.id === memberId);
     if (leaverSession) {
       lazyRequest.clearGuildSubscriptions(leaverSession, guild.id);
     }
 
-    for (let [channelId, subData] of Object.entries(guildSubs)) {
-      let channel = guild.channels.find((x) => x.id === channelId);
+    for (const [channelId, subData] of Object.entries(guildSubs)) {
+      const channel = guild.channels.find((x) => x.id === channelId);
       if (!channel) continue;
 
-      let list_id = lazyRequest.getListId(
+      const list_id = lazyRequest.getListId(
         session,
         guild,
         channel,
@@ -210,16 +210,16 @@ const lazyRequest = {
       );
       let ops = [];
 
-      let oldItems = session.memberListCache[channelId];
+      const oldItems = session.memberListCache[channelId];
       if (!oldItems) continue;
 
-      let tempGuild = { ...guild, members: guild.members.filter((m) => m.id !== memberId) };
-      let {
+      const tempGuild = { ...guild, members: guild.members.filter((m) => m.id !== memberId) };
+      const {
         items: newItems,
         groups,
         count,
       } = lazyRequest.computeMemberList(tempGuild, channel, subData.ranges);
-      let totalOnline = groups
+      const totalOnline = groups
         .filter((g) => g.id !== 'offline')
         .reduce((acc, g) => acc + g.count, 0);
 
@@ -230,7 +230,7 @@ const lazyRequest = {
           items: newItems.slice(range[0], range[1] + 1),
         }));
       } else {
-        let visualIndex = oldItems.findIndex(
+        const visualIndex = oldItems.findIndex(
           (i) => i.member && (i.member.id === memberId || i.member.user?.id === memberId),
         );
         if (visualIndex === -1) continue;
@@ -261,7 +261,7 @@ const lazyRequest = {
     guild.members = guild.members.filter((m) => m.id !== memberId);
   },
   handleMemberAdd: async (session, guild, member) => {
-    let guildSubs = session.subscriptions[guild.id];
+    const guildSubs = session.subscriptions[guild.id];
     if (!guildSubs) return;
 
     const memberId = member.id || member.user?.id;
@@ -270,22 +270,22 @@ const lazyRequest = {
       guild.members.push(member);
     }
 
-    for (let [channelId, subData] of Object.entries(guildSubs)) {
-      let channel = guild.channels.find((x) => x.id === channelId);
+    for (const [channelId, subData] of Object.entries(guildSubs)) {
+      const channel = guild.channels.find((x) => x.id === channelId);
       if (!channel) continue;
 
-      let {
+      const {
         items: newItems,
         groups,
         count,
       } = lazyRequest.computeMemberList(guild, channel, subData.ranges);
-      let list_id = lazyRequest.getListId(
+      const list_id = lazyRequest.getListId(
         session,
         guild,
         channel,
         guild.roles.find((x) => x.id === guild.id),
       );
-      let totalOnline = groups
+      const totalOnline = groups
         .filter((g) => g.id !== 'offline')
         .reduce((acc, g) => acc + g.count, 0);
 
@@ -298,15 +298,15 @@ const lazyRequest = {
           items: newItems.slice(range[0], range[1] + 1),
         }));
       } else {
-        let oldItems = session.memberListCache[channelId] || [];
-        let visualIndex = newItems.findIndex(
+        const oldItems = session.memberListCache[channelId] || [];
+        const visualIndex = newItems.findIndex(
           (i) => i.member && String(i.member.id || i.member.user?.id) === String(memberId),
         );
 
         if (visualIndex !== -1) {
           if (visualIndex > 0 && newItems[visualIndex - 1].group) {
-            let newGroup = newItems[visualIndex - 1].group;
-            let oldGroupIdx = oldItems.findIndex((i) => i.group && i.group.id === newGroup.id);
+            const newGroup = newItems[visualIndex - 1].group;
+            const oldGroupIdx = oldItems.findIndex((i) => i.group && i.group.id === newGroup.id);
 
             if (oldGroupIdx === -1) {
               ops.push({ op: 'INSERT', index: visualIndex - 1, item: newItems[visualIndex - 1] });
@@ -335,20 +335,20 @@ const lazyRequest = {
   handleMembersSync: (session, channel, guild, subData) => {
     if (!subData || !subData.ranges) return;
 
-    let list_id = lazyRequest.getListId(
+    const list_id = lazyRequest.getListId(
       session,
       guild,
       channel,
       guild.roles.find((x) => x.id === guild.id),
     );
 
-    let { ops, groups, items, count } = lazyRequest.computeMemberList(
+    const { ops, groups, items, count } = lazyRequest.computeMemberList(
       guild,
       channel,
       subData.ranges,
     );
 
-    let onlineCount = groups
+    const onlineCount = groups
       .filter((g) => g.id === 'online' || guild.roles.some((r) => r.id === g.id && r.hoist))
       .reduce((acc, g) => acc + g.count, 0);
 
@@ -372,27 +372,27 @@ const lazyRequest = {
       guild,
       'LIST_RELOAD',
       async function () {
-        let otherSession = this;
-        let guildSubs = otherSession.subscriptions[guild.id];
+        const otherSession = this;
+        const guildSubs = otherSession.subscriptions[guild.id];
 
         if (!guildSubs) return;
 
-        for (let [channelId, subData] of Object.entries(guildSubs)) {
-          let channel = guild.channels.find((x) => x.id === channelId);
+        for (const [channelId, subData] of Object.entries(guildSubs)) {
+          const channel = guild.channels.find((x) => x.id === channelId);
           if (!channel) continue;
 
-          let {
+          const {
             items: newItems,
             groups,
             count,
           } = lazyRequest.computeMemberList(guild, channel, subData.ranges || [[0, 99]]);
-          let listId = lazyRequest.getListId(
+          const listId = lazyRequest.getListId(
             otherSession,
             guild,
             channel,
             guild.roles.find((x) => x.id === guild.id),
           );
-          let totalOnline = groups
+          const totalOnline = groups
             .filter((g) => g.id !== 'offline')
             .reduce((acc, g) => acc + g.count, 0);
 
@@ -407,20 +407,20 @@ const lazyRequest = {
               };
             });
           } else {
-            let oldItems = otherSession.memberListCache[channelId];
+            const oldItems = otherSession.memberListCache[channelId];
             if (!oldItems) continue;
 
-            let oldIndex = oldItems.findIndex(
+            const oldIndex = oldItems.findIndex(
               (item) =>
                 item.member && (item.member.id === user_id || item.member.user?.id === user_id),
             );
-            let newIndex = newItems.findIndex(
+            const newIndex = newItems.findIndex(
               (item) =>
                 item.member && (item.member.id === user_id || item.member.user?.id === user_id),
             );
 
             if (oldIndex !== newIndex) {
-              let indicesToDelete = [];
+              const indicesToDelete = [];
               if (oldIndex !== -1) {
                 indicesToDelete.push(oldIndex);
                 if (
@@ -472,11 +472,11 @@ const lazyRequest = {
   fire: async (socket, packet) => {
     if (!socket.session) return;
 
-    let { guild_id, channels, members: memberIds } = packet.d;
+    const { guild_id, channels, members: memberIds } = packet.d;
 
     if (!guild_id || !channels) return;
 
-    let guild = socket.session.guilds.find((x) => x.id === guild_id);
+    const guild = socket.session.guilds.find((x) => x.id === guild_id);
 
     if (!guild) return;
 
@@ -484,8 +484,8 @@ const lazyRequest = {
       socket.session.subscriptions[guild_id] = {};
     }
 
-    for (let [channelId, ranges] of Object.entries(channels)) {
-      let channel = guild.channels.find((x) => x.id === channelId);
+    for (const [channelId, ranges] of Object.entries(channels)) {
+      const channel = guild.channels.find((x) => x.id === channelId);
 
       if (!channel) continue;
 
@@ -495,7 +495,7 @@ const lazyRequest = {
 
       if (Array.isArray(memberIds)) {
         memberIds.forEach((id) => {
-          let presence = globalUtils.getGuildPresences(guild).find((p) => p.user.id === id); //cant trust guild.presences
+          const presence = globalUtils.getGuildPresences(guild).find((p) => p.user.id === id); //cant trust guild.presences
 
           if (presence) {
             socket.session.dispatch('PRESENCE_UPDATE', {

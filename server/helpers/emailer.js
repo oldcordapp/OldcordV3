@@ -52,7 +52,7 @@ class emailer {
 
       if (!this.config.enabled || !this.config) return false;
 
-      let mailOptions = {
+      const mailOptions = {
         sender: {
           email: this.config.fromAddress,
         },
@@ -106,7 +106,7 @@ class emailer {
       );
       htmlContent = replaceAll(htmlContent, '[address]', '401 California Dr, Burlingame, CA 94010');
 
-      let res = await global.emailer.trySendEmail(to, 'Verify Email', htmlContent);
+      const res = await global.emailer.trySendEmail(to, 'Verify Email', htmlContent);
 
       return res;
     } catch (error) {
@@ -141,7 +141,7 @@ class emailer {
       );
       htmlContent = replaceAll(htmlContent, '[address]', '401 California Dr, Burlingame, CA 94010');
 
-      let res = await global.emailer.trySendEmail(
+      const res = await global.emailer.trySendEmail(
         to,
         `Password Reset Request for ${global.config.instance.name}`,
         htmlContent,

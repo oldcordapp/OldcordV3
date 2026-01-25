@@ -30,7 +30,7 @@ const permissions = {
   USE_VAD: 1 << 25,
   has(compare, key) {
     try {
-      let bitmask = this[key];
+      const bitmask = this[key];
 
       if (!bitmask) return false;
 
@@ -43,30 +43,30 @@ const permissions = {
     try {
       if (!guild) return false;
 
-      let member = guild.members.find((y) => y.id == user_id);
+      const member = guild.members.find((y) => y.id == user_id);
 
       if (!member) return false;
 
       if (guild.owner_id == member.user.id) return true;
 
-      let everyoneRole = guild.roles.find((x) => x.id === guild.id);
+      const everyoneRole = guild.roles.find((x) => x.id === guild.id);
       let totalPermissions = BigInt(everyoneRole ? everyoneRole.permissions : 0);
 
-      for (let roleId of member.roles) {
-        let role = guild.roles.find((x) => x.id === roleId);
+      for (const roleId of member.roles) {
+        const role = guild.roles.find((x) => x.id === roleId);
 
         if (role) {
           totalPermissions |= BigInt(role.permissions);
         }
       }
 
-      let ADMINISTRATOR = BigInt(8);
+      const ADMINISTRATOR = BigInt(8);
 
       if ((totalPermissions & ADMINISTRATOR) === ADMINISTRATOR) {
         return true;
       }
 
-      let permissionBit = BigInt(this.toObject()[key]);
+      const permissionBit = BigInt(this.toObject()[key]);
 
       return (totalPermissions & permissionBit) === permissionBit;
     } catch (error) {
@@ -79,17 +79,17 @@ const permissions = {
       if (!channel || !guild) return false;
       if (guild.owner_id == user_id) return true;
 
-      let member = guild.members.find((y) => y.id == user_id);
+      const member = guild.members.find((y) => y.id == user_id);
 
       if (!member) return false;
 
-      let everyoneRole = guild.roles.find((r) => r.id === guild.id);
+      const everyoneRole = guild.roles.find((r) => r.id === guild.id);
       let permissions = BigInt(everyoneRole ? everyoneRole.permissions : 0);
 
-      let memberRoles = [];
+      const memberRoles = [];
 
-      for (let roleId of member.roles) {
-        let role = guild.roles.find((r) => r.id === roleId);
+      for (const roleId of member.roles) {
+        const role = guild.roles.find((r) => r.id === roleId);
 
         if (role) {
           memberRoles.push(role);
@@ -97,13 +97,13 @@ const permissions = {
         }
       }
 
-      let ADMIN_BIT = BigInt(8);
+      const ADMIN_BIT = BigInt(8);
 
       if ((permissions & ADMIN_BIT) === ADMIN_BIT) return true;
 
       if (channel.permission_overwrites && channel.permission_overwrites.length > 0) {
-        let overwrites = channel.permission_overwrites;
-        let everyoneOverwrite = overwrites.find((o) => o.id === guild.id);
+        const overwrites = channel.permission_overwrites;
+        const everyoneOverwrite = overwrites.find((o) => o.id === guild.id);
 
         if (everyoneOverwrite) {
           permissions &= ~BigInt(everyoneOverwrite.deny);
@@ -113,8 +113,8 @@ const permissions = {
         let roleAllow = BigInt(0);
         let roleDeny = BigInt(0);
 
-        for (let role of memberRoles) {
-          let overwrite = overwrites.find((o) => o.id === role.id);
+        for (const role of memberRoles) {
+          const overwrite = overwrites.find((o) => o.id === role.id);
 
           if (overwrite) {
             roleAllow |= BigInt(overwrite.allow);
@@ -125,7 +125,7 @@ const permissions = {
         permissions &= ~roleDeny;
         permissions |= roleAllow;
 
-        let memberOverwrite = overwrites.find((o) => o.id === member.id);
+        const memberOverwrite = overwrites.find((o) => o.id === member.id);
 
         if (memberOverwrite) {
           permissions &= ~BigInt(memberOverwrite.deny);
@@ -135,7 +135,7 @@ const permissions = {
 
       if ((permissions & ADMIN_BIT) === ADMIN_BIT) return true;
 
-      let bitmask = BigInt(this.toObject()[key]);
+      const bitmask = BigInt(this.toObject()[key]);
 
       return (permissions & bitmask) === bitmask;
     } catch (error) {

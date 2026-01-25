@@ -4,10 +4,11 @@ import json from '@eslint/json';
 import markdown from '@eslint/markdown';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import configPrettier from 'eslint-config-prettier';
-import pluginJsxA11y from 'eslint-plugin-jsx-a11y';
-import pluginReact from 'eslint-plugin-react';
-import pluginReactHooks from 'eslint-plugin-react-hooks';
-import pluginImportSort from 'eslint-plugin-simple-import-sort';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -23,7 +24,7 @@ export default defineConfig([
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     extends: [js.configs.recommended],
     plugins: {
-      'simple-import-sort': pluginImportSort,
+      'simple-import-sort': simpleImportSort,
     },
     rules: {
       'simple-import-sort/exports': 'error',
@@ -46,6 +47,7 @@ export default defineConfig([
           ],
         },
       ],
+      'prefer-const': 'error',
     },
     languageOptions: {
       parser: tseslint.parser,
@@ -66,14 +68,13 @@ export default defineConfig([
   },
   {
     files: ['frontend/**/*.{js,jsx,ts,tsx}'],
-    extends: [pluginReact.configs.flat.recommended, pluginJsxA11y.flatConfigs.recommended],
-    plugins: {
-      'react-hooks': pluginReactHooks as any,
-    },
-    rules: {
-      ...pluginReactHooks.configs.recommended.rules,
-      'react/react-in-jsx-scope': 'off',
-    },
+    extends: [
+      react.configs.flat.recommended,
+      react.configs.flat['jsx-runtime'],
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+      jsxA11y.flatConfigs.recommended,
+    ],
     settings: {
       react: { version: 'detect' },
     },
@@ -116,11 +117,9 @@ export default defineConfig([
     ignores: ['eslint.config.mts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-call': 'warn',
-      'prefer-const': 'error',
     },
   },
   // DO NOT REMOVE THE FOLLOWING OR ELSE YOU CANNOT COMMIT LINTER CONFIG CHANGES!

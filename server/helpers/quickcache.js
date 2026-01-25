@@ -10,16 +10,16 @@ const quickcache = {
       return null;
     }
 
-    let url = req.originalUrl;
+    const url = req.originalUrl;
 
     let inValue = `${url}::SHARED`;
 
     if (!shared) {
-      let token = req.headers['authorization'];
+      const token = req.headers['authorization'];
       inValue = `${url}::${token}`;
     }
 
-    let hash = createHash('sha256').update(inValue).digest('hex');
+    const hash = createHash('sha256').update(inValue).digest('hex');
 
     return hash;
   },
@@ -33,15 +33,15 @@ const quickcache = {
         return next();
       } //NEVER cache anything other than GET or well no-cache
 
-      let self = quickcache;
-      let cacheKey = self.getCacheKey(req, shared);
+      const self = quickcache;
+      const cacheKey = self.getCacheKey(req, shared);
 
       if (cacheKey === null) {
         return next();
       }
 
-      let currentTime = Math.floor(Date.now() / 1000);
-      let cachedEntry = self.cacheStore.get(cacheKey);
+      const currentTime = Math.floor(Date.now() / 1000);
+      const cachedEntry = self.cacheStore.get(cacheKey);
 
       if (cachedEntry && cachedEntry.cached_until > currentTime) {
         res.setHeader(
@@ -63,12 +63,12 @@ const quickcache = {
 
       self.requestLock.set(cacheKey, [res]);
 
-      let originalJson = res.json;
+      const originalJson = res.json;
 
       res.json = (body) => {
-        let expiry = currentTime + ttl;
+        const expiry = currentTime + ttl;
 
-        let cacheEntry = {
+        const cacheEntry = {
           data: JSON.stringify(body),
           cached_at: currentTime,
           cached_until: expiry,
@@ -76,8 +76,8 @@ const quickcache = {
 
         self.cacheStore.set(cacheKey, cacheEntry);
 
-        let waitList = self.requestLock.get(cacheKey) || [];
-        let cacheInfo = {
+        const waitList = self.requestLock.get(cacheKey) || [];
+        const cacheInfo = {
           status: 'miss',
           cached_at: currentTime,
           cached_until: expiry,

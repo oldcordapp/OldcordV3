@@ -12,15 +12,15 @@ function AuthCheck({ appPage = null, enforced, minClearance }) {
       ? `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/${user.id}/${user.avatar}.png`
       : DefaultAvatar;
 
-  let AppPage = appPage;
+  const AppPage = appPage;
 
-  let authToken = localStorage.getItem('token');
+  const authToken = localStorage.getItem('token');
 
   if (enforced && !authToken) {
     return <Navigate to="/login" />;
   }
 
-  let user_data = JSON.parse(localStorage.getItem('user_data'));
+  const user_data = JSON.parse(localStorage.getItem('user_data'));
 
   if (!user_data || !user_data.staff_details) {
     return <Navigate to="/login" />;

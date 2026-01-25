@@ -16,8 +16,8 @@ router.param('messageid', async (req, res, next, messageid) => {
 
 router.get('/', channelMiddleware, quickcache.cacheFor(60 * 5, true), async (req, res) => {
   try {
-    let channel = req.channel;
-    let pinned_messages = await global.database.getPinnedMessagesInChannel(channel.id);
+    const channel = req.channel;
+    const pinned_messages = await global.database.getPinnedMessagesInChannel(channel.id);
 
     return res.status(200).json(pinned_messages);
   } catch (error) {
@@ -29,8 +29,8 @@ router.get('/', channelMiddleware, quickcache.cacheFor(60 * 5, true), async (req
 
 router.put('/:messageid', channelMiddleware, async (req, res) => {
   try {
-    let channel = req.channel;
-    let message = req.message;
+    const channel = req.channel;
+    const message = req.message;
 
     if (!message) {
       return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
@@ -42,7 +42,7 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
       return res.status(204).send();
     }
 
-    let tryPin = await global.database.setPinState(req.message.id, true);
+    const tryPin = await global.database.setPinState(req.message.id, true);
 
     if (!tryPin) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -57,7 +57,7 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
         last_pin_timestamp: new Date().toISOString(),
       });
 
-      let pin_msg = await global.database.createSystemMessage(null, channel.id, 6, [req.account]);
+      const pin_msg = await global.database.createSystemMessage(null, channel.id, 6, [req.account]);
 
       await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', pin_msg);
     } else {
@@ -67,7 +67,7 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
         last_pin_timestamp: new Date().toISOString(),
       });
 
-      let pin_msg = await global.database.createSystemMessage(req.guild.id, channel.id, 6, [
+      const pin_msg = await global.database.createSystemMessage(req.guild.id, channel.id, 6, [
         req.account,
       ]);
 
@@ -84,8 +84,8 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
 
 router.delete('/:messageid', channelMiddleware, async (req, res) => {
   try {
-    let channel = req.channel;
-    let message = req.message;
+    const channel = req.channel;
+    const message = req.message;
 
     if (!message) {
       return res.status(404).json(errors.response_404.UNKNOWN_MESSAGE);
@@ -97,7 +97,7 @@ router.delete('/:messageid', channelMiddleware, async (req, res) => {
       return res.status(204).send();
     }
 
-    let tryPin = await global.database.setPinState(req.message.id, false);
+    const tryPin = await global.database.setPinState(req.message.id, false);
 
     if (!tryPin) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -119,7 +119,7 @@ router.delete('/:messageid', channelMiddleware, async (req, res) => {
 
 router.post('/ack', channelMiddleware, async (req, res) => {
   try {
-    let latest_pin = await global.database.getLatestPinAcknowledgement(
+    const latest_pin = await global.database.getLatestPinAcknowledgement(
       req.account.id,
       req.channel.id,
     );

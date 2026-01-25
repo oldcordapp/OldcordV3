@@ -127,7 +127,7 @@ router.post(
         return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
       }
 
-      let usersGuild = await global.database.getUsersGuilds(sender.id);
+      const usersGuild = await global.database.getUsersGuilds(sender.id);
 
       if (usersGuild.length >= global.config.limits['guilds_per_account'].max) {
         return res.status(404).json({
@@ -156,9 +156,9 @@ router.post(
         nick: null,
       });
 
-      let activeSessions = dispatcher.getAllActiveSessions();
+      const activeSessions = dispatcher.getAllActiveSessions();
 
-      for (let session of activeSessions) {
+      for (const session of activeSessions) {
         if (session.subscriptions && session.subscriptions[guild.id]) {
           //if (session.user.id === sender.id) continue;
 
@@ -182,7 +182,7 @@ router.post(
       });
 
       if (guild.system_channel_id != null) {
-        let join_msg = await global.database.createSystemMessage(
+        const join_msg = await global.database.createSystemMessage(
           guild.id,
           guild.system_channel_id,
           7,

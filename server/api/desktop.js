@@ -10,7 +10,7 @@ const windowsCacheFile = join(cacheFolder, 'windows.json');
 const moduleVersionFile = join(cacheFolder, 'module_versions.json');
 const hostVersionFile = join(cacheFolder, 'host_version.json');
 
-let isUsingObjectStorage = false;
+const isUsingObjectStorage = false;
 
 if (!existsSync(windowsCacheFile)) {
   closeSync(openSync(windowsCacheFile, 'w'));

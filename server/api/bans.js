@@ -85,9 +85,9 @@ router.put(
           id: req.params.guildid,
         });
 
-        let activeSessions = dispatcher.getAllActiveSessions();
+        const activeSessions = dispatcher.getAllActiveSessions();
 
-        for (let session of activeSessions) {
+        for (const session of activeSessions) {
           if (session.subscriptions && session.subscriptions[req.guild.id]) {
             if (session.user.id === member.user.id) continue;
 
@@ -128,7 +128,7 @@ router.put(
 
           if (messages.length > 0) {
             for (var message of messages) {
-              let tryDelete = await global.database.deleteMessage(message.id);
+              const tryDelete = await global.database.deleteMessage(message.id);
 
               if (tryDelete) {
                 await dispatcher.dispatchEventInChannel(

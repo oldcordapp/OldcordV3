@@ -4,6 +4,7 @@ import globalUtils from '../../../helpers/globalutils.js';
 import { logText } from '../../../helpers/logger.js';
 import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares.js';
 const router = Router();
+import dispatcher from '../../../helpers/dispatcher.js';
 import errors from '../../../helpers/errors.js';
 import quickcache from '../../../helpers/quickcache.js';
 import Watchdog from '../../../helpers/watchdog.js';
@@ -11,7 +12,6 @@ import relationships from '../relationships.js';
 import billing from './billing.js';
 import connections from './connections.js';
 import guilds from './guilds.js';
-import dispatcher from '../../../helpers/dispatcher.js';
 
 router.use('/relationships', relationships);
 
@@ -67,7 +67,7 @@ router.patch(
   async (req, res) => {
     try {
       let account = req.account;
-      let originalAcc = account;
+      const originalAcc = account;
 
       if (account.bot) {
         if (req.body.username) {
@@ -84,7 +84,7 @@ router.patch(
           });
         }
 
-        let goodUsername = globalUtils.checkUsername(account.username);
+        const goodUsername = globalUtils.checkUsername(account.username);
 
         if (goodUsername.code !== 200) {
           return res.status(goodUsername.code).json(goodUsername);
@@ -110,7 +110,7 @@ router.patch(
       // New accounts via invite (unclaimed account) have null email and null password.
       // By genius Discord engineering if they claim an account it does not use new_password it uses password.
 
-      let update = {
+      const update = {
         avatar: null,
         email: null,
         new_password: null,
@@ -170,7 +170,7 @@ router.patch(
       ) {
         //avatar change
 
-        let tryUpdate = await global.database.updateAccount(
+        const tryUpdate = await global.database.updateAccount(
           account,
           update.avatar,
           account.username,
@@ -183,7 +183,7 @@ router.patch(
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        let retAccount = await global.database.getAccountByEmail(account.email);
+        const retAccount = await global.database.getAccountByEmail(account.email);
 
         if (!retAccount) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -239,7 +239,7 @@ router.patch(
         });
       }
 
-      let discriminator = update.discriminator;
+      const discriminator = update.discriminator;
 
       if (
         isNaN(parseInt(discriminator)) ||
@@ -274,7 +274,7 @@ router.patch(
         });
       }
 
-      let goodUsername = globalUtils.checkUsername(update.username);
+      const goodUsername = globalUtils.checkUsername(update.username);
 
       if (goodUsername.code !== 200) {
         return res.status(goodUsername.code).json(goodUsername);
@@ -395,8 +395,8 @@ router.get('/settings', quickcache.cacheFor(60 * 5), async (req, res) => {
 
 router.patch('/settings', async (req, res) => {
   try {
-    let account = req.account;
-    let new_settings = account.settings;
+    const account = req.account;
+    const new_settings = account.settings;
 
     if (new_settings == null) {
       console.log('new settings null');
@@ -404,7 +404,7 @@ router.patch('/settings', async (req, res) => {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
-    for (let key in req.body) {
+    for (const key in req.body) {
       new_settings[key] = req.body[key];
     }
 
@@ -419,7 +419,7 @@ router.patch('/settings', async (req, res) => {
         const userSessions = global.userSessions.get(account.id);
 
         if (userSessions && userSessions.size > 0) {
-          for (let session of userSessions) {
+          for (const session of userSessions) {
             session.presence.status = req.body.status.toLowerCase();
           }
 
@@ -440,7 +440,7 @@ router.patch('/settings', async (req, res) => {
 
 router.get(/\/settings-proto\/.*/, async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (!account) {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -474,7 +474,7 @@ router.get(/\/settings-proto\/.*/, async (req, res) => {
 
 router.patch(/\/settings-proto\/.*/, async (req, res) => {
   try {
-    let account = req.account;
+    const account = req.account;
 
     if (!account) {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -495,8 +495,8 @@ router.patch(/\/settings-proto\/.*/, async (req, res) => {
 router.put('/notes/:userid', async (req, res) => {
   //updateNoteForUserId
   try {
-    let account = req.account;
-    let user = req.user;
+    const account = req.account;
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json({
@@ -518,7 +518,7 @@ router.put('/notes/:userid', async (req, res) => {
       });
     }
 
-    let tryUpdate = await global.database.updateNoteForUserId(account.id, user.id, new_notes);
+    const tryUpdate = await global.database.updateNoteForUserId(account.id, user.id, new_notes);
 
     if (!tryUpdate) {
       return res.status(500).json({
@@ -547,18 +547,18 @@ router.put('/notes/:userid', async (req, res) => {
 
 router.get('/mentions', quickcache.cacheFor(60 * 5), async (req, res) => {
   try {
-    let account = req.account;
-    let limit = req.query.limit ?? 25;
-    let guild_id = req.query.guild_id ?? null;
-    let include_roles = req.query.roles == 'true' ?? false;
-    let include_everyone_mentions = req.query.everyone == 'true' ?? true;
-    let before = req.query.before ?? null;
+    const account = req.account;
+    const limit = req.query.limit ?? 25;
+    const guild_id = req.query.guild_id ?? null;
+    const include_roles = req.query.roles == 'true' ?? false;
+    const include_everyone_mentions = req.query.everyone == 'true' ?? true;
+    const before = req.query.before ?? null;
 
     if (!guild_id) {
       return res.status(200).json([]); //wtf why does this crash?
     }
 
-    let recentMentions = await global.database.getRecentMentions(
+    const recentMentions = await global.database.getRecentMentions(
       account.id,
       before,
       limit,
@@ -634,8 +634,8 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let code = req.body.code;
-      let secret = req.body.secret;
+      const code = req.body.code;
+      const secret = req.body.secret;
 
       if (!code || !secret) {
         return res.status(400).json({
@@ -644,13 +644,13 @@ router.post(
         }); //figure this one out too
       }
 
-      let user_mfa = await global.database.getUserMfa(req.account.id);
+      const user_mfa = await global.database.getUserMfa(req.account.id);
 
       if (user_mfa.mfa_enabled) {
         return res.status(400).json(errors.response_400.TWOFA_ALREADY_ENABLED);
       }
 
-      let valid = await global.database.validateTotpCode(req.account.id, code, secret); //I KNOW I KNOW
+      const valid = await global.database.validateTotpCode(req.account.id, code, secret); //I KNOW I KNOW
 
       if (!valid) {
         return res.status(400).json({
@@ -661,7 +661,7 @@ router.post(
 
       await global.database.updateUserMfa(req.account.id, 1, secret);
 
-      let returnedObj = globalUtils.sanitizeObject(req.account, [
+      const returnedObj = globalUtils.sanitizeObject(req.account, [
         'settings',
         'token',
         'password',
@@ -705,7 +705,7 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let code = req.body.code;
+      const code = req.body.code;
 
       if (!code) {
         return res.status(400).json({
@@ -714,13 +714,13 @@ router.post(
         });
       }
 
-      let user_mfa = await global.database.getUserMfa(req.account.id);
+      const user_mfa = await global.database.getUserMfa(req.account.id);
 
       if (!user_mfa.mfa_enabled) {
         return res.status(400).json(errors.response_400.TWOFA_NOT_ENABLED);
       }
 
-      let valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
+      const valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
 
       if (!valid) {
         return res.status(400).json({
@@ -731,7 +731,7 @@ router.post(
 
       await global.database.updateUserMfa(req.account.id, 0, null);
 
-      let returnedObj = globalUtils.sanitizeObject(req.account, [
+      const returnedObj = globalUtils.sanitizeObject(req.account, [
         'settings',
         'token',
         'password',

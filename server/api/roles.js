@@ -34,19 +34,19 @@ router.patch(
   ),
   async (req, res) => {
     try {
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (!guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
       }
 
-      let roles = req.guild.roles;
+      const roles = req.guild.roles;
 
       if (roles.length == 0) {
         return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
       }
 
-      let role = req.role;
+      const role = req.role;
 
       if (role == null) {
         return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
@@ -114,19 +114,19 @@ router.delete(
   ),
   async (req, res) => {
     try {
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (!guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
       }
 
-      let role = req.role;
+      const role = req.role;
 
       if (role == null) {
         return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
       }
 
-      let members_with_role = req.guild.members.filter((x) => x.roles.some((y) => y === role.id));
+      const members_with_role = req.guild.members.filter((x) => x.roles.some((y) => y === role.id));
 
       const attempt = await global.database.deleteRole(req.params.roleid);
 
@@ -177,13 +177,13 @@ router.patch(
   ),
   async (req, res) => {
     try {
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (!guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
       }
 
-      let roles = req.body;
+      const roles = req.body;
 
       if (!Array.isArray(roles)) {
         return res.status(400).json({
@@ -193,23 +193,23 @@ router.patch(
       } //figure this one out
 
       let success = 0;
-      let retRoles = [];
+      const retRoles = [];
 
       for (var role of roles) {
         if (!role.id || !role.position) continue;
 
         if (Object.keys(role).length > 2) continue; //fuck you
 
-        let guildRole = guild.roles.find((x) => x.id === role.id);
+        const guildRole = guild.roles.find((x) => x.id === role.id);
 
         if (!guildRole) continue;
 
-        let update_this_role = guildRole.position != role.position;
+        const update_this_role = guildRole.position != role.position;
 
         if (update_this_role) {
           guildRole.position = role.position;
 
-          let tryUpdate = await global.database.updateRole(guildRole);
+          const tryUpdate = await global.database.updateRole(guildRole);
 
           if (!tryUpdate) continue;
 
@@ -251,7 +251,7 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let guild = req.guild;
+      const guild = req.guild;
 
       if (!guild) {
         return res.status(404).json(errors.response_404.UNKNOWN_GUILD);

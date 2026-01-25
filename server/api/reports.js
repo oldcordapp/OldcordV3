@@ -19,7 +19,7 @@ router.post(
   ),
   async (req, res) => {
     try {
-      let valid_problems = [
+      const valid_problems = [
         'Child Sexual Abuse Material (CSAM)',
         'Threat of Self-Harm or Suicide',
         'Terrorism or Violent Extremism',
@@ -35,10 +35,10 @@ router.post(
         'Other',
       ];
 
-      let subject = req.body.subject;
-      let description = req.body.description;
-      let email_address = req.body.email_address;
-      let problem = req.body.problem;
+      const subject = req.body.subject;
+      const description = req.body.description;
+      const email_address = req.body.email_address;
+      const problem = req.body.problem;
 
       if (!subject || subject === '' || subject.length < 1) {
         return res.status(400).json({
