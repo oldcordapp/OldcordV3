@@ -146,7 +146,7 @@ const Server = ({ data }) => {
 
   return (
     <>
-      <div className="mainPage-main-components-sidebar">
+      <div className='mainPage-main-components-sidebar'>
         <Ic_dots
           style={{
             width: '12px',
@@ -162,8 +162,8 @@ const Server = ({ data }) => {
           }}
         />
         {popoutContextMenu !== null ? (
-          <div className="mainPage-main-components-popouts-container" ref={dropdownRef}>
-            <div className="mainPage-main-popouts">
+          <div className='mainPage-main-components-popouts-container' ref={dropdownRef}>
+            <div className='mainPage-main-popouts'>
               <Dropdown
                 contextMenu={popoutContextMenu}
                 onClose={() => setPopoutContextMenu(null)}
@@ -173,72 +173,72 @@ const Server = ({ data }) => {
         ) : (
           <></>
         )}
-        <div className="mainPage-main-components-sidebar-guildAvatar">
+        <div className='mainPage-main-components-sidebar-guildAvatar'>
           <div
-            className="guildAvatar avatar"
+            className='guildAvatar avatar'
             style={{
               backgroundImage: `url('${data.icon == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/icons/` + data.id + '/' + data.icon + '.png'}`,
             }}
           ></div>
         </div>
-        <div className="mainPage-main-components-sidebar-text">{data.name}</div>
-        <div className="mainPage-main-components-sidebar-separator"></div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Server ID</div>
+        <div className='mainPage-main-components-sidebar-text'>{data.name}</div>
+        <div className='mainPage-main-components-sidebar-separator'></div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Server ID</div>
           {data.id}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Server Since</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Server Since</div>
           {new Date(data.creation_date).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
           })}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Member Count</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Member Count</div>
           {data.members.length}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Invite Splash</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Invite Splash</div>
           {data.splash_hash ?? 'NONE'}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Owner</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Owner</div>
           <a href={`/admin/users?searchInput=${data.owner_id}`}>
             {data.owner.username}#{data.owner.discriminator}
           </a>
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Application Id</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Application Id</div>
           {data.application_id ?? 'NONE'}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Server Era</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Server Era</div>
           {'Up to ' + data.region ?? 'Everything'}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Verification Level</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Verification Level</div>
           {data.verification_level === 3
             ? 'HIGH'
             : ((data.verification_level === 2 ? 'MEDIUM' : 'LOW') ?? 'NONE')}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Features</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Features</div>
           {data.features == null || data.features.length === 0 ? 'NONE' : data.features.join(',')}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>
             Default Message Notifications
           </div>
           {data.default_message_notifications === 1 ? 'Only Mentions' : 'All Messages'}
         </div>
       </div>
-      <div className="mainPage-main-components-main">
-        <div className="mainPage-main-components-wrapper">
+      <div className='mainPage-main-components-main'>
+        <div className='mainPage-main-components-wrapper'>
           {data.members.length > 0 ? (
             <>
-              <Paginator header="Members" tabs={['Username', 'Id']}>
+              <Paginator header='Members' tabs={['Username', 'Id']}>
                 {data.members.map((member, i) => (
                   <Member
                     key={i}
@@ -264,7 +264,7 @@ const Server = ({ data }) => {
           )}
           {data.channels.length > 0 ? (
             <>
-              <Paginator header="Channels" tabs={['Name', 'ID', 'Type', 'Position']}>
+              <Paginator header='Channels' tabs={['Name', 'ID', 'Type', 'Position']}>
                 {data.channels.map((channel, i) => (
                   <Channel
                     key={i}
@@ -282,7 +282,7 @@ const Server = ({ data }) => {
           {data.roles.length > 0 ? (
             <>
               <Paginator
-                header="Roles"
+                header='Roles'
                 tabs={['Name', 'ID', 'Permissions', 'Position', 'Color', 'Hoist', 'Mentionable']}
               >
                 {data.roles.map((role, i) => (
@@ -306,7 +306,7 @@ const Server = ({ data }) => {
       </div>
 
       {confirmation != null && (
-        <div id="overlay">
+        <div id='overlay'>
           <Confirmation
             onYes={confirmation.onYes}
             onNo={closeConfirmation}
@@ -316,7 +316,7 @@ const Server = ({ data }) => {
       )}
 
       {inputPopup != null && (
-        <div id="overlay">
+        <div id='overlay'>
           <InputSingle
             summary={inputPopup.summary}
             fieldType={inputPopup.fieldType}

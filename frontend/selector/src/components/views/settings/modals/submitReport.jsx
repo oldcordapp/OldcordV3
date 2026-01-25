@@ -7,18 +7,18 @@ export default function ({ isOpen, onClose, onConfirm }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Report Content"
+      title='Report Content'
       showCloseButton={false}
-      size="small"
-      footerAlignment="right"
+      size='small'
+      footerAlignment='right'
       footer={
         <>
-          <Button variant="ghost" onClick={() => onClose()}>
+          <Button variant='ghost' onClick={() => onClose()}>
             Cancel
           </Button>
           <Button
             onClick={() => onConfirm()}
-            variant="danger"
+            variant='danger'
             style={{
               padding: '20px',
               width: 'auto',
@@ -30,7 +30,7 @@ export default function ({ isOpen, onClose, onConfirm }) {
       }
     >
       <div style={{ paddingBottom: '20px' }}>
-        <Text variant="body">
+        <Text variant='body'>
           By submitting, you{' '}
           <b>confirm that the information is accurate to the best of your ability.</b>
         </Text>

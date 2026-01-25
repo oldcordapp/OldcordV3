@@ -24,13 +24,13 @@ export default function ({
     switch (iconType) {
       case 'settings':
         return (
-          <button className="icon-button" onClick={() => setIsModalOpen(true)}>
+          <button className='icon-button' onClick={() => setIsModalOpen(true)}>
             <Gear />
           </button>
         );
       case 'info':
         return (
-          <button className="icon-button" onClick={() => setIsModalOpen(true)}>
+          <button className='icon-button' onClick={() => setIsModalOpen(true)}>
             <Info />
           </button>
         );
@@ -40,13 +40,13 @@ export default function ({
   return (
     <>
       <div className={`options-card ${disabled ? 'disabled' : ''}`}>
-        <div className="content">
-          <h3 className="title">{title}</h3>
-          <p className="description" title={description}>
+        <div className='content'>
+          <h3 className='title'>{title}</h3>
+          <p className='description' title={description}>
             {description}
           </p>
         </div>
-        <div className="controls">
+        <div className='controls'>
           {renderIcon()}
           <ToggleSwitch
             isChecked={isEnabled}

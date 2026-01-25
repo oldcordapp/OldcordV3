@@ -16,12 +16,12 @@ export default function ({ navItems, activeView, onItemClick }) {
   };
 
   return (
-    <div className="nav-list">
+    <div className='nav-list'>
       {navItems.map((item, index) => {
         switch (item.type) {
           case 'header':
             return (
-              <div key={index} className="nav-header">
+              <div key={index} className='nav-header'>
                 {item.label}
               </div>
             );
@@ -52,7 +52,7 @@ export default function ({ navItems, activeView, onItemClick }) {
               </div>
             );
           case 'separator':
-            return <div key={index} className="nav-separator" />;
+            return <div key={index} className='nav-separator' />;
         }
       })}
     </div>

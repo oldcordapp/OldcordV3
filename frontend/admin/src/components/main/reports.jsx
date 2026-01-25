@@ -95,10 +95,10 @@ const Reports = () => {
   return (
     <>
       <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-        <div className="mainPage-container">
-          <Sidebar active="Reports"></Sidebar>
-          <div className="mainPage-main">
-            <div className="mainPage-main-header">
+        <div className='mainPage-container'>
+          <Sidebar active='Reports'></Sidebar>
+          <div className='mainPage-main'>
+            <div className='mainPage-main-header'>
               <Avatar
                 path={avatarPath}
                 style={{
@@ -107,12 +107,12 @@ const Reports = () => {
                 }}
               ></Avatar>
             </div>
-            <div className="mainPage-main-components">
+            <div className='mainPage-main-components'>
               <>
                 {data.length === 0 ? (
                   <>
                     <>
-                      <div className="search-no-results">
+                      <div className='search-no-results'>
                         <IcReports style={{ fill: '#4f5660', width: '125px', height: 'auto' }} />
                         <p>No Reports Found! Good Work!</p>
                       </div>
@@ -120,56 +120,56 @@ const Reports = () => {
                   </>
                 ) : (
                   <>
-                    <div className="mainPage-main-components-sidebar">
+                    <div className='mainPage-main-components-sidebar'>
                       {selectedReport != null ? (
                         <>
-                          <div className="mainPage-main-components-sidebar-guildAvatar">
-                            <div className="avatar">
+                          <div className='mainPage-main-components-sidebar-guildAvatar'>
+                            <div className='avatar'>
                               <IcReports
                                 style={{ fill: '#4f5660', width: '125px', height: 'auto' }}
                               />
                             </div>
                           </div>
-                          <div className="mainPage-main-components-sidebar-separator no-margin-override"></div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">Report ID</div>
+                          <div className='mainPage-main-components-sidebar-separator no-margin-override'></div>
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Report ID</div>
                             {selectedReport.id}
                           </div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">Problem</div>
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Problem</div>
                             {selectedReport.problem}
                           </div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">Subject</div>
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Subject</div>
                             <textarea
                               readOnly={true}
                               maxLength={1250}
-                              className="textarea-reports"
+                              className='textarea-reports'
                               value={selectedReport.subject}
                             />
                           </div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>
                               Description
                             </div>
                             <textarea
                               readOnly={true}
                               maxLength={1250}
-                              className="textarea-reports"
+                              className='textarea-reports'
                               value={selectedReport.description}
                             />
                           </div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>
                               Email Address
                             </div>
                             {selectedReport.email_address === null
                               ? 'Not Provided'
                               : selectedReport.email_address}
                           </div>
-                          <div className="mainPage-main-components-sidebar-separator no-margin-override"></div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">Actions</div>
+                          <div className='mainPage-main-components-sidebar-separator no-margin-override'></div>
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Actions</div>
                             <div
                               style={{
                                 display: 'flex',
@@ -181,7 +181,7 @@ const Reports = () => {
                               }}
                             >
                               <Button
-                                variant="danger"
+                                variant='danger'
                                 onClick={() => updateReport(selectedReport.id, 'discarded')}
                                 style={{
                                   width: '100%',
@@ -191,7 +191,7 @@ const Reports = () => {
                                 Discard
                               </Button>
                               <Button
-                                variant="success"
+                                variant='success'
                                 onClick={() => updateReport(selectedReport.id, 'approved')}
                                 style={{
                                   width: '100%',
@@ -205,15 +205,15 @@ const Reports = () => {
                         </>
                       ) : (
                         <>
-                          <div className="mainPage-main-components-sidebar-guildAvatar">
-                            <div className="avatar">
+                          <div className='mainPage-main-components-sidebar-guildAvatar'>
+                            <div className='avatar'>
                               <IcReports
                                 style={{ color: '#4f5660', width: '125px', height: 'auto' }}
                               />
                             </div>
                           </div>
                           <div
-                            className="mainPage-main-components-sidebar-text"
+                            className='mainPage-main-components-sidebar-text'
                             style={{ fontSize: '20px' }}
                           >
                             No Report Selected. You can choose to manage one on the right.
@@ -221,12 +221,12 @@ const Reports = () => {
                         </>
                       )}
                     </div>
-                    <div className="mainPage-main-components-main">
-                      <div className="mainPage-main-components-wrapper">
+                    <div className='mainPage-main-components-main'>
+                      <div className='mainPage-main-components-wrapper'>
                         {data && Array.isArray(data) && data.length > 0 ? (
                           <>
                             <Paginator
-                              header="Reports"
+                              header='Reports'
                               tabs={['Id', 'Problem', 'Email Address', 'Actions']}
                             >
                               {data.map((entry, i) => (
@@ -248,7 +248,7 @@ const Reports = () => {
                       </div>
                     </div>
                     {confirmation != null && (
-                      <div id="overlay">
+                      <div id='overlay'>
                         <Confirmation
                           onYes={confirmation.onYes}
                           onNo={closeConfirmation}
@@ -257,7 +257,7 @@ const Reports = () => {
                       </div>
                     )}
                     {inputPopup != null && (
-                      <div id="overlay">
+                      <div id='overlay'>
                         <InputSingle
                           summary={inputPopup.summary}
                           fieldType={inputPopup.fieldType}

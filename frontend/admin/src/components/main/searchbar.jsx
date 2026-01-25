@@ -7,19 +7,19 @@ const Searchbar = ({ placeholder, error }) => {
         {error == null ? (
           <>
             <input
-              type="text"
+              type='text'
               placeholder={placeholder}
-              name="searchInput"
-              className="searchbar-input-text"
+              name='searchInput'
+              className='searchbar-input-text'
             ></input>
           </>
         ) : (
           <>
             <input
-              type="text"
+              type='text'
               placeholder={placeholder}
-              name="searchInput"
-              className="searchbar-input-text input-error"
+              name='searchInput'
+              className='searchbar-input-text input-error'
             ></input>
           </>
         )}
@@ -36,11 +36,11 @@ const Searchbar = ({ placeholder, error }) => {
         <></>
       ) : (
         <>
-          <div className="input-error-text">{error}</div>
+          <div className='input-error-text'>{error}</div>
         </>
       )}
       <input
-        type="submit"
+        type='submit'
         style={{
           display: 'none',
           fontFamily: 'Whitney, Helvetica Neue, Helvetica, Arial, sans-serif',

@@ -17,8 +17,8 @@ export default function ({ isChecked, onChange, uniqueId, disabled = false }) {
     >
       <input
         id={uniqueId}
-        className="toggle-checkbox"
-        type="checkbox"
+        className='toggle-checkbox'
+        type='checkbox'
         checked={isChecked}
         readOnly
         tabIndex={-1}

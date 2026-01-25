@@ -4,7 +4,7 @@ import { WebSocketServer } from 'ws';
 
 import { OPCODES, rtcHandlers } from './handlers/rtc.js';
 import { logText } from './helpers/logger.js';
-import type { GatewayPayload } from './types/gateway.ts';
+import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 
@@ -99,7 +99,7 @@ const rtcServer = {
   async handleClientMessage(socket, data) {
     try {
       const raw_data = Buffer.from(data).toString('utf-8');
-      const packet: GatewayPayload = JSON.parse(raw_data) as GatewayPayload;
+      const packet: GatewayPayload = GatewayPayloadSchema.parse(JSON.parse(raw_data));
 
       this.debug(`Incoming -> ${raw_data}`);
 

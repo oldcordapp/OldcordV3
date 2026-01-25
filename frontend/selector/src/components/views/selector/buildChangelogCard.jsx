@@ -156,8 +156,8 @@ export default function BuildChangelogCard({ selectedBuild }) {
 
   if (!changelogData) {
     return (
-      <Card className="build-changlog-card">
-        <div className="empty-changelog">
+      <Card className='build-changlog-card'>
+        <div className='empty-changelog'>
           <Text>No changelog available for this build.</Text>
         </div>
       </Card>
@@ -165,25 +165,25 @@ export default function BuildChangelogCard({ selectedBuild }) {
   }
 
   return (
-    <Card className="build-changlog-card">
-      <div className="changelog-header">
+    <Card className='build-changlog-card'>
+      <div className='changelog-header'>
         <div>
-          <Text variant="h4">What's New</Text>
+          <Text variant='h4'>What's New</Text>
           {changelogData.date && (
-            <Text variant="small" className="date">
+            <Text variant='small' className='date'>
               {changelogData.date}
             </Text>
           )}
         </div>
       </div>
-      <div className="scroller-wrap">
-        <div className="scroller">
+      <div className='scroller-wrap'>
+        <div className='scroller'>
           {changelogData.cta && (
             <a
               href={changelogData.cta.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cta-button"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='cta-button'
             >
               {changelogData.cta.text}
             </a>

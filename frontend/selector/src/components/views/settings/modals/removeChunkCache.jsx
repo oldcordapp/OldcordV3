@@ -21,12 +21,12 @@ export default function ({ isOpen, onClose }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Reset Failed Chunk Cache?"
-      size="medium"
+      title='Reset Failed Chunk Cache?'
+      size='medium'
       footer={
-        <div className="button-group">
+        <div className='button-group'>
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => {
               onClose();
             }}
@@ -34,7 +34,7 @@ export default function ({ isOpen, onClose }) {
             Cancel
           </Button>
           <Button
-            variant="danger"
+            variant='danger'
             onClick={() => {
               removeCache();
             }}
@@ -49,17 +49,17 @@ export default function ({ isOpen, onClose }) {
           This option will be removed once OPFS has been implemented to Oldcord, which will simplify
           the process with a on-demand download button.
         </InfoCard>
-        <Text variant="body">
+        <Text variant='body'>
           This will clear the list of all previously failed chunk downloads, allowing the bootloader
           to retry downloading missing chunks from the CDN.
         </Text>
-        <Text variant="body">Only use this if:</Text>
+        <Text variant='body'>Only use this if:</Text>
         <ul style={{ marginBottom: '20px' }}>
           <li>
-            <Text variant="body">New chunks have been uploaded to the CDN</Text>
+            <Text variant='body'>New chunks have been uploaded to the CDN</Text>
           </li>
           <li>
-            <Text variant="body">You want to retry downloading previously unavailable chunks</Text>
+            <Text variant='body'>You want to retry downloading previously unavailable chunks</Text>
           </li>
         </ul>
         <InfoCard style={{ marginBottom: '0px' }}>

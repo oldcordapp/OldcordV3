@@ -17,31 +17,31 @@ function AuthCheck({ appPage = null, enforced, minClearance }) {
   const authToken = localStorage.getItem('token');
 
   if (enforced && !authToken) {
-    return <Navigate to="/login" />;
+    return <Navigate to='/login' />;
   }
 
   const user_data = JSON.parse(localStorage.getItem('user_data'));
 
   if (!user_data || !user_data.staff_details) {
-    return <Navigate to="/login" />;
+    return <Navigate to='/login' />;
   }
 
   if (!user_data.mfa_enabled && user_data.needs_mfa) {
-    return <Navigate to="/mfa-notice" />;
+    return <Navigate to='/mfa-notice' />;
   }
 
   if (user_data.staff_details && user_data.staff_details.privilege < minClearance) {
-    return <Navigate to="/" />;
+    return <Navigate to='/' />;
   }
 
   if (AppPage == null) {
     return (
       <>
         <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-          <div className="mainPage-container">
+          <div className='mainPage-container'>
             <Sidebar></Sidebar>
-            <div className="mainPage-main">
-              <div className="mainPage-main-header">
+            <div className='mainPage-main'>
+              <div className='mainPage-main-header'>
                 <Avatar
                   path={avatarPath}
                   style={{
@@ -50,7 +50,7 @@ function AuthCheck({ appPage = null, enforced, minClearance }) {
                   }}
                 ></Avatar>
               </div>
-              <div className="mainPage-main-components"></div>
+              <div className='mainPage-main-components'></div>
             </div>
           </div>
         </div>

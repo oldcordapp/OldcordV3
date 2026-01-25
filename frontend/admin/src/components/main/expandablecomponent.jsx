@@ -8,14 +8,14 @@ const ExpandableComponent = ({ id, header, children, defaultOpened }) => {
 
   return (
     <div
-      className="mainPage-main-components-infoCard-row"
+      className='mainPage-main-components-infoCard-row'
       style={{
         marginBottom: '0',
       }}
     >
-      <div className="mainPage-main-components-infoCard">
+      <div className='mainPage-main-components-infoCard'>
         <div
-          className="mainPage-main-components-infoCard-header"
+          className='mainPage-main-components-infoCard-header'
           onClick={() => setOpen(!open)}
           id={id}
           style={{
@@ -54,7 +54,7 @@ const ExpandableComponent = ({ id, header, children, defaultOpened }) => {
           )}
         </div>
         <div
-          className="mainPage-main-components-infoCard-components"
+          className='mainPage-main-components-infoCard-components'
           style={{
             display: 'block',
           }}

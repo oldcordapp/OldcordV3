@@ -23,9 +23,9 @@ export default function ({
   };
 
   return (
-    <div className="input-container" style={style}>
-      <label className="input-label" htmlFor={id}>
-        {label} {required ? <span className="required-text">(Required)</span> : <></>}
+    <div className='input-container' style={style}>
+      <label className='input-label' htmlFor={id}>
+        {label} {required ? <span className='required-text'>(Required)</span> : <></>}
       </label>
 
       {isTextarea ? (

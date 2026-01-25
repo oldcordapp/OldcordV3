@@ -7,10 +7,10 @@ export default function ({ isOpen, onClose }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Future feature!"
+      title='Future feature!'
       showCloseButton={false}
-      size="small"
-      footerAlignment="right"
+      size='small'
+      footerAlignment='right'
       footer={
         <>
           <Button onClick={onClose}>I see!</Button>
@@ -18,7 +18,7 @@ export default function ({ isOpen, onClose }) {
       }
     >
       <div style={{ paddingBottom: '20px' }}>
-        <Text variant="body">This is a button for OPFS which is not implemented yet!</Text>
+        <Text variant='body'>This is a button for OPFS which is not implemented yet!</Text>
       </div>
     </Modal>
   );

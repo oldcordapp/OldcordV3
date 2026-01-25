@@ -272,10 +272,10 @@ const Staff = () => {
   return (
     <>
       <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-        <div className="mainPage-container">
-          <Sidebar active="Staff"></Sidebar>
-          <div className="mainPage-main">
-            <div className="mainPage-main-header">
+        <div className='mainPage-container'>
+          <Sidebar active='Staff'></Sidebar>
+          <div className='mainPage-main'>
+            <div className='mainPage-main-header'>
               <Avatar
                 path={avatarPath}
                 style={{
@@ -285,25 +285,25 @@ const Staff = () => {
               ></Avatar>
             </div>
             <div
-              className="mainPage-main-components"
+              className='mainPage-main-components'
               style={{
                 display: 'block',
               }}
             >
               <>
                 <>
-                  <ResultsCard header="Staff">
+                  <ResultsCard header='Staff'>
                     {
-                      <div className="staff-container">
+                      <div className='staff-container'>
                         {data.map((data) => {
                           if (data.id == user.id) {
                             return null;
                           }
                           return (
                             <div className={`staff-card`}>
-                              <div className="mainPage-main-components-sidebar-guildAvatar">
+                              <div className='mainPage-main-components-sidebar-guildAvatar'>
                                 <div
-                                  className="guildAvatar avatar"
+                                  className='guildAvatar avatar'
                                   style={{
                                     backgroundImage: `url('${data.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + data.id + '/' + data.avatar + '.png'}`,
                                   }}
@@ -321,7 +321,7 @@ const Staff = () => {
                               >
                                 Privilege: {getPrivilegeName(data.staff_details.privilege)}
                               </span>
-                              <div className="staff-buttons">
+                              <div className='staff-buttons'>
                                 <button
                                   className={`largeButton yes-button`}
                                   onClick={() => {
@@ -337,7 +337,7 @@ const Staff = () => {
                           );
                         })}
                         <div
-                          className="add-staff"
+                          className='add-staff'
                           onClick={() => {
                             setInputPopup({
                               summary: `Oh you're hiring, huh?`,
@@ -372,7 +372,7 @@ const Staff = () => {
                   {selectedStaff && (
                     <>
                       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                        <div className="mainPage-main-components-sidebar">
+                        <div className='mainPage-main-components-sidebar'>
                           <Ic_dots
                             style={{
                               width: '12px',
@@ -389,10 +389,10 @@ const Staff = () => {
                           />
                           {popoutContextMenu !== null ? (
                             <div
-                              className="mainPage-main-components-popouts-container"
+                              className='mainPage-main-components-popouts-container'
                               ref={dropdownRef}
                             >
-                              <div className="mainPage-main-popouts">
+                              <div className='mainPage-main-popouts'>
                                 <Dropdown
                                   contextMenu={popoutContextMenu}
                                   onClose={() => setPopoutContextMenu(null)}
@@ -402,15 +402,15 @@ const Staff = () => {
                           ) : (
                             <></>
                           )}
-                          <div className="mainPage-main-components-sidebar-guildAvatar">
+                          <div className='mainPage-main-components-sidebar-guildAvatar'>
                             <div
-                              className="guildAvatar avatar"
+                              className='guildAvatar avatar'
                               style={{
                                 backgroundImage: `url('${selectedStaff.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + selectedStaff.id + '/' + selectedStaff.avatar + '.png'}`,
                               }}
                             ></div>
                           </div>
-                          <div className="mainPage-main-components-sidebar-text">
+                          <div className='mainPage-main-components-sidebar-text'>
                             {selectedStaff.username}
                             <span
                               style={{
@@ -421,17 +421,17 @@ const Staff = () => {
                               #{selectedStaff.discriminator}
                             </span>
                           </div>
-                          <div className="mainPage-main-components-sidebar-separator"></div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">User ID</div>
+                          <div className='mainPage-main-components-sidebar-separator'></div>
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>User ID</div>
                             {selectedStaff.id}
                           </div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">Privilege</div>
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>Privilege</div>
                             {getPrivilegeName(selectedStaff.staff_details.privilege)}
                           </div>
-                          <div className="mainPage-main-components-sidebar-infoLine">
-                            <div className="mainPage-main-components-sidebar-label">
+                          <div className='mainPage-main-components-sidebar-infoLine'>
+                            <div className='mainPage-main-components-sidebar-label'>
                               Audit Log Entries
                             </div>
                             {selectedStaff.staff_details.audit_log.length}
@@ -442,7 +442,7 @@ const Staff = () => {
                         selectedStaff.staff_details.audit_log.length > 0 ? (
                           <>
                             <Paginator
-                              header="Audit Log"
+                              header='Audit Log'
                               tabs={[
                                 'Action',
                                 'Moderation ID',
@@ -473,7 +473,7 @@ const Staff = () => {
                   )}
                 </>
                 {confirmation != null && (
-                  <div id="overlay">
+                  <div id='overlay'>
                     <Confirmation
                       onYes={confirmation.onYes}
                       onNo={closeConfirmation}
@@ -483,7 +483,7 @@ const Staff = () => {
                 )}
 
                 {inputPopup != null && (
-                  <div id="overlay">
+                  <div id='overlay'>
                     <InputMultiple
                       summary={inputPopup.summary}
                       fields={inputPopup.fields}

@@ -8,15 +8,15 @@ export default function ({ isOpen, onClose }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Changelog"
-      subtitle="19 December 2025"
+      title='Changelog'
+      subtitle='19 December 2025'
       showCloseButton={true}
-      size="medium"
-      footerAlignment="left"
+      size='medium'
+      footerAlignment='left'
       footer={
-        <div className="modal-footer-text">
+        <div className='modal-footer-text'>
           Missed an update?{' '}
-          <a href="https://github.com/oldcordapp/OldcordV3/commits/main/">
+          <a href='https://github.com/oldcordapp/OldcordV3/commits/main/'>
             Check out our commit history on our GitHub!
           </a>
         </div>

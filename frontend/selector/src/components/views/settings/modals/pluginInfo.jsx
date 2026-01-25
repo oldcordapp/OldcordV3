@@ -31,12 +31,12 @@ export default function ({ isOpen, onClose, plugin, type }) {
       onClose={onClose}
       title={cachedPluginData.name}
       showCloseButton={true}
-      size="medium"
+      size='medium'
     >
       <div style={{ paddingBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '1em' }}>
           <Text
-            variant="body"
+            variant='body'
             style={{
               fontSize: '14px',
               fontWeight: '400',
@@ -48,7 +48,7 @@ export default function ({ isOpen, onClose, plugin, type }) {
           </Text>
         </div>
         <Text
-          variant="h1"
+          variant='h1'
           style={{
             fontSize: '20px',
             fontWeight: '600',
@@ -59,7 +59,7 @@ export default function ({ isOpen, onClose, plugin, type }) {
           Authors
         </Text>
         <Text
-          variant="body"
+          variant='body'
           style={{
             fontSize: '14px',
             fontWeight: '400',
@@ -70,7 +70,7 @@ export default function ({ isOpen, onClose, plugin, type }) {
           {cachedPluginData.authors.join(', ')}
         </Text>
         <Text
-          variant="h1"
+          variant='h1'
           style={{
             fontSize: '20px',
             fontWeight: '600',
@@ -80,7 +80,7 @@ export default function ({ isOpen, onClose, plugin, type }) {
         >
           Settings
         </Text>
-        <Text variant="body" style={{ fontSize: '14px', fontWeight: '400', lineHeight: '1.285' }}>
+        <Text variant='body' style={{ fontSize: '14px', fontWeight: '400', lineHeight: '1.285' }}>
           There are no settings for this plugin/patch.
         </Text>
       </div>

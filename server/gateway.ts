@@ -5,7 +5,7 @@ import { gatewayHandlers, OPCODES } from './handlers/gateway.js';
 import dispatcher from './helpers/dispatcher.js';
 import globalUtils from './helpers/globalutils.js';
 import { logText } from './helpers/logger.js';
-import type { GatewayPayload } from './types/gateway.ts';
+import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 
@@ -221,11 +221,11 @@ const gateway = {
   handleClientMessage: async function (socket, data) {
     try {
       const msg = socket.wantsEtf ? data : data.toString('utf-8');
-      const packet: GatewayPayload = (
+      const packet: GatewayPayload = GatewayPayloadSchema.parse(
         socket.wantsEtf && erlpack !== null
           ? erlpack.unpack(msg as Buffer)
-          : JSON.parse(msg as string)
-      ) as GatewayPayload;
+          : JSON.parse(msg as string),
+      );
 
       if (packet.op !== 1) {
         this.debug(`Incoming -> ${String(socket.wantsEtf ? JSON.stringify(packet) : msg)}`);

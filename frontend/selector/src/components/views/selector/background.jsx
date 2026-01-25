@@ -12,7 +12,7 @@ export default function () {
   }
 
   return (
-    <div className="background-container">
+    <div className='background-container'>
       <div className={`background-img`} ref={ref} onAnimationEnd={handleEntered} />
     </div>
   );

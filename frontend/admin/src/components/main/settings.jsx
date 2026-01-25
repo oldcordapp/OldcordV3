@@ -45,10 +45,10 @@ const Settings = () => {
   return (
     <>
       <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-        <div className="mainPage-container">
-          <Sidebar active="Settings" />
-          <div className="mainPage-main">
-            <div className="mainPage-main-header">
+        <div className='mainPage-container'>
+          <Sidebar active='Settings' />
+          <div className='mainPage-main'>
+            <div className='mainPage-main-header'>
               <Avatar
                 path={avatarPath}
                 style={{
@@ -57,11 +57,11 @@ const Settings = () => {
                 }}
               ></Avatar>
             </div>
-            <div className="mainPage-main-components">
-              <div className="mainPage-main-components-infoCard">
-                <div className="mainPage-main-components-infoCard-header">Settings</div>
+            <div className='mainPage-main-components'>
+              <div className='mainPage-main-components-infoCard'>
+                <div className='mainPage-main-components-infoCard-header'>Settings</div>
                 <div
-                  className="mainPage-main-components-infoCard-components"
+                  className='mainPage-main-components-infoCard-components'
                   style={{
                     flexDirection: 'column',
                     maxHeight: '800px',
@@ -69,57 +69,57 @@ const Settings = () => {
                     overflowY: 'auto',
                   }}
                 >
-                  <div className="mainPage-main-components-sidebar-infoLine pd2">
-                    <div className="mainPage-main-components-sidebar-label">Token Secret</div>
+                  <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                    <div className='mainPage-main-components-sidebar-label'>Token Secret</div>
                     <input
-                      className="input-field"
+                      className='input-field'
                       maxLength={250}
                       required={false}
-                      placeholder="391465..."
+                      placeholder='391465...'
                       value={`hello`}
                       onChange={(e) => {}}
                     />
                   </div>
-                  <div className="mainPage-main-components-sidebar-infoLine pd2">
-                    <div className="mainPage-main-components-sidebar-label">Token Secret</div>
+                  <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                    <div className='mainPage-main-components-sidebar-label'>Token Secret</div>
                     <input
-                      className="input-field"
+                      className='input-field'
                       maxLength={250}
                       required={false}
-                      placeholder="391465..."
+                      placeholder='391465...'
                       value={`hello`}
                       onChange={(e) => {}}
                     />
                   </div>
-                  <div className="mainPage-main-components-sidebar-infoLine pd2">
-                    <div className="mainPage-main-components-sidebar-label">Token Secret</div>
+                  <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                    <div className='mainPage-main-components-sidebar-label'>Token Secret</div>
                     <input
-                      className="input-field"
+                      className='input-field'
                       maxLength={250}
                       required={false}
-                      placeholder="391465..."
+                      placeholder='391465...'
                       value={`hello`}
                       onChange={(e) => {}}
                     />
                   </div>
-                  <div className="mainPage-main-components-sidebar-infoLine pd2">
-                    <div className="mainPage-main-components-sidebar-label">Token Secret</div>
+                  <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                    <div className='mainPage-main-components-sidebar-label'>Token Secret</div>
                     <input
-                      className="input-field"
+                      className='input-field'
                       maxLength={250}
                       required={false}
-                      placeholder="391465..."
+                      placeholder='391465...'
                       value={`hello`}
                       onChange={(e) => {}}
                     />
                   </div>
-                  <div className="mainPage-main-components-sidebar-infoLine pd2">
-                    <div className="mainPage-main-components-sidebar-label">Token Secret</div>
+                  <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                    <div className='mainPage-main-components-sidebar-label'>Token Secret</div>
                     <input
-                      className="input-field"
+                      className='input-field'
                       maxLength={250}
                       required={false}
-                      placeholder="391465..."
+                      placeholder='391465...'
                       value={`hello`}
                       onChange={(e) => {}}
                     />

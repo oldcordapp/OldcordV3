@@ -26,9 +26,9 @@ const Avatar = ({ path, style }) => {
 
   return (
     <>
-      <div className="mainPage-main-header-avatar">
+      <div className='mainPage-main-header-avatar'>
         <div
-          className="mainPage-main-header-avatar-icon"
+          className='mainPage-main-header-avatar-icon'
           style={{ ...style, backgroundImage: `url(${path})` }}
           onClick={() => {
             setPopoutContextMenu(
@@ -56,13 +56,13 @@ const Avatar = ({ path, style }) => {
 
         {popoutContextMenu !== null ? (
           <div
-            className="mainPage-main-components-popouts-container"
+            className='mainPage-main-components-popouts-container'
             ref={dropdownRef}
             style={{
               top: '25px',
             }}
           >
-            <div className="mainPage-main-popouts">
+            <div className='mainPage-main-popouts'>
               <Dropdown
                 contextMenu={popoutContextMenu}
                 onClose={() => setPopoutContextMenu(null)}

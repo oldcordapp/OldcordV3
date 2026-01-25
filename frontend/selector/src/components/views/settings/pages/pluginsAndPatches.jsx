@@ -209,8 +209,8 @@ export default function () {
 
   return (
     <>
-      <Text variant="h2">Plugins & Patches</Text>
-      <InfoCard title="Plugin & Patches Management">
+      <Text variant='h2'>Plugins & Patches</Text>
+      <InfoCard title='Plugin & Patches Management'>
         {!hasIncompatibleItems && (
           <>
             Press the cog wheel or info icon to get more info on a plugin or a patch.
@@ -235,7 +235,7 @@ export default function () {
                 const itemConstants = getItemConstants(key, type);
                 return (
                   <li key={itemKey}>
-                    <Text variant="body">
+                    <Text variant='body'>
                       {itemConstants?.name} is not compatible with{' '}
                       {hasIncompatibleItems[itemKey]
                         .map((conflictingKey) => {
@@ -261,13 +261,13 @@ export default function () {
         defaultOption={selectedBuild}
         onSelected={changeSelectedBuild}
         style={{ marginTop: '-20px' }}
-        informativeText="This dropdown only manages patches/plugins for the selected build and does not change the client build launched."
+        informativeText='This dropdown only manages patches/plugins for the selected build and does not change the client build launched.'
       />
-      <Text variant="h5" style={{ marginBottom: '10px' }}>
+      <Text variant='h5' style={{ marginBottom: '10px' }}>
         Plugins
       </Text>
       {!pluginsLoading && availablePlugins ? (
-        <div className="options-grid">
+        <div className='options-grid'>
           {Object.keys(availablePlugins).map((key) => {
             const plugin = availablePlugins[key];
             const compatibleBuilds = plugin.compatibleBuilds;
@@ -293,14 +293,14 @@ export default function () {
           })}
         </div>
       ) : (
-        <Text variant="body" style={{ marginTop: '0px' }}>
+        <Text variant='body' style={{ marginTop: '0px' }}>
           {pluginsLoading ? 'Loading plugins...' : 'No plugins available.'}
         </Text>
       )}
-      <Text variant="h5" style={{ marginTop: '20px', marginBottom: '10px' }}>
+      <Text variant='h5' style={{ marginTop: '20px', marginBottom: '10px' }}>
         Patches (Legacy)
       </Text>
-      <div className="options-grid">
+      <div className='options-grid'>
         {Object.keys(PATCHES).map((key) => {
           const compatibleBuilds = PATCHES[key].compatibleBuilds;
 

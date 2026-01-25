@@ -25,26 +25,26 @@ const Paginator = ({ header, tabs, children, maxPerPage = 5 }) => {
     children.length > maxPerPage ? children.slice(startIndex, startIndex + maxPerPage) : children;
 
   return (
-    <div className="mainPage-main-components-infoCard-row">
-      <div className="mainPage-main-components-infoCard">
-        <div className="mainPage-main-components-infoCard-header">{header}</div>
+    <div className='mainPage-main-components-infoCard-row'>
+      <div className='mainPage-main-components-infoCard'>
+        <div className='mainPage-main-components-infoCard-header'>{header}</div>
         {children.length > maxPerPage ? (
           <>
-            <div className="mainPage-main-components-paginator-pages">
+            <div className='mainPage-main-components-paginator-pages'>
               Page {currentPage + 1} of {totalPages}
             </div>
           </>
         ) : (
           <></>
         )}
-        <div className="mainPage-main-components-infoCard-components">
-          <table className="mainPage-main-components-infoCard-table">
+        <div className='mainPage-main-components-infoCard-components'>
+          <table className='mainPage-main-components-infoCard-table'>
             <thead>
               <tr>
                 {tabs.map((tab) => (
-                  <th className="mainPage-main-components-infoCard-table-th" key={tab}>
+                  <th className='mainPage-main-components-infoCard-table-th' key={tab}>
                     <div
-                      className="mainPage-main-components-infoCard-table-th-header"
+                      className='mainPage-main-components-infoCard-table-th-header'
                       style={{ textAlign: 'left' }}
                     >
                       {tab}
@@ -58,21 +58,21 @@ const Paginator = ({ header, tabs, children, maxPerPage = 5 }) => {
         </div>
         {children.length > maxPerPage ? (
           <>
-            <div className="mainPage-main-components-infoCard-footer">
-              <div className="mainPage-main-components-navigation">
-                <div className="mainPage-main-components-paginator">
-                  <div className="mainPage-main-components-paginator-inner">
+            <div className='mainPage-main-components-infoCard-footer'>
+              <div className='mainPage-main-components-navigation'>
+                <div className='mainPage-main-components-paginator'>
+                  <div className='mainPage-main-components-paginator-inner'>
                     <div
-                      className="mainPage-main-components-paginator-arrow"
-                      id="left"
+                      className='mainPage-main-components-paginator-arrow'
+                      id='left'
                       onClick={handlePrevPage}
                     >
                       <Ic_pageLeft style={{ fill: 'currentColor' }} />
                     </div>
-                    <div className="mainPage-main-components-paginator-separator"></div>
+                    <div className='mainPage-main-components-paginator-separator'></div>
                     <div
-                      className="mainPage-main-components-paginator-arrow"
-                      id="right"
+                      className='mainPage-main-components-paginator-arrow'
+                      id='right'
                       onClick={handleNextPage}
                     >
                       <Ic_pageRight style={{ fill: 'currentColor' }} />

@@ -5,7 +5,7 @@ const Dropdown = ({ contextMenu, onClose }) => {
   };
 
   return (
-    <div className="mainPage-main-components-dropDownMenu">
+    <div className='mainPage-main-components-dropDownMenu'>
       {contextMenu.map((entry, key) => (
         <div
           key={key}

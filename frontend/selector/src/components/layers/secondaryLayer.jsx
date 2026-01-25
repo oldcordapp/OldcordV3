@@ -36,12 +36,12 @@ export default function SecondaryLayer({ sidebarComponent, contentComponent }) {
   }
 
   return (
-    <div className="secondary-layer" ref={ref}>
+    <div className='secondary-layer' ref={ref}>
       <SidebarPart>{sidebarComponent}</SidebarPart>
-      <div className="content-part">
-        <div className="scroller-wrapper">
-          <div className="scroller">
-            <div className="content-view">{contentComponent}</div>
+      <div className='content-part'>
+        <div className='scroller-wrapper'>
+          <div className='scroller'>
+            <div className='content-view'>{contentComponent}</div>
             <ClosePart onClose={onClose} />
           </div>
         </div>

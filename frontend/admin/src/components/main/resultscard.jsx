@@ -26,12 +26,12 @@ const ResultsCard = ({ header, children, maxPerPage = 10 }) => {
     children.length > maxPerPage ? children.slice(startIndex, startIndex + maxPerPage) : children;
 
   return (
-    <div className="mainPage-main-components-infoCard-row">
-      <div className="mainPage-main-components-infoCard">
-        <div className="mainPage-main-components-infoCard-header">{header}</div>
+    <div className='mainPage-main-components-infoCard-row'>
+      <div className='mainPage-main-components-infoCard'>
+        <div className='mainPage-main-components-infoCard-header'>{header}</div>
         {children.length > maxPerPage ? (
           <>
-            <div className="mainPage-main-components-paginator-pages">
+            <div className='mainPage-main-components-paginator-pages'>
               Page {currentPage + 1} of {totalPages}
             </div>
           </>
@@ -39,7 +39,7 @@ const ResultsCard = ({ header, children, maxPerPage = 10 }) => {
           <></>
         )}
         <div
-          className="mainPage-main-components-infoCard-components"
+          className='mainPage-main-components-infoCard-components'
           style={{
             flexDirection: 'column',
             maxHeight: '800px',
@@ -51,21 +51,21 @@ const ResultsCard = ({ header, children, maxPerPage = 10 }) => {
         </div>
         {children.length > maxPerPage ? (
           <>
-            <div className="mainPage-main-components-infoCard-footer">
-              <div className="mainPage-main-components-navigation">
-                <div className="mainPage-main-components-paginator">
-                  <div className="mainPage-main-components-paginator-inner">
+            <div className='mainPage-main-components-infoCard-footer'>
+              <div className='mainPage-main-components-navigation'>
+                <div className='mainPage-main-components-paginator'>
+                  <div className='mainPage-main-components-paginator-inner'>
                     <div
-                      className="mainPage-main-components-paginator-arrow"
-                      id="left"
+                      className='mainPage-main-components-paginator-arrow'
+                      id='left'
                       onClick={handlePrevPage}
                     >
                       <Ic_pageLeft style={{ fill: 'currentColor' }} />
                     </div>
-                    <div className="mainPage-main-components-paginator-separator"></div>
+                    <div className='mainPage-main-components-paginator-separator'></div>
                     <div
-                      className="mainPage-main-components-paginator-arrow"
-                      id="right"
+                      className='mainPage-main-components-paginator-arrow'
+                      id='right'
                       onClick={handleNextPage}
                     >
                       <Ic_pageRight style={{ fill: 'currentColor' }} />

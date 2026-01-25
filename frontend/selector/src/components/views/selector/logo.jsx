@@ -16,12 +16,12 @@ export default function () {
 
   return (
     <a
-      href="https://oldcordapp.com"
+      href='https://oldcordapp.com'
       className={`logo-container mounted enter`}
       onAnimationEnd={handleEntered}
       ref={ref}
     >
-      <Logo className="logo-svg" />
+      <Logo className='logo-svg' />
     </a>
   );
 }

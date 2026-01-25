@@ -34,5 +34,5 @@ export default function () {
     }
   }
 
-  return <div className="settings-view-container">{renderContent()}</div>;
+  return <div className='settings-view-container'>{renderContent()}</div>;
 }

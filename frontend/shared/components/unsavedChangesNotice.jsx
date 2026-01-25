@@ -19,17 +19,17 @@ export default function ({
       in={show}
       nodeRef={noticeRef}
       timeout={300}
-      classNames="notice-region"
+      classNames='notice-region'
       unmountOnExit
     >
-      <div className="notice-region" ref={noticeRef}>
+      <div className='notice-region' ref={noticeRef}>
         <div className={`notice-container ${displayRedNotice ? 'red-notice' : ''}`}>
-          <div className="notice-message">{message}</div>
-          <div className="button-group">
-            <Button variant="ghost" onClick={onReset}>
+          <div className='notice-message'>{message}</div>
+          <div className='button-group'>
+            <Button variant='ghost' onClick={onReset}>
               Reset
             </Button>
-            <Button variant="success" onClick={onSave}>
+            <Button variant='success' onClick={onSave}>
               Save Changes
             </Button>
           </div>

@@ -101,7 +101,7 @@ export default function () {
       <NavigationList navItems={navItems} activeView={activeView} onItemClick={handleItemClick} />
       <div style={{ padding: '8px 10px' }}>
         <Text
-          variant="body"
+          variant='body'
           style={{
             fontSize: '12px',
             fontWeight: '400',

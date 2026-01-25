@@ -11,7 +11,7 @@ const SidebarMenuItem = ({ path, name, Icon, active, disabled = false }) => {
         }
       >
         <Icon style={{ fill: 'currentColor', width: '24px', height: '24px' }} />
-        <div className="mainPage-sidebar-menuText">{name}</div>
+        <div className='mainPage-sidebar-menuText'>{name}</div>
       </div>
     </Link>
   );

@@ -179,14 +179,14 @@ export default function () {
     <>
       <Background />
       <Logo />
-      <div className="selector-view">
-        <Card className="selector-card">
-          <Text variant="body" className="version-three-text">
+      <div className='selector-view'>
+        <Card className='selector-card'>
+          <Text variant='body' className='version-three-text'>
             V3
           </Text>
-          <Text variant="h1">Oldcord Build Selector</Text>
-          <Text variant="h2">Choose your preferred Discord build below</Text>
-          <div className="build-option-section">
+          <Text variant='h1'>Oldcord Build Selector</Text>
+          <Text variant='h2'>Choose your preferred Discord build below</Text>
+          <div className='build-option-section'>
             <DropdownList
               label={'Client Build'}
               options={friendlyBuildIds}
@@ -205,14 +205,14 @@ export default function () {
             </Button>
           </div>
 
-          <Text variant="body" style={{ marginTop: '-10px' }}>
+          <Text variant='body' style={{ marginTop: '-10px' }}>
             Looking for patches or a way to report content? You can now find both options
             conveniently located in the Settings menu.
           </Text>
 
-          <div className="important-information">
+          <div className='important-information'>
             <Text
-              variant="body"
+              variant='body'
               style={{
                 color: 'gray',
                 borderBottom: '0.2px dotted #585757',
@@ -226,7 +226,7 @@ export default function () {
             </Text>
 
             <Text
-              variant="body"
+              variant='body'
               style={{
                 marginBottom: '10px',
                 marginTop: '20px',
@@ -237,16 +237,16 @@ export default function () {
             </Text>
           </div>
 
-          <div className="instance-section">
-            {instance === null && <Text variant="h1">Loading...</Text>}
-            {instance && instance.error && <Text variant="h1">{instance.error}</Text>}
+          <div className='instance-section'>
+            {instance === null && <Text variant='h1'>Loading...</Text>}
+            {instance && instance.error && <Text variant='h1'>{instance.error}</Text>}
             {instance && (
               <>
-                <Text variant="h1">Welcome to {instance.instance.name}!</Text>
-                <Text variant="h2" style={{ marginBottom: '20px' }}>
+                <Text variant='h1'>Welcome to {instance.instance.name}!</Text>
+                <Text variant='h2' style={{ marginBottom: '20px' }}>
                   {instance.instance.description}
                 </Text>
-                <div className="legal">
+                <div className='legal'>
                   {instance.instance.legal.terms && (
                     <a href={instance.instance.legal.terms}>
                       <Text>Terms</Text>
@@ -273,7 +273,7 @@ export default function () {
               </>
             )}
           </div>
-          <div className="buttons">
+          <div className='buttons'>
             <Button
               onClick={() => {
                 handleLaunch();
@@ -286,7 +286,7 @@ export default function () {
           </div>
         </Card>
         <BuildChangelogCard selectedBuild={selectedBuild} />
-        <Text variant="label" className="notice">
+        <Text variant='label' className='notice'>
           Oldcord is an old Discord historical preservation/revival project and is not affiliated
           with or endorsed by Discord, Inc.
         </Text>

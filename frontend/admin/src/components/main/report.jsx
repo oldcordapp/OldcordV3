@@ -21,13 +21,13 @@ const Report = ({ id, problem, email_address, onDiscard, onApprove, selected = f
         className={`mainPage-main-components-infoCard-table-tr ${selected ? 'selected-report-entry' : ''}`}
         onClick={handleRowClick}
       >
-        <td className="mainPage-main-components-infoCard-table-td">{id}</td>
-        <td className="mainPage-main-components-infoCard-table-td">{problem}</td>
-        <td className="mainPage-main-components-infoCard-table-td">{email_address}</td>
-        <td className="mainPage-main-components-infoCard-table-td">
+        <td className='mainPage-main-components-infoCard-table-td'>{id}</td>
+        <td className='mainPage-main-components-infoCard-table-td'>{problem}</td>
+        <td className='mainPage-main-components-infoCard-table-td'>{email_address}</td>
+        <td className='mainPage-main-components-infoCard-table-td'>
           <div>
             <Button
-              variant="danger"
+              variant='danger'
               onClick={(e) => {
                 //e.stopPropagation();
                 onDiscard();
@@ -40,7 +40,7 @@ const Report = ({ id, problem, email_address, onDiscard, onApprove, selected = f
               Discard
             </Button>
             <Button
-              variant="success"
+              variant='success'
               onClick={(e) => {
                 //e.stopPropagation();
                 onApprove();

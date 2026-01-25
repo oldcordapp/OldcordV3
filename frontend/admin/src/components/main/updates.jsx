@@ -63,10 +63,10 @@ const Updates = () => {
   return (
     <>
       <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-        <div className="mainPage-container">
-          <Sidebar active="Updates" />
-          <div className="mainPage-main">
-            <div className="mainPage-main-header">
+        <div className='mainPage-container'>
+          <Sidebar active='Updates' />
+          <div className='mainPage-main'>
+            <div className='mainPage-main-header'>
               <Avatar
                 path={avatarPath}
                 style={{
@@ -75,10 +75,10 @@ const Updates = () => {
                 }}
               ></Avatar>
             </div>
-            <div className="mainPage-main-components">
-              <div className="mainPage-main-components-infoCard">
-                <div className="mainPage-main-components-infoCard-header">Oldcord Update</div>
-                <div className="mainPage-main-components-infoCard-components">
+            <div className='mainPage-main-components'>
+              <div className='mainPage-main-components-infoCard'>
+                <div className='mainPage-main-components-infoCard-header'>Oldcord Update</div>
+                <div className='mainPage-main-components-infoCard-components'>
                   <Update status={updateStatus} error={error} latestCommit={latestCommit} />
                 </div>
               </div>

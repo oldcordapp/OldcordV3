@@ -10,14 +10,14 @@ const Relationship = ({ avatarHash, username, discriminator, id, type }) => {
 
   return (
     <>
-      <tr className="mainPage-main-components-infoCard-table-tr" onClick={handleRowClick}>
-        <td className="mainPage-main-components-infoCard-table-td">
-          <div className="mainPage-main-components-infoCard-table-member">
+      <tr className='mainPage-main-components-infoCard-table-tr' onClick={handleRowClick}>
+        <td className='mainPage-main-components-infoCard-table-td'>
+          <div className='mainPage-main-components-infoCard-table-member'>
             <div
-              className="mainPage-main-components-infoCard-table-member-avatar avatar"
+              className='mainPage-main-components-infoCard-table-member-avatar avatar'
               style={{ backgroundImage: `url('${avatarHash}')` }}
             ></div>
-            <div className="mainPage-main-components-infoCard-table-member-username">
+            <div className='mainPage-main-components-infoCard-table-member-username'>
               {username}
             </div>
           </div>
@@ -26,15 +26,15 @@ const Relationship = ({ avatarHash, username, discriminator, id, type }) => {
           <></>
         ) : (
           <>
-            <td className="mainPage-main-components-infoCard-table-td">
-              <div className="mainPage-main-components-infoCard-table-discriminator">
+            <td className='mainPage-main-components-infoCard-table-td'>
+              <div className='mainPage-main-components-infoCard-table-discriminator'>
                 {discriminator}
               </div>
             </td>
           </>
         )}
-        <td className="mainPage-main-components-infoCard-table-td">
-          <div className="mainPage-main-components-infoCard-table-discriminator">{type}</div>
+        <td className='mainPage-main-components-infoCard-table-td'>
+          <div className='mainPage-main-components-infoCard-table-discriminator'>{type}</div>
         </td>
       </tr>
     </>

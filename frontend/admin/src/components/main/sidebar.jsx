@@ -21,76 +21,76 @@ const Sidebar = ({ active }) => {
   const privilege = user_data?.staff_details?.privilege ?? 0;
 
   return (
-    <div className="mainPage-sidebar">
-      <div className="mainPage-sidebar-header">
-        <Link to="/">
-          <img src={OldcordAdmin} alt="Oldcord Admin logo"></img>
+    <div className='mainPage-sidebar'>
+      <div className='mainPage-sidebar-header'>
+        <Link to='/'>
+          <img src={OldcordAdmin} alt='Oldcord Admin logo'></img>
         </Link>
       </div>
-      <div className="mainPage-sidebar-components">
-        <SidebarMenuList name="General">
+      <div className='mainPage-sidebar-components'>
+        <SidebarMenuList name='General'>
           <SidebarMenuItem
-            path="/users"
-            name="Users"
+            path='/users'
+            name='Users'
             Icon={ic_users}
             active={active}
             disabled={privilege < PRIVILEGE.ADMIN}
           ></SidebarMenuItem>
           <SidebarMenuItem
-            path="/bots"
-            name="Bots"
+            path='/bots'
+            name='Bots'
             Icon={ic_bots}
             active={active}
             disabled={privilege < PRIVILEGE.ADMIN}
           ></SidebarMenuItem>
           <SidebarMenuItem
-            path="/servers"
-            name="Servers"
+            path='/servers'
+            name='Servers'
             Icon={ic_servers}
             active={active}
             disabled={privilege < PRIVILEGE.ADMIN}
           ></SidebarMenuItem>
           <SidebarMenuItem
-            path="/messages"
-            name="Messages"
+            path='/messages'
+            name='Messages'
             Icon={ic_messages}
             active={active}
             disabled={privilege < PRIVILEGE.MODERATOR}
           ></SidebarMenuItem>
           <SidebarMenuItem
-            path="/reports"
-            name="Reports"
+            path='/reports'
+            name='Reports'
             Icon={ic_reports}
             active={active}
             disabled={privilege < PRIVILEGE.JANITOR}
           ></SidebarMenuItem>
         </SidebarMenuList>
-        <SidebarMenuList name="Internal">
+        <SidebarMenuList name='Internal'>
           <SidebarMenuItem
-            path="/staff"
-            name="Staff"
+            path='/staff'
+            name='Staff'
             Icon={ic_staff}
             active={active}
             disabled={privilege < PRIVILEGE.INSTANCE_OWNER}
           ></SidebarMenuItem>
           <SidebarMenuItem
-            path="/audit-logs"
-            name="Audit Logs"
+            path='/audit-logs'
+            name='Audit Logs'
             Icon={ic_archived}
             active={active}
             disabled={privilege < PRIVILEGE.INSTANCE_OWNER}
           ></SidebarMenuItem>
         </SidebarMenuList>
-        <SidebarMenuList name="Instance">
+        <SidebarMenuList name='Instance'>
           <SidebarMenuItem
-            path="/updates"
-            name="Updates"
+            path='/updates'
+            name='Updates'
             Icon={ic_updates}
             active={active}
           ></SidebarMenuItem>
           <SidebarMenuItem
-            path="/settings"
-            name="Settings"
+            path='/settings'
+            name='Settings'
             Icon={ic_settings}
             active={active}
             disabled={privilege < PRIVILEGE.INSTANCE_OWNER}

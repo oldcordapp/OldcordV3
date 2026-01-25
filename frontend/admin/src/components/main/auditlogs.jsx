@@ -44,10 +44,10 @@ const AuditLogs = () => {
   return (
     <>
       <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-        <div className="mainPage-container">
-          <Sidebar active="Audit Logs"></Sidebar>
-          <div className="mainPage-main">
-            <div className="mainPage-main-header">
+        <div className='mainPage-container'>
+          <Sidebar active='Audit Logs'></Sidebar>
+          <div className='mainPage-main'>
+            <div className='mainPage-main-header'>
               <Avatar
                 path={avatarPath}
                 style={{
@@ -57,7 +57,7 @@ const AuditLogs = () => {
               ></Avatar>
             </div>
             <div
-              className="mainPage-main-components"
+              className='mainPage-main-components'
               style={{
                 display: 'block',
               }}
@@ -92,11 +92,11 @@ const AuditLogs = () => {
                   </Paginator>
                 </>
               ) : (
-                <ResultsCard header="Audit Logs">
-                  <div className="search-no-results">
+                <ResultsCard header='Audit Logs'>
+                  <div className='search-no-results'>
                     <img
                       src={NoResults}
-                      alt="No data yet, as staff members act upon other users, servers & messages, it will appear here."
+                      alt='No data yet, as staff members act upon other users, servers & messages, it will appear here.'
                       style={{
                         width: 'auto',
                       }}

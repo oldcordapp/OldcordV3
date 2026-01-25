@@ -49,8 +49,8 @@ export default function () {
 
   return (
     <>
-      <Text variant="h2">Report Content</Text>
-      <InfoCard title="Report Content">
+      <Text variant='h2'>Report Content</Text>
+      <InfoCard title='Report Content'>
         <>
           Use the form below to report any content that violates this instance's rules.
           <br />
@@ -71,34 +71,34 @@ export default function () {
         defaultOption={selectedReportProblem}
         onSelected={setSelectedReportProblem}
         style={{ marginTop: '-20px' }}
-        informativeText="Select the reason for your report."
+        informativeText='Select the reason for your report.'
       />
       <InputField
-        label="Your Email Address"
-        id="email-address"
-        placeholder=""
+        label='Your Email Address'
+        id='email-address'
+        placeholder=''
         required={false}
-        type="email"
+        type='email'
         style={{ marginBottom: '20px' }}
         value={emailAddress}
         onChange={(e) => setEmailAddress(e.target.value)}
       />
       <InputField
-        label="Subject"
-        id="report-subject"
-        placeholder=""
+        label='Subject'
+        id='report-subject'
+        placeholder=''
         required={true}
-        type="text"
+        type='text'
         style={{ marginBottom: '20px' }}
         value={reportSubject}
         onChange={(e) => setReportSubject(e.target.value)}
       />
       <InputField
-        label="Description"
-        id="report-description"
-        placeholder=""
+        label='Description'
+        id='report-description'
+        placeholder=''
         required={true}
-        type="textarea"
+        type='textarea'
         style={{ marginBottom: '20px' }}
         value={reportDescription}
         onChange={(e) => setReportDescription(e.target.value)}
@@ -118,13 +118,13 @@ export default function () {
         Without this specific information, instance administrators cannot take action on your
         report.
       </span>
-      <div className="divider" />
+      <div className='divider' />
       <Button
         style={{ width: '100%' }}
         onClick={() => {
           setIsSubmitReportModalOpen(true);
         }}
-        variant="danger"
+        variant='danger'
       >
         Submit Report
       </Button>

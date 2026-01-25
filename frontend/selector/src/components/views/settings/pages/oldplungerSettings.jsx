@@ -21,8 +21,8 @@ export default function () {
 
   return (
     <>
-      <Text variant="h2">Oldplunger Settings</Text>
-      <InfoCard title="Oldplunger Development Notice">
+      <Text variant='h2'>Oldplunger Settings</Text>
+      <InfoCard title='Oldplunger Development Notice'>
         Oldplunger is in development!
         <br />
         All settings below will either be removed or changed upon release.
@@ -35,7 +35,7 @@ export default function () {
         isChecked={oldplungerEnabled}
         onChange={enableOldplunger}
       />
-      <div className="divider" />
+      <div className='divider' />
     </>
   );
 }

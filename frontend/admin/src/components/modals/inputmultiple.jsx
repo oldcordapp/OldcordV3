@@ -28,15 +28,15 @@ function InputMultiple({
   const isYesButtonDisabled = fields.some((field) => !inputValues[field.name]);
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
+    <div className='modal-overlay' onClick={onCancel}>
       <div
-        className="confirmation-modal-wrapper"
+        className='confirmation-modal-wrapper'
         onClick={(e) => e.stopPropagation()}
         style={{ minWidth: minWidthForm }}
       >
-        <div className="confirmation-modal">
-          <div className="confirmation-modal-inner">
-            <div className="confirmation-modal-inner-summary">{summary}</div>
+        <div className='confirmation-modal'>
+          <div className='confirmation-modal-inner'>
+            <div className='confirmation-modal-inner-summary'>{summary}</div>
 
             <div
               style={{
@@ -86,8 +86,8 @@ function InputMultiple({
                 </div>
               ))}
             </div>
-            <div className="confirmation-modal-inner-buttons-wrapper">
-              <button className="largeButton no-button" onClick={onCancel}>
+            <div className='confirmation-modal-inner-buttons-wrapper'>
+              <button className='largeButton no-button' onClick={onCancel}>
                 <span>{cancelName}</span>
               </button>
               <button

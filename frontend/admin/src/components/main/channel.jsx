@@ -10,16 +10,16 @@ const Channel = ({ name, id, type, position }) => {
   return (
     <>
       <tr
-        className="mainPage-main-components-infoCard-table-tr"
+        className='mainPage-main-components-infoCard-table-tr'
         style={{
           cursor: type.toLowerCase() === 'text' ? 'pointer' : 'auto',
         }}
         onClick={type.toLowerCase() === 'text' ? handleRowClick : {}}
       >
-        <td className="mainPage-main-components-infoCard-table-td">{name}</td>
-        <td className="mainPage-main-components-infoCard-table-td">{id}</td>
-        <td className="mainPage-main-components-infoCard-table-td">{type}</td>
-        <td className="mainPage-main-components-infoCard-table-td">{position}</td>
+        <td className='mainPage-main-components-infoCard-table-td'>{name}</td>
+        <td className='mainPage-main-components-infoCard-table-td'>{id}</td>
+        <td className='mainPage-main-components-infoCard-table-td'>{type}</td>
+        <td className='mainPage-main-components-infoCard-table-td'>{position}</td>
       </tr>
     </>
   );

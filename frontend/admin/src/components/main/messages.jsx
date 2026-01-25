@@ -179,10 +179,10 @@ const Messages = () => {
   return (
     <>
       <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-        <div className="mainPage-container">
-          <Sidebar active="Messages"></Sidebar>
-          <div className="mainPage-main">
-            <div className="mainPage-main-header">
+        <div className='mainPage-container'>
+          <Sidebar active='Messages'></Sidebar>
+          <div className='mainPage-main'>
+            <div className='mainPage-main-header'>
               <Avatar
                 path={avatarPath}
                 style={{
@@ -191,50 +191,50 @@ const Messages = () => {
                 }}
               ></Avatar>
             </div>
-            <div className="mainPage-main-components">
+            <div className='mainPage-main-components'>
               <>
                 <>
                   <div
-                    className="mainPage-main-components-sidebar"
+                    className='mainPage-main-components-sidebar'
                     style={{
                       padding: '0',
                     }}
                   >
                     <ExpandableComponent
-                      id="search-by-cdn-link"
-                      header="Search by CDN Link"
+                      id='search-by-cdn-link'
+                      header='Search by CDN Link'
                       defaultOpened={false}
                     >
-                      <div className="mainPage-main-components-sidebar-infoLine pd2">
-                        <div className="mainPage-main-components-sidebar-label bold">Cdn Link</div>
+                      <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                        <div className='mainPage-main-components-sidebar-label bold'>Cdn Link</div>
                         <input
-                          className="input-field"
+                          className='input-field'
                           maxLength={250}
                           required={false}
-                          placeholder="https://example.com/attachments/..."
+                          placeholder='https://example.com/attachments/...'
                           value={cdnLink}
                           onChange={(e) => setCdnLink(e.target.value)}
                         />
                       </div>
-                      <div className="mainPage-main-components-sidebar-infoLine pd2">
-                        <div className="mainPage-main-components-sidebar-label bold">Context</div>
+                      <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                        <div className='mainPage-main-components-sidebar-label bold'>Context</div>
                         <input
-                          className="input-field"
+                          className='input-field'
                           maxLength={250}
                           required={false}
-                          placeholder="Optional"
+                          placeholder='Optional'
                           value={context}
                           onChange={(e) => setContext(e.target.value)}
                         />
                       </div>
                       <div
-                        className="mainPage-main-components-sidebar-infoLine pd2"
+                        className='mainPage-main-components-sidebar-infoLine pd2'
                         style={{
                           textAlign: 'right',
                         }}
                       >
                         <Button
-                          variant="primary"
+                          variant='primary'
                           onClick={() => searchCdnLink()}
                           style={{
                             width: '80px',
@@ -248,55 +248,55 @@ const Messages = () => {
                       </div>
                     </ExpandableComponent>
                     <ExpandableComponent
-                      id="search-by-message-id"
-                      header="Search by Message ID"
+                      id='search-by-message-id'
+                      header='Search by Message ID'
                       defaultOpened={true}
                     >
-                      <div className="mainPage-main-components-sidebar-infoLine pd2">
-                        <div className="mainPage-main-components-sidebar-label bold">
+                      <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                        <div className='mainPage-main-components-sidebar-label bold'>
                           Message ID
                         </div>
                         <input
-                          className="input-field"
+                          className='input-field'
                           maxLength={250}
                           required={false}
-                          placeholder="391465..."
+                          placeholder='391465...'
                           value={messageId}
                           onChange={(e) => setMessageId(e.target.value)}
                         />
                       </div>
-                      <div className="mainPage-main-components-sidebar-infoLine pd2">
-                        <div className="mainPage-main-components-sidebar-label bold">
+                      <div className='mainPage-main-components-sidebar-infoLine pd2'>
+                        <div className='mainPage-main-components-sidebar-label bold'>
                           Channel ID
                         </div>
                         <input
-                          className="input-field"
+                          className='input-field'
                           maxLength={250}
                           required={false}
-                          placeholder="231661..."
+                          placeholder='231661...'
                           value={channelId}
                           onChange={(e) => setChannelId(e.target.value)}
                         />
                       </div>
-                      <div className="mainPage-main-components-sidebar-infoLine pd2 bold">
-                        <div className="mainPage-main-components-sidebar-label bold">Context</div>
+                      <div className='mainPage-main-components-sidebar-infoLine pd2 bold'>
+                        <div className='mainPage-main-components-sidebar-label bold'>Context</div>
                         <input
-                          className="input-field"
+                          className='input-field'
                           maxLength={250}
                           required={false}
-                          placeholder="Optional"
+                          placeholder='Optional'
                           value={context}
                           onChange={(e) => setContext(e.target.value)}
                         />
                       </div>
                       <div
-                        className="mainPage-main-components-sidebar-infoLine pd2"
+                        className='mainPage-main-components-sidebar-infoLine pd2'
                         style={{
                           textAlign: 'right',
                         }}
                       >
                         <Button
-                          variant="primary"
+                          variant='primary'
                           onClick={() => searchMsgID()}
                           style={{
                             width: '80px',
@@ -310,13 +310,13 @@ const Messages = () => {
                       </div>
                     </ExpandableComponent>
                   </div>
-                  <ResultsCard header="Message Results">
+                  <ResultsCard header='Message Results'>
                     {data.length === 0 ? (
                       <>
-                        <div className="search-no-results">
+                        <div className='search-no-results'>
                           <img
                             src={NoResults}
-                            alt="No data yet, try to search by CDN link or message ID."
+                            alt='No data yet, try to search by CDN link or message ID.'
                             style={{
                               width: 'auto',
                             }}
@@ -354,7 +354,7 @@ const Messages = () => {
                                     marginRight: '15px',
                                     cursor: 'pointer',
                                   }}
-                                  className="message-result-avatar"
+                                  className='message-result-avatar'
                                   onClick={() =>
                                     navigate(`/users?searchInput=${message.author.id}`)
                                   }
@@ -382,8 +382,8 @@ const Messages = () => {
                                 />
                               </>
                             )}
-                            <div className="message-result-body">
-                              <div className="message-header-details">
+                            <div className='message-result-body'>
+                              <div className='message-header-details'>
                                 {message.author.id !== '456226577798135808' &&
                                 message.author.username !== 'Deleted User' ? (
                                   <>
@@ -391,7 +391,7 @@ const Messages = () => {
                                       style={{
                                         cursor: 'pointer',
                                       }}
-                                      className="message-result-username"
+                                      className='message-result-username'
                                       onClick={() =>
                                         navigate(`/users?searchInput=${message.author.id}`)
                                       }
@@ -418,18 +418,18 @@ const Messages = () => {
                                   : message.content}
                               </h1>
                               {message.attachments.length > 0 && (
-                                <div className="message-result-attachments">
+                                <div className='message-result-attachments'>
                                   <span>
                                     {message.attachments.length}{' '}
                                     {message.attachments.length == 1 ? 'Attachment' : 'Attachments'}
                                     :
                                   </span>
-                                  <div className="message-attachments">
+                                  <div className='message-attachments'>
                                     {message.attachments.map((attachment) => (
                                       <div
-                                        className="attachment-detail"
+                                        className='attachment-detail'
                                         key={attachment.id}
-                                        title="Click to copy URL"
+                                        title='Click to copy URL'
                                         onClick={() => {
                                           navigator.clipboard.writeText(attachment.url); //dont open it automatically as it could be illegal content & now it's cached on their browser
                                         }}
@@ -441,7 +441,7 @@ const Messages = () => {
                                 </div>
                               )}
                             </div>
-                            <div className="message-actions">
+                            <div className='message-actions'>
                               <Ic_dots
                                 style={{
                                   width: '14px',
@@ -498,7 +498,7 @@ const Messages = () => {
                         ))}
                         {popoutContextMenu !== null ? (
                           <div
-                            className="mainPage-main-components-popouts-container"
+                            className='mainPage-main-components-popouts-container'
                             ref={dropdownRef}
                             style={{
                               top: popoutPosition.y,
@@ -510,7 +510,7 @@ const Messages = () => {
                             }}
                           >
                             <div
-                              className="mainPage-main-popouts"
+                              className='mainPage-main-popouts'
                               style={{
                                 transform: 'translate(-10px, 0)',
                                 top: '0',
@@ -533,7 +533,7 @@ const Messages = () => {
                   </ResultsCard>
                 </>
                 {confirmation != null && (
-                  <div id="overlay">
+                  <div id='overlay'>
                     <Confirmation
                       onYes={confirmation.onYes}
                       onNo={closeConfirmation}

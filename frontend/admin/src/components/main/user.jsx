@@ -178,7 +178,7 @@ const User = ({ data }) => {
 
   return (
     <>
-      <div className="mainPage-main-components-sidebar">
+      <div className='mainPage-main-components-sidebar'>
         <Ic_dots
           style={{
             width: '12px',
@@ -194,8 +194,8 @@ const User = ({ data }) => {
           }}
         />
         {popoutContextMenu !== null ? (
-          <div className="mainPage-main-components-popouts-container" ref={dropdownRef}>
-            <div className="mainPage-main-popouts">
+          <div className='mainPage-main-components-popouts-container' ref={dropdownRef}>
+            <div className='mainPage-main-popouts'>
               <Dropdown
                 contextMenu={popoutContextMenu}
                 onClose={() => setPopoutContextMenu(null)}
@@ -205,15 +205,15 @@ const User = ({ data }) => {
         ) : (
           <></>
         )}
-        <div className="mainPage-main-components-sidebar-guildAvatar">
+        <div className='mainPage-main-components-sidebar-guildAvatar'>
           <div
-            className="guildAvatar avatar"
+            className='guildAvatar avatar'
             style={{
               backgroundImage: `url('${data.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + data.id + '/' + data.avatar + '.png'}`,
             }}
           ></div>
         </div>
-        <div className="mainPage-main-components-sidebar-text">
+        <div className='mainPage-main-components-sidebar-text'>
           {data.username}
           <span
             style={{
@@ -224,45 +224,45 @@ const User = ({ data }) => {
             #{data.discriminator}
           </span>
         </div>
-        <div className="mainPage-main-components-sidebar-separator"></div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">User ID</div>
+        <div className='mainPage-main-components-sidebar-separator'></div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>User ID</div>
           {data.id}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">User Since</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>User Since</div>
           {new Date(data.created_at).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
           })}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Email</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Email</div>
           {data.email}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Account Claimed?</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Account Claimed?</div>
           {data.claimed ? 'Yes' : 'No'}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Email Verified?</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Email Verified?</div>
           {data.verified ? 'Yes' : 'No'}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Server Count</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Server Count</div>
           {data.guilds.length}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Flags</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Flags</div>
           {data.flags}
         </div>
       </div>
-      <div className="mainPage-main-components-main">
-        <div className="mainPage-main-components-wrapper">
+      <div className='mainPage-main-components-main'>
+        <div className='mainPage-main-components-wrapper'>
           {data.guilds && Array.isArray(data.guilds) && data.guilds.length > 0 ? (
             <>
-              <Paginator header="Servers" tabs={['Name', 'Id']}>
+              <Paginator header='Servers' tabs={['Name', 'Id']}>
                 {data.guilds.map((guild, i) => (
                   <Member
                     key={i}
@@ -290,7 +290,7 @@ const User = ({ data }) => {
           Array.isArray(data.relationships) &&
           data.relationships.length > 0 ? (
             <>
-              <Paginator header="Relationships" tabs={['Username', 'Discriminator', 'Status']}>
+              <Paginator header='Relationships' tabs={['Username', 'Discriminator', 'Status']}>
                 {data.relationships.map((entry, i) => (
                   <Relationship
                     key={i}
@@ -316,7 +316,7 @@ const User = ({ data }) => {
           )}
           {data.bots && Array.isArray(data.bots) && data.bots.length > 0 ? (
             <>
-              <Paginator header="Bots" tabs={['Username', 'Id']}>
+              <Paginator header='Bots' tabs={['Username', 'Id']}>
                 {data.bots.map((bot, i) => (
                   <Member
                     key={i}
@@ -345,7 +345,7 @@ const User = ({ data }) => {
       </div>
 
       {confirmation != null && (
-        <div id="overlay">
+        <div id='overlay'>
           <Confirmation
             onYes={confirmation.onYes}
             onNo={closeConfirmation}
@@ -355,7 +355,7 @@ const User = ({ data }) => {
       )}
 
       {inputPopup != null && (
-        <div id="overlay">
+        <div id='overlay'>
           <InputSingle
             summary={inputPopup.summary}
             fieldType={inputPopup.fieldType}

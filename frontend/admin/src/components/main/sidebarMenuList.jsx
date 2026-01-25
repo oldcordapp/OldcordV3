@@ -1,7 +1,7 @@
 const SidebarMenuList = ({ name, children }) => {
   return (
     <>
-      <div className="mainPage-sidebar-subheader" id={name}>
+      <div className='mainPage-sidebar-subheader' id={name}>
         {name}
       </div>
       {children}

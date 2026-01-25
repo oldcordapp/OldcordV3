@@ -51,20 +51,20 @@ const Users = () => {
   return (
     <>
       <div style={{ display: 'flex', flex: 1, minHeight: '100vh' }}>
-        <div className="mainPage-container">
-          <Sidebar active="Users"></Sidebar>
-          <div className="mainPage-main">
-            <div className="mainPage-main-header">
-              <div className="mainPage-main-header-components">
-                <Searchbar placeholder="Lookup a user by ID" error={error}></Searchbar>
+        <div className='mainPage-container'>
+          <Sidebar active='Users'></Sidebar>
+          <div className='mainPage-main'>
+            <div className='mainPage-main-header'>
+              <div className='mainPage-main-header-components'>
+                <Searchbar placeholder='Lookup a user by ID' error={error}></Searchbar>
               </div>
               <Avatar path={avatarPath}></Avatar>
             </div>
-            <div className="mainPage-main-components">
+            <div className='mainPage-main-components'>
               {data == null ? (
                 <>
-                  <div className="search-no-results">
-                    <img src={NoResults} alt="No Results Found"></img>
+                  <div className='search-no-results'>
+                    <img src={NoResults} alt='No Results Found'></img>
                     <p>No Results Found</p>
                   </div>
                 </>

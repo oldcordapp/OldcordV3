@@ -15,17 +15,17 @@ const MfaNotice = () => {
 
   return (
     <div style={{ display: 'flex', flex: 1, minHeight: '100vh', transform: 'scale(1.15)' }}>
-      <div className="loginPage-container" style={{ backgroundImage: `url('${LoginSplash}')` }}>
-        <div className="admin-logo">
+      <div className='loginPage-container' style={{ backgroundImage: `url('${LoginSplash}')` }}>
+        <div className='admin-logo'>
           <img
             src={OldcordLogo}
-            alt="Oldcord Logo"
+            alt='Oldcord Logo'
             style={{ fill: '#1f6ad3', width: '225px', marginBottom: '15px' }}
           />
         </div>
         <form onSubmit={handleSubmit}>
           <div
-            className="loginPage-card"
+            className='loginPage-card'
             style={{
               textAlign: 'center',
               overflow: 'hidden',
@@ -34,7 +34,7 @@ const MfaNotice = () => {
             }}
           >
             <div
-              className="loginPage-card-contents no-mfa"
+              className='loginPage-card-contents no-mfa'
               style={{
                 paddingBottom: 'none',
                 paddingTop: 'none',
@@ -56,7 +56,7 @@ const MfaNotice = () => {
                 YOU HAVE BEEN BLOCKED FROM PROCEEDING
               </h1>
               <div
-                className="loginPage-card-text"
+                className='loginPage-card-text'
                 style={{
                   color: 'rgba(0, 0, 0, 0.73)',
                   marginTop: '-22px',

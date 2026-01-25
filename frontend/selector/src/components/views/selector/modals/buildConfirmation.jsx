@@ -32,13 +32,13 @@ export default function ({ isOpen, onClose, onConfirm, selectedBuild, enabledPlu
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Build Confirmation"
+      title='Build Confirmation'
       showCloseButton={false}
-      size="small"
-      footerAlignment="right"
+      size='small'
+      footerAlignment='right'
       footer={
         <>
-          <Button variant="ghost" onClick={() => onClose(false)}>
+          <Button variant='ghost' onClick={() => onClose(false)}>
             Cancel
           </Button>
           <Button onClick={() => onConfirm()}>Launch</Button>
@@ -46,19 +46,19 @@ export default function ({ isOpen, onClose, onConfirm, selectedBuild, enabledPlu
       }
     >
       <div style={{ paddingBottom: '20px' }}>
-        <Text variant="body">Selected Build: {displayedBuild}</Text>
+        <Text variant='body'>Selected Build: {displayedBuild}</Text>
         {oldplungerEnabled !== 'true' &&
           displayedPlugins &&
           displayedPlugins.legacy &&
           displayedPlugins.legacy.length > 0 && (
             <>
-              <Text variant="body" style={{ marginTop: '16px' }}>
+              <Text variant='body' style={{ marginTop: '16px' }}>
                 Enabled legacy patches:
               </Text>
               <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
                 {displayedPlugins.legacy.map((plugin, index) => (
                   <li key={index} style={{ margin: '4px 0' }}>
-                    <Text variant="body">{PATCHES[plugin].name}</Text>
+                    <Text variant='body'>{PATCHES[plugin].name}</Text>
                   </li>
                 ))}
               </ul>
@@ -69,13 +69,13 @@ export default function ({ isOpen, onClose, onConfirm, selectedBuild, enabledPlu
           displayedPlugins.oldplunger &&
           displayedPlugins.oldplunger.length > 0 && (
             <>
-              <Text variant="body" style={{ marginTop: '16px' }}>
+              <Text variant='body' style={{ marginTop: '16px' }}>
                 Enabled plugins:
               </Text>
               <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
                 {displayedPlugins.oldplunger.map((plugin, index) => (
                   <li key={index} style={{ margin: '4px 0' }}>
-                    <Text variant="body">{plugins[plugin].name}</Text>
+                    <Text variant='body'>{plugins[plugin].name}</Text>
                   </li>
                 ))}
               </ul>

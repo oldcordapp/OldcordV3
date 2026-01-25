@@ -14,7 +14,7 @@ export default function () {
 
   return (
     <Button onClick={switchView}>
-      <Gear className="gear-icon" />
+      <Gear className='gear-icon' />
     </Button>
   );
 }

@@ -42,19 +42,19 @@ export default function ({
   };
 
   return (
-    <div className="list-container" ref={wrapperRef} style={style} title={informativeText}>
-      <label className="list-label">{label}</label>
+    <div className='list-container' ref={wrapperRef} style={style} title={informativeText}>
+      <label className='list-label'>{label}</label>
       <button
-        type="button"
+        type='button'
         className={`list-button ${isOpen ? 'is-open' : ''}`}
         onClick={toggleDropdown}
       >
-        <span className="list-button-label">{selectedValue}</span>
-        <span className="list-arrow" />
+        <span className='list-button-label'>{selectedValue}</span>
+        <span className='list-arrow' />
       </button>
 
       {isOpen && (
-        <ul className="list-dropdown" role="listbox">
+        <ul className='list-dropdown' role='listbox'>
           {options.map((option, index) => (
             <li
               key={index}

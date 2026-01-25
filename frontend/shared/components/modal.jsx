@@ -60,27 +60,27 @@ export default function ({
   const sizeClass = `modal-content ${size}`;
 
   return ReactDOM.createPortal(
-    <CSSTransition nodeRef={ref} in={inProp} timeout={300} classNames="modal" unmountOnExit>
-      <div className="modal-container" ref={ref}>
-        <div className="modal-backdrop" onClick={handleModalClose}></div>
-        <div className="modal-root">
+    <CSSTransition nodeRef={ref} in={inProp} timeout={300} classNames='modal' unmountOnExit>
+      <div className='modal-container' ref={ref}>
+        <div className='modal-backdrop' onClick={handleModalClose}></div>
+        <div className='modal-root'>
           <div className={`modal-content ${sizeClass}`} style={style}>
             {(title || showCloseButton) && (
-              <div className="modal-header">
-                <div className="modal-header-text">
-                  {title && <h4 className="modal-title">{title}</h4>}
-                  {subtitle && <div className="modal-subtitle">{subtitle}</div>}
+              <div className='modal-header'>
+                <div className='modal-header-text'>
+                  {title && <h4 className='modal-title'>{title}</h4>}
+                  {subtitle && <div className='modal-subtitle'>{subtitle}</div>}
                 </div>
                 {showCloseButton && (
-                  <button type="button" className="modal-close-button" onClick={handleModalClose}>
+                  <button type='button' className='modal-close-button' onClick={handleModalClose}>
                     <Xmark />
                   </button>
                 )}
               </div>
             )}
 
-            <div className="scroller-wrapper">
-              <div className="scroller">{children}</div>
+            <div className='scroller-wrapper'>
+              <div className='scroller'>{children}</div>
             </div>
 
             {footer && (

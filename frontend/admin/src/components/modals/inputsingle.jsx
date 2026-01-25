@@ -19,11 +19,11 @@ function InputSingle({
   const isYesButtonDisabled = inputValue.trim() === '';
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="confirmation-modal-wrapper" onClick={(e) => e.stopPropagation()}>
-        <div className="confirmation-modal">
-          <div className="confirmation-modal-inner">
-            <div className="confirmation-modal-inner-summary">{summary}</div>
+    <div className='modal-overlay' onClick={onCancel}>
+      <div className='confirmation-modal-wrapper' onClick={(e) => e.stopPropagation()}>
+        <div className='confirmation-modal'>
+          <div className='confirmation-modal-inner'>
+            <div className='confirmation-modal-inner-summary'>{summary}</div>
 
             <div
               style={{
@@ -59,8 +59,8 @@ function InputSingle({
                 onChange={(e) => setInputValue(e.target.value)}
               />
             </div>
-            <div className="confirmation-modal-inner-buttons-wrapper">
-              <button className="largeButton no-button" onClick={onCancel}>
+            <div className='confirmation-modal-inner-buttons-wrapper'>
+              <button className='largeButton no-button' onClick={onCancel}>
                 <span>{cancelName}</span>
               </button>
               <button

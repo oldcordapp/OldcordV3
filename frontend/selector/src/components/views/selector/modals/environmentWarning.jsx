@@ -26,11 +26,11 @@ export default function ({ isOpen, onClose, onConfirm, environment }) {
       onClose={onClose}
       title={`${getEnvironmentName(displayedEnvironment)} Warning`}
       showCloseButton={false}
-      size="small"
-      footerAlignment="right"
+      size='small'
+      footerAlignment='right'
       footer={
         <>
-          <Button variant="ghost" onClick={() => onClose(false)}>
+          <Button variant='ghost' onClick={() => onClose(false)}>
             Cancel
           </Button>
           <Button onClick={() => onConfirm()}>Continue</Button>
@@ -38,7 +38,7 @@ export default function ({ isOpen, onClose, onConfirm, environment }) {
       }
     >
       <div style={{ paddingBottom: '20px' }}>
-        <Text variant="body">
+        <Text variant='body'>
           This is a/an {displayedEnvironment} instance and may be unstable. Do you want to continue?
         </Text>
       </div>

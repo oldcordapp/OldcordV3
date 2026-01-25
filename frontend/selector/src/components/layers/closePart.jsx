@@ -25,11 +25,11 @@ export default function ({ onClose }) {
 
   return (
     <div>
-      <div className="close-button-container">
-        <button className="close-button" onClick={handleClose}>
-          <Xmark className="x-mark" />
+      <div className='close-button-container'>
+        <button className='close-button' onClick={handleClose}>
+          <Xmark className='x-mark' />
         </button>
-        <div className="keybind-hint">ESC</div>
+        <div className='keybind-hint'>ESC</div>
       </div>
     </div>
   );

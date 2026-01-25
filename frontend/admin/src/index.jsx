@@ -37,29 +37,29 @@ root.render(
         <Routes>
           <Route
             index
-            path="/"
+            path='/'
             element={<AuthCheck enforced={true} minClearance={PRIVILEGE.JANITOR} />}
           />
           <Route
-            path="/servers"
+            path='/servers'
             element={<AuthCheck appPage={Servers} enforced={true} minClearance={PRIVILEGE.ADMIN} />}
           />
           <Route
-            path="/bots"
+            path='/bots'
             element={<AuthCheck appPage={Bots} enforced={true} minClearance={PRIVILEGE.ADMIN} />}
           />
           <Route
-            path="/users"
+            path='/users'
             element={<AuthCheck appPage={Users} enforced={true} minClearance={PRIVILEGE.ADMIN} />}
           />
           <Route
-            path="/staff"
+            path='/staff'
             element={
               <AuthCheck appPage={Staff} enforced={true} minClearance={PRIVILEGE.INSTANCE_OWNER} />
             }
           />
           <Route
-            path="/audit-logs"
+            path='/audit-logs'
             element={
               <AuthCheck
                 appPage={AuditLogs}
@@ -69,25 +69,25 @@ root.render(
             }
           />
           <Route
-            path="/reports"
+            path='/reports'
             element={
               <AuthCheck appPage={Reports} enforced={true} minClearance={PRIVILEGE.JANITOR} />
             }
           />
           <Route
-            path="/messages"
+            path='/messages'
             element={
               <AuthCheck appPage={Messages} enforced={true} minClearance={PRIVILEGE.MODERATOR} />
             }
           />
           <Route
-            path="/updates"
+            path='/updates'
             element={
               <AuthCheck appPage={Updates} enforced={true} minClearance={PRIVILEGE.JANITOR} />
             }
           />
           <Route
-            path="/settings"
+            path='/settings'
             element={
               <AuthCheck
                 appPage={Settings}
@@ -96,8 +96,8 @@ root.render(
               />
             }
           />
-          <Route path="/login" element={<Login />} />
-          <Route path="/mfa-notice" element={<MfaNotice />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/mfa-notice' element={<MfaNotice />} />
         </Routes>
       </Router>
     </AuthUserProvider>

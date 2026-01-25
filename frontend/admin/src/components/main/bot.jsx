@@ -167,7 +167,7 @@ const Bot = ({ data }) => {
 
   return (
     <>
-      <div className="mainPage-main-components-sidebar">
+      <div className='mainPage-main-components-sidebar'>
         <Ic_dots
           style={{
             width: '12px',
@@ -183,8 +183,8 @@ const Bot = ({ data }) => {
           }}
         />
         {popoutContextMenu !== null ? (
-          <div className="mainPage-main-components-popouts-container" ref={dropdownRef}>
-            <div className="mainPage-main-popouts">
+          <div className='mainPage-main-components-popouts-container' ref={dropdownRef}>
+            <div className='mainPage-main-popouts'>
               <Dropdown
                 contextMenu={popoutContextMenu}
                 onClose={() => setPopoutContextMenu(null)}
@@ -194,15 +194,15 @@ const Bot = ({ data }) => {
         ) : (
           <></>
         )}
-        <div className="mainPage-main-components-sidebar-guildAvatar">
+        <div className='mainPage-main-components-sidebar-guildAvatar'>
           <div
-            className="guildAvatar avatar"
+            className='guildAvatar avatar'
             style={{
               backgroundImage: `url('${data.avatar == null ? DefaultAvatar : `${window.ADMIN_ENV.BASE_ENDPOINT}/avatars/` + data.id + '/' + data.avatar + '.png'}`,
             }}
           ></div>
         </div>
-        <div className="mainPage-main-components-sidebar-text">
+        <div className='mainPage-main-components-sidebar-text'>
           {data.username}
           <span
             style={{
@@ -213,13 +213,13 @@ const Bot = ({ data }) => {
             #{data.discriminator}
           </span>
         </div>
-        <div className="mainPage-main-components-sidebar-separator"></div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">User ID</div>
+        <div className='mainPage-main-components-sidebar-separator'></div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>User ID</div>
           {data.application.id}
         </div>
         <div
-          className="subsection-sidebar-info"
+          className='subsection-sidebar-info'
           style={{
             '--subsection-header': `"Application Info"`,
             '--subsection-status-symbol': `"${applicationInfoOpen ? '▲' : '▼'}"`,
@@ -229,26 +229,26 @@ const Bot = ({ data }) => {
           {applicationInfoOpen ? (
             <>
               <div
-                className="mainPage-main-components-sidebar-infoLine"
+                className='mainPage-main-components-sidebar-infoLine'
                 style={{
                   marginTop: '10px',
                 }}
               >
-                <div className="mainPage-main-components-sidebar-label">ID</div>
+                <div className='mainPage-main-components-sidebar-label'>ID</div>
                 {data.application.id}
               </div>
-              <div className="mainPage-main-components-sidebar-infoLine">
-                <div className="mainPage-main-components-sidebar-label">Name</div>
+              <div className='mainPage-main-components-sidebar-infoLine'>
+                <div className='mainPage-main-components-sidebar-label'>Name</div>
                 {data.application.name}
               </div>
-              <div className="mainPage-main-components-sidebar-infoLine">
-                <div className="mainPage-main-components-sidebar-label">Description</div>
+              <div className='mainPage-main-components-sidebar-infoLine'>
+                <div className='mainPage-main-components-sidebar-label'>Description</div>
                 {data.application.description === '' || data.application.description === null
                   ? 'NONE'
                   : data.application.description}
               </div>
-              <div className="mainPage-main-components-sidebar-infoLine">
-                <div className="mainPage-main-components-sidebar-label">Owner</div>
+              <div className='mainPage-main-components-sidebar-infoLine'>
+                <div className='mainPage-main-components-sidebar-label'>Owner</div>
                 <a href={`/admin/users?searchInput=${data.application.owner.id}`}>
                   {data.application.owner.username}#{data.application.owner.discriminator}
                 </a>
@@ -258,28 +258,28 @@ const Bot = ({ data }) => {
             <></>
           )}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Server Count</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Server Count</div>
           {data.guilds.length}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Is Public?</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Is Public?</div>
           {data.public === true ? 'Yes' : 'No'}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Requires Code Grant?</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Requires Code Grant?</div>
           {data.require_code_grant === true ? 'Yes' : 'No'}
         </div>
-        <div className="mainPage-main-components-sidebar-infoLine">
-          <div className="mainPage-main-components-sidebar-label">Flags</div>
+        <div className='mainPage-main-components-sidebar-infoLine'>
+          <div className='mainPage-main-components-sidebar-label'>Flags</div>
           {data.flags || 0}
         </div>
       </div>
-      <div className="mainPage-main-components-main">
-        <div className="mainPage-main-components-wrapper">
+      <div className='mainPage-main-components-main'>
+        <div className='mainPage-main-components-wrapper'>
           {data.guilds && Array.isArray(data.guilds) && data.guilds.length > 0 ? (
             <>
-              <Paginator header="Servers" tabs={['Name', 'Id']}>
+              <Paginator header='Servers' tabs={['Name', 'Id']}>
                 {data.guilds.map((guild, i) => (
                   <Member
                     key={i}
@@ -307,7 +307,7 @@ const Bot = ({ data }) => {
       </div>
 
       {confirmation != null && (
-        <div id="overlay">
+        <div id='overlay'>
           <Confirmation
             onYes={confirmation.onYes}
             onNo={closeConfirmation}
@@ -317,7 +317,7 @@ const Bot = ({ data }) => {
       )}
 
       {inputPopup != null && (
-        <div id="overlay">
+        <div id='overlay'>
           <InputSingle
             summary={inputPopup.summary}
             fieldType={inputPopup.fieldType}
