@@ -5,7 +5,10 @@ export default {
 
     const files = validFiles.map((f) => `"${f}"`).join(' ');
 
-    return [`eslint --fix ${files}`, `prettier --write ${files}`];
+    return [
+      `npx --node-options='--experimental-strip-types' eslint --flag unstable_native_nodejs_ts_config --fix ${files}`,
+      `prettier --write ${files}`,
+    ];
   },
   '*.{html,yml,yaml}': (filenames) => {
     const files = filenames.map((f) => `"${f}"`).join(' ');
