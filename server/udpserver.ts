@@ -1,5 +1,5 @@
 import udp from 'dgram';
-import sodium, { add } from 'libsodium-wrappers';
+import sodium from 'libsodium-wrappers';
 
 import { OPCODES } from './handlers/rtc.js';
 import { logText } from './helpers/logger.js';
@@ -116,8 +116,6 @@ const udpServer = {
         this.sendBytes(info.address, info.port, msg);
       } else if (msg.length > 12) {
         const ssrc = msg.readUInt32BE(8);
-        const sequence = msg.readUInt16BE(2);
-        const timestamp = msg.readUInt32BE(4);
 
         const session = this.clients.get(ssrc);
 
@@ -127,7 +125,6 @@ const udpServer = {
         }
 
         const voiceKey = Buffer.from(session.encryption_key);
-        const rtpHeader = msg.subarray(0, 12);
 
         const nonce = Buffer.alloc(24).fill(0);
         msg.subarray(0, 12).copy(nonce, 0);

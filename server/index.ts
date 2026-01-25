@@ -33,7 +33,7 @@ import express from 'express';
 import fs from 'fs';
 import { createServer } from 'http';
 import https from 'https';
-import { Jimp, ResizeStrategy } from 'jimp';
+import { Jimp } from 'jimp';
 import path from 'path';
 
 import router from './api/index.js';

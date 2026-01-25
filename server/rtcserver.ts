@@ -4,6 +4,7 @@ import { WebSocketServer } from 'ws';
 
 import { OPCODES, rtcHandlers } from './handlers/rtc.js';
 import { logText } from './helpers/logger.js';
+import type { GatewayPayload } from './types/gateway.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 
