@@ -161,7 +161,8 @@ const gateway = {
     socket.on('close', (code) => this.handleClientClose(socket, code));
 
     let heartbeat_payload: GatewayPayload | Buffer | string | undefined = {
-      op: OPCODES.HEARTBEAT_INFO,
+      // TODO: Remove the "as" type after converting handlers/gateway.js into ts
+      op: OPCODES.HEARTBEAT_INFO as 10,
       s: null,
       d: {
         heartbeat_interval: 45 * 1000,
@@ -235,7 +236,7 @@ const gateway = {
       if (typeof handler === 'function') {
         await handler(socket, packet);
       } else {
-        this.debug(`Unknown Opcode?? ${packet.op}`);
+        this.debug(`Unknown Opcode?? ${String(packet.op)}`);
       }
     } catch (error) {
       logText(error, 'error');

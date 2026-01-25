@@ -55,7 +55,8 @@
     "rimraf": "^6.1.2",
     "semantic-sdp": "^3.31.1",
     "speakeasy": "^2.0.0",
-    "ws": "^8.19.0"
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/css": "^0.14.1",
