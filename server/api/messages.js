@@ -334,14 +334,18 @@ router.post(
             ourGuilds.some((og) => og.id === rg.id),
           );
 
-          const hasAllowedSharedGuild = mutualGuilds.some((guild) => {
-            const senderAllows = !account.settings.restricted_guilds.includes(guild.id);
-            const recipientAllows = !recipient.settings.restricted_guilds.includes(guild.id);
+          if (recipient.bot && mutualGuilds.length === 0) {
+             return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
+          }
 
-            return senderAllows && recipientAllows;
-          });
+          if (!recipient.bot && !globalUtils.areWeFriends(account, recipient)) {
+            const hasAllowedSharedGuild = mutualGuilds.some((guild) => {
+              const senderAllows = !account.settings.restricted_guilds.includes(guild.id);
+              const recipientAllows = !recipient.settings.restricted_guilds.includes(guild.id);
 
-          if (!globalUtils.areWeFriends(account, recipient)) {
+              return senderAllows && recipientAllows;
+            });
+
             if (global.config.require_friendship_for_dm) {
               return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
             }
