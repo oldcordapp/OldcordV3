@@ -360,7 +360,7 @@ class session {
       this.guilds = await global.database.getUsersGuilds(this.user.id);
 
       if (this.user.bot) {
-        for (const guild of this.guilds) {
+        for (let guild of this.guilds) {
           this.guildCache.push(guild);
 
           guild = {
@@ -369,7 +369,7 @@ class session {
           }; //bots cant get this here idk
         }
       } else {
-        for (const guild of this.guilds) {
+        for (let guild of this.guilds) {
           if (guild.unavailable) {
             this.guilds = this.guilds.filter((x) => x.id !== guild.id);
 
@@ -471,7 +471,7 @@ class session {
             guild_presences = [guild_presences.find((x) => x.user.id === this.user.id)];
           }
 
-          for (const presence of guild_presences) {
+          for (let presence of guild_presences) {
             if (this.presences.find((x) => x.user.id === presence.user.id)) continue;
 
             this.presences.push({
@@ -500,7 +500,7 @@ class session {
             }),
           );
 
-          for (const channel of guild.channels) {
+          for (let channel of guild.channels) {
             if ((year === 2017 && month < 9) || year < 2017) {
               if (channel.type === 4) {
                 guild.channels = guild.channels.filter((x) => x.id !== channel.id);
@@ -656,7 +656,7 @@ class session {
         _trace: [JSON.stringify(['oldcord-v3', { micros: 0, calls: ['oldcord-v3'] }])],
       });
 
-      for (const guild of this.unavailable_guilds) {
+      for (let guild of this.unavailable_guilds) {
         await this.dispatch('GUILD_DELETE', {
           id: guild.id,
           unavailable: true,
@@ -664,7 +664,7 @@ class session {
       }
 
       if (this.user.bot) {
-        for (const guild of this.guilds) {
+        for (let guild of this.guilds) {
           if (guild.unavailable) {
             await this.dispatch(
               'GUILD_CREATE',
