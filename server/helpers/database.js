@@ -5968,8 +5968,8 @@ const database = {
         requester_id,
       ]);
 
-      if (rows === null || rows.length === 0) {
-        return [];
+      if (!rows || rows.length === 0) {
+        return {}; 
       }
 
       const notes = {};
@@ -5982,7 +5982,7 @@ const database = {
     } catch (error) {
       logText(error, 'error');
 
-      return [];
+      return {};
     }
   },
   updateNoteForUserId: async (requester_id, user_id, new_note) => {
