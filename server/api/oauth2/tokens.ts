@@ -1,7 +1,9 @@
 import { Router } from 'express';
+import type { Response } from "express";
+
 const router = Router({ mergeParams: true });
 
-router.get('/', async (req, res) => {
+router.get('/', async (res: Response) => {
   return res.status(200).json([]);
 });
 

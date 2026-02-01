@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
 import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 import { guildMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares.js';
 import Snowflake from '../helpers/snowflake.js';
 const router = Router({ mergeParams: true });

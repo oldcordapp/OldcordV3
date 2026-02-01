@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 import { rateLimitMiddleware } from '../helpers/middlewares.js';
 import { cacheFor } from '../helpers/quickcache.js';
 const router = Router({ mergeParams: true });

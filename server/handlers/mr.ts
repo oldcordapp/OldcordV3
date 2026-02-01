@@ -2,9 +2,6 @@ import ws from 'ws';
 
 const { EventEmitter } = ws;
 
-import globalUtils from '../helpers/globalutils.js';
-import session from '../helpers/session.js';
-
 const OPCODES = {
   IDENTIFY: 'IDENTIFY',
   ALRIGHT: 'ALRIGHT',
@@ -16,7 +13,7 @@ const OPCODES = {
   HEARTBEAT_ACK: 'HEARTBEAT_ACK',
 };
 
-async function handleIdentify(socket, packet) {
+async function handleIdentify(socket: any, packet: any) {
   const public_ip = packet.d.public_ip;
   const public_port = packet.d.public_port;
   const timestamp = packet.d.timestamp;
@@ -46,22 +43,22 @@ async function handleIdentify(socket, packet) {
   );
 }
 
-async function handleHeartbeat(socket, packet) {
+async function handleHeartbeat(socket: any, packet: any) {
   if (!socket.hb) return;
 
   socket.hb.acknowledge(packet.d);
   socket.hb.reset();
 }
 
-async function handleAnswer(socket, packet) {
+async function handleAnswer(socket: any, packet: any) {
   socket.emitter.emit('answer-received', packet.d);
 }
 
-async function handleVideoBatch(socket, packet) {
+async function handleVideoBatch(socket: any, packet: any) {
   socket.emitter.emit('video-batch', packet.d);
 }
 
-async function handleSpeakingBatch(socket, packet) {
+async function handleSpeakingBatch(socket: any, packet: any) {
   socket.emitter.emit('speaking-batch', packet.d);
 }
 

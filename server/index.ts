@@ -41,7 +41,7 @@ import gateway from './gateway.ts';
 import database from './helpers/database.js';
 import errors from './helpers/errors.js';
 import globalUtils from './helpers/globalutils.js';
-import { logText } from './helpers/logger.js';
+import { logText } from './helpers/logger.ts';
 import {
   apiVersionMiddleware,
   assetsMiddleware,

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 const router = Router({ mergeParams: true });
 import { response_500 } from '../helpers/errors.js';
 import { cacheFor } from '../helpers/quickcache.js';

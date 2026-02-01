@@ -17,7 +17,7 @@ const OPCODES = {
   DISCONNECT: 13,
 };
 
-async function handleIdentify(socket, packet) {
+async function handleIdentify(socket: any, packet: any) {
   const userid = packet.d.user_id;
   const server_id = packet.d.server_id;
   const sessionid = packet.d.session_id;
@@ -159,14 +159,14 @@ async function handleIdentify(socket, packet) {
   }
 }
 
-async function handleHeartbeat(socket, packet) {
+async function handleHeartbeat(socket: any, packet: any) {
   if (!socket.hb) return;
 
   socket.hb.acknowledge(packet.d);
   socket.hb.reset();
 }
 
-async function handleSelectProtocol(socket, packet) {
+async function handleSelectProtocol(socket: any, packet: any) {
   const protocol = packet.d.protocol;
 
   global.rtcServer.protocolsMap.set(socket.userid, protocol ?? 'webrtc');
@@ -267,7 +267,7 @@ async function handleSelectProtocol(socket, packet) {
   }
 }
 
-async function handleICECandidates(socket, packet) {
+async function handleICECandidates(socket: any, packet: any) {
   if (
     !global.rtcServer.protocolsMap.has(socket.userid) ||
     global.rtcServer.protocolsMap.has(packet.d.user_id)
@@ -302,7 +302,7 @@ async function handleICECandidates(socket, packet) {
   }
 }
 
-async function handleSpeaking(socket, packet) {
+async function handleSpeaking(socket: any, packet: any) {
   const ssrc = packet.d.ssrc;
   const protocol = global.rtcServer.protocolsMap.get(socket.userid);
 
@@ -347,7 +347,7 @@ async function handleSpeaking(socket, packet) {
         }
 
         await Promise.all(
-          Array.from(clientsToNotify).map((client) => {
+          Array.from(clientsToNotify).map((client: any) => {
             const updatedSsrcs = client.getOutgoingStreamSSRCsForUser(socket.userid);
 
             client.websocket.send(
@@ -367,7 +367,7 @@ async function handleSpeaking(socket, packet) {
 
       await Promise.all(
         Array.from(global.mediaserver.getClientsForRtcServer(socket.client.voiceRoomId)).map(
-          (client) => {
+          (client: any) => {
             if (client.user_id === socket.userid) return Promise.resolve();
 
             const ssrcInfo = client.getOutgoingStreamSSRCsForUser(socket.userid);
@@ -379,7 +379,7 @@ async function handleSpeaking(socket, packet) {
               return Promise.resolve();
             }
 
-            client.websocket.send(
+            return client.websocket.send(
               JSON.stringify({
                 op: OPCODES.SPEAKING,
                 d: {
@@ -451,6 +451,7 @@ async function handleVideo(socket, packet) {
     audio_ssrc: audio_ssrc,
     video_ssrc: video_ssrc,
     rtx_ssrc: rtx_ssrc,
+    user_id: ""
   };
 
   const protocol = global.rtcServer.protocolsMap.get(socket.userid);
@@ -508,7 +509,7 @@ async function handleVideo(socket, packet) {
       }
 
       await Promise.all(
-        Array.from(clientsThatNeedUpdate).map((client) => {
+        Array.from(clientsThatNeedUpdate).map((client: any) => {
           const ssrcs = client.getOutgoingStreamSSRCsForUser(socket.userid);
           client.websocket.send(
             JSON.stringify({
@@ -609,13 +610,13 @@ async function handleResume(socket, packet) {
     socket.session = sesh;
   }
 
-  let sesh = null;
+  let sesh: any = null;
 
   if (!session2) {
     sesh = socket.session;
   } else {
     sesh = session2;
-    sesh.user = session2.user;
+    sesh!.user = session2.user;
   }
 
   sesh.server_id = server_id;

@@ -2,17 +2,24 @@ import { createHash } from 'crypto';
 
 import errors from './errors.js';
 import globalUtils from './globalutils.js';
-import { logText } from './logger.js';
+import { logText } from './logger.ts';
+import type { IncomingHttpHeaders } from 'http';
+import type { NextFunction, Request, Response } from 'express';
+
+export interface WatchdogFingerprint {
+  fingerprint: string | null,
+  reason: string
+}
 
 const Watchdog = {
   numHeadersThreshold: 10,
   susScoreDecayTime: 24 * 60 * 60 * 1000, //to-do: add this to the config somewhere
   susScoreDecayStore: new Map(),
   rateLimitStore: new Map(),
-  normalizeHeader: (name) => {
+  normalizeHeader: (name: string): string => {
     return name.toLowerCase().trim();
   },
-  getFingerprint: (url, baseUrl, protocol, headers, account = null, ja3hash = null) => {
+  getFingerprint: (url: string, baseUrl: string, protocol: string, headers: IncomingHttpHeaders): WatchdogFingerprint => {
     if (
       typeof headers !== 'object' ||
       headers === null ||
@@ -39,7 +46,7 @@ const Watchdog = {
 
       if (!outcome) {
         return {
-          fingeprint: null,
+          fingerprint: null,
           reason: 'Invalid X-Super-Properties Object',
         };
       }
@@ -79,18 +86,18 @@ const Watchdog = {
       reason: '',
     }; //to-do: something with the account & ja3 hash, tcp/ip stack if provided (would require your own certificate & possibly kernel driver for Linux systems, unsure about Windows - could use something like node pcap?)
   },
-  getRandomRange(min, max) {
+  getRandomRange(min: number, max: number): number {
     min = Math.ceil(min);
     max = Math.floor(max);
 
     return Math.floor(Math.random() * (max - min + 1)) + min;
   },
-  middleware: (maxPerTimeFrame, timeFrame, sus_weight = 0.2, onTrip = null) => {
+  middleware: (maxPerTimeFrame: number, timeFrame: number, sus_weight: number = 0.2, onTrip: Function | null = null) => {
     if (typeof maxPerTimeFrame !== 'number' || typeof timeFrame !== 'number') {
       throw new Error('Missing maxPerTimeFrame and timeFrame for initialization of the Watchdog.');
     }
 
-    return async function (req, res, next) {
+    return async function (req: Request, res: Response, next: NextFunction) {
       if (!global.config.ratelimit_config.enabled) {
         return next();
       }
@@ -110,10 +117,8 @@ const Watchdog = {
         const fingerprint_outcome = Watchdog.getFingerprint(
           req.originalUrl,
           req.baseUrl,
-          req.headers['x-forwarded-proto'] || req.protocol,
+          req.headers['x-forwarded-proto']?.toString() || req.protocol,
           req.headers,
-          req.account,
-          null,
         );
         const fingerprint = fingerprint_outcome.fingerprint;
 
@@ -236,7 +241,7 @@ const Watchdog = {
       return next();
     };
   },
-  setSusScoreDecay: (fingerprint) => {
+  setSusScoreDecay: (fingerprint: string) => {
     const existingTimer = Watchdog.susScoreDecayStore.get(fingerprint);
 
     if (existingTimer) {

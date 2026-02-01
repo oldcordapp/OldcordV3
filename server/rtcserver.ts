@@ -2,8 +2,8 @@ import sodium from 'libsodium-wrappers';
 import { EventEmitter } from 'node:events';
 import { WebSocketServer } from 'ws';
 
-import { OPCODES, rtcHandlers } from './handlers/rtc.js';
-import { logText } from './helpers/logger.js';
+import { OPCODES, rtcHandlers } from './handlers/rtc.ts';
+import { logText } from './helpers/logger.ts';
 import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones

@@ -4,9 +4,9 @@ import dispatcher from '../../helpers/dispatcher.js';
 import errors from '../../helpers/errors.js';
 import globalUtils from '../../helpers/globalutils.js';
 import lazyRequest from '../../helpers/lazyRequest.js';
-import { logText } from '../../helpers/logger.js';
+import { logText } from '../../helpers/logger.ts';
 import applications from './applications.js';
-import tokens from './tokens.js';
+import tokens from './tokens.ts';
 
 const router = Router({ mergeParams: true });
 

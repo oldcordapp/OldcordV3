@@ -4,7 +4,7 @@ import dispatcher from './dispatcher.js';
 import globalUtils from './globalutils.js';
 import Intents from './intents.js';
 import lazyRequest from './lazyRequest.js';
-import { logText } from './logger.js';
+import { logText } from './logger.ts';
 
 let erlpack = null;
 

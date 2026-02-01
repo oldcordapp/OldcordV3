@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import type { Response } from "express"
 
 import { config, generateGatewayURL } from '../../helpers/globalutils.js';
 const router = Router();
 
-router.get('/instance/domains', (req, res) => {
-  res.json({
+router.get('/instance/domains', (req, res: Response) => {
+  return res.json({
     cdn: `${config.secure ? 'https://' : 'http://'}${global.full_url}`, //for user uploaded attachments
     gateway: generateGatewayURL(req),
     defaultApiVersion: '6',
@@ -12,8 +13,8 @@ router.get('/instance/domains', (req, res) => {
   });
 });
 
-router.get('/instance/config', (req, res) => {
-  res.json({
+router.get('/instance/config', (res: Response) => {
+  return res.json({
     limits_user_maxGuilds: null,
     limits_user_maxBio: null,
     limits_guild_maxEmojis: null,

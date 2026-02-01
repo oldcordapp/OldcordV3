@@ -3,8 +3,8 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
 import errors from './errors.js';
 import globalUtils from './globalutils.js';
-import { logText } from './logger.js';
-import { getTimestamps } from './wayback.js';
+import { logText } from './logger.ts';
+import { getTimestamps } from './wayback.ts';
 
 const config = globalUtils.config;
 

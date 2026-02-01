@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 
-import { mrHandlers, OPCODES } from './handlers/mr.js';
-import { logText } from './helpers/logger.js';
+import { mrHandlers, OPCODES } from './handlers/mr.ts';
+import { logText } from './helpers/logger.ts';
 import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones

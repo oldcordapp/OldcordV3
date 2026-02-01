@@ -4,7 +4,7 @@ import zlib from 'zlib';
 import { gatewayHandlers, OPCODES } from './handlers/gateway.js';
 import dispatcher from './helpers/dispatcher.js';
 import globalUtils from './helpers/globalutils.js';
-import { logText } from './helpers/logger.js';
+import { logText } from './helpers/logger.ts';
 import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones

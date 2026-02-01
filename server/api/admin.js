@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 import { staffAccessMiddleware } from '../helpers/middlewares.js';
 const router = Router({ mergeParams: true });
 import { readFileSync, writeFileSync } from 'node:fs';

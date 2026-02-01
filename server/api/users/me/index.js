@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import globalUtils from '../../../helpers/globalutils.js';
-import { logText } from '../../../helpers/logger.js';
+import { logText } from '../../../helpers/logger.ts';
 import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares.js';
 const router = Router();
 import dispatcher from '../../../helpers/dispatcher.js';

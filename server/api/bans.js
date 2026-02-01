@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import dispatcher from '../helpers/dispatcher.js';
 import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 import { guildPermissionsMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 const router = Router({ mergeParams: true });
 import errors from '../helpers/errors.js';

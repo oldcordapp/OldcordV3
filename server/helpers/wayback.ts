@@ -1,6 +1,11 @@
-import { logText } from './logger.js';
+import { logText } from './logger.ts';
 
-export function convertTimestampToCustomFormat(timestamp) {
+interface WaybackTimestampsResponse {
+  first_ts: string | null,
+  last_ts: string | null
+}
+
+export function convertTimestampToCustomFormat(timestamp: string): string {
   const dateObject = new Date(timestamp);
 
   const year = dateObject.getUTCFullYear();
@@ -13,7 +18,7 @@ export function convertTimestampToCustomFormat(timestamp) {
   return `${year}${month}${day}${hours}${minutes}${seconds}`;
 }
 
-export async function getTimestamps(url) {
+export async function getTimestamps(url: string): Promise<WaybackTimestampsResponse | null> {
   try {
     const response = await fetch('https://web.archive.org/web/timemap/link/' + url, {
       headers: {
@@ -42,8 +47,8 @@ export async function getTimestamps(url) {
     }
 
     return {
-      first_ts: wayback.convertTimestampToCustomFormat(first_ts),
-      last_ts: wayback.convertTimestampToCustomFormat(last_ts),
+      first_ts: convertTimestampToCustomFormat(first_ts),
+      last_ts: convertTimestampToCustomFormat(last_ts),
     };
   } catch (error) {
     logText(error, 'error');

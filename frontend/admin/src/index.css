@@ -167,11 +167,6 @@ body {
   box-sizing: border-box;
 }
 
-.confirmation-modal-inner input::input-placeholder {
-  color: #e3e5e8;
-  font-weight: 500;
-}
-
 .confirmation-modal-inner input::placeholder {
   color: #e3e5e8;
   font-weight: 500;
@@ -179,10 +174,6 @@ body {
 
 .confirmation-modal-inner input:hover {
   box-shadow: 0 0 0 1px #c7d0f0;
-}
-
-.confirmation-modal-inner input:hover::input-placeholder {
-  color: #9099a4;
 }
 
 .confirmation-modal-inner input:hover::placeholder {
@@ -196,7 +187,7 @@ body {
   color: #7289da;
 }
 
-.confirmation-modal-inner input::input-placeholder {
+.confirmation-modal-inner input::placeholder {
   color: #9099a4;
 }
 

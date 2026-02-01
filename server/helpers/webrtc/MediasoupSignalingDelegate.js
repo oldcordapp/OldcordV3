@@ -3,7 +3,7 @@ process.env.DEBUG = 'mediasoup*';
 import { createWorker } from 'mediasoup';
 import { SDPInfo } from 'semantic-sdp';
 
-import { logText } from '../logger.js';
+import { logText } from '../logger.ts';
 import { MediasoupWebRtcClient } from './MediasoupWebRtcClient.js';
 import { VoiceRoom } from './VoiceRoom.js';
 

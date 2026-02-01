@@ -1,4 +1,4 @@
-import { logText } from './logger.js';
+import { logText } from './logger.ts';
 
 const permissions = {
   CREATE_INSTANT_INVITE: 1 << 0,

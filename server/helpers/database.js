@@ -5,7 +5,7 @@ import { join } from 'path';
 import { Pool } from 'pg';
 import { totp } from 'speakeasy';
 
-import md5 from '../helpers/md5.js';
+import md5 from '../helpers/md5.ts';
 import { dispatchEventInChannel, dispatchEventInGuild } from './dispatcher.js';
 import { generateMsgEmbeds } from './embedder.js';
 import {
@@ -22,7 +22,7 @@ import {
   SerializeOverwritesToString,
   usersToIDs,
 } from './globalutils.js';
-import { logText } from './logger.js';
+import { logText } from './logger.ts';
 import { deconstruct, generate } from './snowflake.js';
 
 const db_config = config.db_config;

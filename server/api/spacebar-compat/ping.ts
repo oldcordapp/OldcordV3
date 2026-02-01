@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import type { Response } from "express"
 
 import { config } from '../../helpers/globalutils.js';
 const router = Router();
 
-router.get('/', (req, res) => {
-  res.json({
+router.get('/', (res: Response) => {
+  return res.json({
     ping: 'pong! this is oldcord! not spacebar! you got FOOLED!',
     instance: {
       id: 'what the fuck is this?',

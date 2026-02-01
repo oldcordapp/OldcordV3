@@ -4,7 +4,7 @@ import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/errors.js';
 import globalUtils from '../helpers/globalutils.js';
 import lazyRequest from '../helpers/lazyRequest.js';
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 import { instanceMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 import { verify } from '../helpers/recaptcha.js';
 import Watchdog from '../helpers/watchdog.js';
@@ -559,9 +559,7 @@ router.post('/fingerprint', (req, res) => {
     req.originalUrl,
     req.baseUrl,
     req.headers['x-forwarded-proto'] || req.protocol,
-    req.headers,
-    req.account,
-    null,
+    req.headers
   );
 
   return res.status(200).json({

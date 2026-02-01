@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { response_500 } from '../helpers/errors.js';
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 const router = Router();
 
 router.get('/', async (req, res) => {

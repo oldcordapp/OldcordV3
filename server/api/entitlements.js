@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { logText } from '../helpers/logger.js';
+import { logText } from '../helpers/logger.ts';
 import { generate } from '../helpers/snowflake.js';
 const router = Router({ mergeParams: true });
 import { response_500 } from '../helpers/errors.js';
