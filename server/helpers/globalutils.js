@@ -296,6 +296,19 @@ const globalUtils = {
 
     return partTwo;
   },
+  generateAckToken: (user_id, channel_id, message_id) => {
+    const key = _config.ack_secret + `--${user_id}`;
+    const timeStampBuffer = Buffer.allocUnsafe(4);
+    timeStampBuffer.writeUInt32BE(Math.floor(Date.now() / 1000) - 1293840);
+    const encodedTimeStamp = encode(timeStampBuffer);
+    const encodedIds = encode(message_id);
+    const partOne = `${encodedIds}.${encodedTimeStamp}`;
+    const encryptedAuth = createHmac('sha3-224', key).update(partOne).digest();
+    const encodedEncryptedAuth = encode(encryptedAuth);
+    const partTwo = `${partOne}.${encodedEncryptedAuth}`;
+
+    return partTwo;
+  },
   replaceAll: (str, find, replace) => {
     if (typeof find === 'string') {
       find = find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escape special characters
@@ -862,6 +875,7 @@ export const {
   getRegions,
   serverRegionToYear,
   canUseServer,
+  generateAckToken,
   generateToken,
   replaceAll,
   SerializeOverwriteToString,

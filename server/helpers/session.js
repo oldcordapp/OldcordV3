@@ -395,13 +395,15 @@ class session {
           }
 
           if (guild.region != 'everything' && !globalUtils.canUseServer(year, guild.region)) {
+            let msgid = `12792182114301050${Math.round(Math.random() * 100).toString()}`;
+
             guild.channels = [
               {
                 type: this.socket.channel_types_are_ints ? 0 : 'text',
                 name: 'readme',
                 topic: `This server only supports ${globalUtils.serverRegionToYear(guild.region)} builds! Please change your client and try again.`,
-                last_message_id: '0',
-                id: `12792182114301050${Math.round(Math.random() * 100).toString()}`,
+                last_message_id: msgid,
+                id: msgid,
                 parent_id: null,
                 guild_id: guild.id,
                 permission_overwrites: [],
@@ -536,7 +538,7 @@ class session {
             this.read_states.push(
               getLatestAcknowledgement || {
                 id: channel.id,
-                last_message_id: '0',
+                last_message_id: channel.last_message_id,
                 last_pin_timestamp: '0',
                 mention_count: 0,
               },

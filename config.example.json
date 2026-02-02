@@ -1,5 +1,6 @@
 {
   "token_secret": "35c8...",
+  "ack_secret": "19ac...",
   "secure": false,
   "base_url": "127.0.0.1",
   "gateway_url": "",

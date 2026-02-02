@@ -735,14 +735,7 @@ router.post(
       }
 
       const channel = req.channel;
-
-      const msgAlreadyAcked = await global.database.isMessageAcked(guy.id, channel.id, message.id);
-
-      if (msgAlreadyAcked) {
-        return res.status(200).json({
-          token: globalUtils.generateToken(guy.id, globalUtils.generateString(20)),
-        });
-      }
+      const manual = req.body.manual === true;
 
       const tryAck = await global.database.acknowledgeMessage(guy.id, channel.id, message.id, 0);
 
@@ -751,11 +744,13 @@ router.post(
       await dispatcher.dispatchEventTo(guy.id, 'MESSAGE_ACK', {
         channel_id: channel.id,
         message_id: message.id,
-        manual: false, //This is for if someone clicks mark as read
+        manual: manual, //This is for if someone clicks mark as read
       });
 
+      const ackToken = globalUtils.generateAckToken(guy.id, channel.id, message.id);
+
       return res.status(200).json({
-        token: globalUtils.generateToken(guy.id, globalUtils.generateString(20)),
+        token: ackToken
       });
     } catch (error) {
       logText(error, 'error');
