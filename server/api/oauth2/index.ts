@@ -51,7 +51,7 @@ router.get('/authorize', async (req: any, res: Response) => {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
     }
 
-    const { owner, ...appData } = dbApplications[0];
+    const { ...appData } = dbApplications[0];
     const application: any = { 
       ...appData,
       redirect_uris: [],
