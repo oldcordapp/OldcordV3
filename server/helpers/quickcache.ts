@@ -1,11 +1,11 @@
 import { createHash } from 'crypto';
 
-import globalUtils from './globalutils.js';
+import globalUtils from './globalutils.ts';
 
 const quickcache = {
   cacheStore: new Map(),
   requestLock: new Map(),
-  getCacheKey(req, shared) {
+  getCacheKey(req: any, shared: boolean): string | null {
     if (!req.headers['authorization'] && !shared) {
       return null;
     }
@@ -23,8 +23,8 @@ const quickcache = {
 
     return hash;
   },
-  cacheFor(ttl, shared = false) {
-    return function (req, res, next) {
+  cacheFor(ttl: number, shared = false) {
+    return function (req: any, res: any, next: any) {
       if (
         req.method !== 'GET' ||
         req.headers['cache-control'] === 'no-cache' ||

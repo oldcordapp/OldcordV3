@@ -4,6 +4,15 @@ import cluster from 'cluster';
 const EPOCH = 1420070400000n;
 const snowflakeInstance = new SapphireSnowflake(EPOCH);
 
+export interface DeconstructedSnowflake {
+  timestamp: number;
+  workerID: number;
+  processID: number;
+  increment: number;
+  binary: string;
+  date: Date;
+};
+
 class Snowflake {
   static processId = BigInt(process.pid % 31);
   static workerId = BigInt((cluster.worker?.id || 0) % 31);
@@ -12,7 +21,7 @@ class Snowflake {
     throw new Error(`The ${this.constructor.name} class may not be instantiated.`);
   }
 
-  static generate() {
+  static generate(): string {
     return snowflakeInstance
       .generate({
         processId: Snowflake.processId,
@@ -21,28 +30,23 @@ class Snowflake {
       .toString();
   }
 
-  static deconstruct(snowflake) {
+  static deconstruct(snowflake: string): DeconstructedSnowflake {
     const deconstructed = snowflakeInstance.deconstruct(snowflake);
+    const timestampNum = Number(deconstructed.timestamp);
 
-    const res = {
+    const res: DeconstructedSnowflake = {
       timestamp: Number(deconstructed.timestamp),
       workerID: Number(deconstructed.workerId),
       processID: Number(deconstructed.processId),
       increment: Number(deconstructed.increment),
       binary: BigInt(snowflake).toString(2).padStart(64, '0'),
+      date: new Date(timestampNum)
     };
-
-    Object.defineProperty(res, 'date', {
-      get: function get() {
-        return new Date(this.timestamp);
-      },
-      enumerable: true,
-    });
 
     return res;
   }
 
-  static isValid(snowflake, maxAge = null) {
+  static isValid(snowflake: string, maxAge: any = null): boolean {
     if (!/^\d+$/.test(snowflake)) return false;
     if (snowflake.length < 11) return false;
 

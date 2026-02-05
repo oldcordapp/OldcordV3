@@ -1,0 +1,377 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model InstanceInfo {
+  version Float @id
+
+  @@map("instance_info")
+}
+
+model User {
+  id                String           @id
+  username          String?
+  discriminator     String?
+  email             String?          @unique
+  password          String?
+  token             String?          @unique
+  verified          Boolean?         @default(false)
+  claimed           Boolean?         @default(true)
+  mfa_enabled       Boolean?         @default(false)
+  mfa_secret        String?
+  premium           Boolean?         @default(true)
+  created_at        String?
+  avatar            String?
+  bot               Boolean?         @default(false)
+  flags             Int?             @default(0)
+  registration_ip   String?
+  email_token       String?
+  last_login_ip     String?
+  private_channels  Json?            @default("[]")
+  settings          Json?            @default("{\"show_current_game\":false,\"inline_attachment_media\":true,\"inline_embed_media\":true,\"render_embeds\":true,\"render_reactions\":true,\"sync\":true,\"theme\":\"dark\",\"enable_tts_command\":true,\"message_display_compact\":false,\"locale\":\"en-US\",\"convert_emoticons\":true,\"restricted_guilds\":[],\"allow_email_friend_request\":false,\"friend_source_flags\":{\"all\":true},\"developer_mode\":true,\"guild_positions\":[],\"detect_platform_accounts\":false,\"status\":\"online\"}")
+  guild_settings    Json?            @default("[]")
+  disabled_until    String?
+  disabled_reason   String?
+  staff             Staff?
+  mfa_login_tickets MfaLoginTicket[]
+  members           Member[]
+  applications      Application[]
+  channel           Channel?         @relation(fields: [channelId], references: [id])
+  channelId         String?
+
+  @@map("users")
+}
+
+model Relationship {
+  user_id_1 String?
+  type      Int?
+  user_id_2 String?
+
+  @@map("relationships")
+  @@ignore
+}
+
+model UserNote {
+  author_id String?
+  user_id   String?
+  note      String?
+
+  @@map("user_notes")
+  @@ignore
+}
+
+model GuildSubscription {
+  guild_id        String?
+  user_id         String?
+  subscription_id String?
+  ended           Boolean? @default(false)
+
+  @@map("guild_subscriptions")
+  @@ignore
+}
+
+model DmChannel {
+  id    String @id
+  user1 String?
+  user2 String?
+
+  @@map("dm_channels")
+}
+
+model GroupChannel {
+  id         String?
+  icon       String?
+  name       String?
+  owner_id   String?
+  recipients Json?   @default("[]")
+
+  @@map("group_channels")
+  @@ignore
+}
+
+model Staff {
+  user_id   String @id
+  privilege Int?   @default(1)
+  audit_log Json?  @default("[]")
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("staff")
+}
+
+model ConnectedAccount {
+  user_id      String?
+  account_id   String?
+  username     String?
+  visibility   Boolean? @default(false)
+  friendSync   Boolean? @default(true)
+  integrations Json?    @default("[]")
+  revoked      Boolean? @default(false)
+  connected_at String?
+  platform     String?
+
+  @@map("connected_accounts")
+  @@ignore
+}
+
+model Channel {
+  id                    String   @id
+  type                  Int?     @default(0)
+  guild_id              String?
+  parent_id             String?
+  topic                 String?
+  last_message_id       String?  @default("0")
+  permission_overwrites Json?    @default("[]")
+  name                  String?
+  nsfw                  Boolean? @default(false)
+  rate_limit_per_user   Int?     @default(0)
+  user_limit            Int?     @default(0)
+  bitrate               Int?     @default(64000)
+  position              Int?     @default(0)
+  guild                 Guild?   @relation(fields: [guild_id], references: [id])
+  recipients            User[]
+
+  @@map("channels")
+}
+
+model Permission {
+  channel_id String?
+  overwrite  String?
+
+  @@map("permissions")
+  @@ignore
+}
+
+model Guild {
+  id                            String    @id
+  name                          String?
+  icon                          String?
+  splash                        String?
+  banner                        String?
+  region                        String?
+  owner_id                      String?
+  afk_channel_id                String?
+  system_channel_id             String?
+  afk_timeout                   Int?      @default(300)
+  creation_date                 String?
+  exclusions                    Json?     @default("[]")
+  custom_emojis                 Json?     @default("[]")
+  webhooks                      Json?     @default("[]")
+  features                      Json?     @default("[]")
+  vanity_url                    String?
+  default_message_notifications Int?      @default(0)
+  verification_level            Int?      @default(0)
+  explicit_content_filter       Int?      @default(0)
+  premium_tier                  Int?      @default(0)
+  premium_subscription_count    Int?      @default(0)
+  premium_progress_bar_enabled  Boolean?  @default(false)
+  invites                       Invite[]
+  channels                      Channel[]
+  members                       Member[]
+  roles                         Role[]
+
+  @@map("guilds")
+}
+
+model Application {
+  id          String  @id
+  owner_id    String?
+  name        String? @default("My Application")
+  icon        String?
+  secret      String?
+  description String?
+  owner       User?   @relation(fields: [owner_id], references: [id])
+  bot         Bot?    @relation(fields: [botId], references: [id])
+  botId       String?
+
+  @@map("applications")
+}
+
+model Bot {
+  id                 String        @id
+  application_id     String?
+  username           String?
+  discriminator      String?
+  avatar             String?
+  public             Boolean?      @default(true)
+  require_code_grant Boolean?      @default(false)
+  token              String?
+  applications       Application[]
+
+  @@map("bots")
+}
+
+model Role {
+  role_id     String  @id
+  guild_id    String
+  name        String
+  hoist       Boolean @default(false)
+  color       Int     @default(0)
+  mentionable Boolean @default(false)
+  permissions Int     @default(104193089)
+  position    Int     @default(0)
+
+  guild Guild @relation(fields: [guild_id], references: [id])
+
+  @@map("roles")
+}
+
+model Member {
+  guild_id  String
+  user_id   String
+  nick      String?
+  roles     Json    @default("[]")
+  joined_at String
+  deaf      Boolean @default(false)
+  mute      Boolean @default(false)
+
+  user  User  @relation(fields: [user_id], references: [id])
+  guild Guild @relation(fields: [guild_id], references: [id])
+
+  @@id([guild_id, user_id])
+  @@map("members")
+}
+
+model Invite {
+  code       String   @id
+  guild_id   String?
+  channel_id String?
+  temporary  Boolean? @default(false)
+  revoked    Boolean? @default(false)
+  inviter_id String?
+  uses       Int?     @default(0)
+  maxUses    Int?     @default(0)
+  maxAge     Int?     @default(0)
+  xkcdpass   Boolean? @default(false)
+  createdAt  String?
+  guild      Guild?   @relation(fields: [guild_id], references: [id])
+
+  @@map("invites")
+}
+
+model Message {
+  message_id       String   @id
+  type             Int?     @default(0)
+  guild_id         String?
+  channel_id       String?
+  author_id        String?
+  content          String?
+  edited_timestamp String?
+  mention_everyone Boolean? @default(false)
+  nonce            String?
+  timestamp        String?
+  tts              Boolean? @default(false)
+  embeds           Json?    @default("[]")
+  reactions        Json?    @default("[]")
+  mentions         Json?    @default("[]")
+  pinned           Boolean? @default(false)
+  overrides        String?
+
+  @@map("messages")
+}
+
+model Acknowledgement {
+  user_id            String
+  channel_id         String
+  message_id         String?
+  timestamp          String?
+  mention_count      Int?    @default(0)
+  last_pin_timestamp String? @default("0")
+
+  @@id([user_id, channel_id])
+  @@map("acknowledgements")
+}
+
+model Attachment {
+  attachment_id String?
+  message_id    String?
+  filename      String?
+  height        Int?
+  width         Int?
+  size          Int?
+  url           String?
+
+  @@map("attachments")
+  @@ignore
+}
+
+model Widget {
+  guild_id   String?
+  channel_id String?
+  enabled    Boolean? @default(false)
+
+  @@map("widgets")
+  @@ignore
+}
+
+model Ban {
+  guild_id String?
+  user_id  String?
+
+  @@map("bans")
+  @@ignore
+}
+
+model Webhook {
+  guild_id   String?
+  channel_id String?
+  id         String  @id
+  token      String?
+  avatar     String?
+  name       String? @default("Captain Hook")
+  creator_id String?
+
+  @@map("webhooks")
+}
+
+model WebhookOverride {
+  id          String?
+  override_id String  @id
+  avatar_url  String?
+  username    String?
+
+  @@map("webhook_overrides")
+}
+
+model AuditLog {
+  id          String  @id
+  guild_id    String?
+  action_type Int?
+  target_id   String?
+  user_id     String?
+  changes     Json?
+
+  @@map("audit_logs")
+}
+
+model InstanceReport {
+  id            String    @id
+  problem       String?
+  subject       String?
+  description   String?
+  email_address String?
+  action        String?   @default("PENDING")
+  created_at    DateTime? @default(now())
+
+  @@map("instance_reports")
+}
+
+model MfaLoginTicket {
+  user_id    String
+  mfa_ticket String @id
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("mfa_login_tickets")
+}

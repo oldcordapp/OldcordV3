@@ -1,10 +1,8 @@
 import ytdl_core from '@distube/ytdl-core';
 const { getInfo } = ytdl_core;
 import { load } from 'cheerio';
-import path from 'fs';
 import { Jimp } from 'jimp';
 
-import globalUtils from './globalutils.js';
 import { logText } from './logger.ts';
 
 const hexToDecimal = (hex) => {
@@ -16,10 +14,10 @@ const hexToDecimal = (hex) => {
 };
 
 const embedder = {
-  embed_cache: [],
-  getEmbedInfo: async (url) => {
+  embed_cache: [] as any,
+  getEmbedInfo: async (url: string): Promise<any> => {
     try {
-      const content = await fetch(url, {
+      const content: any = await fetch(url, {
         headers: {
           'User-Agent': 'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)',
         },
@@ -54,8 +52,8 @@ const embedder = {
         };
       }
 
-      const text = await content.text();
-      const $ = load(text);
+      const text: string = await content.text();
+      const $: any = load(text);
       const videoUrl =
         $('meta[property="og:video"]').attr('content') ||
         $('meta[property="twitter:player:stream"]').attr('content');
@@ -88,7 +86,7 @@ const embedder = {
       const color = themeColor ? hexToDecimal(themeColor) : 7506394;
       const title = ogTitle || $('title').text() || '';
 
-      const embedObj = {
+      const embedObj: any = {
         color: color,
         title: title,
         description: description,
@@ -146,7 +144,7 @@ const embedder = {
       return null;
     }
   },
-  embedAttachedVideo: (url, thumbnail_url, width, height) => {
+  embedAttachedVideo: (url: string, thumbnail_url: string, width: number, height: number): any => {
     const videoFilename = url.split('/').pop();
     const thumbFilename = thumbnail_url.split('/').pop();
     const attachmentVideoUrl = `attachment://${videoFilename}`;
@@ -171,7 +169,7 @@ const embedder = {
       },
     };
   },
-  embedYouTube: async (url) => {
+  embedYouTube: async (url: string): Promise<any> => {
     try {
       const info = await getInfo(url);
       const videoDetails = info.videoDetails;
@@ -221,8 +219,8 @@ const embedder = {
       return {}; //Return {} if ytdl core thinks you're a bot so it doesn't break messaging.
     }
   },
-  generateMsgEmbeds: async (content, attachments, force) => {
-    const ret = [];
+  generateMsgEmbeds: async (content: any, attachments: any, force: boolean): Promise<any> => {
+    const ret: any = [];
 
     if (attachments && Array.isArray(attachments)) {
       for (const attachment of attachments) {
@@ -252,7 +250,7 @@ const embedder = {
     }
 
     for (var url of urls) {
-      const checkCache = embedder.embed_cache.find((x) => x.url == url);
+      const checkCache: any = embedder.embed_cache.find((x: any) => x.url == url);
 
       if (checkCache && !force) {
         ret.push(checkCache.embed);
@@ -260,7 +258,7 @@ const embedder = {
         continue;
       }
 
-      let embed = {};
+      let embed: any = {};
 
       if (url.includes('youtube.com/watch?v=') || url.includes('youtu.be/')) {
         embed = await embedder.embedYouTube(url);

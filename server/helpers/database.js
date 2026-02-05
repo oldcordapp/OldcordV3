@@ -4,7 +4,6 @@ import { promises as fsPromises } from 'fs';
 import { join } from 'path';
 import { Pool } from 'pg';
 import { totp } from 'speakeasy';
-
 import md5 from '../helpers/md5.ts';
 import { dispatchEventInChannel, dispatchEventInGuild } from './dispatcher.js';
 import { generateMsgEmbeds } from './embedder.js';
@@ -1035,18 +1034,24 @@ const database = {
       //#endregion
 
       await database.runQuery(
-        `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
-                SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
-                WHERE NOT EXISTS (SELECT 1 FROM channels WHERE id = $1)`,
+        `WITH fake_guild AS (
+          INSERT INTO guilds (id, name)
+          VALUES ($3, 'Overridden Guild')
+          ON CONFLICT (id) DO NOTHING
+          RETURNING id
+        )
+        INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
+        SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
+        WHERE NOT EXISTS (SELECT 1 FROM channels WHERE id = $1)`,
         [
           '643945264868098049',
           0,
           '643945264868098049',
+          null,
           '[OVERRIDENTOPIC]',
-          null,
           '0',
-          null,
-          'please-read-me',
+          [],
+          'please-read-me', 
           0,
         ],
       );

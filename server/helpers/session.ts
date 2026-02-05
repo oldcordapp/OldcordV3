@@ -1,12 +1,13 @@
 import { constants, deflateSync } from 'zlib';
 
-import dispatcher from './dispatcher.js';
-import globalUtils from './globalutils.js';
-import Intents from './intents.js';
-import lazyRequest from './lazyRequest.js';
+import dispatcher from './dispatcher.ts';
+import globalUtils from './globalutils.ts';
+import Intents from './intents.ts';
+import lazyRequest from './lazyRequest.ts';
 import { logText } from './logger.ts';
+import { prisma } from '../prisma.ts';
 
-let erlpack = null;
+let erlpack: any = null;
 
 try {
   const erlpackModule = await import('erlpack');
@@ -22,53 +23,75 @@ const BUFFER_LIMIT = 500; //max dispatch event backlog before terminating?
 const SESSION_TIMEOUT = 10 * 1000; //10 seconds brooo
 
 class session {
+  private id: string;
+  private socket: any;
+  private user: any;
+  private ready: boolean;
+  private presence: any;
+  private type: string;
+  private dead: boolean;
+  private ratelimited: boolean;
+  private guilds: any[];
+  private unavailable_guilds: any[];
+  private presences: any[];
+  private read_states: any[];
+  private relationships: any[];
+  private guildCache: any;
+  private apiVersion: number;
+  private application: any;
+  private timeout: any;
+
+  public lastMessage: number;
+  public seq: number;
+  public eventsBuffer: any[];
+
   constructor(
-    id,
-    socket,
-    user,
-    token,
-    ready,
-    presence,
-    guild_id = 0,
-    channel_id = 0,
+    id: string,
+    socket: any,
+    user: any,
+    _token: string,
+    ready: boolean,
+    presence: any,
+    _guild_id = 0,
+    _channel_id = 0,
     type = 'gateway',
     apiVersion = 3,
-    capabilities,
+    _capabilities: any,
   ) {
     this.id = id;
     this.socket = socket;
-    this.token = token;
+    //this.token = token;
     this.user = user && (({ password, token, ...rest }) => rest)(user);
     this.seq = 0;
-    this.time = Date.now();
+    //this.time = Date.now();
     this.ready = ready;
     this.presence = presence;
     this.type = type ?? 'gateway'; //or voice
     this.dead = false;
     this.lastMessage = Date.now();
     this.ratelimited = false;
-    this.last_idle = 0;
-    this.channel_id = channel_id;
-    this.guild_id = guild_id;
+    //this.last_idle = 0;
+    //this.channel_id = channel_id;
+    //this.guild_id = guild_id;
     this.eventsBuffer = [];
     this.guilds = [];
     this.unavailable_guilds = [];
     this.presences = [];
     this.read_states = [];
     this.relationships = [];
-    this.subscriptions = {};
-    this.memberListCache = {};
+    //this.subscriptions = {};
+    //this.memberListCache = {};
     this.guildCache = [];
     this.apiVersion = apiVersion;
-    this.capabilities = capabilities; // Either an integer (recent/third party) or a build date (specific build capabilities). We can use it to give builds/capability flag specific JSON object props.
+    //this.capabilities = capabilities; // Either an integer (recent/third party) or a build date (specific build capabilities). We can use it to give builds/capability flag specific JSON object props.
     this.application = null;
   }
-  onClose(code) {
+  onClose(_code: number) {
     this.dead = true;
     this.socket = null;
     this.timeout = setTimeout(this.terminate.bind(this), SESSION_TIMEOUT);
   }
-  async updatePresence(status, game_id = null, save_presence = true, bypass_check = false) {
+  async updatePresence(status: string, game_id = null, save_presence = true, bypass_check = false) {
     if (this.type !== 'gateway') {
       return;
     }
@@ -89,7 +112,14 @@ class session {
       if (status.toLowerCase() != 'offline' && save_presence) {
         this.user.settings.status = status.toLowerCase();
 
-        await global.database.updateSettings(this.user.id, this.user.settings);
+        await prisma.user.update({
+          where: {
+            id: this.user.id
+          },
+          data: {
+            settings: this.user.settings
+          }
+        });
 
         await this.dispatch('USER_SETTINGS_UPDATE', this.user.settings);
 
@@ -99,7 +129,7 @@ class session {
       this.presence.status = status.toLowerCase();
       this.presence.game_id = game_id;
 
-      const broadcastStatus =
+      const broadcastStatus: string =
         status.toLowerCase() === 'invisible' ? 'offline' : status.toLowerCase(); //this works i think
 
       await this.dispatchPresenceUpdate(broadcastStatus);
@@ -186,7 +216,7 @@ class session {
       });
     }
   }
-  async dispatchPresenceUpdate(presenceOverride = null) {
+  async dispatchPresenceUpdate(presenceOverride: any = null) {
     if (this.type !== 'gateway') return;
 
     const presence = this.presence;
@@ -194,7 +224,18 @@ class session {
       presence.status = presenceOverride;
     }
 
-    const current_guilds = await global.database.getUsersGuilds(this.user.id);
+    const current_guilds = await prisma.guild.findMany({
+      where: {
+        members: {
+          some: {
+            user_id: this.user.id
+          }
+        }
+      },
+      include: {
+        members: true
+      }
+    });
 
     this.guilds = current_guilds;
 
@@ -208,7 +249,7 @@ class session {
         activities: [],
         guild_id: guild.id,
         user: globalUtils.miniUserObject(this.user),
-        roles: guild.members.find((x) => x.id === this.user.id)?.roles || [],
+        roles: guild.members.find((x: any) => x.id === this.user.id)?.roles || [],
       };
 
       await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', guildSpecificPresence);
@@ -220,7 +261,18 @@ class session {
       return;
     }
 
-    const current_guilds = await global.database.getUsersGuilds(this.user.id);
+    const current_guilds = await prisma.guild.findMany({
+      where: {
+        members: {
+          some: {
+            user_id: this.user.id
+          }
+        }
+      },
+      include: {
+        members: true
+      }
+    });
 
     this.guilds = current_guilds;
 
@@ -229,7 +281,7 @@ class session {
     for (let i = 0; i < current_guilds.length; i++) {
       const guild = current_guilds[i];
 
-      const our_member = guild.members.find((x) => x.id === this.user.id);
+      const our_member: any = guild.members.find((x: any) => x.id === this.user.id);
 
       if (!our_member) continue;
 
@@ -351,13 +403,24 @@ class session {
       return;
     }
 
-    const merged_members = [];
+    const merged_members: any[] = [];
 
     try {
       const month = this.socket.client_build_date.getMonth();
       const year = this.socket.client_build_date.getFullYear();
 
-      this.guilds = await global.database.getUsersGuilds(this.user.id);
+      this.guilds = await prisma.guild.findMany({
+        where: {
+          members: {
+            some: {
+              user_id: this.user.id
+            }
+          }
+        },
+        include: {
+          members: true
+        }
+      });
 
       if (this.user.bot) {
         for (let guild of this.guilds) {
@@ -369,7 +432,7 @@ class session {
           }; //bots cant get this here idk
         }
       } else {
-        for (let guild of this.guilds) {
+        for (let guild of this.guilds as any) {
           if (guild.unavailable) {
             this.guilds = this.guilds.filter((x) => x.id !== guild.id);
 
@@ -530,10 +593,21 @@ class session {
               continue;
             }
 
-            const getLatestAcknowledgement = await global.database.getLatestAcknowledgement(
-              this.user.id,
-              channel.id,
-            );
+            const ack = await prisma.acknowledgement.findUnique({
+              where: {
+                user_id_channel_id: {
+                  user_id: this.user.id,
+                  channel_id: channel.id,
+                },
+              },
+            });
+
+            const getLatestAcknowledgement = ack ? {
+              id: ack.channel_id,
+              mention_count: ack.mention_count || 0,
+              last_message_id: ack.message_id,
+              last_pin_timestamp: ack.last_pin_timestamp || '0',
+            } : null;
 
             this.read_states.push(
               getLatestAcknowledgement || {
@@ -569,15 +643,45 @@ class session {
         ],
       };
 
-      const chans = this.user.bot
-        ? await database.getBotPrivateChannels(this.user.id)
-        : await database.getPrivateChannels(this.user.id);
-      const filteredDMs = [];
+      let chans: any[] = [];
 
+      if (this.user.bot) {
+        const botDms = await prisma.dmChannel.findMany({
+          where: {
+            OR: [
+              { user1: this.user.id },
+              { user2: this.user.id }
+            ]
+          }
+        });
+
+        chans = botDms.map(dm => dm.id);
+      } else {
+        const result = await prisma.user.findUnique({
+          where: { id: this.user.id },
+          select: { private_channels: true },
+        });
+
+        if (result?.private_channels) {
+          const rawChannels = result.private_channels;
+          chans = typeof rawChannels === 'string'
+            ? JSON.parse(rawChannels)
+            : (rawChannels as any[]);
+        }
+      }
+
+      const filteredDMs: any = [];
       const users = new Set();
 
       for (const chan_id of chans) {
-        let chan = await database.getChannelById(chan_id);
+        let chan = await prisma.channel.findUnique({
+          where: {
+            id: chan_id
+          },
+          include: {
+            recipients: true
+          }
+        });
 
         if (!chan) continue;
 

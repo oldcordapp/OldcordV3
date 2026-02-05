@@ -28,7 +28,7 @@ const permissions = {
   DEAFEN_MEMBERS: 1 << 23,
   MOVE_MEMBERS: 1 << 24,
   USE_VAD: 1 << 25,
-  has(compare, key) {
+  has(compare: string, key: string): boolean {
     try {
       const bitmask = this[key];
 
@@ -39,7 +39,7 @@ const permissions = {
       return false;
     }
   },
-  hasGuildPermissionTo(guild, user_id, key, for_build) {
+  hasGuildPermissionTo(guild: any, user_id: string, key:string, _for_build: string): boolean {
     try {
       if (!guild) return false;
 
@@ -74,7 +74,7 @@ const permissions = {
       return false;
     }
   },
-  hasChannelPermissionTo(channel, guild, user_id, key) {
+  hasChannelPermissionTo(channel: any, guild: any, user_id: string, key: string): boolean {
     try {
       if (!channel || !guild) return false;
       if (guild.owner_id == user_id) return true;
@@ -86,10 +86,10 @@ const permissions = {
       const everyoneRole = guild.roles.find((r) => r.id === guild.id);
       let permissions = BigInt(everyoneRole ? everyoneRole.permissions : 0);
 
-      const memberRoles = [];
+      const memberRoles: any = [];
 
       for (const roleId of member.roles) {
-        const role = guild.roles.find((r) => r.id === roleId);
+        const role: any = guild.roles.find((r) => r.id === roleId);
 
         if (role) {
           memberRoles.push(role);
@@ -113,7 +113,7 @@ const permissions = {
         let roleAllow = BigInt(0);
         let roleDeny = BigInt(0);
 
-        for (const role of memberRoles) {
+        for (const role of memberRoles as any[]) {
           const overwrite = overwrites.find((o) => o.id === role.id);
 
           if (overwrite) {

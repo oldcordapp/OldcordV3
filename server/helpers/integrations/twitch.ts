@@ -1,12 +1,14 @@
-import globalUtils from '../globalutils.js';
+import globalUtils from '../globalutils.ts';
 import { logText } from '../logger.ts';
 const twitchConfig = globalUtils.config.integration_config.find((x) => x.platform == 'twitch');
 
 class Twitch {
-  constructor(code) {
+  private code: string;
+
+  constructor(code: string) {
     this.code = code;
   }
-  async getAccessToken() {
+  async getAccessToken(): Promise<string | null> {
     if (!twitchConfig) return null;
 
     const form = new FormData();
@@ -23,7 +25,7 @@ class Twitch {
     };
 
     try {
-      const response = await (await fetch('https://id.twitch.tv/oauth2/token', options)).json();
+      const response: any = await (await fetch('https://id.twitch.tv/oauth2/token', options)).json();
 
       return response.access_token;
     } catch (error) {
@@ -32,7 +34,7 @@ class Twitch {
       return null;
     }
   }
-  async getUser(access_token) {
+  async getUser(access_token): Promise<any | null> {
     if (!twitchConfig) return null;
 
     const options = {
@@ -43,7 +45,7 @@ class Twitch {
     };
 
     try {
-      const response = await (await fetch('https://api.twitch.tv/helix/users', options)).json();
+      const response: any = await (await fetch('https://api.twitch.tv/helix/users', options)).json();
 
       return response.data[0];
     } catch (error) {

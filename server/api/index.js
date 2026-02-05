@@ -18,7 +18,7 @@ import reports from './reports.js';
 import spacebarPing from "./spacebar-compat/ping.ts";
 import spacebarPolicies from './spacebar-compat/policies.ts';
 import store from './store.js';
-import tutorial from './tutorial.js';
+import tutorial from './tutorial.ts';
 import users from './users/index.js';
 import voice from './voice.ts';
 import webhooks from './webhooks.js';

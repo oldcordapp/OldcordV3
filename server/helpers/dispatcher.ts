@@ -1,8 +1,9 @@
+import { prisma } from '../prisma.ts';
 import { handleMembersSync } from './lazyRequest.js';
 import { logText } from './logger.ts';
 
 const dispatcher = {
-  dispatchEventTo: async (user_id, type, payload) => {
+  dispatchEventTo: async (user_id: string, type: string, payload: any): Promise<boolean> => {
     const sessions = global.userSessions.get(user_id);
 
     if (!sessions || sessions.size === 0) return false;
@@ -10,8 +11,10 @@ const dispatcher = {
     for (let z = 0; z < sessions.length; z++) {
       sessions[z].dispatch(type, payload);
     }
+
+    return true;
   },
-  dispatchLogoutTo: async (user_id) => {
+  dispatchLogoutTo: async (user_id: string): Promise<boolean> => {
     const sessions = global.userSessions.get(user_id);
 
     if (!sessions || sessions.size === 0) return false;
@@ -20,15 +23,17 @@ const dispatcher = {
       sessions[z].socket.close(4004, 'Authentication failed');
       sessions[z].onClose(4004);
     }
+
+    return true;
   },
-  dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis: async (type, payload) => {
-    global.userSessions.forEach((sessions, userId) => {
+  dispatchEventToEveryoneWhatAreYouDoingWhyWouldYouDoThis: async (type: string, payload: any) => {
+    global.userSessions.forEach((sessions: any, _userId: string) => {
       for (let z = 0; z < sessions.length; z++) {
         sessions[z].dispatch(type, payload);
       }
     });
   },
-  dispatchGuildMemberUpdateToAllTheirGuilds: async (user_id, new_user) => {
+  dispatchGuildMemberUpdateToAllTheirGuilds: async (user_id: string, new_user: any): Promise<boolean> => {
     const sessions = global.userSessions.get(user_id);
 
     if (!sessions || sessions.size === 0) return false;
@@ -38,12 +43,23 @@ const dispatcher = {
 
       sessions[z].dispatchSelfUpdate();
     }
+
+    return true;
   },
-  dispatchEventToAllPerms: async (guild_id, channel_id, permission_check, type, payload) => {
-    const guild = await global.database.getGuildById(guild_id);
+  dispatchEventToAllPerms: async (guild_id: string, channel_id: string, permission_check: any, type: string, payload: any): Promise<boolean> => {
+    const guilds = await prisma.guild.findMany({
+      where: {
+        id: guild_id
+      },
+      include: {
+        channels: true,
+        members: true
+      }
+    });
 
-    if (guild == null) return false;
+    if (guilds.length == 0) return false;
 
+    let guild = guilds[0];
     let channel;
 
     if (channel_id) {
@@ -59,18 +75,18 @@ const dispatcher = {
     for (let i = 0; i < members.length; i++) {
       const member = members[i];
 
-      const uSessions = global.userSessions.get(member.id);
+      const uSessions = global.userSessions.get(member.user_id);
 
       if (!uSessions) continue;
 
       for (let z = 0; z < uSessions.length; z++) {
         const uSession = uSessions[z];
 
-        if (guild.owner_id != member.id && uSession && uSession.socket) {
+        if (guild.owner_id != member.user_id && uSession && uSession.socket) {
           //Skip checks if owner
           const guildPermCheck = global.permissions.hasGuildPermissionTo(
             guild,
-            member.id,
+            member.user_id,
             permission_check,
             uSession.socket.client_build,
           );
@@ -81,7 +97,7 @@ const dispatcher = {
             const channelPermCheck = global.permissions.hasChannelPermissionTo(
               channel,
               guild,
-              member.id,
+              member.user_id,
               permission_check,
             );
 
@@ -102,16 +118,16 @@ const dispatcher = {
   },
   //this system is so weird but hey it works - definitely due for a rewrite
   dispatchEventInGuildToThoseSubscribedTo: async (
-    guild,
-    type,
-    payload,
+    guild: any,
+    type: string,
+    payload: any,
     ignorePayload = false,
-    typeOverride = null,
-  ) => {
-    if (!guild?.id) return;
+    typeOverride: any = null,
+  ): Promise<boolean> => {
+    if (!guild?.id) return false;
 
     const activeSessions = Array.from(global.userSessions.values()).flat();
-    const updatePromises = activeSessions.map(async (session) => {
+    const updatePromises = activeSessions.map(async (session: any) => {
       const guildInSession = session.guilds?.find((g) => g.id === guild.id);
       if (!guildInSession) return;
 
@@ -181,7 +197,7 @@ const dispatcher = {
     return true;
   },
   getSessionsInGuild: (guild) => {
-    const sessions = [];
+    const sessions: any = [];
 
     if (!guild || !guild.members) {
       return [];
@@ -192,7 +208,7 @@ const dispatcher = {
 
       if (!member) continue;
 
-      const uSessions = global.userSessions.get(member.id);
+      const uSessions: any = global.userSessions.get(member.id);
 
       if (!uSessions || uSessions.length === 0) continue;
 
@@ -202,9 +218,9 @@ const dispatcher = {
     return sessions;
   },
   getAllActiveSessions: () => {
-    const usessions = [];
+    const usessions: any = [];
 
-    global.userSessions.forEach((sessions, userId) => {
+    global.userSessions.forEach((sessions: any, _userId: string) => {
       for (let z = 0; z < sessions.length; z++) {
         if (sessions[z].dead || sessions[z].terminated) continue;
 
@@ -214,9 +230,9 @@ const dispatcher = {
 
     return usessions;
   },
-  dispatchEventInGuild: async (guild, type, payload) => {
+  dispatchEventInGuild: async (guild: any, type: string, payload: any): Promise<boolean> => {
     if (!guild || !guild.members) {
-      return;
+      return false;
     }
 
     for (let i = 0; i < guild.members.length; i++) {
@@ -260,7 +276,7 @@ const dispatcher = {
 
     return true;
   },
-  dispatchEventInPrivateChannel: async (channel, type, payload) => {
+  dispatchEventInPrivateChannel: async (channel: any, type: string, payload: any): Promise<boolean> => {
     if (channel === null || !channel.recipients) return false;
 
     for (let i = 0; i < channel.recipients.length; i++) {
@@ -279,7 +295,7 @@ const dispatcher = {
 
     return true;
   },
-  dispatchEventInChannel: async (guild, channel_id, type, payload) => {
+  dispatchEventInChannel: async (guild: any, channel_id: string, type: string, payload: any): Promise<boolean> => {
     if (guild === null) return false;
 
     const channel = guild.channels.find((x) => x.id === channel_id);

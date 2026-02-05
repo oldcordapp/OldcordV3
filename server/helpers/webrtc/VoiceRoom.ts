@@ -1,22 +1,27 @@
 class VoiceRoom {
-  constructor(id, type, sfu, router) {
+  private _id: string;
+  private _type: string;
+  private _clients: Map<string, any>;
+  private _router: any;
+  
+  //_sfu is deprecated
+  constructor(id: string, type: string, _sfu: any, router: any) {
     this._id = id;
     this._type = type;
     this._clients = new Map();
-    this._sfu = sfu;
     this._router = router;
   }
 
-  onClientJoin = (client) => {
+  onClientJoin = (client: any) => {
     this._clients.set(client.user_id, client);
   };
 
-  onClientOffer = (client, transport, codecs, rtpHeaders) => {
+  onClientOffer = (client: any, transport: any, codecs: any[], rtpHeaders: any) => {
     client.transport = transport;
     client.codecs = codecs;
     client.headerExtensions = rtpHeaders;
 
-    const supportedCodecs = global.MEDIA_CODECS.map((codec) => {
+    const supportedCodecs = (global as any).MEDIA_CODECS.map((codec: any) => {
       const codecName = codec.mimeType.split('/')[1];
       const alternativePayloadType = codecName === 'opus' ? 111 : 102;
       return {
@@ -30,7 +35,7 @@ class VoiceRoom {
     client.codecCapabilities = supportedCodecs;
   };
 
-  onClientLeave = (client) => {
+  onClientLeave = (client: any) => {
     this._clients.delete(client.user_id);
 
     for (const otherClient of this.clients.values()) {
@@ -64,7 +69,7 @@ class VoiceRoom {
     return this._clients;
   }
 
-  getClientById = (id) => {
+  getClientById = (id: string) => {
     return this._clients.get(id);
   };
 

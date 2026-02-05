@@ -1,18 +1,20 @@
 import { Router } from 'express';
+import type { Response } from "express";
 
 import dispatcher from '../../helpers/dispatcher.js';
 import errors from '../../helpers/errors.js';
-import globalUtils from '../../helpers/globalutils.js';
+import globalUtils from '../../helpers/globalutils.ts';
 import lazyRequest from '../../helpers/lazyRequest.js';
 import { logText } from '../../helpers/logger.ts';
 import applications from './applications.js';
 import tokens from './tokens.ts';
+import { prisma } from '../../prisma.ts';
 
 const router = Router({ mergeParams: true });
 
 router.use('/applications', applications);
 router.use('/tokens', tokens);
-router.get('/authorize', async (req, res) => {
+router.get('/authorize', async (req: any, res: Response) => {
   try {
     const account = req.account;
 
@@ -37,44 +39,47 @@ router.get('/authorize', async (req, res) => {
       }); // citation 2
     }
 
-    const return_obj = {
+    let return_obj: any = {
       authorized: false,
     };
 
-    const application = await global.database.getApplicationById(client_id);
+    const dbApplications = await prisma.application.findMany({
+      where: { id: client_id }
+    });
 
-    if (!application) {
+    if (dbApplications.length === 0) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
     }
 
+    const { owner, ...appData } = dbApplications[0];
+    const application: any = { 
+      ...appData,
+      redirect_uris: [],
+      rpc_application_state: 0,
+      rpc_origins: []
+    };
+
     if (scope.includes('bot')) {
-      const bot = await global.database.getBotByApplicationId(application.id);
+      const bots = await prisma.bot.findMany({
+        where: { application_id: application.id }
+      });
 
-      if (!bot) {
+      if (bots.length === 0) {
         return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
       }
 
-      if (!bot.public && application.owner.id != account.id) {
+      const rawBot = bots[0];
+
+      if (!rawBot.public && application.owner_id != account.id) {
         return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
       }
 
-      const is_public = bot.public;
-      const requires_code_grant = bot.require_code_grant;
+      const { public: is_public, require_code_grant: requires_code_grant, token, ...botData } = rawBot;
 
-      delete bot.public;
-      delete bot.require_code_grant;
-      delete bot.token;
-
-      application.bot = bot;
+      application.bot = botData; 
       application.bot_public = is_public;
       application.bot_require_code_grant = requires_code_grant;
     }
-
-    delete application.redirect_uris;
-    delete application.rpc_application_state;
-    delete application.rpc_origins;
-    delete application.secret;
-    delete application.owner; //to-do this somewhere else
 
     return_obj.application = application;
 
@@ -83,12 +88,11 @@ router.get('/authorize', async (req, res) => {
     }
 
     return_obj.redirect_uri = null;
-
     return_obj.user = globalUtils.miniUserObject(account);
 
     const guilds = await global.database.getUsersGuilds(account.id);
 
-    const guilds_array = [];
+    const guilds_array: any = [];
 
     if (guilds.length > 0) {
       for (var guild of guilds) {
@@ -122,7 +126,7 @@ router.get('/authorize', async (req, res) => {
   }
 });
 
-router.post('/authorize', async (req, res) => {
+router.post('/authorize', async (req: any, res: any) => {
   try {
     const account = req.account;
 
@@ -130,9 +134,10 @@ router.post('/authorize', async (req, res) => {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
-    const client_id = req.query.client_id;
-    const scope = req.query.scope;
-    let permissions = parseInt(req.query.permissions);
+    const client_id = req.query.client_id as string;
+    const scope = req.query.scope as string;
+
+    let permissions = parseInt(String(req.query.permissions || '0'));
 
     if (!client_id) {
       return res.status(400).json({
@@ -152,37 +157,50 @@ router.post('/authorize', async (req, res) => {
       permissions = 0;
     }
 
-    const application = await global.database.getApplicationById(client_id);
+    const dbApplications = await prisma.application.findMany({
+      where: {
+        id: client_id
+      }
+    });
 
-    if (!application) {
+    if (dbApplications.length == 0) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
     }
 
+    let application: any = dbApplications[0];
     let guild_id = null;
 
     if (scope === 'bot') {
       guild_id = req.body.bot_guild_id || req.body.guild_id;
 
-      const bot = await global.database.getBotByApplicationId(application.id);
+      const bots = await prisma.bot.findMany({
+        where: { application_id: application.id }
+      });
 
-      if (!bot) {
+      if (bots.length === 0) {
         return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
       }
 
-      if (!bot.public && application.owner.id != account.id) {
+      const bot = bots[0];
+
+      if (!bot.public && application.owner_id != account.id) {
         return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
       }
 
       application.bot = bot;
     }
 
-    const guilds = await global.database.getUsersGuilds(account.id);
+    const guilds = await prisma.guild.findMany({
+      where: {
+        id: guild_id!
+      }
+    });
 
-    if (!guilds || guild_id === null) {
+    if (guilds.length == 0) {
       return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
     }
 
-    const guild = guilds.find((x) => x.id === guild_id);
+    const guild: any = guilds.find((x) => x.id === guild_id);
 
     if (!guild) {
       return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
@@ -209,17 +227,32 @@ router.post('/authorize', async (req, res) => {
       global.permissions.hasGuildPermissionTo(guild, account.id, 'MANAGE_GUILD', null);
 
     if (hasPermission) {
-      const isBanned = await database.isBannedFromGuild(guild.id, application.bot.id);
+      const banRows: any[] = await prisma.$queryRaw`
+        SELECT user_id 
+        FROM bans 
+        WHERE user_id = ${application.bot.id} 
+          AND guild_id = ${guild.id} 
+        LIMIT 1
+      `;
 
-      if (isBanned) {
+      if (banRows.length > 0) {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
       }
 
       try {
-        await global.database.joinGuild(application.bot.id, guild);
+        await prisma.member.create({
+          data: {
+            user_id: application.bot.id,
+            guild_id: guild.id,
+            joined_at: new Date().toISOString(),
+            roles: [],
+            nick: null,
+            deaf: false,
+            mute: false
+          }
+        });
 
         await dispatcher.dispatchEventTo(application.bot.id, 'GUILD_CREATE', guild);
-
         await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
           roles: [],
           user: globalUtils.miniBotObject(application.bot),

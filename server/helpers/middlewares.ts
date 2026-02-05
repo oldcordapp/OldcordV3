@@ -1,10 +1,12 @@
 import rateLimit from 'express-rate-limit';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
-import errors from './errors.js';
-import globalUtils from './globalutils.js';
+import errors from './errors.ts';
+import globalUtils from './globalutils.ts';
 import { logText } from './logger.ts';
 import { getTimestamps } from './wayback.ts';
+import type { NextFunction } from 'express';
+import { prisma } from '../prisma.ts';
 
 const config = globalUtils.config;
 
@@ -12,7 +14,7 @@ const spacebarApis = ['/.well-known/spacebar', '/policies/instance/domains'];
 
 const cached404s = {};
 
-function corsMiddleware(req, res, next) {
+function corsMiddleware(req: any, res: any, next: any) {
   // Stolen from spacebar because of allowing fermi/flicker support
   res.set('Access-Control-Allow-Credentials', 'true');
   res.set('Access-Control-Allow-Headers', req.header('Access-Control-Request-Headers') || '*');
@@ -29,7 +31,7 @@ function corsMiddleware(req, res, next) {
   next();
 }
 
-function apiVersionMiddleware(req, _, next) {
+function apiVersionMiddleware(req: any, _, next: any) {
   const versionRegex = /^\/v(\d+)/;
   const match = req.path.match(versionRegex);
 
@@ -47,7 +49,7 @@ function apiVersionMiddleware(req, _, next) {
   next();
 }
 
-async function clientMiddleware(req, res, next) {
+async function clientMiddleware(req: any, res: any, next: any) {
   try {
     if (spacebarApis.includes(req.path)) return next();
 
@@ -122,11 +124,11 @@ async function clientMiddleware(req, res, next) {
   }
 }
 
-function rateLimitMiddleware(max, windowMs, ignore_trusted = true) {
+function rateLimitMiddleware(max: number, windowMs: number, ignore_trusted = true) {
   const rL = rateLimit({
     windowMs: windowMs,
     max: max,
-    handler: (req, res, next) => {
+    handler: (req: any, res: any, next: NextFunction) => {
       if (!config.ratelimit_config.enabled) {
         return next();
       }
@@ -145,7 +147,7 @@ function rateLimitMiddleware(max, windowMs, ignore_trusted = true) {
     },
   });
 
-  return function (req, res, next) {
+  return function (req: any, res: any, next: any) {
     rL(req, res, (err) => {
       if (err) return next(err);
       next();
@@ -153,7 +155,7 @@ function rateLimitMiddleware(max, windowMs, ignore_trusted = true) {
   };
 }
 
-async function assetsMiddleware(req, res) {
+async function assetsMiddleware(req: any, res: any) {
   try {
     globalUtils.addClientCapabilities(req.cookies['release_date'], req);
 
@@ -188,7 +190,7 @@ async function assetsMiddleware(req, res) {
       let snapshot_url = `https://cdn.oldcordapp.com/assets/${req.params.asset}`; //try download from oldcord cdn first
 
       if (doWayback) {
-        let timestamps = await getTimestamps(`https://discordapp.com/assets/${req.params.asset}`);
+        let timestamps: any = await getTimestamps(`https://discordapp.com/assets/${req.params.asset}`);
 
         if (
           timestamps == null ||
@@ -324,19 +326,28 @@ async function authMiddleware(req, res, next) {
       return res.status(404).json(errors.response_404.NOT_FOUND); //discord's old api used to just return this if you tried it unauthenticated. so i guess, return that too?
     }
 
-    const account = await global.database.getAccountByToken(token);
+    const accounts = await prisma.user.findMany({
+      where: {
+        token: token
+      },
+      include: {
+        staff: true
+      }
+    });
 
-    if (!account) {
+    if (accounts.length === 0) {
       return res.status(401).json(errors.response_401.UNAUTHORIZED);
     }
 
-    if (account.disabled_until != null) {
+    let account = accounts[0];
+
+    if (account.disabled_until) {
       req.cannot_pass = true;
     }
 
-    const staffDetails = await global.database.getStaffDetails(account.id);
+    const staffDetails = account.staff;
 
-    if (staffDetails != null) {
+    if (staffDetails) {
       req.is_staff = true;
       req.staff_details = staffDetails;
     }
@@ -441,7 +452,18 @@ async function userMiddleware(req, res, next) {
     return next();
   }
 
-  const guilds = await global.database.getUsersGuilds(user.id);
+  const guilds = await prisma.guild.findMany({
+    where: {
+      members: {
+        some: {
+          user_id: user.id
+        }
+      }
+    },
+    include: {
+      members: true 
+    }
+  });
 
   if (guilds.length == 0) {
     return res.status(404).json(errors.response_404.UNKNOWN_USER);
@@ -452,7 +474,7 @@ async function userMiddleware(req, res, next) {
       guild &&
       guild.members &&
       guild.members.length > 0 &&
-      guild.members.some((member) => member.id === account.id),
+      guild.members.some((member: any) => member.id === account.id),
   );
 
   if (!share) {
@@ -486,7 +508,9 @@ async function channelMiddleware(req, res, next) {
   if (!req.guild && channel.id.includes('12792182114301050')) return next();
 
   if (!req.guild) {
-    req.guild = await global.database.getGuildById(req.params.guildid); //hate this also
+    req.guild = await prisma.guild.findUnique({
+      where: { id: req.params.guildid }
+    });
   }
 
   if (req.is_staff) {
@@ -620,7 +644,11 @@ function channelPermissionsMiddleware(permission) {
 
           //Need a complete user object for the relationships
           const otherID = channel.recipients[channel.recipients[0].id == sender.id ? 1 : 0].id;
-          const other = await global.database.getAccountByUserId(otherID);
+          const other = await prisma.user.findUnique({
+            where: {
+              id: otherID
+            }
+          });
 
           if (!other) {
             return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
@@ -628,19 +656,30 @@ function channelPermissionsMiddleware(permission) {
 
           const friends = !sender.bot && !other.bot && globalUtils.areWeFriends(sender, other);
 
-          const guilds = await global.database.getUsersGuilds(other.id);
+          const guilds = await prisma.guild.findMany({
+            where: {
+              members: {
+                some: {
+                  user_id: other.id
+                }
+              }
+            },
+            include: {
+              members: true 
+            }
+          });
 
           const sharedGuilds = guilds.filter(
             (guild) =>
               guild.members != null &&
               guild.members.length > 0 &&
-              guild.members.some((member) => member.id === sender.id),
+              guild.members.some((member: any) => member.id === sender.id),
           );
 
           if (!friends) {
             const hasAllowedGuild = sharedGuilds.some((guild) => {
               const senderAllows = !sender.settings.restricted_guilds.includes(guild.id);
-              const recipientAllows = !other.settings.restricted_guilds.includes(guild.id);
+              const recipientAllows = !(other.settings! as any).restricted_guilds.includes(guild.id);
 
               return senderAllows && recipientAllows;
             });

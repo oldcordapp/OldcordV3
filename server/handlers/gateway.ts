@@ -1,6 +1,7 @@
-import dispatcher from '../helpers/dispatcher.js';
-import globalUtils from '../helpers/globalutils.js';
-import lazyRequest from '../helpers/lazyRequest.js';
+import { prisma } from '../prisma.ts';
+import dispatcher from '../helpers/dispatcher.ts';
+import globalUtils from '../helpers/globalutils.ts';
+import lazyRequest from '../helpers/lazyRequest.ts';
 import session from '../helpers/session.js';
 
 const OPCODES = {
@@ -16,7 +17,7 @@ const OPCODES = {
   MEMBERCHUNKS: 14,
 };
 
-async function handleIdentify(socket, packet) {
+async function handleIdentify(socket: any, packet: any) {
   if (socket.identified || socket.session) {
     return socket.close(4005, 'You have already identified.');
   }
@@ -25,7 +26,11 @@ async function handleIdentify(socket, packet) {
 
   socket.identified = true;
 
-  const user = await global.database.getAccountByToken(packet.d.token);
+  const user = await prisma.user.findUnique({
+    where: {
+      token: packet.d.token
+    }
+  });
 
   if (user == null || user.disabled_until) {
     return socket.close(4004, 'Authentication failed');
@@ -46,7 +51,7 @@ async function handleIdentify(socket, packet) {
       status: 'online',
     };
   } else {
-    savedStatus = user.settings?.status || 'online';
+    savedStatus = (user.settings as any).status || 'online';
   }
 
   socket.user = user;
@@ -86,20 +91,20 @@ async function handleIdentify(socket, packet) {
   await socket.session.updatePresence(finalStatus, null, false, true);
 }
 
-async function handleHeartbeat(socket, packet) {
+async function handleHeartbeat(socket: any, packet: any) {
   if (!socket.hb) return;
 
   socket.hb.reset();
   socket.hb.acknowledge(packet.d);
 }
 
-async function handlePresence(socket, packet) {
+async function handlePresence(socket: any, packet: any) {
   if (!socket.session) return socket.close(4003, 'Not authenticated');
 
   await global.gateway.syncPresence(socket, packet);
 }
 
-async function handleVoiceState(socket, packet) {
+async function handleVoiceState(socket: any, packet: any) {
   if (!socket.session) return socket.close(4003, 'Not authenticated');
 
   const guild_id = packet.d.guild_id;
@@ -141,7 +146,11 @@ async function handleVoiceState(socket, packet) {
   socket.session.self_deafened = self_deaf;
 
   if (!socket.current_guild) {
-    socket.current_guild = await global.database.getGuildById(guild_id);
+    socket.current_guild = await prisma.guild.findUnique({
+      where: {
+        id: guild_id
+      }
+    });
   }
 
   if (socket.session.channel_id != 0 && socket.current_guild) {
@@ -227,7 +236,7 @@ async function handleVoiceState(socket, packet) {
   }
 }
 
-async function handleOp12GetGuildMembersAndPresences(socket, packet) {
+async function handleOp12GetGuildMembersAndPresences(socket: any, packet: any) {
   if (!socket.session) return;
 
   const guild_ids = packet.d;
@@ -255,14 +264,14 @@ async function handleOp12GetGuildMembersAndPresences(socket, packet) {
   }
 }
 
-async function handleOp14GetGuildMemberChunks(socket, packet) {
+async function handleOp14GetGuildMemberChunks(socket: any, packet: any) {
   //This new rewritten code was mainly inspired by spacebar if you couldn't tell since their OP 14 is more stable than ours at the moment.
   //TO-DO: add support for shit like INSERT and whatnot (hell)
 
   await lazyRequest.fire(socket, packet);
 }
 
-async function handleResume(socket, packet) {
+async function handleResume(socket: any, packet: any) {
   const token = packet.d.token;
   const session_id = packet.d.session_id;
 
@@ -272,7 +281,11 @@ async function handleResume(socket, packet) {
 
   socket.resumed = true;
 
-  const user2 = await global.database.getAccountByToken(token);
+  const user2 = await prisma.user.findUnique({
+    where: {
+      token: token
+    }
+  });
 
   if (!user2) {
     return socket.close(4004, 'Authentication failed');
@@ -310,7 +323,7 @@ async function handleResume(socket, packet) {
     socket.session = sesh;
   }
 
-  let sesh = null;
+  let sesh: any = null;
 
   if (!session2) {
     sesh = socket.session;

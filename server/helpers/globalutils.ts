@@ -4,6 +4,8 @@ import { existsSync, readFileSync } from 'fs';
 import encode from './base64url.js';
 import dispatcher from './dispatcher.js';
 import { logText } from './logger.ts';
+import { deconstruct, generate } from './snowflake.js';
+import { prisma } from "../prisma.ts";
 
 const configPath = './config.json';
 
@@ -14,32 +16,93 @@ if (!existsSync(configPath)) {
   process.exit(1);
 }
 
-const _config = JSON.parse(readFileSync(configPath, 'utf8'));
+const _config: any = JSON.parse(readFileSync(configPath, 'utf8'));
 
 const globalUtils = {
   config: _config,
-  badEmails: null,
+  badEmails: new Set(),
   nonStandardPort: _config.includePortInUrl
     ? _config.secure
       ? _config.port != 443
       : _config.port != 80
     : false,
-  generateSsrc() {
+  generateSsrc(): number {
     return randomBytes(4).readUInt32BE(0);
   },
-  generateGatewayURL: (req) => {
+  createSystemMessage: async (guild_id: string, channel_id: string, type: number, props: any = []) => {
+    //type 1 needs a different body for it to work, look into that later
+
+    /*
+        Msg type 
+            0 - default
+            1 - recipient add to group (GROUP DM RELATED)
+            2 - recipient removed from group (GROUP DM RELATED)
+            3 - call (DM / GROUP DM RELATED)
+            4 - channel name change (GROUP DM RELATED)
+            5 - channel icon change (GROUP DM RELATED)
+            6 - pins add (SERVER)
+            7 - guild member join (SERVER)
+        */
+    try {
+      const id = generate();
+      const nonce = generate();
+      const author_id = props[0].id || generate();
+      const date = deconstruct(id).date.toISOString();
+
+      let mention_id = generate();
+
+      if (type === 1) {
+        mention_id = props[1].id;
+      }
+
+      let msg = await prisma.message.create({
+        data: {
+          type: type,
+          guild_id: guild_id,
+          message_id: id,
+          channel_id: channel_id,
+          author_id: author_id,
+          nonce: nonce,
+          content: `${type === 1 ? `<@${mention_id}>` : ''}`,
+          timestamp: date
+        }
+      })
+
+      await prisma.channel.update({
+        where: {
+          id: channel_id
+        },
+        data: {
+          last_message_id: id
+        }
+      });
+
+      if (type === 1) {
+        msg.mentions = [miniUserObject(props[1])];
+      } else {
+        msg.mentions = [];
+      }
+
+      return msg;
+    } catch (error) {
+      logText(error, 'error');
+
+      return null;
+    }
+  },
+  generateGatewayURL: (req: any): string => {
     let host = req.headers['host'];
     if (host) host = host.split(':', 2)[0];
     const baseUrl = _config.gateway_url == '' ? (host ?? _config.base_url) : _config.gateway_url;
     return `${_config.secure ? 'wss' : 'ws'}://${baseUrl}${_config.includePortInWsUrl && (_config.secure ? _config.ws_port != 443 : _config.ws_port != 80) ? `:${_config.ws_port}` : ''}`;
   },
-  generateRTCServerURL: () => {
+  generateRTCServerURL: (): string => {
     return _config.signaling_server_url == ''
       ? _config.base_url + ':' + _config.signaling_server_port
       : _config.signaling_server_url;
   },
-  unavailableGuildsStore: [],
-  generateString: (length) => {
+  unavailableGuildsStore: [] as any[],
+  generateString: (length): string => {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length;
@@ -51,15 +114,15 @@ const globalUtils = {
 
     return result;
   },
-  getUserPresence: (member) => {
+  getUserPresence: (member: any): any => {
     const userId = String(member.id || member.user?.id);
     const uSessions = global.userSessions.get(userId);
     const activeSessions = uSessions
-      ? Array.from(uSessions).filter((s) => !s.dead && s.presence)
+      ? Array.from(uSessions).filter((s: any) => !s.dead && s.presence)
       : [];
 
     if (activeSessions.length > 0) {
-      const statuses = activeSessions.map((s) => s.presence.status);
+      const statuses = activeSessions.map((s: any) => s.presence.status);
 
       let finalStatus = 'offline';
 
@@ -71,8 +134,8 @@ const globalUtils = {
         finalStatus = 'idle';
       }
 
-      const primarySession =
-        activeSessions.find((s) => s.presence.activities?.length > 0) || activeSessions[0];
+      const primarySession: any =
+        activeSessions.find((s: any) => s.presence.activities?.length > 0) || activeSessions[0];
 
       return {
         status: finalStatus,
@@ -89,18 +152,18 @@ const globalUtils = {
       user: globalUtils.miniUserObject(member.user),
     };
   },
-  getGuildPresences: (guild) => {
-    const presences = [];
+  getGuildPresences: (guild: any): any => {
+    const presences: any = [];
 
     for (var member of guild.members) {
-      const presence = globalUtils.getUserPresence(member);
+      const presence: any = globalUtils.getUserPresence(member);
 
       presences.push(presence);
     }
 
     return presences;
   },
-  getGuildOnlineUserIds: (guild_id) => {
+  getGuildOnlineUserIds: (guild_id): any => {
     const user_ids = new Set();
 
     for (const [userId, sessions] of global.userSessions) {
@@ -117,7 +180,7 @@ const globalUtils = {
 
     return Array.from(user_ids);
   },
-  generateMemorableInviteCode: () => {
+  generateMemorableInviteCode: (): string => {
     const words = [
       'biggs',
       'rosalina',
@@ -151,7 +214,7 @@ const globalUtils = {
       'meepo',
     ];
 
-    const selected = [];
+    const selected: string[] = [];
 
     while (selected.length < 3) {
       const word = words[Math.floor(Math.random() * words.length)];
@@ -163,7 +226,7 @@ const globalUtils = {
 
     return selected.join('-');
   },
-  addClientCapabilities: (client_build, obj) => {
+  addClientCapabilities: (client_build: any, obj: any): boolean => {
     if (client_build === 'thirdPartyOrMobile') {
       const now = new Date();
       const months = [
@@ -206,7 +269,7 @@ const globalUtils = {
       return true;
     }
   },
-  flagToReason: (flag) => {
+  flagToReason: (flag: string): string => {
     let ret = '';
 
     switch (flag) {
@@ -226,7 +289,7 @@ const globalUtils = {
 
     return ret;
   },
-  getRegions: () => {
+  getRegions: (): any[] => {
     return [
       {
         id: '2016',
@@ -258,12 +321,12 @@ const globalUtils = {
       },
     ];
   },
-  serverRegionToYear: (region) => {
+  serverRegionToYear: (region: string): string => {
     return globalUtils.getRegions().find((x) => x.id.toLowerCase() == region)
       ? globalUtils.getRegions().find((x) => x.id.toLowerCase() == region).name
       : 'everything';
   },
-  canUseServer: (year, region) => {
+  canUseServer: (year: number, region: string): boolean => {
     const serverRegion = globalUtils.serverRegionToYear(region);
 
     if (serverRegion.toLowerCase() === 'everything') {
@@ -278,38 +341,38 @@ const globalUtils = {
 
     return false;
   },
-  generateToken: (user_id, password_hash) => {
+  generateToken: (user_id: string, password_hash: string): string => {
     //sorry ziad but im stealing this from hummus source, love you
     //oh also this: https://user-images.githubusercontent.com/34555296/120932740-4ca47480-c6f7-11eb-9270-6fb3fbbd856c.png
 
     const key = `${_config.token_secret}--${password_hash}`;
-    const timeStampBuffer = Buffer.allocUnsafe(4);
+    const timeStampBuffer: any = Buffer.allocUnsafe(4);
 
     timeStampBuffer.writeUInt32BE(Math.floor(Date.now() / 1000) - 1293840);
 
     const encodedTimeStamp = encode(timeStampBuffer);
     const encodedUserId = encode(user_id);
     const partOne = `${encodedUserId}.${encodedTimeStamp}`;
-    const encryptedAuth = createHmac('sha3-224', key).update(partOne).digest();
+    const encryptedAuth: any = createHmac('sha3-224', key).update(partOne).digest();
     const encodedEncryptedAuth = encode(encryptedAuth);
     const partTwo = `${partOne}.${encodedEncryptedAuth}`;
 
     return partTwo;
   },
-  generateAckToken: (user_id, channel_id, message_id) => {
+  generateAckToken: (user_id: string, message_id: string): string => {
     const key = _config.ack_secret + `--${user_id}`;
-    const timeStampBuffer = Buffer.allocUnsafe(4);
+    const timeStampBuffer: any = Buffer.allocUnsafe(4);
     timeStampBuffer.writeUInt32BE(Math.floor(Date.now() / 1000) - 1293840);
     const encodedTimeStamp = encode(timeStampBuffer);
     const encodedIds = encode(message_id);
     const partOne = `${encodedIds}.${encodedTimeStamp}`;
-    const encryptedAuth = createHmac('sha3-224', key).update(partOne).digest();
+    const encryptedAuth: any = createHmac('sha3-224', key).update(partOne).digest();
     const encodedEncryptedAuth = encode(encryptedAuth);
     const partTwo = `${partOne}.${encodedEncryptedAuth}`;
 
     return partTwo;
   },
-  replaceAll: (str, find, replace) => {
+  replaceAll: (str: string, find: any, replace: any): any => {
     if (typeof find === 'string') {
       find = find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escape special characters
       find = new RegExp(find, 'g');
@@ -319,10 +382,10 @@ const globalUtils = {
 
     return str.replace(find, replace);
   },
-  SerializeOverwriteToString(overwrite) {
+  SerializeOverwriteToString(overwrite: any): string {
     return `${overwrite.id}_${overwrite.allow.toString()}_${overwrite.deny.toString()}_${overwrite.type}`;
   },
-  SerializeOverwritesToString(overwrites) {
+  SerializeOverwritesToString(overwrites: any): any {
     if (overwrites == null || overwrites.length == 0) {
       return null;
     }
@@ -337,7 +400,7 @@ const globalUtils = {
 
     return ret;
   },
-  sanitizeObject: (object, toSanitize = []) => {
+  sanitizeObject: (object: any, toSanitize: any = []): any => {
     const sanitizedObject = { ...object };
 
     if (toSanitize.length > 0) {
@@ -348,7 +411,7 @@ const globalUtils = {
 
     return sanitizedObject;
   },
-  buildGuildObject: (guild, req) => {
+  buildGuildObject: (guild: any, req: any): any => {
     if (!guild) return null;
 
     if (!req.account) return null;
@@ -377,7 +440,7 @@ const globalUtils = {
 
     return guild;
   },
-  checkUsername: (username) => {
+  checkUsername: (username: string): any => {
     const allowed = /^[A-Za-z0-9А-Яа-яЁё\s.]+$/;
 
     if (!username) {
@@ -427,7 +490,7 @@ const globalUtils = {
       username: '',
     };
   },
-  badEmail: async (email) => {
+  badEmail: async (email: string): Promise<boolean> => {
     try {
       if (!globalUtils.badEmails) {
         const response = await fetch(
@@ -435,7 +498,7 @@ const globalUtils = {
         );
 
         if (!response.ok) {
-          globalUtils.badEmails = new Set(['Bademaildomainlist.com']);
+          globalUtils.badEmails = new Set(['example.com']);
 
           return false;
         }
@@ -455,7 +518,7 @@ const globalUtils = {
       return true;
     }
   },
-  validSuperPropertiesObject: (superprops, url, baseUrl, userAgent) => {
+  validSuperPropertiesObject: (superprops: any, _url: any, baseUrl: any, userAgent: any): boolean => {
     try {
       //Maybe do something with url going forward?
 
@@ -513,12 +576,12 @@ const globalUtils = {
       return false;
     }
   },
-  prepareAccountObject: (rows, relationships) => {
+  prepareAccountObject: (rows: any, relationships: any): any => {
     if (rows === null || rows.length === 0) {
       return null;
     }
 
-    const user = {
+    const user: any = {
       id: rows[0].id,
       username: rows[0].username,
       discriminator: rows[0].discriminator,
@@ -547,7 +610,7 @@ const globalUtils = {
 
     return user;
   },
-  areWeFriends: (user1, user2) => {
+  areWeFriends: (user1: any, user2: any): boolean => {
     if (user1.bot || user2.bot) {
       return false;
     }
@@ -579,7 +642,7 @@ const globalUtils = {
 
     return relationshipState.type === 1 && ourRelationshipState.type === 1;
   },
-  parseMentions: (text) => {
+  parseMentions: (text: string): any => {
     const result = {
       mentions: [],
       mention_roles: [],
@@ -617,7 +680,7 @@ const globalUtils = {
           if (text[i++] != '@') break; //Ignore non-user mentions
 
           //Check type (optional)
-          let targetArray = result.mentions;
+          let targetArray: any = result.mentions;
           switch (text[i]) {
             case '!': //Nickname
               i++;
@@ -630,7 +693,7 @@ const globalUtils = {
           }
 
           //Read snowflake
-          let snowflake = '';
+          let snowflake: any  = '';
           while (true) {
             if (i >= text.length) {
               //Snowflake not complete
@@ -690,41 +753,41 @@ const globalUtils = {
 
     return result;
   },
-  pingPrivateChannel: async (channel) => {
+  pingPrivateChannel: async (channel: any) => {
     for (var recipient of channel.recipients) {
       await globalUtils.pingPrivateChannelUser(channel, recipient.id);
     }
   },
-  pingPrivateChannelUser: async (private_channel, recipient_id) => {
-    let userPrivChannels = await database.getPrivateChannels(recipient_id);
+  pingPrivateChannelUser: async (private_channel: any, recipient_id: any) => {
+    const user = await prisma.user.findUnique({
+      where: { id: recipient_id },
+      select: { private_channels: true }
+    });
 
-    let sendCreate = false;
-    if (!userPrivChannels) {
-      //New
-      userPrivChannels = [private_channel.id];
-      sendCreate = true;
-    } else {
-      if (userPrivChannels.includes(private_channel.id)) {
-        //Remove old entry
-        const oldIndex = userPrivChannels.indexOf(private_channel.id);
-        userPrivChannels.splice(oldIndex, 1);
-      } else {
-        sendCreate = true;
-      }
-
-      //Add to top
-      userPrivChannels.unshift(private_channel.id);
+    if (!user) {
+      return;
     }
 
-    await database.setPrivateChannels(recipient_id, userPrivChannels);
+    let userPrivChannels: any = user.private_channels || [];
+    let sendCreate = !userPrivChannels.includes(private_channel.id);
+
+    userPrivChannels = [
+      private_channel.id, 
+      ...userPrivChannels.filter(id => id !== private_channel.id)
+    ];
+
+    await prisma.user.update({
+      where: { id: recipient_id },
+      data: { private_channels: userPrivChannels }
+    });
 
     if (sendCreate) {
-      await dispatcher.dispatchEventTo(recipient_id, 'CHANNEL_CREATE', function () {
-        return globalUtils.personalizeChannelObject(this.socket, private_channel);
+      await dispatcher.dispatchEventTo(recipient_id, 'CHANNEL_CREATE', function (socket) {
+        return globalUtils.personalizeChannelObject(socket, private_channel);
       });
     }
   },
-  formatMessage: (row, author, attachments, mentions, mention_roles, reactions, isWebhook) => {
+  formatMessage: (row: any, author: any, attachments: any, mentions: any, mention_roles: any, reactions: any, isWebhook: boolean): any => {
     return {
       type: row.type, //8 = boost, 9 = boosted server, guild has reached level 1, 10 = level 2, 11 = level 3 (12 = i have added what a bla bla to this channel?)
       guild_id: row.guild_id, //Is this necessary here?
@@ -747,7 +810,7 @@ const globalUtils = {
       ...(isWebhook && { webhook_id: row.author_id.split('_')[1] }),
     };
   },
-  channelTypeToString: (type) => {
+  channelTypeToString: (type: number): string => {
     switch (type) {
       case 0:
         return 'text';
@@ -763,7 +826,7 @@ const globalUtils = {
         return 'text';
     }
   },
-  personalizeMessageObject: (msg, guild, client_build_date) => {
+  personalizeMessageObject: (msg: any, guild: any, client_build_date: any): any => {
     const boostLvlConversion = {
       9: 1,
       10: 2,
@@ -807,12 +870,12 @@ const globalUtils = {
 
     return msg;
   },
-  personalizeChannelObject: (req, channel, user = null) => {
+  personalizeChannelObject: (req: any, channel: any, user: any = null): any => {
     if (!req) return channel;
 
     if (!req.plural_recipients && channel.type >= 2) return null;
 
-    const clone = {};
+    const clone: any = {};
     Object.assign(clone, channel);
 
     if (channel.recipients)
@@ -830,8 +893,8 @@ const globalUtils = {
 
     return clone;
   },
-  usersToIDs: (array) => {
-    const IDs = [];
+  usersToIDs: (array: any): string[] | [] => {
+    const IDs: string[] = [];
 
     for (let i = 0; i < array.length; i++)
       if (array[i].id) IDs.push(array[i].id);
@@ -839,7 +902,7 @@ const globalUtils = {
 
     return IDs;
   },
-  miniUserObject: (user) => {
+  miniUserObject: (user: any): any => {
     return {
       username: user.username,
       discriminator: user.discriminator,
@@ -850,7 +913,7 @@ const globalUtils = {
       premium: user.premium || true,
     };
   },
-  miniBotObject: (bot) => {
+  miniBotObject: (bot: any): any => {
     delete bot.token;
 
     return bot;

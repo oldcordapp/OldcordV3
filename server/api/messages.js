@@ -747,7 +747,7 @@ router.post(
         manual: manual, //This is for if someone clicks mark as read
       });
 
-      const ackToken = globalUtils.generateAckToken(guy.id, channel.id, message.id);
+      const ackToken = globalUtils.generateAckToken(guy.id, message.id);
 
       return res.status(200).json({
         token: ackToken

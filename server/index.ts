@@ -3,9 +3,11 @@ import Snowflake from './helpers/snowflake.js';
 // this is needed because of discord kotlin sending in id as Number and not string, and it messes precision
 const originalJsonParse = JSON.parse;
 
-JSON.parse = (text: string, reviver?: JSONReviver): unknown => {
+JSON.parse = (text: string, reviver?: any): any => {
+  if (typeof text !== 'string') return text;
+
   try {
-    return originalJsonParse(text, function (key: string, value: any, context: JSONReviverContext) {
+    return originalJsonParse(text, function (key: string, value: any, context?: any) {
       let result = value;
 
       if (typeof value === 'number' && context?.source) {
@@ -15,15 +17,19 @@ JSON.parse = (text: string, reviver?: JSONReviver): unknown => {
           !Number.isSafeInteger(value) &&
           !rawValue.includes('.') &&
           !rawValue.toLowerCase().includes('e') &&
-          Snowflake.isValid(rawValue)
+          typeof Snowflake !== 'undefined' && Snowflake.isValid(rawValue)
         ) {
           result = rawValue;
         }
       }
 
-      return reviver ? reviver.call(this, key, result, context) : result;
+      if (reviver) {
+        return reviver.call(this, key, result, context);
+      }
+      return result;
     });
   } catch (e) {
+    console.error(e);
     return originalJsonParse(text, reviver);
   }
 };

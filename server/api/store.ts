@@ -1,17 +1,15 @@
 import { Router } from 'express';
+import type { Request, Response } from "express";
 
-import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.ts';
-import { guildMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 const router = Router();
 import { generate } from '../helpers/snowflake.js';
 
-router.param('id', async (req, _, next, id) => {
+router.param('id', async (_req: Request, _, next, _id: string) => {
   //Currently unknown
   next();
 });
 
-router.get('/directory/:id', (req, res) => {
+router.get('/directory/:id', (req: Request, res: Response) => {
   const id = req.params.id;
   const SKU_ID = generate();
   const APP_ID = generate();
@@ -58,7 +56,7 @@ router.get('/directory/:id', (req, res) => {
   });
 });
 
-router.get('/published-listings/skus/:skuId', async (req, res) => {
+router.get('/published-listings/skus/:skuId', async (req: Request, res: Response) => {
   const id = req.params.skuId;
 
   return res.status(200).json({

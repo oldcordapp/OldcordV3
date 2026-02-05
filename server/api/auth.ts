@@ -2,12 +2,19 @@ import { Router } from 'express';
 const router = Router();
 import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/errors.js';
-import globalUtils from '../helpers/globalutils.js';
+import globalUtils, { config } from '../helpers/globalutils.js';
 import lazyRequest from '../helpers/lazyRequest.js';
 import { logText } from '../helpers/logger.ts';
 import { instanceMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 import { verify } from '../helpers/recaptcha.js';
-import Watchdog from '../helpers/watchdog.js';
+import Watchdog from '../helpers/watchdog.ts';
+
+import { totp } from 'speakeasy';
+
+import { prisma } from '../prisma.ts';
+import { hash, genSalt, compareSync } from 'bcrypt';
+import { generate } from '../helpers/snowflake.js';
+import { generateToken, generateString } from '../helpers/globalutils.js';
 
 global.config = globalUtils.config;
 
@@ -23,7 +30,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     2,
   ),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const release_date = req.client_build;
 
@@ -135,97 +142,176 @@ router.post(
         }
       }
 
-      let emailToken = globalUtils.generateString(60);
+      let emailToken: string | null = globalUtils.generateString(60);
 
       if (!global.config.email_config.enabled) {
         emailToken = null;
       }
 
-      const registrationAttempt = await global.database.createAccount(
-        req.body.username,
-        req.body.email,
-        req.body.password,
-        req.ip ?? null,
-        emailToken,
-      );
+      const userCount = await prisma.user.count({
+        where: { username: req.body.username }
+      });
 
-      if ('reason' in registrationAttempt) {
+      if (userCount >= 9999) {
         return res.status(400).json({
           code: 400,
-          email: registrationAttempt.reason,
+          username: 'Too many people have this username.',
         });
       }
 
-      const account = await global.database.getAccountByToken(registrationAttempt.token);
+      const salt = await genSalt(10);
+      const pwHash = await hash(req.body.password || generateString(20), salt);
+      const id = generate(); // Snowflake ID
+      const date = new Date().toISOString();
+      const token = generateToken(id, pwHash);
 
-      if (account == null) {
+      let discriminator = Math.floor(Math.random() * 9999);
+
+      while (discriminator < 1000) {
+        discriminator = Math.floor(Math.random() * 9999);
+      }
+
+      let newUser;
+
+      try {
+        newUser = await prisma.user.create({
+          data: {
+            id: id,
+            username: req.body.username,
+            discriminator: discriminator.toString(),
+            email: req.body.email,
+            password: req.body.password ? pwHash : null,
+            token: token,
+            created_at: date,
+            registration_ip: req.ip ?? null,
+            verified: config.email_config.enabled ? false : true,
+            email_token: emailToken ?? null,
+            settings: {
+              show_current_game: false,
+              inline_attachment_media: true,
+              inline_embed_media: true,
+              render_embeds: true,
+              render_reactions: true,
+              sync: true,
+              theme: "dark",
+              enable_tts_command: true,
+              message_display_compact: false,
+              locale: "en-US",
+              convert_emoticons: true,
+              restricted_guilds: [],
+              allow_email_friend_request: false,
+              friend_source_flags: { all: true },
+              developer_mode: true,
+              guild_positions: [],
+              detect_platform_accounts: false,
+              status: "online"
+            }
+          }
+        });
+      } catch (error: any) {
+        if (error.code === 'P2002') {
+          return res.status(400).json({ code: 400, email: 'Email is already registered.' });
+        }
+
+        throw error;
+      }
+
+      if (newUser == null) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
       if (emailToken != null) {
-        await global.emailer.sendRegistrationEmail(req.body.email, emailToken, account);
+        await global.emailer.sendRegistrationEmail(req.body.email, emailToken, newUser);
       }
 
       if (req.body.invite) {
-        const code = req.body.invite;
-
-        const invite = await global.database.getInvite(code);
-
-        if (invite) {
-          const guild = await global.database.getGuildById(invite.guild.id);
-
-          if (guild) {
-            await global.database.joinGuild(account.id, guild);
-
-            await dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
-
-            await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
-              roles: [],
-              user: globalUtils.miniUserObject(account),
-              guild_id: invite.guild.id,
-              joined_at: new Date().toISOString(),
-              deaf: false,
-              mute: false,
-              nick: null,
-            });
-
-            const activeSessions = dispatcher.getAllActiveSessions();
-
-            for (const session of activeSessions) {
-              if (session.subscriptions && session.subscriptions[guild.id]) {
-                //if (session.user.id === account.id) continue;
-
-                await lazyRequest.handleMemberAdd(session, guild, {
-                  user: globalUtils.miniUserObject(account),
-                  roles: [],
-                  joined_at: new Date().toISOString(),
-                  deaf: false,
-                  mute: false,
-                  nick: null,
-                });
+        const invite = await prisma.invite.findUnique({
+          where: {
+            code: req.body.invite
+          },
+          include: {
+            guild: {
+              include: { 
+                channels: true, 
+                roles: true,
+                members: {
+                  include: {
+                    user: true
+                  }
+                }
               }
             }
+          }
+        });
 
-            await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', {
+        if (invite && invite.guild) {
+          await prisma.member.create({
+            data: {
+              user_id: newUser.id,
+              guild_id: invite.guild_id!,
+              joined_at: new Date().toISOString(),
+              roles: [],
+              nick: null,
+              deaf: false,
+              mute: false
+            }
+          });
+
+          await prisma.invite.update({
+            where: { code: req.body.invite },
+            data: {
+              uses: { increment: 1 }
+            }
+          });
+
+          await dispatcher.dispatchEventTo(newUser.id, 'GUILD_CREATE', invite.guild);
+
+          await dispatcher.dispatchEventInGuild(invite.guild, 'GUILD_MEMBER_ADD', {
+            roles: [],
+            user: globalUtils.miniUserObject(newUser),
+            guild_id: invite.guild.id,
+            joined_at: new Date().toISOString(),
+            deaf: false,
+            mute: false,
+            nick: null,
+          });
+
+          const activeSessions = dispatcher.getAllActiveSessions();
+
+          for (const session of activeSessions) {
+            if (session.subscriptions && session.subscriptions[invite.guild.id]) {
+              //if (session.user.id === account.id) continue;
+
+              await lazyRequest.handleMemberAdd(session, invite.guild, {
+                user: globalUtils.miniUserObject(newUser),
+                roles: [],
+                joined_at: new Date().toISOString(),
+                deaf: false,
+                mute: false,
+                nick: null,
+              });
+            }
+
+            await dispatcher.dispatchEventInGuild(invite.guild, 'PRESENCE_UPDATE', {
               game_id: null,
               status: 'online',
               activities: [],
               roles: [],
-              user: globalUtils.miniUserObject(account),
+              user: globalUtils.miniUserObject(newUser),
               guild_id: invite.guild.id,
             });
 
-            if (guild.system_channel_id != null) {
-              const join_msg = await global.database.createSystemMessage(
-                guild.id,
-                guild.system_channel_id,
+            if (invite.guild.system_channel_id != null) {
+              const join_msg = await globalUtils.createSystemMessage(
+                invite.guild.id,
+                invite.guild.system_channel_id,
                 7,
-                [account],
+                [newUser],
               );
 
               await dispatcher.dispatchEventInChannel(
-                guild,
-                guild.system_channel_id,
+                invite.guild,
+                invite.guild.system_channel_id,
                 'MESSAGE_CREATE',
                 join_msg,
               );
@@ -240,17 +326,39 @@ router.post(
 
       if (autoJoinGuild.length > 0) {
         const guildId = autoJoinGuild[0].split(':')[1];
+        const guild = await prisma.guild.findUnique({
+          where: {
+            id: guildId
+          },
+          include: {
+            channels: true,
+            roles: true,
+            members: {
+              include: {
+                user: true
+              }
+            }
+          }
+        });
 
-        const guild = await global.database.getGuildById(guildId);
+        if (guild) {
+          await prisma.member.create({
+            data: {
+              user_id: newUser.id,
+              guild_id: guild.id,
+              joined_at: new Date().toISOString(),
+              roles: [],
+              nick: null,
+              deaf: false,
+              mute: false
+            }
+          });
 
-        if (guild != null) {
-          await global.database.joinGuild(account.id, guild);
-
-          await dispatcher.dispatchEventTo(account.id, 'GUILD_CREATE', guild);
+          await dispatcher.dispatchEventTo(newUser.id, 'GUILD_CREATE', guild);
 
           await dispatcher.dispatchEventInGuild(guild, 'GUILD_MEMBER_ADD', {
             roles: [],
-            user: globalUtils.miniUserObject(account),
+            user: globalUtils.miniUserObject(newUser),
             guild_id: guildId,
             joined_at: new Date().toISOString(),
             deaf: false,
@@ -265,7 +373,7 @@ router.post(
               //if (session.user.id === account.id) continue;
 
               await lazyRequest.handleMemberAdd(session, guild, {
-                user: globalUtils.miniUserObject(account),
+                user: globalUtils.miniUserObject(newUser),
                 roles: [],
                 joined_at: new Date().toISOString(),
                 deaf: false,
@@ -280,16 +388,16 @@ router.post(
             status: 'online',
             activities: [],
             roles: [],
-            user: globalUtils.miniUserObject(account),
+            user: globalUtils.miniUserObject(newUser),
             guild_id: guildId,
           });
 
           if (guild.system_channel_id != null) {
-            const join_msg = await global.database.createSystemMessage(
+            const join_msg = await globalUtils.createSystemMessage(
               guild.id,
               guild.system_channel_id,
               7,
-              [account],
+              [newUser],
             );
 
             await dispatcher.dispatchEventInChannel(
@@ -303,7 +411,7 @@ router.post(
       }
 
       return res.status(200).json({
-        token: registrationAttempt.token,
+        token: newUser.token,
       });
     } catch (error) {
       logText(error, 'error');
@@ -324,7 +432,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     0.75,
   ),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       if (req.body.login) {
         req.body.email = req.body.login;
@@ -344,40 +452,51 @@ router.post(
         });
       }
 
-      const loginAttempt = await global.database.checkAccount(
-        req.body.email,
-        req.body.password,
-        req.ip ?? null,
-      );
+      const user = await prisma.user.findUnique({
+        where: { email: req.body.email },
+        include: { staff: true }
+      });
 
-      if ('disabled_until' in loginAttempt) {
+      if (!user || !user.email || !user.password) {
+        return res.status(400).json({
+          code: 400,
+          email: 'Email and/or password is invalid.',
+          password: 'Email and/or password is invalid.',
+        });
+      }
+
+      if (user.disabled_until != null) {
         return res.status(400).json({
           code: 400,
           email: 'This account has been disabled.',
         });
       }
 
-      if ('reason' in loginAttempt) {
+      const isMatch = compareSync(req.body.password, user.password);
+
+      if (!isMatch) {
         return res.status(400).json({
           code: 400,
-          email: loginAttempt.reason,
-          password: loginAttempt.reason,
+          email: 'Email and/or password is invalid.',
+          password: 'Email and/or password is invalid.',
         });
       }
 
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { last_login_ip: req.ip ?? null }
+      });
+
+      const loginAttempt = { token: user.token };
+
       if (req.headers['referer'] && req.headers['referer'].includes('redirect_to=%2Fadmin')) {
-        const tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
+        const tryGetStaffDetails = user.staff;
 
-        if (!tryGetAcc) {
-          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-        }
-
-        const tryGetStaffDetails = await global.database.getStaffDetails(tryGetAcc.id);
-
-        if (tryGetStaffDetails === null) {
+        if (!tryGetStaffDetails) {
           console.log(
-            `[${tryGetAcc.id}] ${tryGetAcc.username}#${tryGetAcc.discriminator} just tried to login to the Oldcord instance staff admin panel without permission. Further investigation necessary.`,
+            `[${user.id}] ${user.username}#${user.discriminator} just tried to login to the Oldcord instance staff admin panel without permission. Further investigation necessary.`,
           );
+
           return res.status(400).json({
             code: 400,
             email: 'This account is not instance staff. This incident has been logged.',
@@ -388,26 +507,27 @@ router.post(
         req.staff_details = tryGetStaffDetails;
       }
 
-      const mfa_status = await global.database.getUserMfaByToken(loginAttempt.token);
+      if (user.mfa_enabled && user.mfa_secret) {
+        const mfaTicket = generateString(40);
 
-      if (mfa_status.mfa_enabled) {
-        const tryGetAcc = await global.database.getAccountByToken(loginAttempt.token);
+        try {
+          await prisma.mfaLoginTicket.create({
+            data: {
+              user_id: user.id,
+              mfa_ticket: mfaTicket
+            }
+          });
 
-        if (!tryGetAcc) {
-          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-        } //fuck? how do we make this work better?
-
-        const ticket = await global.database.generateMfaTicket(tryGetAcc.id);
-
-        if (!ticket) {
+          return res.status(200).json({
+            mfa: true,
+            ticket: mfaTicket,
+            sms: false,
+          });
+        }
+        catch (error) {
+          logText(error, 'error');
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
-
-        return res.status(200).json({
-          mfa: true,
-          ticket: ticket,
-          sms: false,
-        });
       }
 
       return res.status(200).json({
@@ -433,7 +553,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     0.2,
   ),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const ticket = req.body.ticket;
       const code = req.body.code;
@@ -445,40 +565,37 @@ router.post(
         });
       }
 
-      const user_mfa = await global.database.getUserMfaByTicket(ticket);
+      const ticketData = await prisma.mfaLoginTicket.findUnique({
+        where: { mfa_ticket: ticket },
+        include: { user: true }
+      });
 
-      if (!user_mfa.mfa_secret || !user_mfa.mfa_enabled) {
-        return res.status(400).json({
-          code: 400,
-          message: 'Invalid TOTP code',
-        });
+      if (!ticketData || !ticketData.user) {
+        return res.status(400).json({ code: 400, message: 'Invalid ticket' });
       }
 
-      const token = await global.database.getLoginTokenByMfaTicket(ticket);
+      const user = ticketData.user;
 
-      if (!token) {
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-      } //???
+      if (!user.mfa_enabled || !user.mfa_secret) {
+        return res.status(400).json({ code: 400, message: 'MFA not enabled' });
+      }
 
-      const account = await global.database.getAccountByToken(token);
-
-      if (!account) {
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-      } // ihate this so fucking much
-
-      const valid = await global.database.validateTotpCode(account.id, code);
+      const valid = totp.verify({
+        secret: user.mfa_secret,
+        encoding: 'base32',
+        token: code,
+      });
 
       if (!valid) {
-        return res.status(400).json({
-          code: 400,
-          message: 'Invalid TOTP code',
-        }); //to-do find the actual error msgs
+        return res.status(400).json({ code: 400, message: 'Invalid TOTP code' });
       }
 
-      await global.database.invalidateMfaTicket(ticket);
+      await prisma.mfaLoginTicket.delete({
+        where: { mfa_ticket: ticket }
+      });
 
       return res.status(200).json({
-        token: token,
+        token: user.token,
       });
     } catch (error) {
       logText(error, 'error');
@@ -499,7 +616,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     0.4,
   ),
-  async (req, res) => {
+  async (_req: any, res: any) => {
     return res.status(204).send();
   },
 );
@@ -515,7 +632,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     0.4,
   ),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const email = req.body.email;
 
@@ -526,7 +643,11 @@ router.post(
         });
       }
 
-      const account = await global.database.getAccountByEmail(email);
+      const account = await prisma.user.findUnique({
+        where: {
+          email: email
+        }
+      });
 
       if (!account) {
         return res.status(400).json({
@@ -554,7 +675,7 @@ router.post(
   },
 );
 
-router.post('/fingerprint', (req, res) => {
+router.post('/fingerprint', (req: any, res: any) => {
   const fingerprint = Watchdog.getFingerprint(
     req.originalUrl,
     req.baseUrl,
@@ -563,7 +684,7 @@ router.post('/fingerprint', (req, res) => {
   );
 
   return res.status(200).json({
-    fingerprint: fingerprint.fingeprint,
+    fingerprint: fingerprint.fingerprint,
   });
 });
 
@@ -578,7 +699,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     0.5,
   ),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const auth_token = req.headers['authorization'];
 
@@ -586,7 +707,11 @@ router.post(
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
-      const account = await global.database.getAccountByToken(auth_token);
+      const account = await prisma.user.findUnique({
+        where: {
+          token: auth_token
+        }
+      });
 
       if (!account) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -617,9 +742,18 @@ router.post(
         }
       }
 
-      const tryUseEmailToken = await global.database.useEmailToken(account.id, token);
+      const tryUseEmailToken = await prisma.user.updateMany({
+        where: {
+          id: account.id,
+          email_token: token
+        },
+        data: {
+          email_token: null,
+          verified: true
+        }
+      })
 
-      if (!tryUseEmailToken) {
+      if (tryUseEmailToken.count == 0) {
         return res.status(400).json({
           token: 'Invalid email verification token.',
         });
@@ -647,7 +781,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     1,
   ),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const auth_token = req.headers['authorization'];
 
@@ -655,7 +789,11 @@ router.post(
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
-      const account = await global.database.getAccountByToken(auth_token);
+      const account = await prisma.user.findUnique({
+        where: {
+          token: auth_token
+        }
+      })
 
       if (!account) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
@@ -669,7 +807,7 @@ router.post(
         return res.status(204).send();
       }
 
-      let emailToken = await global.database.getEmailToken(account.id);
+      let emailToken = account.email_token;
       let newEmailToken = false;
 
       if (!emailToken) {
@@ -688,9 +826,16 @@ router.post(
       }
 
       if (newEmailToken) {
-        const tryUpdate = await global.database.updateEmailToken(account.id, emailToken);
+        const tryUpdate = await prisma.user.updateMany({
+          where: {
+            id: account.id
+          },
+          data: {
+            email_token: emailToken,
+          }
+        })
 
-        if (!tryUpdate) {
+        if (tryUpdate.count == 0) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
       }

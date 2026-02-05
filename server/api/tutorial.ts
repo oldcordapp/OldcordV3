@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import type { Request, Response } from "express";
 
 import { response_500 } from '../helpers/errors.js';
 import { logText } from '../helpers/logger.ts';
 const router = Router();
 
-router.get('/', async (req, res) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     return res.status(200).json({
       indicators_suppressed: true,
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/indicators/suppress', async (req, res) => {
+router.post('/indicators/suppress', async (_req: Request, res: Response) => {
   try {
     return res.status(200).json({
       indicators_suppressed: true,
@@ -52,7 +53,7 @@ router.post('/indicators/suppress', async (req, res) => {
   }
 });
 
-router.put('/indicators/:indicator', async (req, res) => {
+router.put('/indicators/:indicator', async (_req: Request, res: Response) => {
   try {
     return res.status(200).json({
       indicators_suppressed: true,
