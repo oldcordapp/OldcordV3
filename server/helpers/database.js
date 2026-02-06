@@ -1115,11 +1115,11 @@ const database = {
                 settings.friend_source_flags.all = false;
                 changed = true;
               }
-              if (settings.friend_source_flags.mutual_friends !== false) {
+              if (settings.friend_source_flags.mutual_friends !== true) {
                 settings.friend_source_flags.mutual_friends = true;
                 changed = true;
               }
-              if (settings.friend_source_flags.mutual_guilds !== false) {
+              if (settings.friend_source_flags.mutual_guilds !== true) {
                 settings.friend_source_flags.mutual_guilds = true;
                 changed = true;
               }
