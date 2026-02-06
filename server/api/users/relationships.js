@@ -180,17 +180,19 @@ router.put('/:userid', async (req, res) => {
         if (user.settings.friend_source_flags.mutual_friends) {
           const sharedFriends = [];
 
-          for (var friend of account.relationships.find((item) => item.type === 1)) {
-            if (user.relationships.map((i) => i.id).includes(friend.id)) {
-              sharedFriends.push(friend);
+          if (account.relationships && Array.isArray(account.relationships)) {
+            for (var friend of account.relationships.find((item) => item.type === 1)) {
+              if (user.relationships.map((i) => i.id).includes(friend.id)) {
+                sharedFriends.push(friend);
+              }
             }
-          }
 
-          if (sharedFriends.length === 0) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
+            if (sharedFriends.length === 0) {
+              return res.status(403).json({
+                code: 403,
+                message: 'Failed to send friend request',
+              });
+            }
           }
         }
       }
