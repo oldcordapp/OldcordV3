@@ -193,12 +193,25 @@ const database = {
   doescolumnExist,
   setupDatabase: async () => {
     try {
-      await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
+      await database.runQuery(
+        `CREATE TABLE IF NOT EXISTS instance_info (version FLOAT, dm_restriction_applied BOOLEAN DEFAULT FALSE);`,
+        [],
+      );
 
       await database.runQuery(
-        `INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,
-        [0.2],
-      ); //for the people who update their instance but do not manually run the relationships migration script
+        `INSERT INTO instance_info (version, dm_restriction_applied) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,
+        [0.2, false],
+      );
+
+      const columnExists = await database.doescolumnExist(
+        'instance_info',
+        'dm_restriction_applied',
+      );
+      if (!columnExists) {
+        await database.runQuery(
+          `ALTER TABLE instance_info ADD COLUMN dm_restriction_applied BOOLEAN DEFAULT FALSE;`,
+        );
+      }
 
       await performMigrations();
 
@@ -1094,65 +1107,78 @@ const database = {
         `CREATE INDEX CONCURRENTLY IF NOT EXISTS trgm_index_messages_content ON messages USING GIN (lower(content) gin_trgm_ops);`,
       );
 
+      const infoRows = await database.runQuery(
+        `SELECT dm_restriction_applied FROM instance_info LIMIT 1`,
+      );
+      const dmRestrictionApplied =
+        infoRows && infoRows.length > 0 ? infoRows[0].dm_restriction_applied : false;
+
       if (config.require_friendship_for_dm) {
-        const users = await database.runQuery(`SELECT id, settings FROM users WHERE bot = false`);
+        if (!dmRestrictionApplied) {
+          const users = await database.runQuery(`SELECT id, settings FROM users WHERE bot = false`);
 
-        if (users) {
-          for (const user of users) {
-            let settings = JSON.parse(user.settings);
-            let changed = false;
+          if (users) {
+            for (const user of users) {
+              let settings = JSON.parse(user.settings);
+              let changed = false;
 
-            if (
-              settings.default_guilds_restricted === false ||
-              settings.default_guilds_restricted === undefined
-            ) {
-              settings.default_guilds_restricted = true;
-              changed = true;
-            }
-
-            if (settings.friend_source_flags) {
-              if (settings.friend_source_flags.all !== false) {
-                settings.friend_source_flags.all = false;
+              if (
+                settings.default_guilds_restricted === false ||
+                settings.default_guilds_restricted === undefined
+              ) {
+                settings.default_guilds_restricted = true;
                 changed = true;
               }
-              if (settings.friend_source_flags.mutual_friends !== true) {
-                settings.friend_source_flags.mutual_friends = true;
-                changed = true;
-              }
-              if (settings.friend_source_flags.mutual_guilds !== true) {
-                settings.friend_source_flags.mutual_guilds = true;
-                changed = true;
-              }
-            } else {
-              settings.friend_source_flags = {
-                all: false,
-                mutual_friends: true,
-                mutual_guilds: true,
-              };
-              changed = true;
-            }
 
-            const userGuilds = await database.runQuery(
-              `SELECT guild_id FROM members WHERE user_id = $1`,
-              [user.id],
-            );
-
-            if (userGuilds) {
-              for (const guilds of userGuilds) {
-                if (!settings.restricted_guilds.includes(guilds.guild_id)) {
-                  settings.restricted_guilds.push(guilds.guild_id);
+              if (settings.friend_source_flags) {
+                if (settings.friend_source_flags.all !== false) {
+                  settings.friend_source_flags.all = false;
                   changed = true;
                 }
+                if (settings.friend_source_flags.mutual_friends !== true) {
+                  settings.friend_source_flags.mutual_friends = true;
+                  changed = true;
+                }
+                if (settings.friend_source_flags.mutual_guilds !== true) {
+                  settings.friend_source_flags.mutual_guilds = true;
+                  changed = true;
+                }
+              } else {
+                settings.friend_source_flags = {
+                  all: false,
+                  mutual_friends: true,
+                  mutual_guilds: true,
+                };
+                changed = true;
+              }
+
+              const userGuilds = await database.runQuery(
+                `SELECT guild_id FROM members WHERE user_id = $1`,
+                [user.id],
+              );
+
+              if (userGuilds) {
+                for (const guilds of userGuilds) {
+                  if (!settings.restricted_guilds.includes(guilds.guild_id)) {
+                    settings.restricted_guilds.push(guilds.guild_id);
+                    changed = true;
+                  }
+                }
+              }
+
+              if (changed) {
+                await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
+                  JSON.stringify(settings),
+                  user.id,
+                ]);
               }
             }
-
-            if (changed) {
-              await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
-                JSON.stringify(settings),
-                user.id,
-              ]);
-            }
           }
+          await database.runQuery(`UPDATE instance_info SET dm_restriction_applied = true`);
+        }
+      } else {
+        if (dmRestrictionApplied) {
+          await database.runQuery(`UPDATE instance_info SET dm_restriction_applied = false`);
         }
       }
 
