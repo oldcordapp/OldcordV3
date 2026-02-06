@@ -2,9 +2,12 @@ import { Router } from 'express';
 
 import { logText } from '../helpers/logger.ts';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
-import { rateLimitMiddleware } from '../helpers/middlewares.js';
-import { middleware } from '../helpers/watchdog.js';
+import { response_500 } from '../helpers/errors.ts';
+import { rateLimitMiddleware } from '../helpers/middlewares.ts';
+import { middleware } from '../helpers/watchdog.ts';
+import type { Response } from "express";
+import { prisma } from '../prisma.ts';
+import { generate } from '../helpers/snowflake.ts';
 
 router.post(
   '/',
@@ -17,7 +20,7 @@ router.post(
     global.config.ratelimit_config.reports.timeFrame,
     0.5,
   ),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       const valid_problems = [
         'Child Sexual Abuse Material (CSAM)',
@@ -75,12 +78,16 @@ router.post(
         });
       }
 
-      await global.database.submitInstanceReport(
-        description,
-        subject,
-        problem,
-        email_address ?? null,
-      );
+      await prisma.instanceReport.create({
+        data: {
+          description: description,
+          subject: subject,
+          problem: problem,
+          email_address: email_address ?? null,
+          id: generate(),
+          action: 'PENDING'
+        }
+      });
 
       return res.status(204).send();
     } catch (error) {

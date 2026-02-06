@@ -43,11 +43,11 @@ const permissions = {
     try {
       if (!guild) return false;
 
-      const member = guild.members.find((y) => y.id == user_id);
+      const member = guild.members.find((y) => (y.user_id || y.id) == user_id);
 
       if (!member) return false;
 
-      if (guild.owner_id == member.user.id) return true;
+      if (guild.owner_id == user_id) return true;
 
       const everyoneRole = guild.roles.find((x) => x.id === guild.id);
       let totalPermissions = BigInt(everyoneRole ? everyoneRole.permissions : 0);
@@ -79,7 +79,7 @@ const permissions = {
       if (!channel || !guild) return false;
       if (guild.owner_id == user_id) return true;
 
-      const member = guild.members.find((y) => y.id == user_id);
+      const member = guild.members.find((y) => (y.user_id || y.id) == user_id);
 
       if (!member) return false;
 
@@ -125,7 +125,7 @@ const permissions = {
         permissions &= ~roleDeny;
         permissions |= roleAllow;
 
-        const memberOverwrite = overwrites.find((o) => o.id === member.id);
+        const memberOverwrite = overwrites.find((o) => o.id === user_id);
 
         if (memberOverwrite) {
           permissions &= ~BigInt(memberOverwrite.deny);

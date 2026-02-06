@@ -8,9 +8,7 @@ import { logText } from '../helpers/logger.ts';
 import { instanceMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 import { verify } from '../helpers/recaptcha.js';
 import Watchdog from '../helpers/watchdog.ts';
-
 import { totp } from 'speakeasy';
-
 import { prisma } from '../prisma.ts';
 import { hash, genSalt, compareSync } from 'bcrypt';
 import { generate } from '../helpers/snowflake.js';

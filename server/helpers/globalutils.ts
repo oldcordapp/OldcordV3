@@ -115,7 +115,7 @@ const globalUtils = {
     return result;
   },
   getUserPresence: (member: any): any => {
-    const userId = String(member.id || member.user?.id);
+    const userId = String(member.id || member.user_id);
     const uSessions = global.userSessions.get(userId);
     const activeSessions = uSessions
       ? Array.from(uSessions).filter((s: any) => !s.dead && s.presence)
@@ -918,6 +918,119 @@ const globalUtils = {
 
     return bot;
   },
+  getChannelMessages: async (channel_id: string, requester_id: string, limit: number = 25, before_id?: string | null, after_id?: string | null, includeReactions: boolean = false) => {
+    try {
+      const where: any = { channel_id };
+
+      if (before_id && after_id) {
+        where.message_id = { lt: before_id, gt: after_id };
+      } else if (before_id) {
+        where.message_id = { lt: before_id };
+      } else if (after_id) {
+        where.message_id = { gt: after_id };
+      }
+
+      const messages = await prisma.message.findMany({
+        where,
+        take: limit,
+        orderBy: { message_id: 'desc' },
+        include: {
+          attachments: true,
+        }
+      });
+
+      if (!messages.length) return [];
+
+      const uniqueUserIds = new Set<string>();
+
+      messages.forEach(msg => {
+        if (msg.author_id) uniqueUserIds.add(msg.author_id);
+        const { mentions } = parseMentions(msg.content || '');
+        mentions?.forEach((id: string) => uniqueUserIds.add(id));
+      });
+
+      const users = await prisma.user.findMany({
+        where: { id: { in: Array.from(uniqueUserIds) } },
+        select: { id: true, username: true, discriminator: true, avatar: true, bot: true }
+      });
+
+      const userMap = new Map(users.map(u => [u.id, u]));
+
+      const finalMessages = await Promise.all(messages.map(async (msg) => {
+        let isWebhook: boolean = msg.author_id!.startsWith('WEBHOOK_');
+        let author: any = null;
+
+        if (isWebhook) {
+          const [_, webhookId, overrideId] = msg.author_id!.split('_');
+          const webhook = await prisma.webhook.findUnique({
+            where: {
+              id: webhookId
+            }
+          });
+
+          const override = await prisma.webhookOverride.findUnique({
+            where: {
+              id: webhookId,
+              override_id: overrideId
+            }
+          });
+
+          author = webhook ? {
+            id: webhookId,
+            username: override?.username || webhook.name,
+            avatar: override?.avatar_url || webhook.avatar,
+            bot: true,
+            webhook: true,
+            discriminator: '0000',
+          } : { id: webhookId, username: 'Deleted Webhook', discriminator: '0000', bot: true, webhook: true };
+        } else {
+          author = userMap.get(msg.author_id!) || { id: '0', username: 'Deleted User', discriminator: '0000', bot: false };
+        }
+
+        const { mentions: mentionIds, mention_roles } = parseMentions(msg.content || '');
+        const mentions = (mentionIds || []).map(id => userMap.get(id)).filter(Boolean);
+
+        let reactions: any = JSON.parse(msg.reactions as string) || [];
+
+        if (includeReactions && reactions.length > 0) {
+          const reactionSummary: Record<string, any> = {};
+
+          reactions.forEach((r: any) => {
+            const key = JSON.stringify(r.emoji);
+
+            if (!reactionSummary[key]) {
+              reactionSummary[key] = { emoji: r.emoji, count: 0, me: false };
+            }
+
+            reactionSummary[key].count++;
+
+            if (r.user_id === requester_id) reactionSummary[key].me = true;
+          });
+
+          reactions = Object.values(reactionSummary);
+        }
+
+        return formatMessage(
+          msg,
+          author,
+          msg.attachments.map(a => ({
+            ...a,
+            id: a.attachment_id,
+            proxy_url: a.url,
+          })),
+          mentions,
+          mention_roles,
+          reactions,
+          isWebhook
+        );
+      }));
+
+      return finalMessages;
+    } catch (error) {
+      logText(error, 'error');
+      return [];
+    }
+  }
 };
 
 export const {

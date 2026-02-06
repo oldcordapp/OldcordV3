@@ -90,7 +90,18 @@ router.get('/authorize', async (req: any, res: Response) => {
     return_obj.redirect_uri = null;
     return_obj.user = globalUtils.miniUserObject(account);
 
-    const guilds = await global.database.getUsersGuilds(account.id);
+    const guilds = await prisma.guild.findMany({
+      where: {
+        members: {
+          some: {
+            user_id: account.id
+          }
+        }
+      },
+      include: {
+        members: true
+      }
+    });
 
     const guilds_array: any = [];
 
@@ -227,15 +238,17 @@ router.post('/authorize', async (req: any, res: any) => {
       global.permissions.hasGuildPermissionTo(guild, account.id, 'MANAGE_GUILD', null);
 
     if (hasPermission) {
-      const banRows: any[] = await prisma.$queryRaw`
-        SELECT user_id 
-        FROM bans 
-        WHERE user_id = ${application.bot.id} 
-          AND guild_id = ${guild.id} 
-        LIMIT 1
-      `;
+      const bans = await prisma.ban.findMany({
+        where: {
+          user_id: application.bot.id,
+          guild_id: guild.id
+        },
+        select: {
+          user_id: true
+        }
+      })
 
-      if (banRows.length > 0) {
+      if (bans.length > 0) {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
       }
 

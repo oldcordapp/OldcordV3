@@ -5,6 +5,8 @@ import { join } from 'path';
 import { Pool } from 'pg';
 import { totp } from 'speakeasy';
 import md5 from '../helpers/md5.ts';
+import { prisma } from '../prisma.ts';
+
 import { dispatchEventInChannel, dispatchEventInGuild } from './dispatcher.js';
 import { generateMsgEmbeds } from './embedder.js';
 import {
@@ -1033,28 +1035,29 @@ const database = {
 
       //#endregion
 
-      await database.runQuery(
-        `WITH fake_guild AS (
-          INSERT INTO guilds (id, name)
-          VALUES ($3, 'Overridden Guild')
-          ON CONFLICT (id) DO NOTHING
-          RETURNING id
-        )
-        INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
-        SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
-        WHERE NOT EXISTS (SELECT 1 FROM channels WHERE id = $1)`,
-        [
-          '643945264868098049',
-          0,
-          '643945264868098049',
-          null,
-          '[OVERRIDENTOPIC]',
-          '0',
-          [],
-          'please-read-me', 
-          0,
-        ],
-      );
+      await prisma.guild.upsert({
+      where: { id: '643945264868098049' },
+      update: {},
+      create: {
+        id: '643945264868098049',
+        name: 'Overridden Guild',
+        owner_id: '643945264868098049'
+      }
+    });
+
+    await prisma.channel.upsert({
+      where: { id: '643945264868098049' },
+      update: {},
+      create: {
+        id: '643945264868098049',
+        type: 0,
+        guild_id: '643945264868098049',
+        topic: '[OVERRIDENTOPIC]',
+        name: 'please-read-me',
+        position: 0,
+        permission_overwrites: []
+      }
+    });
 
       await database.runQuery(
         `INSERT INTO messages (guild_id, message_id, channel_id, author_id, content, edited_timestamp, mention_everyone, nonce, timestamp, tts, embeds)

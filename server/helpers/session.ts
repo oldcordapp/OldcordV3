@@ -44,46 +44,54 @@ class session {
   public lastMessage: number;
   public seq: number;
   public eventsBuffer: any[];
+  public token: string;
+  public time: number;
+  public last_idle: number;
+  public channel_id: number;
+  public guild_id: number;
+  public subscriptions: any;
+  public memberListCache: any;
+  public capabilities: any;
 
   constructor(
     id: string,
     socket: any,
     user: any,
-    _token: string,
+    token: string,
     ready: boolean,
     presence: any,
-    _guild_id = 0,
-    _channel_id = 0,
+    guild_id = 0,
+    channel_id = 0,
     type = 'gateway',
     apiVersion = 3,
-    _capabilities: any,
+    capabilities: any,
   ) {
     this.id = id;
     this.socket = socket;
-    //this.token = token;
+    this.token = token;
     this.user = user && (({ password, token, ...rest }) => rest)(user);
     this.seq = 0;
-    //this.time = Date.now();
+    this.time = Date.now();
     this.ready = ready;
     this.presence = presence;
     this.type = type ?? 'gateway'; //or voice
     this.dead = false;
     this.lastMessage = Date.now();
     this.ratelimited = false;
-    //this.last_idle = 0;
-    //this.channel_id = channel_id;
-    //this.guild_id = guild_id;
+    this.last_idle = 0;
+    this.channel_id = channel_id;
+    this.guild_id = guild_id;
     this.eventsBuffer = [];
     this.guilds = [];
     this.unavailable_guilds = [];
     this.presences = [];
     this.read_states = [];
     this.relationships = [];
-    //this.subscriptions = {};
-    //this.memberListCache = {};
+    this.subscriptions = {};
+    this.memberListCache = {};
     this.guildCache = [];
     this.apiVersion = apiVersion;
-    //this.capabilities = capabilities; // Either an integer (recent/third party) or a build date (specific build capabilities). We can use it to give builds/capability flag specific JSON object props.
+    this.capabilities = capabilities; // Either an integer (recent/third party) or a build date (specific build capabilities). We can use it to give builds/capability flag specific JSON object props.
     this.application = null;
   }
   onClose(_code: number) {
@@ -233,7 +241,13 @@ class session {
         }
       },
       include: {
-        members: true
+        channels: true,
+        roles: true,
+        members: {
+          include: {
+            user: true
+          }
+        }
       }
     });
 
@@ -270,7 +284,13 @@ class session {
         }
       },
       include: {
-        members: true
+        channels: true,
+        roles: true,
+        members: {
+          include: {
+            user: true
+          }
+        }
       }
     });
 
@@ -418,7 +438,13 @@ class session {
           }
         },
         include: {
-          members: true
+          channels: true,
+          roles: true,
+          members: {
+            include: {
+              user: true
+            }
+          }
         }
       });
 
@@ -510,11 +536,16 @@ class session {
               },
               ...guild.members.map((x) => {
                 return {
-                  ...x,
-                  guild: {
-                    id: guild.id,
-                  },
-                  guild_id: guild.id,
+                    nick: x.nick,
+                    roles: x.roles,
+                    joined_at: x.joined_at,
+                    deaf: x.deaf,
+                    mute: x.mute,
+                    user: globalUtils.miniUserObject(x.user), 
+                    guild: {
+                        id: guild.id,
+                    },
+                    guild_id: guild.id,
                 };
               }),
             ]);
@@ -528,10 +559,10 @@ class session {
             continue;
           }
 
-          let guild_presences = guild.presences;
+          let guild_presences = globalUtils.getGuildPresences(guild);
 
-          if (guild_presences.length == 0) continue;
-
+          if (guild_presences.length == 0)
+            continue;
           if (guild_presences.length >= 100) {
             guild_presences = [guild_presences.find((x) => x.user.id === this.user.id)];
           }
@@ -556,13 +587,18 @@ class session {
           merged_members.push(
             guild.members.map((x) => {
               return {
-                ...x,
-                guild: {
-                  id: guild.id,
-                },
-                guild_id: guild.id,
-              };
-            }),
+                  user: globalUtils.miniUserObject(x.user), 
+                  roles: x.roles,
+                  nick: x.nick,
+                  joined_at: x.joined_at,
+                  deaf: x.deaf,
+                  mute: x.mute,
+                  guild_id: guild.id,
+                  guild: {
+                    id: guild.id,
+                  },
+                };
+              }),
           );
 
           for (let channel of guild.channels) {

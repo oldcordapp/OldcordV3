@@ -20,35 +20,38 @@ model InstanceInfo {
 }
 
 model User {
-  id                String           @id
+  id                String             @id
   username          String?
   discriminator     String?
-  email             String?          @unique
+  email             String?            @unique
   password          String?
-  token             String?          @unique
-  verified          Boolean?         @default(false)
-  claimed           Boolean?         @default(true)
-  mfa_enabled       Boolean?         @default(false)
+  token             String?            @unique
+  verified          Boolean?           @default(false)
+  claimed           Boolean?           @default(true)
+  mfa_enabled       Boolean?           @default(false)
   mfa_secret        String?
-  premium           Boolean?         @default(true)
+  premium           Boolean?           @default(true)
   created_at        String?
   avatar            String?
-  bot               Boolean?         @default(false)
-  flags             Int?             @default(0)
+  bot               Boolean?           @default(false)
+  flags             Int?               @default(0)
   registration_ip   String?
   email_token       String?
   last_login_ip     String?
-  private_channels  Json?            @default("[]")
-  settings          Json?            @default("{\"show_current_game\":false,\"inline_attachment_media\":true,\"inline_embed_media\":true,\"render_embeds\":true,\"render_reactions\":true,\"sync\":true,\"theme\":\"dark\",\"enable_tts_command\":true,\"message_display_compact\":false,\"locale\":\"en-US\",\"convert_emoticons\":true,\"restricted_guilds\":[],\"allow_email_friend_request\":false,\"friend_source_flags\":{\"all\":true},\"developer_mode\":true,\"guild_positions\":[],\"detect_platform_accounts\":false,\"status\":\"online\"}")
-  guild_settings    Json?            @default("[]")
+  private_channels  Json?              @default("[]")
+  settings          Json?              @default("{\"show_current_game\":false,\"inline_attachment_media\":true,\"inline_embed_media\":true,\"render_embeds\":true,\"render_reactions\":true,\"sync\":true,\"theme\":\"dark\",\"enable_tts_command\":true,\"message_display_compact\":false,\"locale\":\"en-US\",\"convert_emoticons\":true,\"restricted_guilds\":[],\"allow_email_friend_request\":false,\"friend_source_flags\":{\"all\":true},\"developer_mode\":true,\"guild_positions\":[],\"detect_platform_accounts\":false,\"status\":\"online\"}")
+  guild_settings    Json?              @default("[]")
   disabled_until    String?
   disabled_reason   String?
   staff             Staff?
   mfa_login_tickets MfaLoginTicket[]
   members           Member[]
   applications      Application[]
-  channel           Channel?         @relation(fields: [channelId], references: [id])
+  channel           Channel?           @relation(fields: [channelId], references: [id])
   channelId         String?
+  guilds            Guild[]
+  bans              Ban[]
+  connectedAccounts ConnectedAccount[]
 
   @@map("users")
 }
@@ -74,15 +77,14 @@ model UserNote {
 model GuildSubscription {
   guild_id        String?
   user_id         String?
-  subscription_id String?
+  subscription_id String   @id
   ended           Boolean? @default(false)
 
   @@map("guild_subscriptions")
-  @@ignore
 }
 
 model DmChannel {
-  id    String @id
+  id    String  @id
   user1 String?
   user2 String?
 
@@ -111,18 +113,19 @@ model Staff {
 }
 
 model ConnectedAccount {
-  user_id      String?
-  account_id   String?
+  user_id      String
+  account_id   String
   username     String?
   visibility   Boolean? @default(false)
   friendSync   Boolean? @default(true)
   integrations Json?    @default("[]")
   revoked      Boolean? @default(false)
   connected_at String?
-  platform     String?
+  platform     String
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@id([user_id, platform])
   @@map("connected_accounts")
-  @@ignore
 }
 
 model Channel {
@@ -145,14 +148,6 @@ model Channel {
   @@map("channels")
 }
 
-model Permission {
-  channel_id String?
-  overwrite  String?
-
-  @@map("permissions")
-  @@ignore
-}
-
 model Guild {
   id                            String    @id
   name                          String?
@@ -160,7 +155,7 @@ model Guild {
   splash                        String?
   banner                        String?
   region                        String?
-  owner_id                      String?
+  owner_id                      String
   afk_channel_id                String?
   system_channel_id             String?
   afk_timeout                   Int?      @default(300)
@@ -180,6 +175,8 @@ model Guild {
   channels                      Channel[]
   members                       Member[]
   roles                         Role[]
+  owner                         User      @relation(fields: [owner_id], references: [id])
+  bans                          Ban[]
 
   @@map("guilds")
 }
@@ -261,22 +258,23 @@ model Invite {
 }
 
 model Message {
-  message_id       String   @id
-  type             Int?     @default(0)
+  message_id       String       @id
+  type             Int?         @default(0)
   guild_id         String?
   channel_id       String?
   author_id        String?
   content          String?
   edited_timestamp String?
-  mention_everyone Boolean? @default(false)
+  mention_everyone Boolean?     @default(false)
   nonce            String?
   timestamp        String?
-  tts              Boolean? @default(false)
-  embeds           Json?    @default("[]")
-  reactions        Json?    @default("[]")
-  mentions         Json?    @default("[]")
-  pinned           Boolean? @default(false)
+  tts              Boolean?     @default(false)
+  embeds           Json?        @default("[]")
+  reactions        Json?        @default("[]")
+  mentions         Json?        @default("[]")
+  pinned           Boolean?     @default(false)
   overrides        String?
+  attachments      Attachment[]
 
   @@map("messages")
 }
@@ -294,16 +292,16 @@ model Acknowledgement {
 }
 
 model Attachment {
-  attachment_id String?
-  message_id    String?
+  attachment_id String  @id
+  message_id    String
   filename      String?
   height        Int?
   width         Int?
   size          Int?
   url           String?
+  message       Message @relation(fields: [message_id], references: [message_id], onDelete: Cascade)
 
   @@map("attachments")
-  @@ignore
 }
 
 model Widget {
@@ -316,11 +314,14 @@ model Widget {
 }
 
 model Ban {
-  guild_id String?
-  user_id  String?
+  guild_id String
+  user_id  String
 
+  guild Guild @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([guild_id, user_id])
   @@map("bans")
-  @@ignore
 }
 
 model Webhook {

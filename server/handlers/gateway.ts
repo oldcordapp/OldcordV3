@@ -27,9 +27,9 @@ async function handleIdentify(socket: any, packet: any) {
   socket.identified = true;
 
   const user = await prisma.user.findUnique({
-    where: {
-      token: packet.d.token
-    }
+      where: {
+          token: packet.d.token
+      }
   });
 
   if (user == null || user.disabled_until) {
@@ -146,11 +146,13 @@ async function handleVoiceState(socket: any, packet: any) {
   socket.session.self_deafened = self_deaf;
 
   if (!socket.current_guild) {
-    socket.current_guild = await prisma.guild.findUnique({
-      where: {
-        id: guild_id
-      }
-    });
+    if (guild_id) {
+      socket.current_guild = await prisma.guild.findUnique({
+        where: {
+          id: guild_id
+        }
+      });
+    }
   }
 
   if (socket.session.channel_id != 0 && socket.current_guild) {

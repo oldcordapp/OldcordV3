@@ -144,7 +144,9 @@ const dispatcher = {
           if (finalPayload.ops) {
             finalType = 'GUILD_MEMBER_LIST_UPDATE';
           }
-        } catch (err) {
+        } catch (err: any) {
+          console.error(err);
+          console.log(err.stackTrace);
           logText(`Error executing dynamic payload: ${err}`, 'error');
           return;
         }
@@ -240,7 +242,7 @@ const dispatcher = {
 
       if (!member) continue;
 
-      const uSessions = global.userSessions.get(member.user.id);
+      const uSessions = global.userSessions.get(member.user_id);
 
       if (!uSessions || uSessions.length === 0) continue;
 

@@ -509,7 +509,8 @@ async function channelMiddleware(req, res, next) {
 
   if (!req.guild) {
     req.guild = await prisma.guild.findUnique({
-      where: { id: req.params.guildid }
+      where: { id: req.params.guildid },
+      include: { members: true, roles: true }
     });
   }
 

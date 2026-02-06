@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, type NextFunction } from 'express';
 
-import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
-import globalUtils from '../helpers/globalutils.js';
+import dispatcher from '../helpers/dispatcher.ts';
+import errors from '../helpers/errors.ts';
+import globalUtils from '../helpers/globalutils.ts';
 import { logText } from '../helpers/logger.ts';
 import {
   channelMiddleware,
@@ -10,69 +10,55 @@ import {
   guildPermissionsMiddleware,
   instanceMiddleware,
   rateLimitMiddleware,
-} from '../helpers/middlewares.js';
-import quickcache from '../helpers/quickcache.js';
-import Watchdog from '../helpers/watchdog.js';
+} from '../helpers/middlewares.ts';
+import quickcache from '../helpers/quickcache.ts';
+import Watchdog from '../helpers/watchdog.ts';
 import messages from './messages.js';
 import pins from './pins.js';
+import { prisma } from '../prisma.ts';
 
 const router = Router({ mergeParams: true });
 const config = globalUtils.config;
 
-router.param('channelid', async (req, res, next, channelid) => {
+router.param('channelid', async (req: any, _res: any, next, channelid) => {
   const guild = req.guild;
 
   if (!guild) {
-    //fallback for dm channels & group dms & legacy clients
+    const channelData = await prisma.channel.findUnique({
+      where: { id: channelid }
+    });
 
-    req.channel = await global.database.getChannelById(channelid);
-
-    //req.guild = await global.database.getGuildById(channelid);
-
-    /*
-        if (req.guild === null) {
-            req.channel = await global.database.getChannelById(channelid); 
-        } else {
-            let found_channel = req.guild.channels.filter(y => y.type === 0 && y.id === channelid && global.permissions.hasChannelPermissionTo(y, req.guild, req.account.id, "READ_MESSAGES"));
-
-            if (found_channel) {
-                req.channel = found_channel;
-                return next();
-            }
-
-            let text_channels = req.guild.channels.filter(x => x.type === 0 && global.permissions.hasChannelPermissionTo(x, req.guild, req.account.id, "READ_MESSAGES"));
-
-            req.channel = text_channels.length > 0 ? text_channels[0] : null;
-        } //So this is a bug with older clients where it wants the first text channel using the guild id as the channel id
-         */
+    if (channelData) {
+      req.channel = channelData;
+    } else {
+      req.channel = null;
+    }
 
     return next();
   }
 
-  req.member = req.guild.members.find((y) => y.id === req.account.id);
+  req.member = req.guild.members.find((y: any) => y.user_id === req.account.id);
 
-  const channel = req.guild.channels.find((y) => y.id === channelid);
+  const channel = req.guild.channels.find((y: any) => y.id === channelid);
 
-  if (channel == null) {
+  if (!channel) {
     req.channel = null;
 
-    return next(); //no channel let's wrap it up - try not to use getChannelById when not necessary
+    return next();
   }
 
+  const typeInt = parseInt(channel.type);
   if (req.channel_types_are_ints) {
-    channel.type = parseInt(channel.type);
-  } else channel.type = parseInt(channel.type) == 2 ? 'voice' : 'text';
+    channel.type = typeInt;
+  } else {
+    channel.type = typeInt === 2 ? 'voice' : 'text';
+  }
 
   req.channel = channel;
-
-  if (!req.guild && req.channel.guild_id != null) {
-    req.guild = await global.database.getGuildById(req.channel.guild_id);
-  } //just in case there is a guild and it's not resolved yet - for future use
-
   next();
 });
 
-router.param('recipientid', async (req, res, next, recipientid) => {
+router.param('recipientid', async (req: any, _res: any, next: NextFunction, recipientid: string) => {
   req.recipient = await global.database.getAccountByUserId(recipientid);
 
   next();
@@ -83,7 +69,7 @@ router.get(
   channelMiddleware,
   channelPermissionsMiddleware('READ_MESSAGES'),
   quickcache.cacheFor(60 * 5, true),
-  async (req, res) => {
+  async (req: any, res) => {
     return res
       .status(200)
       .json(globalUtils.personalizeChannelObject(req, req.channel, req.account)); //req.account is a dirty hack ok
@@ -104,7 +90,7 @@ router.post(
     global.config.ratelimit_config.typing.timeFrame,
     0.4,
   ),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       var payload = {
         channel_id: req.params.channelid,
@@ -149,7 +135,7 @@ router.patch(
     global.config.ratelimit_config.updateChannel.timeFrame,
     0.5,
   ),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       let channel = req.channel;
 
@@ -216,8 +202,8 @@ router.patch(
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function () {
-          return globalUtils.personalizeChannelObject(this.socket, channel);
+        await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+          return globalUtils.personalizeChannelObject(socket, channel);
         });
 
         return res.status(200).json(channel);
@@ -267,7 +253,7 @@ router.get(
   '/:channelid/call',
   channelMiddleware,
   quickcache.cacheFor(60 * 5, false),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       if (!req.channel.recipients) {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
@@ -288,7 +274,7 @@ router.post(
   '/:channelid/call/ring',
   channelMiddleware,
   quickcache.cacheFor(60 * 5, false),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       if (!req.channel.recipients) {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
@@ -314,7 +300,7 @@ router.post(
   instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
   channelMiddleware,
   channelPermissionsMiddleware('CREATE_INSTANT_INVITE'),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const sender = req.account;
 
@@ -392,7 +378,7 @@ router.get(
   channelMiddleware,
   channelPermissionsMiddleware('MANAGE_WEBHOOKS'),
   quickcache.cacheFor(60 * 5, true),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const guild = req.guild;
 
@@ -416,7 +402,7 @@ router.post(
   instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
   channelMiddleware,
   channelPermissionsMiddleware('MANAGE_WEBHOOKS'),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const account = req.account;
       const guild = req.guild;
@@ -457,7 +443,7 @@ router.put(
   instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
   channelMiddleware,
   guildPermissionsMiddleware('MANAGE_ROLES'),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const id = req.params.id;
       let type = req.body.type;
@@ -551,7 +537,7 @@ router.delete(
   instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
   channelMiddleware,
   guildPermissionsMiddleware('MANAGE_ROLES'),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const id = req.params.id;
       const channel_id = req.params.channelid;
@@ -614,7 +600,7 @@ router.put(
     global.config.ratelimit_config.updateMember.timeFrame,
     0.75,
   ),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const sender = req.account;
 
@@ -641,7 +627,7 @@ router.put(
       const recipient = req.recipient;
 
       if (recipient == null) {
-        return res.status(404).json(errors.response_404.UNKNWON_USER);
+        return res.status(404).json(errors.response_404.UNKNOWN_USER);
       }
 
       if (!globalUtils.areWeFriends(sender, recipient)) {
@@ -658,8 +644,8 @@ router.put(
         throw 'Failed to update recipients list in channel';
 
       //Notify everyone else
-      await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function () {
-        return globalUtils.personalizeChannelObject(this.socket, channel);
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+        return globalUtils.personalizeChannelObject(socket, channel);
       });
 
       //Notify new recipient
@@ -694,7 +680,7 @@ router.delete(
     global.config.ratelimit_config.updateMember.timeFrame,
     0.75,
   ),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const sender = req.account;
 
@@ -724,8 +710,8 @@ router.delete(
         throw 'Failed to update recipients list in channel';
 
       //Notify everyone else
-      await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function () {
-        return globalUtils.personalizeChannelObject(this.socket, channel);
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+        return globalUtils.personalizeChannelObject(socket, channel);
       });
 
       const remove_msg = await global.database.createSystemMessage(null, channel.id, 2, [
@@ -757,7 +743,7 @@ router.delete(
     global.config.ratelimit_config.deleteChannel.timeFrame,
     0.5,
   ),
-  async (req, res) => {
+  async (req: any, res) => {
     try {
       const sender = req.account;
 
@@ -825,8 +811,8 @@ router.delete(
           if (!(await global.database.updateChannelRecipients(channel.id, newRecipientsList)))
             throw 'Failed to update recipients list in channel';
 
-          await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function () {
-            return globalUtils.personalizeChannelObject(this.socket, channel);
+          await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+            return globalUtils.personalizeChannelObject(socket, channel);
           });
         }
       } else {
