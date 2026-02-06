@@ -1116,18 +1116,18 @@ const database = {
                 changed = true;
               }
               if (settings.friend_source_flags.mutual_friends !== false) {
-                settings.friend_source_flags.mutual_friends = false;
+                settings.friend_source_flags.mutual_friends = true;
                 changed = true;
               }
               if (settings.friend_source_flags.mutual_guilds !== false) {
-                settings.friend_source_flags.mutual_guilds = false;
+                settings.friend_source_flags.mutual_guilds = true;
                 changed = true;
               }
             } else {
               settings.friend_source_flags = {
                 all: false,
-                mutual_friends: false,
-                mutual_guilds: false,
+                mutual_friends: true,
+                mutual_guilds: true,
               };
               changed = true;
             }
@@ -6719,8 +6719,8 @@ const database = {
           settings.default_guilds_restricted = true;
           settings.friend_source_flags = {
             all: false,
-            mutual_friends: false,
-            mutual_guilds: false,
+            mutual_friends: true,
+            mutual_guilds: true,
           };
           await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
             JSON.stringify(settings),
