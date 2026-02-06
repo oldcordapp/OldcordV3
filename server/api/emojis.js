@@ -14,7 +14,6 @@ router.get(
   '/',
   guildMiddleware,
   guildPermissionsMiddleware('MANAGE_EMOJIS'),
-  quickcache.cacheFor(60 * 5, true),
   async (req, res) => {
     try {
       const guild = req.guild;
