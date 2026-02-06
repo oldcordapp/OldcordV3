@@ -626,7 +626,9 @@ function channelPermissionsMiddleware(permission) {
             return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
           }
 
-          const friends = !sender.bot && !other.bot && globalUtils.areWeFriends(sender, other);
+          if (sender.bot || other.bot) return next();
+
+          const friends = globalUtils.areWeFriends(sender, other);
 
           const guilds = await global.database.getUsersGuilds(other.id);
 
@@ -645,7 +647,7 @@ function channelPermissionsMiddleware(permission) {
               return senderAllows && recipientAllows;
             });
 
-            if (!hasAllowedGuild || global.config.require_friendship_for_dm) {
+            if (!hasAllowedGuild) {
               return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
             }
           }

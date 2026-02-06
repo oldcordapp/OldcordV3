@@ -1094,6 +1094,68 @@ const database = {
         `CREATE INDEX CONCURRENTLY IF NOT EXISTS trgm_index_messages_content ON messages USING GIN (lower(content) gin_trgm_ops);`,
       );
 
+      if (config.require_friendship_for_dm) {
+        const users = await database.runQuery(`SELECT id, settings FROM users WHERE bot = false`);
+
+        if (users) {
+          for (const user of users) {
+            let settings = JSON.parse(user.settings);
+            let changed = false;
+
+            if (
+              settings.default_guilds_restricted === false ||
+              settings.default_guilds_restricted === undefined
+            ) {
+              settings.default_guilds_restricted = true;
+              changed = true;
+            }
+
+            if (settings.friend_source_flags) {
+              if (settings.friend_source_flags.all !== false) {
+                settings.friend_source_flags.all = false;
+                changed = true;
+              }
+              if (settings.friend_source_flags.mutual_friends !== false) {
+                settings.friend_source_flags.mutual_friends = false;
+                changed = true;
+              }
+              if (settings.friend_source_flags.mutual_guilds !== false) {
+                settings.friend_source_flags.mutual_guilds = false;
+                changed = true;
+              }
+            } else {
+              settings.friend_source_flags = {
+                all: false,
+                mutual_friends: false,
+                mutual_guilds: false,
+              };
+              changed = true;
+            }
+
+            const userGuilds = await database.runQuery(
+              `SELECT guild_id FROM members WHERE user_id = $1`,
+              [user.id],
+            );
+
+            if (userGuilds) {
+              for (const guilds of userGuilds) {
+                if (!settings.restricted_guilds.includes(guilds.guild_id)) {
+                  settings.restricted_guilds.push(guilds.guild_id);
+                  changed = true;
+                }
+              }
+            }
+
+            if (changed) {
+              await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
+                JSON.stringify(settings),
+                user.id,
+              ]);
+            }
+          }
+        }
+      }
+
       return true;
     } catch (error) {
       logText(error, 'error');
@@ -5441,6 +5503,23 @@ const database = {
         [guild.id, user_id, null, '[]', date, 0, 0],
       );
 
+      const userRows = await database.runQuery(`SELECT settings, bot FROM users WHERE id = $1`, [
+        user_id,
+      ]);
+
+      if (userRows && userRows.length > 0 && !userRows[0].bot) {
+        const settings = JSON.parse(userRows[0].settings);
+        if (settings.default_guilds_restricted) {
+          if (!settings.restricted_guilds.includes(guild.id)) {
+            settings.restricted_guilds.push(guild.id);
+            await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
+              JSON.stringify(settings),
+              user_id,
+            ]);
+          }
+        }
+      }
+
       return true;
     } catch (error) {
       logText(error, 'error');
@@ -5969,7 +6048,7 @@ const database = {
       ]);
 
       if (!rows || rows.length === 0) {
-        return {}; 
+        return {};
       }
 
       const notes = {};
@@ -6629,6 +6708,26 @@ const database = {
           email_token ?? null,
         ],
       );
+
+      const userRows = await database.runQuery(`SELECT settings, bot FROM users WHERE id = $1`, [
+        id,
+      ]);
+
+      if (userRows && userRows.length > 0 && !userRows[0].bot) {
+        const settings = JSON.parse(userRows[0].settings);
+        if (config.require_friendship_for_dm) {
+          settings.default_guilds_restricted = true;
+          settings.friend_source_flags = {
+            all: false,
+            mutual_friends: false,
+            mutual_guilds: false,
+          };
+          await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
+            JSON.stringify(settings),
+            id,
+          ]);
+        }
+      }
 
       return {
         token: token,
