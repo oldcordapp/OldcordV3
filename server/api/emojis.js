@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
-import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.ts';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import { guildMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares.js';
-import Snowflake from '../helpers/snowflake.js';
+import Snowflake from '../helpers/utils/snowflake.js';
 const router = Router({ mergeParams: true });
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import quickcache from '../helpers/quickcache.js';
 
 router.get(

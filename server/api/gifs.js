@@ -1,8 +1,8 @@
 import { Router } from 'express';
 
-import { logText } from '../helpers/logger.ts';
+import { logText } from '../helpers/utils/logger.ts';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
+import { response_500 } from '../helpers/consts/errors.js';
 import { cacheFor } from '../helpers/quickcache.js';
 
 router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {

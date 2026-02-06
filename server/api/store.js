@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
-import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.ts';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import { guildMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 const router = Router();
-import { generate } from '../helpers/snowflake.js';
+import { generate } from '../helpers/utils/snowflake.js';
 
 router.param('id', async (req, _, next, id) => {
   //Currently unknown

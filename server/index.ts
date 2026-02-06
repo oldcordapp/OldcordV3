@@ -1,4 +1,4 @@
-import Snowflake from './helpers/snowflake.js';
+import Snowflake from './helpers/utils/snowflake.js';
 
 // this is needed because of discord kotlin sending in id as Number and not string, and it messes precision
 const originalJsonParse = JSON.parse;
@@ -39,9 +39,9 @@ import path from 'path';
 import router from './api/index.js';
 import gateway from './gateway.ts';
 import database from './helpers/database.js';
-import errors from './helpers/errors.js';
-import globalUtils from './helpers/globalutils.js';
-import { logText } from './helpers/logger.ts';
+import errors from './helpers/consts/errors.js';
+import globalUtils from './helpers/utils/globalutils.js';
+import { logText } from './helpers/utils/logger.ts';
 import {
   apiVersionMiddleware,
   assetsMiddleware,
@@ -56,9 +56,9 @@ import { Readable } from 'stream';
 
 import emailer from './helpers/emailer.js';
 import MediasoupSignalingDelegate from './helpers/webrtc/MediasoupSignalingDelegate.js';
-import mrServer from './mrserver.ts';
-import rtcServer from './rtcserver.ts';
-import udpServer from './udpserver.ts';
+import mrServer from './protocol/mrserver.ts';
+import rtcServer from './protocol/rtcserver.ts';
+import udpServer from './protocol/udpserver.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 

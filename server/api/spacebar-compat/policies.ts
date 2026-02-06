@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Response } from "express"
 
-import { config, generateGatewayURL } from '../../helpers/globalutils.js';
+import { config, generateGatewayURL } from '../../helpers/utils/globalutils.js';
 const router = Router();
 
 router.get('/instance/domains', (req, res: Response) => {
