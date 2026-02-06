@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import globalUtils from '../helpers/globalutils.js';
 import lazyRequest from '../helpers/lazyRequest.js';
 import { logText } from '../helpers/logger.ts';
@@ -641,11 +641,15 @@ router.patch(
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
       }
 
+      const guild = await global.database.getGuildById(req.params.guildid);
+      if (!guild) {
+        return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
+      }
       const widget = await global.database.getGuildWidget(req.params.guildid);
 
       if (widget == null) {
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-      } //Should we return Unknown Widget here?
+        return res.status(500).json(errors.response_400.WIDGET_DISABLED);
+      }
 
       return res.status(200).json(widget);
     } catch (error) {

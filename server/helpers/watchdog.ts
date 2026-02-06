@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import errors from './errors.js';
+import errors from './consts/errors.js';
 import globalUtils from './globalutils.js';
 import { logText } from './logger.ts';
 import type { IncomingHttpHeaders } from 'http';

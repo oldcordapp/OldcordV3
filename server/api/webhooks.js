@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { copyFileSync, existsSync, mkdirSync, promises } from 'fs';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import globalUtils from '../helpers/globalutils.js';
 import { logText } from '../helpers/logger.ts';
 import md5 from '../helpers/md5.ts';

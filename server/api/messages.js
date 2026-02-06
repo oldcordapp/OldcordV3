@@ -7,7 +7,7 @@ import multer from 'multer';
 import { extname, join } from 'path';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import globalUtils from '../helpers/globalutils.js';
 import { logText } from '../helpers/logger.ts';
 import {

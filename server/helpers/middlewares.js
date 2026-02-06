@@ -1,7 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
-import errors from './errors.js';
+import errors from './consts/errors.js';
 import globalUtils from './globalutils.js';
 import { logText } from './logger.ts';
 import { getTimestamps } from './wayback.ts';

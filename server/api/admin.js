@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import globalUtils from '../helpers/globalutils.js';
 //PRIVILEGE: 1 - (JANITOR) [Can only flag things for review], 2 - (MODERATOR) [Can only delete messages, mute users, and flag things for review], 3 - (ADMIN) [Free reign, can review flags, disable users, delete servers, etc], 4 - (INSTANCE OWNER) - [Can add new admins, manage staff, etc]
 

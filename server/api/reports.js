@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { logText } from '../helpers/logger.ts';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
+import { response_500 } from '../helpers/consts/errors.js';
 import { rateLimitMiddleware } from '../helpers/middlewares.js';
 import { middleware } from '../helpers/watchdog.js';
 

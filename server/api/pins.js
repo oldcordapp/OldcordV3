@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import { logText } from '../helpers/logger.ts';
 import { channelMiddleware } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';

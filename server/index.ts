@@ -39,7 +39,7 @@ import path from 'path';
 import router from './api/index.js';
 import gateway from './gateway.ts';
 import database from './helpers/database.js';
-import errors from './helpers/errors.js';
+import errors from './helpers/consts/errors.js';
 import globalUtils from './helpers/globalutils.js';
 import { logText } from './helpers/logger.ts';
 import {

@@ -5,7 +5,7 @@ import { logText } from '../../../helpers/logger.ts';
 import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares.js';
 const router = Router();
 import dispatcher from '../../../helpers/dispatcher.js';
-import errors from '../../../helpers/errors.js';
+import errors from '../../../helpers/consts/errors.js';
 import quickcache from '../../../helpers/quickcache.js';
 import Watchdog from '../../../helpers/watchdog.js';
 import relationships from '../relationships.js';

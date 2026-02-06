@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { response_500 } from '../helpers/errors.js';
+import { response_500 } from '../helpers/consts/errors.js';
 import { logText } from '../helpers/logger.ts';
 const router = Router();
 

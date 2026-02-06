@@ -5,7 +5,7 @@ import globalUtils from '../helpers/globalutils.js';
 import { logText } from '../helpers/logger.ts';
 import { guildPermissionsMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 const router = Router({ mergeParams: true });
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import lazyRequest from '../helpers/lazyRequest.js';
 import quickcache from '../helpers/quickcache.js';
 import Watchdog from '../helpers/watchdog.js';

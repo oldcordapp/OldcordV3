@@ -7,7 +7,7 @@ import { guildMiddleware, guildPermissionsMiddleware } from '../helpers/middlewa
 import Snowflake from '../helpers/snowflake.js';
 const router = Router({ mergeParams: true });
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import quickcache from '../helpers/quickcache.js';
 
 router.get(

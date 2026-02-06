@@ -37,7 +37,7 @@
       "speaking_throttle_ms": 150
     }
   },
-  "default_client_build": "october_5_2017",
+  "default_client_build": "december_31_2018",
   "debug_logs": {
     "gateway": true,
     "rtc": true,
@@ -312,6 +312,11 @@
       "maxPerTimeFrame": 100,
       "timeFrame": 3600000,
       "breakdown": "1000 * 60 * 60"
+    },
+    "hypesquad": {
+      "maxPerTimeFrame": 2,
+      "timeFrame": 30000,
+      "breakdown": "1000 * 30"
     }
   },
   "serveDesktopClient": false

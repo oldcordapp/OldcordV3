@@ -4,7 +4,8 @@
 
 # OldcordV3
 
-An open-source reimplementation of the old (2015-2018) Discord backend, including an on-demand client patcher. <br>
+An open-source reimplementation of the old (2015-2018) Discord backend, including an on-demand client patcher.
+
 Contributions are highly encouraged! We'd love your help to clean and refactor the codebase!
 
 ## ⚠️ Important Notices
@@ -21,7 +22,8 @@ Contributions are highly encouraged! We'd love your help to clean and refactor t
 
 - **If you have your own Oldcord instance before October 5, 2025, please update your Node.js version to either the latest LTS version or the latest version.** This is because of the new Selector update requiring the latest Node.js version to build.
 
-**Help Wanted**! <br>
+**Help Wanted**!
+
 There are some features we need help with, if you're up for the task, feel free to submit a PR!
 
 - Audit Logs
@@ -87,6 +89,7 @@ There are some features we need help with, if you're up for the task, feel free 
 - `Google reCAPTCHA`: To enable, provide a `site_key`, `secret_key` and change `enabled` to `true`. Do the opposite (`enabled` to `false`) to disable.
   - **IMPORTANT**: The default keys are for demo purposes, **all answers will be marked as valid**, you MUST change these for a production environment.
 - `integration_config`: Manages in-app connections (e.g, Twitch). You'll need to create developer applications on these platforms (like Twitch) to get a `client_id` and `client_secret`.
+
   ```json
     "integration_config" : [{
       "platform" : "twitch",
@@ -95,6 +98,7 @@ There are some features we need help with, if you're up for the task, feel free 
       "redirect_uri" : "https://staging.oldcordapp.com/api/connections/twitch/callback"
     }]
   ```
+
 - `trusted_users`: An array of user IDs that bypass short-term rate limits. Useful for bots.
 - `instance_flags`: An array of strings to enable special features or restrictions:
   - `NO_REGISTRATION`: Blocks new user sign-ups.
@@ -103,7 +107,7 @@ There are some features we need help with, if you're up for the task, feel free 
   - `autojoin:GUILDID` - Automatically makes new users join a specific guild upon registration (e.g., `"autojoin:1413791197947867136"`)
 - `includePortInUrl`: If set to `false` will force the server to use ports 443/80 instead of the instance port. Good for reverse proxies.
 - `includePortInWsUrl`: If set to `false` will force the server gateway to use ports 443/80 instead of the instance port. Good for reverse proxies.
-- `tenor_api_key`: Needed if you want `/tenor` support. You can get an API key [here](https://tenor.com/developer/dashboard).
+- `tenor_api_key`: Needed if you want `/tenor` support. You can get an [API key here](https://tenor.com/developer/dashboard).
 - `auto_embed_urls`: Set to `true` if you want urls included in message content to automatically embed.
 
 ## FAQ

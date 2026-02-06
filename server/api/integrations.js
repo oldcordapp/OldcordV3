@@ -4,7 +4,7 @@ import { logText } from '../helpers/logger.ts';
 import { rateLimitMiddleware } from '../helpers/middlewares.js';
 import { cacheFor } from '../helpers/quickcache.js';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
+import { response_500 } from '../helpers/consts/errors.js';
 import { middleware } from '../helpers/watchdog.js';
 
 router.get(

@@ -28,11 +28,11 @@ import { deconstruct, generate } from './snowflake.js';
 const db_config = config.db_config;
 
 const pool = new Pool(db_config);
-
 const cache = {};
 
 async function runQuery(queryString, values = []) {
   //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
+  //TODO pls refactor this shit as soon as possible, my head wanted to explode
 
   const query = {
     text: queryString,
@@ -217,7 +217,7 @@ const database = {
 
       await database.runQuery(
         `
-                CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
                 username TEXT,
                 discriminator TEXT,
@@ -228,7 +228,7 @@ const database = {
                 claimed BOOLEAN DEFAULT TRUE,
                 mfa_enabled BOOLEAN DEFAULT FALSE,
                 mfa_secret TEXT DEFAULT NULL,
-                premium BOOLEAN DEFAULT TRUE,
+                premium BOOLEAN DEFAULT FALSE,
                 created_at TEXT DEFAULT NULL,
                 avatar TEXT DEFAULT NULL,
                 bot BOOLEAN DEFAULT FALSE,
@@ -240,8 +240,10 @@ const database = {
                 settings TEXT DEFAULT '{"show_current_game":false,"inline_attachment_media":true,"inline_embed_media":true,"render_embeds":true,"render_reactions":true,"sync":true,"theme":"dark","enable_tts_command":true,"message_display_compact":false,"locale":"en-US","convert_emoticons":true,"restricted_guilds":[],"allow_email_friend_request":false,"friend_source_flags":{"all":true},"developer_mode":true,"guild_positions":[],"detect_platform_accounts":false,"status":"online"}',
                 guild_settings TEXT DEFAULT '[]',
                 disabled_until TEXT DEFAULT NULL,
-                disabled_reason TEXT DEFAULT NULL
-           );`,
+                disabled_reason TEXT DEFAULT NULL,
+                hypesquad INTEGER DEFAULT NULL,
+                billing_cards TEXT DEFAULT '[]'
+            );`,
         [],
       ); // 4 = Everyone, 3 = Friends of Friends & Server Members, 2 = Friends of Friends, 1 = Server Members, 0 = No one
 
@@ -1189,6 +1191,20 @@ const database = {
       return false;
     }
   },
+  changeHypesquadStatus: async (user_id, house_id) => {
+    // boolean means success or not
+    try {
+      await database.runQuery(`
+        UPDATE users SET hypesquad = $1 WHERE id = $2
+        `,
+        [house_id, user_id],
+      );
+      return true;
+    } catch (error) {
+      logText(error, 'error');
+      return false;
+    }
+  },
   internalDisableAccount: async (staff, user_id, disabled_until, audit_log_reason) => {
     try {
       if (user_id === staff.user_id || user_id === '643945264868098049') {
@@ -1877,6 +1893,31 @@ const database = {
     } catch (error) {
       logText(error, 'error');
 
+      return null;
+    }
+  },
+  getUserPremiumState: async (user_id) => {
+    try {
+      const r = await database.runQuery(`
+        SELECT premium FROM users WHERE id = $1`
+      , [user_id]);
+      return { premium:r };
+    } catch (error) {
+      logText(error, 'error');
+      return null;
+    }
+  },
+  setUserPremium: async (user_id, v) => {
+    const sameState = await database.getUserPremiumState(user_id);
+    if (v ===sameState) return v; // just return the same instead of reupdating it
+    try {
+      await database.runQuery(`
+        UPDATE users SET premium = $1 WHERE id = $2`,
+        [String(v), user_id]
+      );
+      return v;
+    } catch (error) {
+      logText(error,'error');
       return null;
     }
   },
@@ -7197,7 +7238,7 @@ const database = {
     try {
       const user = await database.getAccountByEmail(email);
 
-      // IHATE TYPESCRIPT I HATE TYPESCRIPT I HATE TYPESCRIPT
+      // IHATE TYPESCRIPT I HATE TYPESCRIPT I HATE TYPESCRIPT (no i love typescript sir)
       if (user == null || !user?.email || !user?.password || !user?.token || !user?.settings) {
         return {
           success: false,

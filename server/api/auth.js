@@ -1,7 +1,7 @@
 import { Router } from 'express';
 const router = Router();
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
+import errors from '../helpers/consts/errors.js';
 import globalUtils from '../helpers/globalutils.js';
 import lazyRequest from '../helpers/lazyRequest.js';
 import { logText } from '../helpers/logger.ts';

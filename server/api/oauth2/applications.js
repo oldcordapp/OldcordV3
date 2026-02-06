@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { logText } from '../../helpers/logger.ts';
 const router = Router({ mergeParams: true });
-import errors from '../../helpers/errors.js';
+import errors from '../../helpers/consts/errors.js';
 
 router.param('applicationid', async (req, res, next, applicationid) => {
   req.application = await global.database.getApplicationById(applicationid);

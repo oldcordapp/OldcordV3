@@ -16,6 +16,7 @@ router.get('/directory/:id', (req, res) => {
   const SKU_ID = generate();
   const APP_ID = generate();
 
+  // TODO: please make this configurable :) funfunfunfun
   return res.status(200).json({
     id: id,
     data: {
@@ -61,6 +62,7 @@ router.get('/directory/:id', (req, res) => {
 router.get('/published-listings/skus/:skuId', async (req, res) => {
   const id = req.params.skuId;
 
+    // TODO: please make this configurable :) funfunfunfun
   return res.status(200).json({
     benefits: [],
     description:

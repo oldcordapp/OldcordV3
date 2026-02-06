@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { logText } from '../helpers/logger.ts';
 import { generate } from '../helpers/snowflake.js';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
+import { response_500 } from '../helpers/consts/errors.js';
 import { cacheFor } from '../helpers/quickcache.js';
 
 router.param('code', async (req, _, next, code) => {
