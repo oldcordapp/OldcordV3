@@ -181,7 +181,9 @@ router.put('/:userid', async (req, res) => {
           const sharedFriends = [];
 
           if (account.relationships && Array.isArray(account.relationships)) {
-            for (var friend of account.relationships.find((item) => item.type === 1)) {
+            const friends = account.relationships.filter((item) => item.type === 1);
+
+            for (var friend of friends) {
               if (user.relationships.map((i) => i.id).includes(friend.id)) {
                 sharedFriends.push(friend);
               }
