@@ -1,7 +1,7 @@
 import { murmur3 } from 'murmurhash-js';
 
 import dispatcher from './dispatcher.js';
-import globalUtils from './globalutils.js';
+import globalUtils from './utils/globalutils.js';
 
 const lazyRequest = {
   getSortedList: (guild) => {

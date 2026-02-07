@@ -4,8 +4,8 @@ import { load } from 'cheerio';
 import path from 'fs';
 import { Jimp } from 'jimp';
 
-import globalUtils from './globalutils.js';
-import { logText } from './logger.ts';
+import globalUtils from './utils/globalutils.js';
+import { logText } from './utils/logger.ts';
 
 const hexToDecimal = (hex) => {
   if (hex.startsWith('#')) {

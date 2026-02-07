@@ -21,9 +21,9 @@ import {
   prepareAccountObject,
   SerializeOverwritesToString,
   usersToIDs,
-} from './globalutils.js';
-import { logText } from './logger.ts';
-import { deconstruct, generate } from './snowflake.js';
+} from './utils/globalutils.js';
+import { logText } from './utils/logger.ts';
+import { deconstruct, generate } from './utils/snowflake.js';
 
 const db_config = config.db_config;
 
@@ -33,6 +33,7 @@ const cache = {};
 
 async function runQuery(queryString, values = []) {
   //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
+  // TODO pls refactor all this shit my brain will explode help
 
   const query = {
     text: queryString,

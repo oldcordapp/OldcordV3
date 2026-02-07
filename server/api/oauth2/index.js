@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
 import dispatcher from '../../helpers/dispatcher.js';
-import errors from '../../helpers/errors.js';
-import globalUtils from '../../helpers/globalutils.js';
+import errors from '../../helpers/consts/errors.js';
+import globalUtils from '../../helpers/utils/globalutils.js';
 import lazyRequest from '../../helpers/lazyRequest.js';
-import { logText } from '../../helpers/logger.ts';
+import { logText } from '../../helpers/utils/logger.ts';
 import applications from './applications.js';
 import tokens from './tokens.ts';
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Response } from "express";
-import { getRegions } from '../helpers/globalutils.js';
+import { getRegions } from '../helpers/utils/globalutils.js';
 
 const router = Router({ mergeParams: true });
 import { cacheFor } from '../helpers/quickcache.js';

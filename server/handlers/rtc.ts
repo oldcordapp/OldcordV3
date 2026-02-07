@@ -1,4 +1,4 @@
-import { generateSsrc, generateString, miniUserObject } from '../helpers/globalutils.js';
+import { generateSsrc, generateString, miniUserObject } from '../helpers/utils/globalutils.js';
 import session from '../helpers/session.js';
 
 const OPCODES = {

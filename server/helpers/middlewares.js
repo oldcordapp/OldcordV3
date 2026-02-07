@@ -1,10 +1,10 @@
 import rateLimit from 'express-rate-limit';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
-import errors from './errors.js';
-import globalUtils from './globalutils.js';
-import { logText } from './logger.ts';
-import { getTimestamps } from './wayback.ts';
+import errors from './consts/errors.js';
+import globalUtils from './utils/globalutils.js';
+import { logText } from './utils/logger.ts';
+import { getTimestamps } from './utils/wayback.ts';
 
 const config = globalUtils.config;
 

@@ -1,5 +1,5 @@
 import { handleMembersSync } from './lazyRequest.js';
-import { logText } from './logger.ts';
+import { logText } from './utils/logger.ts';
 
 const dispatcher = {
   dispatchEventTo: async (user_id, type, payload) => {
