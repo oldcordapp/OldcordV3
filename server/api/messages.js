@@ -336,8 +336,8 @@ router.post(
 
           if (!recipient.bot && !globalUtils.areWeFriends(account, recipient)) {
             const hasAllowedSharedGuild = mutualGuilds.some((guild) => {
-              const senderAllows = !account.settings.restricted_guilds.includes(guild.id);
-              const recipientAllows = !recipient.settings.restricted_guilds.includes(guild.id);
+              const senderAllows = !(account.settings && account.settings.restricted_guilds.includes(guild.id));
+              const recipientAllows = !(recipient.settings && recipient.settings.restricted_guilds.includes(guild.id));
 
               return senderAllows && recipientAllows;
             });
@@ -727,7 +727,7 @@ router.post(
       }
 
       const channel = req.channel;
-      const manual = req.body.manual === true;
+      const manual = (req.body.manual && req.body.manual === true) ?? false;
 
       const tryAck = await global.database.acknowledgeMessage(guy.id, channel.id, message.id, 0);
 
