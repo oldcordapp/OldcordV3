@@ -48,7 +48,7 @@ import {
   clientMiddleware,
   corsMiddleware,
 } from './helpers/middlewares.js';
-import permissions from './helpers/permissions.js';
+import permissions from './helpers/utils/permissions.js';
 const config = globalUtils.config;
 const app = express();
 import os from 'os';

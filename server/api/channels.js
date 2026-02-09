@@ -830,14 +830,7 @@ router.delete(
           });
         }
       } else {
-        //Deleting a guild channel
-        if (req.params.channelid == req.params.guildid) {
-          //TODO: Allow on 2018+ guilds
-          return res.status(403).json({
-            code: 403,
-            message: 'The main channel cannot be deleted.',
-          });
-        }
+        //Deleting a guild channel - Why didn't we allow this before?
 
         await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'CHANNEL_DELETE', {
           id: channel.id,

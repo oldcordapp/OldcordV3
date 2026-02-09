@@ -6504,7 +6504,8 @@ const database = {
       ) {
         const tCatId = generate();
         const vCatId = generate();
-        const genTextId = generate();
+        const genTextId = id;
+        //const genTextId = generate();
         const genVoiceId = generate();
 
         await database.runQuery(
