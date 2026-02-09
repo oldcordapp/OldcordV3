@@ -1,6 +1,7 @@
 import { Router } from 'express';
 const router = Router();
 import Snowflake from '../../../helpers/snowflake.js';
+import { AVAILABLE_PLANS_ID } from '../../../helpers/consts/subscriptions.js';
 
 router.param('guildid', async (req, _, next, guildid) => {
   req.guild = await global.database.getGuildById(guildid);
@@ -13,9 +14,22 @@ router.get('/subscriptions', async (req, res) => {
 
   return res.status(200).json(subscriptions);
 });
+router.post('/subscriptions', async (req, res) => {//TODO: check if the payment source is valid/exists (because why not)
+  const acc = req.account;
+  const { payment_gateway_plan_id: plan, payment_source_id: cardID } = req.body;
+
+  if (plan === AVAILABLE_PLANS_ID.premium_month_tier_2 || plan === AVAILABLE_PLANS_ID.premium_year_tier_2){
+    // TODO make the nitro badge dynamic
+    const gotPremium = await global.database.setUserPremium(acc.id, true);
+    if (gotPremium===null) return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+  };
+
+  return res.status(200).json({success:true});
+});
 
 router.get('/payment-sources', (req, res) => {
   return res.status(200).json([
+    //TODO put this on the user's db idk thing and make this is the default
     {
       id: Snowflake.generate(),
       type: 1,
