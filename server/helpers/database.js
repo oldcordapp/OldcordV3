@@ -218,50 +218,50 @@ const database = {
 
       await database.runQuery(
         `
-                CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                username TEXT,
-                discriminator TEXT,
-                email TEXT,
-                password TEXT,
-                token TEXT,
-                verified BOOLEAN DEFAULT FALSE,
-                claimed BOOLEAN DEFAULT TRUE,
-                mfa_enabled BOOLEAN DEFAULT FALSE,
-                mfa_secret TEXT DEFAULT NULL,
-                premium BOOLEAN DEFAULT TRUE,
-                created_at TEXT DEFAULT NULL,
-                avatar TEXT DEFAULT NULL,
-                bot BOOLEAN DEFAULT FALSE,
-                flags INTEGER DEFAULT 0,
-                registration_ip TEXT DEFAULT NULL,
-                email_token TEXT DEFAULT NULL,
-                last_login_ip TEXT DEFAULT NULL,
-                private_channels TEXT DEFAULT '[]',
-                settings TEXT DEFAULT '{"show_current_game":false,"inline_attachment_media":true,"inline_embed_media":true,"render_embeds":true,"render_reactions":true,"sync":true,"theme":"dark","enable_tts_command":true,"message_display_compact":false,"locale":"en-US","convert_emoticons":true,"restricted_guilds":[],"allow_email_friend_request":false,"friend_source_flags":{"all":true},"developer_mode":true,"guild_positions":[],"detect_platform_accounts":false,"status":"online"}',
-                guild_settings TEXT DEFAULT '[]',
-                disabled_until TEXT DEFAULT NULL,
-                disabled_reason TEXT DEFAULT NULL
+            CREATE TABLE IF NOT EXISTS users (
+              id TEXT PRIMARY KEY,
+              username TEXT,
+              discriminator TEXT,
+              email TEXT,
+              password TEXT,
+              token TEXT,
+              verified BOOLEAN DEFAULT FALSE,
+              claimed BOOLEAN DEFAULT TRUE,
+              mfa_enabled BOOLEAN DEFAULT FALSE,
+              mfa_secret TEXT DEFAULT NULL,
+              premium BOOLEAN DEFAULT FALSE,
+              created_at TEXT DEFAULT NULL,
+              avatar TEXT DEFAULT NULL,
+              bot BOOLEAN DEFAULT FALSE,
+              flags INTEGER DEFAULT 0,
+              registration_ip TEXT DEFAULT NULL,
+              email_token TEXT DEFAULT NULL,
+              last_login_ip TEXT DEFAULT NULL,
+              private_channels TEXT DEFAULT '[]',
+              settings TEXT DEFAULT '{"show_current_game":false,"inline_attachment_media":true,"inline_embed_media":true,"render_embeds":true,"render_reactions":true,"sync":true,"theme":"dark","enable_tts_command":true,"message_display_compact":false,"locale":"en-US","convert_emoticons":true,"restricted_guilds":[],"allow_email_friend_request":false,"friend_source_flags":{"all":true},"developer_mode":true,"guild_positions":[],"detect_platform_accounts":false,"status":"online"}',
+              guild_settings TEXT DEFAULT '[]',
+              disabled_until TEXT DEFAULT NULL,
+              disabled_reason TEXT DEFAULT NULL
            );`,
         [],
       ); // 4 = Everyone, 3 = Friends of Friends & Server Members, 2 = Friends of Friends, 1 = Server Members, 0 = No one
 
       await database.runQuery(
         `
-            CREATE TABLE IF NOT EXISTS relationships (
-	        user_id_1 TEXT,
+          CREATE TABLE IF NOT EXISTS relationships (
+	          user_id_1 TEXT,
             type INT,
             user_id_2 TEXT
-            );`,
+          );`,
         [],
       ); //User ID 1 will always be the user that initially establishes the relationship. Internally, the type will always be 3 for both incoming and outgoing FRs to avoid inserting 2 columns for one relationship. Checking whether the user id is in column 1 will also be the way to determine blocked users.
 
       await database.runQuery(
         `
             CREATE TABLE IF NOT EXISTS user_notes (
-                author_id TEXT,
-                user_id TEXT,
-                note TEXT DEFAULT NULL
+              author_id TEXT,
+              user_id TEXT,
+              note TEXT DEFAULT NULL
             );`,
         [],
       );
@@ -1878,6 +1878,31 @@ const database = {
     } catch (error) {
       logText(error, 'error');
 
+      return null;
+    }
+  },
+  getUserPremiumState: async (user_id) => {
+    try {
+      const r = await database.runQuery(`
+        SELECT premium FROM users WHERE id = $1`
+      , [user_id]);
+      return { premium:r };
+    } catch (error) {
+      logText(error, 'error');
+      return null;
+    }
+  },
+  setUserPremium: async (user_id, v) => {
+    const sameState = await database.getUserPremiumState(user_id);
+    if (v ===sameState) return v; // just return the same instead of reupdating it
+    try {
+      await database.runQuery(`
+        UPDATE users SET premium = $1 WHERE id = $2`,
+        [String(v), user_id]
+      );
+      return v;
+    } catch (error) {
+      logText(error,'error');
       return null;
     }
   },

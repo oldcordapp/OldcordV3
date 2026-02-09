@@ -4,6 +4,7 @@ import { replaceAll } from './utils/globalutils.js';
 import { logText } from './utils/logger.ts';
 
 //So SES is the best we got, everything else is quick to block ya - so just use amazon.
+// TODO yes so as on the issue#109 please add smtp support :)
 
 class emailer {
   constructor(config, max_per_timeframe, timeframe_ms, ratelimiter_modifier = 5) {
