@@ -2,7 +2,7 @@ import { constants, deflateSync } from 'zlib';
 
 import dispatcher from './dispatcher.js';
 import globalUtils from './utils/globalutils.js';
-import Intents from './intents.js';
+import Intents from './intents/intents.js';
 import lazyRequest from './lazyRequest.js';
 import { logText } from './utils/logger.ts';
 
