@@ -4300,6 +4300,7 @@ const database = {
       return await Promise.all(
         messageRows.map(async (row) => {
           const isWebhook = row.author_id.includes('WEBHOOK_');
+          let author = null;
 
           if (isWebhook) {
             const webhookId = row.author_id.split('_')[1];
