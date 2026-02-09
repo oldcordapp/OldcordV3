@@ -7,16 +7,16 @@ import multer from 'multer';
 import { extname, join } from 'path';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
-import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.ts';
+import errors from '../helpers/consts/errors.js';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import {
   channelPermissionsMiddleware,
   instanceMiddleware,
   rateLimitMiddleware,
 } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
-import Snowflake from '../helpers/snowflake.js';
+import Snowflake from '../helpers/utils/snowflake.js';
 import Watchdog from '../helpers/watchdog.js';
 import reactions from './reactions.js';
 

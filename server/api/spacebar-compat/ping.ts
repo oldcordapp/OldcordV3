@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Response } from "express"
 
-import { config } from '../../helpers/globalutils.js';
+import { config } from '../../helpers/utils/globalutils.js';
 const router = Router();
 
 router.get('/', (res: Response) => {

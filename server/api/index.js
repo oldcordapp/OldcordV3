@@ -2,7 +2,7 @@ import express from 'express';
 
 import { authMiddleware, instanceMiddleware } from '../helpers/middlewares.js';
 const app = express();
-import { config, generateGatewayURL } from '../helpers/globalutils.js';
+import { config, generateGatewayURL } from '../helpers/utils/globalutils.js';
 import activities from './activities.ts';
 import admin from './admin.js';
 import auth from './auth.js';

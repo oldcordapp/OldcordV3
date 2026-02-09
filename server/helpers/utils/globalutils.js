@@ -2,7 +2,7 @@ import { createHmac, randomBytes } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
 
 import encode from './base64url.js';
-import dispatcher from './dispatcher.js';
+import dispatcher from '../dispatcher.js';
 import { logText } from './logger.ts';
 
 const configPath = './config.json';
