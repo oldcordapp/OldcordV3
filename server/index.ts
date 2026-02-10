@@ -184,11 +184,11 @@ async function startServers() {
       gatewayServer = certificates ? https.createServer(certificates) : createServer();
     }
 
-    await new Promise<void>((resolve) => rtcHttpServer.listen(config.signaling_server_port, () => resolve()));
-    await new Promise<void>((resolve) => mrHttpServer.listen(config.mr_server.port, () => resolve()));
-
     global.udpServer.start(config.udp_server_port, config.debug_logs.udp ?? true);
     global.rtcServer.start(rtcHttpServer, config.signaling_server_port, config.debug_logs.rtc ?? true);
+
+    await new Promise<void>((resolve) => rtcHttpServer.listen(config.signaling_server_port, () => resolve()));
+    await new Promise<void>((resolve) => mrHttpServer.listen(config.mr_server.port, () => resolve()));
 
     if (global.using_media_relay) {
       global.mrServer = mrServer;
