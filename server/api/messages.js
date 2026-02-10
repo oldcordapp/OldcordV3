@@ -727,7 +727,7 @@ router.post(
       }
 
       const channel = req.channel;
-      const manual = (req.body.manual && req.body.manual === true) ?? false;
+      const manual = req.body?.manual === true;
 
       const tryAck = await global.database.acknowledgeMessage(guy.id, channel.id, message.id, 0);
 
