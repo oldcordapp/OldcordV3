@@ -78,68 +78,67 @@ export default function () {
 
   const handleToggle = (itemKey, type) => {
     const itemConstants = getItemConstants(itemKey, type);
-    const currentItems = getPendingItems(type);
+    if (!itemConstants) return;
 
-    if (!currentItems.includes(itemKey)) {
-      const incompatibleItems =
-        itemConstants.incompatiblePatches || itemConstants.incompatiblePlugins;
+    const currentPendingPatches =
+      type === 'legacy' ? getPendingItems('legacy') : pendingChangePatches;
+    const currentPendingPlugins =
+      type === 'oldplunger' ? getPendingItems('oldplunger') : pendingChangePlugins;
 
-      const foundIncompatibleItems =
-        incompatibleItems &&
-        currentItems.filter((item) => {
-          return incompatibleItems.includes(item);
+    const isTogglingOn = !(type === 'legacy' ? currentPendingPatches : currentPendingPlugins).includes(
+      itemKey,
+    );
+
+    if (isTogglingOn) {
+      const incompatiblePatches = itemConstants.incompatiblePatches || [];
+      const incompatiblePlugins = itemConstants.incompatiblePlugins || [];
+
+      const foundConflicts = [
+        ...incompatiblePatches
+          .filter((p) => currentPendingPatches.includes(p))
+          .map((p) => `legacy-${p}`),
+        ...incompatiblePlugins
+          .filter((p) => currentPendingPlugins.includes(p))
+          .map((p) => `oldplunger-${p}`),
+      ];
+
+      if (foundConflicts.length > 0) {
+        setHasIncompatibleItems((prev) => ({
+          ...(prev || {}),
+          [`${type}-${itemKey}`]: foundConflicts,
+        }));
+      }
+    } else {
+      setHasIncompatibleItems((prev) => {
+        if (!prev) return null;
+        const next = { ...prev };
+        const itemKeyWithType = `${type}-${itemKey}`;
+
+        delete next[itemKeyWithType];
+
+        Object.keys(next).forEach((key) => {
+          next[key] = next[key].filter(
+            (conflictingKeyWithType) => conflictingKeyWithType !== itemKeyWithType,
+          );
+          if (next[key].length === 0) delete next[key];
         });
 
-      if (foundIncompatibleItems.length > 0) {
-        if (!hasIncompatibleItems) {
-          setHasIncompatibleItems({
-            [`${type}-${itemKey}`]: foundIncompatibleItems,
-          });
-        } else {
-          setHasIncompatibleItems((previousItems) => {
-            return {
-              ...previousItems,
-              [`${type}-${itemKey}`]: foundIncompatibleItems,
-            };
-          });
-        }
-      }
-    } else if (hasIncompatibleItems) {
-      setHasIncompatibleItems((previousItems) => {
-        const itemKeyWithType = `${type}-${itemKey}`;
-        if (previousItems[itemKeyWithType]) {
-          delete previousItems[itemKeyWithType];
-        } else {
-          Object.keys(previousItems).forEach((key) => {
-            const newIncompatibleItems = previousItems[key].filter((item) => item !== itemKey);
-            if (newIncompatibleItems.length > 0) {
-              previousItems[key] = newIncompatibleItems;
-            } else {
-              delete previousItems[key];
-            }
-          });
-        }
-        if (Object.keys(previousItems).length === 0) {
-          return null;
-        } else {
-          return previousItems;
-        }
+        return Object.keys(next).length === 0 ? null : next;
       });
     }
 
     setPendingItems(type, (previousItems) => {
-      let newItems;
       if (previousItems.includes(itemKey)) {
-        newItems = previousItems.filter((item) => item !== itemKey);
+        return previousItems.filter((item) => item !== itemKey);
       } else {
-        newItems = [...previousItems, itemKey];
+        return [...previousItems, itemKey];
       }
-      return newItems;
     });
   };
 
   const handleSave = useCallback(() => {
     if (hasIncompatibleItems) {
+      triggerNudge();
       return;
     }
     localStorageCEP.selectedPatches[selectedBuildOriginal] = pendingChangePatches;
@@ -151,7 +150,9 @@ export default function () {
     pendingChangePatches,
     pendingChangePlugins,
     hasIncompatibleItems,
-    selectedBuild,
+    selectedBuildOriginal,
+    localStorageCEP,
+    triggerNudge,
   ]);
 
   const handleReset = useCallback(() => {
@@ -159,7 +160,7 @@ export default function () {
     setPendingChangePlugins(resetToSelected('oldplunger'));
     setHasUnsavedChanges(false);
     setHasIncompatibleItems(null);
-  }, [setHasUnsavedChanges, selectedBuild]);
+  }, [setHasUnsavedChanges, selectedBuildOriginal, localStorageCEP]);
 
   useEffect(() => {
     registerHandlers(handleSave, handleReset);
@@ -238,13 +239,10 @@ export default function () {
                     <Text variant='body'>
                       {itemConstants?.name} is not compatible with{' '}
                       {hasIncompatibleItems[itemKey]
-                        .map((conflictingKey) => {
-                          const conflictingType = type === 'legacy' ? 'oldplunger' : 'legacy';
-                          const conflictingConstants = getItemConstants(
-                            conflictingKey,
-                            conflictingType,
-                          );
-                          return conflictingConstants?.name || conflictingKey;
+                        .map((conflictingKeyWithType) => {
+                          const [cType, cKey] = conflictingKeyWithType.split('-', 2);
+                          const conflictingConstants = getItemConstants(cKey, cType);
+                          return conflictingConstants?.name || cKey;
                         })
                         .join(', ')}
                     </Text>
