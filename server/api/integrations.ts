@@ -1,11 +1,12 @@
 import { Router } from 'express';
 
 import { logText } from '../helpers/logger.ts';
-import { rateLimitMiddleware } from '../helpers/middlewares.js';
-import { cacheFor } from '../helpers/quickcache.js';
+import { rateLimitMiddleware } from '../helpers/middlewares.ts';
+import { cacheFor } from '../helpers/quickcache.ts';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
-import { middleware } from '../helpers/watchdog.js';
+import { response_500 } from '../helpers/errors.ts';
+import { middleware } from '../helpers/watchdog.ts';
+import type { Response } from "express";
 
 router.get(
   '/tenor/search',
@@ -19,7 +20,7 @@ router.get(
     0.1,
   ),
   cacheFor(60 * 30, true),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       const query = req.query.q;
 
@@ -33,7 +34,7 @@ router.get(
         key: global.config.tenor_api_key,
         limit: 50,
         media_filter: 'tinygif',
-      }).toString();
+      } as any).toString();
 
       const url = `${baseUrl}?${params}`;
 
@@ -41,7 +42,7 @@ router.get(
         method: 'GET',
       });
 
-      const data = await response.json();
+      const data: any = await response.json();
       const results = data.results || [];
 
       const gifs = results

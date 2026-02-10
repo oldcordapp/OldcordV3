@@ -84,12 +84,45 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req: any, res: any
       return res.status(400).json(errors.response_400.ADMIN_USE_BOT_TAB);
     } //This is because it has application info, etc
 
-    const bots = await global.database.getUsersBots(userRet);
+    const bots = await prisma.bot.findMany({
+      where: {
+        application: {
+          owner_id: userRet.id
+        }
+      },
+      include: {
+        application: {
+          include: {
+            owner: true
+          }
+        }
+      }
+    });
+
+    const formattedBots = bots.map(bot => ({
+      avatar: bot.avatar,
+      discriminator: bot.discriminator,
+      username: bot.username,
+      id: bot.id,
+      public: bot.public,
+      require_code_grant: bot.require_code_grant,
+      application: {
+        id: bot.application.id,
+        name: bot.application.name,
+        icon: bot.application.icon,
+        description: bot.application.description,
+        redirect_uris: [],
+        rpc_application_state: 0,
+        rpc_origins: [],
+        owner: bot.application.owner?.toPublic()
+      },
+    }));
+
 
     const userRetTotal = {
       ...userRet,
       guilds,
-      bots,
+      formattedBots,
     };
 
     return res

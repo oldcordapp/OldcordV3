@@ -1,12 +1,12 @@
-import { Router } from 'express';
+import { Router, type NextFunction, type Response } from 'express';
 
 import { logText } from '../helpers/logger.ts';
-import { generate } from '../helpers/snowflake.js';
+import { generate } from '../helpers/snowflake.ts';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
-import { cacheFor } from '../helpers/quickcache.js';
+import { response_500 } from '../helpers/errors.ts';
+import { cacheFor } from '../helpers/quickcache.ts';
 
-router.param('code', async (req, _, next, code) => {
+router.param('code', async (req: any, _res: Response, next: NextFunction, _code: string) => {
   const id = '1279311572212178955';
 
   req.gift = {
@@ -109,7 +109,7 @@ router.param('code', async (req, _, next, code) => {
   next();
 });
 
-router.get('/gift-codes/:code', cacheFor(60 * 10), async (req, res) => {
+router.get('/gift-codes/:code', cacheFor(60 * 10), async (req: any, res: Response) => {
   try {
     return res.status(200).json(req.gift);
   } catch (error) {

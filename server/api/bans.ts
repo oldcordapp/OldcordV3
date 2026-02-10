@@ -1,16 +1,18 @@
 import { Router } from 'express';
 
-import dispatcher from '../helpers/dispatcher.js';
-import globalUtils from '../helpers/globalutils.js';
+import dispatcher from '../helpers/dispatcher.ts';
+import globalUtils from '../helpers/globalutils.ts';
 import { logText } from '../helpers/logger.ts';
-import { guildPermissionsMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
+import { guildPermissionsMiddleware, rateLimitMiddleware } from '../helpers/middlewares.ts';
 const router = Router({ mergeParams: true });
-import errors from '../helpers/errors.js';
-import lazyRequest from '../helpers/lazyRequest.js';
-import quickcache from '../helpers/quickcache.js';
-import Watchdog from '../helpers/watchdog.js';
+import errors from '../helpers/errors.ts';
+import lazyRequest from '../helpers/lazyRequest.ts';
+import quickcache from '../helpers/quickcache.ts';
+import Watchdog from '../helpers/watchdog.ts';
+import type { Response } from "express";
+import { prisma } from '../prisma.ts';
 
-router.param('memberid', async (req, res, next, memberid) => {
+router.param('memberid', async (req: any, _res: Response, next, memberid) => {
   req.member = req.guild.members.find((x) => x.id === memberid);
 
   next();
@@ -20,11 +22,28 @@ router.get(
   '/',
   guildPermissionsMiddleware('BAN_MEMBERS'),
   quickcache.cacheFor(60 * 5, true),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
-      const bans = await global.database.getGuildBans(req.params.guildid);
+      const bans = await prisma.ban.findMany({
+        where: {
+          guild_id: req.params.guildid,
+        },
+        include: {
+          user: true,
+        },
+      });
 
-      return res.status(200).json(bans);
+      const formattedBans = bans.map((ban) => ({
+        user: {
+          id: ban.user.id,
+          username: ban.user.username,
+          discriminator: ban.user.discriminator,
+          avatar: ban.user.avatar,
+          bot: ban.user.bot,
+        }
+      }));
+
+      return res.status(200).json(formattedBans);
     } catch (error) {
       logText(error, 'error');
 
@@ -45,7 +64,7 @@ router.put(
     global.config.ratelimit_config.bans.timeFrame,
     0.75,
   ),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       const sender = req.account;
 
@@ -67,18 +86,22 @@ router.put(
       }
 
       if (userInGuild) {
-        const attempt = await global.database.leaveGuild(member.id, req.params.guildid);
+        await prisma.member.delete({
+          where: {
+            guild_id_user_id: {
+              user_id: member.id,
+              guild_id: req.params.guildid
+            }
+          }
+        });
+      }
 
-        if (!attempt) {
-          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      await prisma.ban.create({
+        data: {
+          guild_id: req.params.guildid,
+          user_id: member.id
         }
-      }
-
-      const tryBan = await global.database.banMember(req.params.guildid, member.id);
-
-      if (!tryBan) {
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-      }
+      });
 
       if (userInGuild) {
         await dispatcher.dispatchEventTo(member.id, 'GUILD_DELETE', {
@@ -111,32 +134,33 @@ router.put(
         }
 
         if (deleteMessageDays > 0) {
-          let messages = await global.database.getUsersMessagesInGuild(
-            req.params.guildid,
-            member.user.id,
-          );
+          const cutoffDate = new Date();
 
-          const deletemessagedaysDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - deleteMessageDays);
 
-          deletemessagedaysDate.setDate(deletemessagedaysDate.getDate() - deleteMessageDays);
-
-          messages = messages.filter((message) => {
-            const messageTimestamp = new Date(message.timestamp);
-
-            return messageTimestamp >= deletemessagedaysDate;
+          let messages = await prisma.message.findMany({
+            where: {
+              guild_id: req.params.guildid as string,
+              author_id: member.user.id,
+              timestamp: {
+                gte: cutoffDate.toString()
+              }
+            }
           });
 
           if (messages.length > 0) {
             for (var message of messages) {
-              const tryDelete = await global.database.deleteMessage(message.id);
+              const deleteResult = await prisma.message.delete({
+                where: { message_id: message.message_id }
+              }).catch(() => null);
 
-              if (tryDelete) {
+              if (deleteResult) {
                 await dispatcher.dispatchEventInChannel(
                   req.guild,
-                  message.channel_id,
+                  message.channel_id!,
                   'MESSAGE_DELETE',
                   {
-                    id: message.id,
+                    id: message.message_id,
                     guild_id: req.params.guildid,
                     channel_id: message.channel_id,
                   },
@@ -168,7 +192,7 @@ router.delete(
     global.config.ratelimit_config.bans.timeFrame,
     0.75,
   ),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       const sender = req.account;
 
@@ -176,28 +200,45 @@ router.delete(
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
       }
 
-      const bans = await global.database.getGuildBans(req.params.guildid);
+      const bans = await prisma.ban.findMany({
+        where: {
+          guild_id: req.params.guildid as string
+        },
+        include: {
+          user: true
+        }
+      });
 
       const ban = bans.find((x) => x.user.id == req.params.memberid);
 
       if (!ban) {
-        return res.status(404).json(errors.response_404.UNKNOWN_USER);
+        return res.status(404).json(errors.response_404.UNKNOWN_BAN);
       } //figure out the correct response here
 
-      const attempt = await global.database.unbanMember(req.params.guildid, req.params.memberid);
-
-      if (!attempt) {
-        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-      }
+      const deletedBan = await prisma.ban.delete({
+        where: {
+          guild_id_user_id: {
+            guild_id: req.params.guildid as string,
+            user_id: req.params.memberid as string,
+          },
+        },
+        include: {
+          user: true
+        }
+      });
 
       await dispatcher.dispatchEventTo(sender.id, 'GUILD_BAN_REMOVE', {
         guild_id: req.params.guildid,
-        user: globalUtils.miniUserObject(ban.user),
+        user: globalUtils.miniUserObject(deletedBan.user),
         roles: [],
       });
 
       return res.status(204).send();
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'P2025') {
+        return res.status(404).json(errors.response_404.UNKNOWN_BAN); 
+      }
+  
       logText(error, 'error');
 
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);

@@ -1,28 +1,38 @@
 import { Router } from 'express';
 
-import dispatcher from '../../helpers/dispatcher.js';
-import errors from '../../helpers/errors.js';
-import globalUtils from '../../helpers/globalutils.js';
+import dispatcher from '../../helpers/dispatcher.ts';
+import errors from '../../helpers/errors.ts';
+import globalUtils from '../../helpers/globalutils.ts';
 import { logText } from '../../helpers/logger.ts';
-import { rateLimitMiddleware, userMiddleware } from '../../helpers/middlewares.js';
-import quickcache from '../../helpers/quickcache.js';
-import Watchdog from '../../helpers/watchdog.js';
+import { rateLimitMiddleware, userMiddleware } from '../../helpers/middlewares.ts';
+import quickcache from '../../helpers/quickcache.ts';
+import Watchdog from '../../helpers/watchdog.ts';
 import me from './me/index.js';
+import type { NextFunction, Response } from "express";
+import { prisma } from '../../prisma.ts';
 
 const router = Router();
 
-router.param('userid', async (req, res, next, userid) => {
+router.param('userid', async (req: any, _res: Response, next: NextFunction, userid: string) => {
   if (userid === '@me') {
     userid = req.account.id;
   }
-  req.user = await global.database.getAccountByUserId(userid);
+
+  req.user = await prisma.user.findUnique({
+    where: {
+      id: userid,
+    },
+    include: {
+      staff: true,
+    }
+  });
 
   next();
 });
 
 router.use('/@me', me);
 
-router.get('/:userid', userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get('/:userid', userMiddleware, quickcache.cacheFor(60 * 5), async (req: any, res: Response) => {
   return res.status(200).json(globalUtils.miniUserObject(req.user));
 });
 
@@ -38,7 +48,7 @@ router.post(
     global.config.ratelimit_config.createPrivateChannel.timeFrame,
     0.5,
   ),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       let recipients = req.body.recipients;
       const account = req.account;
@@ -63,7 +73,7 @@ router.post(
         });
       }
 
-      let validRecipientIDs = [];
+      let validRecipientIDs: string[] = [];
       const map = {};
 
       validRecipientIDs.push(account.id);
@@ -71,7 +81,21 @@ router.post(
       for (var recipient of recipients) {
         if (validRecipientIDs.includes(recipient)) continue;
 
-        const userObject = await global.database.getAccountByUserId(recipient);
+        const userObject = await prisma.user.findUnique({
+          where: {
+            id: recipient,
+          },
+          select: {
+            id: true,
+            username: true,
+            discriminator: true,
+            avatar: true,
+            bot: true,
+            staff: true,
+            settings: true,
+            guild_settings: true
+          }
+        });
 
         if (!userObject) continue;
 
@@ -80,14 +104,32 @@ router.post(
         validRecipientIDs.push(recipient);
       }
 
-      let channel = null;
+      let channel: any = null;
       let type = validRecipientIDs.length > 2 ? 3 : 1;
+      
+      if (type == 1) {
+        const otherUserId = validRecipientIDs.find(id => id !== account.id);
 
-      if (type == 1)
-        channel = await global.database.findPrivateChannel(
-          account.id,
-          validRecipientIDs[validRecipientIDs[0] == account.id ? 1 : 0],
-        );
+        if (otherUserId) {
+          const dmRecord = await prisma.dmChannel.findFirst({
+            where: {
+              OR: [
+                { user1: account.id, user2: otherUserId },
+                { user1: otherUserId, user2: account.id },
+              ],
+            },
+          });
+
+          if (dmRecord) {
+            channel = await prisma.channel.findUnique({
+              where: { id: dmRecord.id },
+              include: {
+                recipients: true,
+              },
+            });
+          }
+        }
+      }
 
       if (type === 3) {
         for (var validRecipientId of validRecipientIDs) {
@@ -106,14 +148,14 @@ router.post(
         type = validRecipientIDs.length > 2 ? 3 : 1;
       }
 
-      channel ??= await global.database.createChannel(
-        null,
-        null,
-        type,
-        0,
-        validRecipientIDs,
-        account.id,
-      );
+      channel ??= await globalUtils.createChannel({
+        guildId: null,
+        name: null,
+        type: type,
+        position: 0,
+        recipientIds: validRecipientIDs,
+        ownerId: account.id
+      });
 
       const pChannel = globalUtils.personalizeChannelObject(req, channel);
 
@@ -129,25 +171,36 @@ router.post(
   },
 );
 
-router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), async (req: any, res: Response) => {
   try {
     const account = req.account;
     const user = req.user;
-    const ret = {};
+    const ret: any = {};
 
-    const guilds = await global.database.getUsersGuilds(user.id);
+    const guilds = await prisma.guild.findMany({
+      where: {
+        members: {
+          some: {
+            user_id: user.id
+          }
+        }
+      },
+      include: {
+        members: true
+      }
+    });
 
     const sharedGuilds = guilds.filter(
       (guild) =>
         guild.members != null &&
         guild.members.length > 0 &&
-        guild.members.some((member) => member.id === account.id),
+        guild.members.some((member) => member.user_id === account.id),
     );
-    const mutualGuilds = [];
+    const mutualGuilds: any = [];
 
     for (var sharedGuild of sharedGuilds) {
       const id = sharedGuild.id;
-      const member = sharedGuild.members.find((y) => y.id == user.id);
+      const member = sharedGuild.members.find((y) => y.user_id == user.id);
 
       if (!member) continue;
 
@@ -162,7 +215,7 @@ router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), asyn
 
     ret.mutual_guilds = req.query.with_mutual_guilds === 'false' ? undefined : mutualGuilds;
 
-    const sharedFriends = [];
+    const sharedFriends: any = [];
 
     if (!user.bot) {
       const ourFriends = account.relationships;
@@ -183,9 +236,13 @@ router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), asyn
 
     ret.mutual_friends = sharedFriends;
 
-    let connectedAccounts = await global.database.getConnectedAccounts(user.id);
+    let connectedAccounts = await prisma.connectedAccount.findMany({
+      where: {
+        user_id: user.id
+      }
+    });
 
-    connectedAccounts = connectedAccounts.filter((x) => x.visibility == 1);
+    connectedAccounts = connectedAccounts.filter((x) => x.visibility == true);
 
     connectedAccounts.forEach(
       (x) => (x = globalUtils.sanitizeObject(x, ['integrations', 'revoked', 'visibility'])),
@@ -218,7 +275,7 @@ router.get('/:userid/profile', userMiddleware, quickcache.cacheFor(60 * 5), asyn
 
 //Never share this cache because it's mutuals and whatnot, different for each requester
 //We're gonna remove the userMiddleware from this since it needs to work on users we're friends with without any guilds in common
-router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req: any, res: Response) => {
   try {
     const account = req.account;
 
@@ -243,7 +300,7 @@ router.get('/:userid/relationships', quickcache.cacheFor(60 * 5), async (req, re
     const ourFriends = account.relationships;
     const theirFriends = user.relationships;
 
-    const sharedFriends = [];
+    const sharedFriends: any = [];
 
     for (var ourFriend of ourFriends) {
       for (var theirFriend of theirFriends) {

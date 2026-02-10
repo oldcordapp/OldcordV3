@@ -1,6 +1,30 @@
 import { EventEmitter } from 'node:events';
+import type { VoiceRoom } from './VoiceRoom.ts';
+
+export interface SSRCs {
+  audio_ssrc?: number;
+  video_ssrc?: number;
+  rtx_ssrc?: number;
+};
 
 class MediasoupWebRtcClient {
+  public user_id: string;
+  public voiceRoomId: string;
+  public websocket: any;
+  public room: VoiceRoom;
+  public webrtcConnected: boolean;
+  public isStopped: boolean;
+  public emitter: EventEmitter;
+  public consumers: any[];
+  public transport: any;
+  public codecs: any[];
+  public codecCapabilities: any[];
+  public headerExtensions: any[];
+  public audioProducer: any;
+  public videoProducer: any;
+  public incomingSSRCS: any;
+  public videoStream: any;
+
   constructor(userId, roomId, websocket, room) {
     this.user_id = userId;
     this.voiceRoomId = roomId;
@@ -20,11 +44,11 @@ class MediasoupWebRtcClient {
     this.videoStream = undefined;
   }
 
-  initIncomingSSRCs(ssrcs) {
+  initIncomingSSRCs(ssrcs: any) {
     this.incomingSSRCS = ssrcs;
   }
 
-  getIncomingStreamSSRCs() {
+  getIncomingStreamSSRCs(): SSRCs {
     return {
       audio_ssrc: this.incomingSSRCS?.audio_ssrc,
       video_ssrc: this.isProducingVideo() ? this.incomingSSRCS?.video_ssrc : 0,
@@ -32,7 +56,7 @@ class MediasoupWebRtcClient {
     };
   }
 
-  getOutgoingStreamSSRCsForUser(user_id) {
+  getOutgoingStreamSSRCsForUser(user_id: string): SSRCs {
     const otherClient = this.room?.getClientById(user_id);
     const audioProducerId = otherClient?.audioProducer?.id;
     const videoProducerId = otherClient?.videoProducer?.id;
@@ -56,11 +80,11 @@ class MediasoupWebRtcClient {
     };
   }
 
-  isProducingAudio() {
+  isProducingAudio(): boolean {
     return !!this.audioProducer;
   }
 
-  isProducingVideo() {
+  isProducingVideo(): boolean {
     return !!this.videoProducer;
   }
 
@@ -122,7 +146,7 @@ class MediasoupWebRtcClient {
     );
   }
 
-  async publishTrack(type, ssrc) {
+  async publishTrack(type: string, ssrc: SSRCs) {
     try {
       if (!this.webrtcConnected || !this.transport) return;
 
@@ -157,7 +181,7 @@ class MediasoupWebRtcClient {
                 }) || [],
             encodings: [
               {
-                ssrc: ssrc.audio_ssrc,
+                ssrc: ssrc.audio_ssrc!,
                 maxBitrate: 64000,
                 codecPayloadType:
                   this.codecCapabilities?.find((codec) => codec.kind === 'audio')
@@ -221,7 +245,7 @@ class MediasoupWebRtcClient {
     }
   }
 
-  stopPublishingTrack(type) {
+  stopPublishingTrack(type: string) {
     if (!this.room) return;
 
     const producer = type === 'audio' ? this.audioProducer : this.videoProducer;
@@ -249,7 +273,7 @@ class MediasoupWebRtcClient {
     }
   }
 
-  async subscribeToTrack(user_id, type) {
+  async subscribeToTrack(user_id: string, type: string) {
     if (!this.webrtcConnected || !this.transport) return;
 
     const client = this.room?.getClientById(user_id);
@@ -296,7 +320,7 @@ class MediasoupWebRtcClient {
     this.consumers?.push(consumer);
   }
 
-  unSubscribeFromTrack(user_id, type) {
+  unSubscribeFromTrack(user_id: string, type: string) {
     const client = this.room?.getClientById(user_id);
     if (!client) return;
 
@@ -315,7 +339,7 @@ class MediasoupWebRtcClient {
     }
   }
 
-  isSubscribedToTrack(user_id, type) {
+  isSubscribedToTrack(user_id: string, type: string) {
     const client = this.room?.getClientById(user_id);
 
     if (!client) return false;

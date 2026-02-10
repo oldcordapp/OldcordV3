@@ -163,7 +163,7 @@ const globalUtils = {
 
     return presences;
   },
-  getGuildOnlineUserIds: (guild_id): any => {
+  getGuildOnlineUserIds: (guild_id: string): any => {
     const user_ids = new Set();
 
     for (const [userId, sessions] of global.userSessions) {
@@ -381,6 +381,92 @@ const globalUtils = {
     }
 
     return str.replace(find, replace);
+  },
+  createChannel: async (params: {
+    guildId?: string | null,
+    name?: string | null,
+    type: number,
+    position?: number,
+    recipientIds?: string[],
+    ownerId?: string | null,
+    parentId?: string | null,
+  }) => {
+    const { guildId, name, type, position = 0, recipientIds = [], ownerId, parentId } = params;
+    const channel_id = generate();
+
+    return await prisma.$transaction(async (tx) => {
+      const dbChannel = await tx.channel.create({
+        data: {
+          id: channel_id,
+          type,
+          name: (type === 1 || type === 3) ? null : name,
+          guild_id: (type === 1 || type === 3) ? null : guildId,
+          parent_id: (type === 1 || type === 3) ? null : parentId,
+          position: (type === 1 || type === 3) ? 0 : position,
+          last_message_id: '0',
+          recipients: recipientIds.length > 0 ? {
+            connect: recipientIds.map(id => ({ id }))
+          } : undefined,
+          bitrate: type === 2 ? 64000 : undefined,
+          user_limit: type === 2 ? 0 : undefined,
+        },
+        include: {
+          recipients: true
+        }
+      });
+
+      if (type === 1) {
+        await tx.dmChannel.create({
+          data: { id: channel_id, user1: recipientIds[0], user2: recipientIds[1] }
+        });
+      } else if (type === 3) {
+        await tx.groupChannel.create({
+          data: {
+            id: channel_id,
+            owner_id: ownerId,
+            name: name || '',
+            recipients: recipientIds,
+          }
+        });
+      }
+
+      const baseResponse: any = {
+        id: dbChannel.id,
+        type: dbChannel.type,
+        last_message_id: dbChannel.last_message_id,
+      };
+
+      if (type === 1 || type === 3) {
+        baseResponse.guild_id = null;
+        baseResponse.recipients = dbChannel.recipients || [];
+
+        if (type === 3) {
+          baseResponse.name = dbChannel.name || '';
+          baseResponse.icon = null;
+          baseResponse.owner_id = ownerId;
+        }
+
+        return baseResponse;
+      }
+
+      return {
+        ...baseResponse,
+        name: dbChannel.name,
+        position: dbChannel.position,
+        permission_overwrites: [],
+        ...([0, 2, 4, 5].includes(type) && { guild_id: guildId }),
+        ...([0, 2, 5].includes(type) && { parent_id: parentId }),
+        ...(type === 0 && {
+          topic: null,
+          rate_limit_per_user: 0,
+          nsfw: false,
+        }),
+        ...(type === 2 && {
+          bitrate: 64000,
+          user_limit: 0,
+        }),
+      };
+    });
   },
   SerializeOverwriteToString(overwrite: any): string {
     return `${overwrite.id}_${overwrite.allow.toString()}_${overwrite.deny.toString()}_${overwrite.type}`;

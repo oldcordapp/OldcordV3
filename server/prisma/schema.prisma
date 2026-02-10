@@ -52,6 +52,7 @@ model User {
   guilds            Guild[]
   bans              Ban[]
   connectedAccounts ConnectedAccount[]
+  messages          Message[]
 
   @@map("users")
 }
@@ -92,14 +93,13 @@ model DmChannel {
 }
 
 model GroupChannel {
-  id         String?
+  id         String  @id
   icon       String?
   name       String?
   owner_id   String?
   recipients Json?   @default("[]")
 
   @@map("group_channels")
-  @@ignore
 }
 
 model Staff {
@@ -189,22 +189,22 @@ model Application {
   secret      String?
   description String?
   owner       User?   @relation(fields: [owner_id], references: [id])
-  bot         Bot?    @relation(fields: [botId], references: [id])
+  bot         Bot?
   botId       String?
 
   @@map("applications")
 }
 
 model Bot {
-  id                 String        @id
-  application_id     String?
+  id                 String      @id
+  application_id     String      @unique
   username           String?
   discriminator      String?
   avatar             String?
-  public             Boolean?      @default(true)
-  require_code_grant Boolean?      @default(false)
+  public             Boolean?    @default(true)
+  require_code_grant Boolean?    @default(false)
   token              String?
-  applications       Application[]
+  application        Application @relation(fields: [application_id], references: [id])
 
   @@map("bots")
 }
@@ -265,6 +265,7 @@ model Message {
   author_id        String?
   content          String?
   edited_timestamp String?
+  author           User?        @relation(fields: [author_id], references: [id])
   mention_everyone Boolean?     @default(false)
   nonce            String?
   timestamp        String?

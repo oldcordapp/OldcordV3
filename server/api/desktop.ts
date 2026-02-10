@@ -2,6 +2,8 @@ import contentDisposition from 'content-disposition';
 import { Router, static as expressStatic } from 'express';
 import { closeSync, existsSync, openSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import type { Request, Response } from "express";
+
 const router = Router();
 
 const distributionFolder = join(process.cwd(), 'distribution');
@@ -68,17 +70,22 @@ router.use(
   }),
 );
 
-router.get('/api/updates/windows/distributions/app/manifests/latest', async (req, res) => {
-  let updateInfo = readFileSync(windowsCacheFile, { encoding: 'utf-8' });
+router.get('/api/updates/windows/distributions/app/manifests/latest', async (req: any, res: Response) => {
+  let updateInfo: any; 
+  let moduleVersions: any;
+  
+  const rawUpdateInfo = readFileSync(windowsCacheFile, { encoding: 'utf-8' });
   const hostVersion = JSON.parse(readFileSync(hostVersionFile, { encoding: 'utf-8' }));
-  let moduleVersions = readFileSync(moduleVersionFile, { encoding: 'utf-8' });
+  const rawModuleVersions = readFileSync(moduleVersionFile, { encoding: 'utf-8' });
 
-  if (Math.abs(new Date() - statSync(windowsCacheFile).mtime) >= 14400000 || updateInfo === '') {
-    updateInfo = await (
-      await fetch(
+  const fileStats = statSync(windowsCacheFile);
+  const isCacheExpired = Date.now() - fileStats.mtime.getTime() >= 14400000;
+
+  if (isCacheExpired || rawUpdateInfo === '') {
+    const response = await fetch(
         'https://updates.discord.com/distributions/app/manifests/latest?channel=stable&platform=win&arch=x64',
-      )
-    ).json();
+    );
+    updateInfo = await response.json();
     writeFileSync(windowsCacheFile, JSON.stringify(updateInfo));
 
     if (hostVersion.windows === null) {
@@ -86,10 +93,10 @@ router.get('/api/updates/windows/distributions/app/manifests/latest', async (req
       writeFileSync(hostVersionFile, JSON.stringify(hostVersion));
     }
   } else {
-    updateInfo = JSON.parse(updateInfo);
+    updateInfo = JSON.parse(rawUpdateInfo);
   }
 
-  if (moduleVersions === '') {
+  if (rawModuleVersions === '') {
     moduleVersions = {};
     for (const module of Object.keys(updateInfo.modules)) {
       if (!Object.keys(patched_versions.modules).includes(module)) {
@@ -98,7 +105,7 @@ router.get('/api/updates/windows/distributions/app/manifests/latest', async (req
     }
     writeFileSync(moduleVersionFile, JSON.stringify(moduleVersions));
   } else {
-    moduleVersions = JSON.parse(moduleVersions);
+    moduleVersions = JSON.parse(rawModuleVersions);
   }
 
   if (
@@ -138,15 +145,15 @@ router.get('/api/updates/windows/distributions/app/manifests/latest', async (req
   return res.status(200).json(updateInfo);
 });
 
-router.get('/api/updates/stable', async (req, res) => {
+router.get('/api/updates/stable', async (_req: Request, res: Response) => {
   return res.status(204).send();
 });
 
-router.get('/api/modules/stable/versions.json', async (req, res) => {
+router.get('/api/modules/stable/versions.json', async (_req: Request, res: Response) => {
   return res.status(204).send();
 });
 
-router.get('/api/download', function (req, res) {
+router.get('/api/download', function (req: Request, res: Response) {
   let pathToDownload;
   switch (req.query.platform) {
     case 'win': {

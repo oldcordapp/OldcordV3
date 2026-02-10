@@ -4,10 +4,22 @@ import { createWorker } from 'mediasoup';
 import { SDPInfo } from 'semantic-sdp';
 
 import { logText } from '../logger.ts';
-import { MediasoupWebRtcClient } from './MediasoupWebRtcClient.js';
-import { VoiceRoom } from './VoiceRoom.js';
+import { MediasoupWebRtcClient } from './MediasoupWebRtcClient.ts';
+import { VoiceRoom } from './VoiceRoom.ts';
+import type { Worker, WorkerLogTag } from 'mediasoup/types';
+
+export interface SDPAnswer {
+  sdp?: string;
+  selectedVideoCodec: string;
+}
 
 class MediasoupSignalingDelegate {
+  public _workers: Worker<any>[];
+  public _rooms: any;
+  public nextWorkerIdx: number;
+  public _ip: string;
+  public logRtpPackets: boolean;
+
   constructor() {
     this._workers = [];
     this._rooms = new Map();
@@ -16,7 +28,7 @@ class MediasoupSignalingDelegate {
     this.logRtpPackets = false;
   }
 
-  async start(public_ip, portMin, portMax, debug_logs) {
+  async start(public_ip: string, portMin: number, portMax: number, debug_logs: boolean) {
     this._ip = public_ip.replace('\n', '');
     const numWorkers = 2;
 
@@ -24,7 +36,7 @@ class MediasoupSignalingDelegate {
       const worker = await createWorker({
         logLevel: debug_logs ? 'debug' : 'none',
         logTags: debug_logs
-          ? [
+          ? ([
               'info',
               'ice',
               'dtls',
@@ -35,8 +47,8 @@ class MediasoupSignalingDelegate {
               'simulcast',
               'svc',
               'sctp',
-              ...(this.logRtpPackets ? ['rtp', 'rtcp'] : []),
-            ]
+              ...(this.logRtpPackets ? (['rtp', 'rtcp'] as WorkerLogTag[]) : []),
+            ] as const)
           : [],
         rtcMinPort: portMin,
         rtcMaxPort: portMax,
@@ -52,12 +64,12 @@ class MediasoupSignalingDelegate {
     logText(`Media Server online on ${this.ip}:${this.port}`, `MEDIA_SERVER`);
   }
 
-  async join(roomId, userId, ws, type) {
+  async join(roomId: string, userId: string, ws: any, type: string): Promise<MediasoupWebRtcClient | null> {
     const rooms =
       type === 'stream'
         ? []
-        : Array.from(this.rooms.values()).filter(
-            (room) => room.type === 'dm-voice' || room.type === 'guild-voice',
+        : Array.from<VoiceRoom>(this.rooms.values()).filter(
+            (room: VoiceRoom) => room.type === 'dm-voice' || room.type === 'guild-voice',
           );
 
     let existingClient;
@@ -84,7 +96,7 @@ class MediasoupSignalingDelegate {
     return client;
   }
 
-  async onOffer(client_build, client_build_date, client, sdpOffer, codecs) {
+  async onOffer(client_build: string, client_build_date: Date, client: MediasoupWebRtcClient, sdpOffer: string, codecs: any): Promise<SDPAnswer> {
     const room = this._rooms.get(client.voiceRoomId);
     const legacyAnswer =
       client_build === 'january_23_2017' || client_build_date.getFullYear() < 2017;
@@ -138,7 +150,7 @@ class MediasoupSignalingDelegate {
     }
 
     if (legacyAnswer) {
-      const sdpLines = [];
+      const sdpLines: string[] = [];
 
       sdpLines.push('v=0');
       sdpLines.push(`o=- 0 0 IN IP4 ${iceCandidate.ip}`);
@@ -189,7 +201,7 @@ class MediasoupSignalingDelegate {
     return { sdp: sdpAnswer, selectedVideoCodec: 'H264' };
   }
 
-  onClientClose(client) {
+  onClientClose(client: MediasoupWebRtcClient) {
     this._rooms.get(client.voiceRoomId)?.onClientLeave(client);
   }
 

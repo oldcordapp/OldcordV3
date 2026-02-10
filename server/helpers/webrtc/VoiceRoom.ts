@@ -1,8 +1,10 @@
+import type { MediasoupWebRtcClient } from "./MediasoupWebRtcClient.ts";
+
 class VoiceRoom {
   private _id: string;
-  private _type: string;
-  private _clients: Map<string, any>;
-  private _router: any;
+  public _type: string;
+  public _clients: Map<string,  MediasoupWebRtcClient>;
+  public _router: any;
   
   //_sfu is deprecated
   constructor(id: string, type: string, _sfu: any, router: any) {

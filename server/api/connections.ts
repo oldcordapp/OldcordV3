@@ -1,16 +1,23 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 
-import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
-import globalUtils from '../helpers/globalutils.js';
-import Twitch from '../helpers/integrations/twitch.js';
+import dispatcher from '../helpers/dispatcher.ts';
+import errors from '../helpers/errors.ts';
+import globalUtils from '../helpers/globalutils.ts';
+import Twitch from '../helpers/integrations/twitch.ts';
 
 const router = Router({ mergeParams: true });
 const integrationConfig = globalUtils.config.integration_config;
 
-let pendingCallback = [];
+export interface PendingCallback {
+  token: any;
+  platform: any;
+  user_agent: string;
+  release_date: string;
+};
 
-router.get('/:platform/authorize', async (req, res) => {
+let pendingCallback: PendingCallback[] = [];
+
+router.get('/:platform/authorize', async (req: Request, res: Response) => {
   const token = req.query.token;
   const platform = req.params.platform;
 
@@ -30,8 +37,8 @@ router.get('/:platform/authorize', async (req, res) => {
   pendingCallback.push({
     token: token,
     platform: platform,
-    user_agent: req.headers['user-agent'],
-    release_date: req.client_build,
+    user_agent: req.headers['user-agent'] || 'unknown',
+    release_date: (req as any).client_build || 'unknown',
   });
 
   return res.redirect(
@@ -39,8 +46,8 @@ router.get('/:platform/authorize', async (req, res) => {
   );
 });
 
-router.get('/:platform/callback', async (req, res) => {
-  const code = req.query.code;
+router.get('/:platform/callback', async (req: Request, res: Response) => {
+  const code = req.query.code as string;
   const platform = req.params.platform;
   //let state = req.params.state;
   const pending = pendingCallback.find(
