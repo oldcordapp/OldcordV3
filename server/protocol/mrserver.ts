@@ -15,7 +15,7 @@ const mrServer = {
       return;
     }
 
-    logText(message, 'MRA_CLIENT');
+    logText(message, 'MPA_CLIENT');
   },
   getRandomMediaServer() {
     const serverEntries = Array.from(this.servers.entries());
@@ -34,6 +34,58 @@ const mrServer = {
       socket: serverObject.socket,
       port: serverObject.port,
     };
+  },
+  getClosestMediaServer(lat, lon) {
+    const serverEntries = Array.from(this.servers.entries());
+
+    if (serverEntries.length === 0) {
+      return null;
+    }
+
+    if (!lat || !lon) {
+        return this.getRandomMediaServer();
+    }
+
+    let closestServer: any = null;
+    let minDistance = Infinity;
+
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+        var R = 6371;
+        var dLat = deg2rad(lat2-lat1);
+        var dLon = deg2rad(lon2-lon1); 
+        var a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2)
+            ; 
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        var d = R * c;
+        return d;
+    }
+
+    function deg2rad(deg) {
+        return deg * (Math.PI/180)
+    }
+
+    for (const [ip, server] of serverEntries) {
+        if (server.lat === 0 && server.lon === 0) continue;
+
+        const dist = getDistanceFromLatLonInKm(lat, lon, server.lat, server.lon);
+        if (dist < minDistance) {
+            minDistance = dist;
+            closestServer = {
+                ip: ip,
+                socket: server.socket,
+                port: server.port
+            };
+        }
+    }
+
+    if (!closestServer) {
+        return this.getRandomMediaServer();
+    }
+
+    return closestServer;
   },
   async handleClientConnect(socket) {
     this.debug(`Connected to a media server`);

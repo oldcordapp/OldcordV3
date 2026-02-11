@@ -110,7 +110,26 @@ async function handleIdentify(socket: any, packet: any) {
       }),
     );
   } else {
-    const mediaServer = global.mrServer.getRandomMediaServer();
+    let lat = 0;
+    let lon = 0;
+    
+    try {
+        const userIp = socket._socket.remoteAddress || socket.upgradeReq?.connection?.remoteAddress;
+        if (userIp && userIp !== '127.0.0.1' && userIp !== '::1') {
+             const response = await fetch(`http://ip-api.com/json/${userIp}`);
+             if (response.ok) {
+                 const data = await response.json() as any;
+                 if (data.status === 'success') {
+                     lat = data.lat;
+                     lon = data.lon;
+                 }
+             }
+        }
+    } catch (e) {
+        // Ignore
+    }
+
+    const mediaServer = global.mrServer.getClosestMediaServer(lat, lon);
 
     if (mediaServer === null) {
       return;
