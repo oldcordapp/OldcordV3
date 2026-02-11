@@ -332,10 +332,13 @@ async function handleSpeaking(socket: any, packet: any) {
       }
 
       if (!socket.client.isProducingAudio()) {
+        if (!packet.d.speaking || !ssrc) {
+          return;
+        }
+
         global.rtcServer.debug(
-          `Client ${socket.userid} sent a speaking packet but has no audio producer.`,
+          `Client ${socket.userid} sent a speaking packet but has no audio producer. Attempting to initialize...`,
         );
-        return;
       }
 
       const incomingSSRCs = socket.client.getIncomingStreamSSRCs();
