@@ -434,7 +434,7 @@ async function handleSpeaking(socket: any, packet: any) {
         }),
       );
 
-      mediaServer.socket.emitter.on('speaking-batch', (speaking_batch) => {
+      mediaServer.socket.emitter.once('speaking-batch', (speaking_batch) => {
         console.log(`Received speaking-batch for ${Object.keys(speaking_batch).length} clients.`);
 
         for (const [recipientId, speakingPacket] of Object.entries(speaking_batch)) {
