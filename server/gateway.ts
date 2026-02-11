@@ -6,6 +6,7 @@ import dispatcher from './helpers/dispatcher.js';
 import globalUtils from './helpers/utils/globalutils.js';
 import { logText } from './helpers/utils/logger.ts';
 import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
+import database from './helpers/database.js';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 
@@ -245,25 +246,22 @@ const gateway = {
     }
   },
   handleClientClose: async function (socket, code) {
-    if (socket.session) {
-      if (socket.current_guild) {
-        const voiceStates = global.guild_voice_states.get(socket.current_guild.id);
-        const possibleIndex = voiceStates.findIndex((x) => x.user_id === socket.user.id);
-        const myVoiceState = voiceStates[possibleIndex];
+    if (socket.user) {
+      global.guild_voice_states.forEach(async (states, guildId) => {
+        const idx = states.findIndex(s => s.user_id === socket.user.id);
+        if (idx !== -1) {
+          const oldState = states.splice(idx, 1)[0];
 
-        if (myVoiceState) {
-          myVoiceState.channel_id = null;
+          oldState.channel_id = null;
 
-          await dispatcher.dispatchEventInGuild(
-            socket.current_guild,
-            'VOICE_STATE_UPDATE',
-            myVoiceState,
-          );
+          const guild = await database.getGuildById(guildId); //please do this more efficiently
+
+          await dispatcher.dispatchEventInGuild(guild, 'VOICE_STATE_UPDATE', oldState);
         }
+      });
+    }
 
-        voiceStates.splice(possibleIndex, 1);
-      }
-
+    if (socket.session) {
       socket.session.onClose(code);
     }
   },

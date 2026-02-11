@@ -34,25 +34,18 @@ class MediasoupWebRtcClient {
 
   getOutgoingStreamSSRCsForUser(user_id) {
     const otherClient = this.room?.getClientById(user_id);
-    const audioProducerId = otherClient?.audioProducer?.id;
-    const videoProducerId = otherClient?.videoProducer?.id;
 
-    const audioConsumer = this.consumers?.find(
-      (consumer) => consumer.producerId === audioProducerId,
-    );
+    if (!otherClient) {
+      return { audio_ssrc: 0, video_ssrc: 0, rtx_ssrc: 0 };
+    }
 
-    const videoConsumer = this.consumers?.find(
-      (consumer) => consumer.producerId === videoProducerId,
-    );
-
-    const audioSsrc = audioConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
-    const videoSsrc = videoConsumer?.rtpParameters?.encodings[0]?.ssrc ?? 0;
-    const rtxSsrc = videoConsumer?.rtpParameters?.encodings[0]?.rtx?.ssrc ?? 0;
+    const audioConsumer = this.consumers.find(c => c.appData.user_id === user_id && c.kind === 'audio');
+    const videoConsumer = this.consumers.find(c => c.appData.user_id === user_id && c.kind === 'video');
 
     return {
-      audio_ssrc: audioSsrc,
-      video_ssrc: videoSsrc,
-      rtx_ssrc: rtxSsrc,
+        audio_ssrc: audioConsumer?.rtpParameters?.encodings?.[0]?.ssrc ?? 0,
+        video_ssrc: videoConsumer?.rtpParameters?.encodings?.[0]?.ssrc ?? 0,
+        rtx_ssrc: videoConsumer?.rtpParameters?.encodings?.[0]?.rtx?.ssrc ?? 0,
     };
   }
 
@@ -99,7 +92,7 @@ class MediasoupWebRtcClient {
         );
 
         if (audioConsumer) {
-          consumerAudioSsrc = audioConsumer.rtpParameters?.encodings?.[0]?.ssrc ?? 0;
+          consumerAudioSsrc = audioConsumer.rtpParameters.encodings[0].ssrc;
         }
 
         if (videoConsumer) {
@@ -260,9 +253,7 @@ class MediasoupWebRtcClient {
 
     if (!producer) return;
 
-    const existingConsumer = this.consumers?.find((x) => x.producerId === producer?.id);
-
-    if (existingConsumer) return;
+    if (this.consumers.find(c => c.producerId === producer.id)) return;
 
     const consumer = await this.transport.consume({
       producerId: producer.id,
@@ -279,7 +270,7 @@ class MediasoupWebRtcClient {
       },
       paused: type === 'video',
       appData: {
-        user_id: client.user_id,
+        user_id: user_id,
       },
     });
 
@@ -288,12 +279,12 @@ class MediasoupWebRtcClient {
     );
 
     if (type === 'video') {
-      setTimeout(async () => {
-        await consumer.resume();
-      }, 2000);
+       await consumer.resume();
     }
 
     this.consumers?.push(consumer);
+
+    return consumer;
   }
 
   unSubscribeFromTrack(user_id, type) {
