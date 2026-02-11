@@ -27,7 +27,7 @@ router.get(
         return res.json([]);
       }
 
-      const baseUrl = 'https://tenor.googleapis.com/v2/search';
+      const baseUrl = 'https://api.klipy.com/v2/search';
       const params = new URLSearchParams({
         q: query,
         key: global.config.tenor_api_key,
