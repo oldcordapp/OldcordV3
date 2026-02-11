@@ -15,7 +15,7 @@ const mrServer = {
       return;
     }
 
-    logText(message, 'MPA_CLIENT');
+    logText(message, 'MRA_CLIENT');
   },
   getRandomMediaServer() {
     const serverEntries = Array.from(this.servers.entries());
