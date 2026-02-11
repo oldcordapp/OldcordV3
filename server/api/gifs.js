@@ -15,12 +15,12 @@ router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {
     }
 
     const catRes = await fetch(
-      `https://tenor.googleapis.com/v2/categories?key=${global.config.tenor_api_key}&type=featured`,
+      `https://api.klipy.com/v2/categories?key=${global.config.tenor_api_key}&type=featured`,
     );
     const catData = await catRes.json();
 
     const trendRes = await fetch(
-      `https://tenor.googleapis.com/v2/featured?key=${global.config.tenor_api_key}&limit=10&media_filter=tinygif`,
+      `https://api.klipy.com/v2/featured?key=${global.config.tenor_api_key}&limit=10&media_filter=tinygif`,
     );
     const trendData = await trendRes.json();
 
@@ -57,7 +57,7 @@ router.get('/trending-gifs', cacheFor(60 * 5, true), async (req, res) => {
     }
 
     const response = await fetch(
-      `https://tenor.googleapis.com/v2/featured?key=${global.config.tenor_api_key}&limit=50&media_filter=tinymp4,gif`,
+      `https://api.klipy.com/v2/featured?key=${global.config.tenor_api_key}&limit=50&media_filter=tinymp4,gif`,
     );
     const data = await response.json();
 
@@ -100,7 +100,7 @@ router.get('/search', cacheFor(60 * 5, true), async (req, res) => {
       contentfilter: 'medium',
     });
 
-    const response = await fetch(`https://tenor.googleapis.com/v2/search?${params}`);
+    const response = await fetch(`https://api.klipy.com/v2/search?${params}`);
     const data = await response.json();
 
     const gifs = (data.results || []).map((gif) => {
