@@ -1,28 +1,49 @@
 import { Router } from 'express';
 
-import globalUtils from '../../../helpers/globalutils.js';
+import globalUtils, { generateString } from '../../../helpers/globalutils.ts';
 import { logText } from '../../../helpers/logger.ts';
-import { guildMiddleware, rateLimitMiddleware } from '../../../helpers/middlewares.js';
+import { rateLimitMiddleware } from '../../../helpers/middlewares.ts';
+import type { NextFunction, Response } from "express";
+
 const router = Router();
-import dispatcher from '../../../helpers/dispatcher.js';
-import errors from '../../../helpers/errors.js';
-import quickcache from '../../../helpers/quickcache.js';
-import Watchdog from '../../../helpers/watchdog.js';
+import dispatcher from '../../../helpers/dispatcher.ts';
+import errors from '../../../helpers/errors.ts';
+import quickcache from '../../../helpers/quickcache.ts';
+import Watchdog from '../../../helpers/watchdog.ts';
 import relationships from '../relationships.js';
-import billing from './billing.js';
-import connections from './connections.js';
-import guilds from './guilds.js';
+import billing from './billing.ts';
+import connections from './connections.ts';
+import guilds from './guilds.ts';
+import { prisma } from '../../../prisma.ts';
+import md5 from '../../../helpers/md5.ts';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { totp } from 'speakeasy';
+import { compareSync } from 'bcrypt';
 
 router.use('/relationships', relationships);
 
-router.param('userid', async (req, res, next, userid) => {
-  req.user = await global.database.getAccountByUserId(userid);
+router.param('userid', async (req: any, _res: Response, next: NextFunction, userid: string) => {
+  req.user = await prisma.user.findUnique({
+    where: {
+      id: userid,
+    },
+    include: {
+      staff: true,
+    }
+  });
 
   next();
 });
 
-router.param('guildid', async (req, _, next, guildid) => {
-  req.guild = await global.database.getGuildById(guildid);
+router.param('guildid', async (req: any, _res: Response, next: NextFunction, guildid: string) => {
+  req.guild = await prisma.guild.findUnique({
+    where: {
+      id: guildid
+    },
+    include: {
+      members: true
+    }
+  });
 
   next();
 });
@@ -32,7 +53,7 @@ router.use('/guilds', guilds);
 router.use('/billing', billing);
 
 //Or this
-router.get('/', quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get('/', quickcache.cacheFor(60 * 5), async (req: any, res: Response) => {
   try {
     return res
       .status(200)
@@ -64,7 +85,7 @@ router.patch(
     global.config.ratelimit_config.updateMe.timeFrame,
     0.5,
   ),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       let account = req.account;
       const originalAcc = account;
@@ -98,19 +119,62 @@ router.patch(
           account.avatar = req.body.avatar;
         }
 
-        account = await global.database.updateBotUser(account);
+        try {
+          let send_icon = account.avatar;
 
-        if (!account) {
+          if (account.avatar != null) {
+            if (account.avatar.includes('data:image')) {
+              var extension = account.avatar.split('/')[1].split(';')[0];
+              var imgData = account.avatar.replace(`data:image/${extension};base64,`, '');
+              var file_name = generateString(30);
+              var hash = md5(file_name);
+
+              if (extension == 'jpeg') {
+                extension = 'jpg';
+              }
+
+              send_icon = hash.toString();
+
+              if (!existsSync(`www_dynamic/avatars`)) {
+                mkdirSync(`www_dynamic/avatars`, { recursive: true });
+              }
+
+              if (!existsSync(`www_dynamic/avatars/${account.id}`)) {
+                mkdirSync(`www_dynamic/avatars/${account.id}`, { recursive: true });
+
+                writeFileSync(`www_dynamic/avatars/${account.id}/${hash}.${extension}`, imgData, 'base64');
+              } else {
+                writeFileSync(`www_dynamic/avatars/${account.id}/${hash}.${extension}`, imgData, 'base64');
+              }
+            } else {
+              send_icon = account.avatar;
+            }
+          }
+
+          await prisma.bot.update({
+            where: {
+              id: account.id
+            },
+            data: {
+              avatar: send_icon,
+              username: account.username
+            }
+          })
+
+          account.avatar = send_icon;
+
+          return res.status(200).json(account);
+        } catch (error) {
+          logText(error, 'error');
+
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
-
-        return res.status(200).json(account);
       }
 
       // New accounts via invite (unclaimed account) have null email and null password.
       // By genius Discord engineering if they claim an account it does not use new_password it uses password.
 
-      const update = {
+      const update: any = {
         avatar: null,
         email: null,
         new_password: null,
@@ -170,20 +234,25 @@ router.patch(
       ) {
         //avatar change
 
-        const tryUpdate = await global.database.updateAccount(
+        const tryUpdate = await globalUtils.updateAccount(
           account,
           update.avatar,
           account.username,
           account.discriminator,
           null,
           null,
+          null
         );
 
         if (tryUpdate !== 3 && tryUpdate !== 2) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
         }
 
-        const retAccount = await global.database.getAccountByEmail(account.email);
+        const retAccount = await prisma.user.findUnique({
+          where: {
+            email: account.email
+          }
+        });
 
         if (!retAccount) {
           return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -281,10 +350,7 @@ router.patch(
       }
 
       if (update.password) {
-        const correctPassword = await global.database.doesThisMatchPassword(
-          update.password,
-          account.password,
-        );
+        const correctPassword = compareSync(update.password, account.password);
 
         if (!correctPassword) {
           return res.status(400).json({
@@ -294,7 +360,7 @@ router.patch(
         }
       }
 
-      const attemptToUpdate = await global.database.updateAccount(
+      const attemptToUpdate = await globalUtils.updateAccount(
         account,
         update.avatar,
         update.username,
@@ -328,7 +394,11 @@ router.patch(
         }
       }
 
-      account = await global.database.getAccountByUserId(account.id);
+      account = await prisma.user.findUnique({
+        where: {
+          id: account.id
+        }
+      });
 
       if (!account) {
         return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
@@ -346,7 +416,14 @@ router.patch(
       if (originalAcc.email != account.email) {
         account.verified = false;
 
-        await global.database.unverifyEmail(account.id);
+        await prisma.user.update({
+          where: {
+            id: account.id
+          },
+          data: {
+            verified: false
+          }
+        });
       } //unverify them as they need to uh verify with their new email thingimajig
 
       await dispatcher.dispatchEventTo(account.id, 'USER_UPDATE', {
@@ -383,7 +460,7 @@ router.patch(
 ); //someone PLEASE clean this up SOMEHOW
 
 //Or this
-router.get('/settings', quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get('/settings', quickcache.cacheFor(60 * 5), async (req: any, res: Response) => {
   try {
     return res.status(200).json(req.account.settings);
   } catch (error) {
@@ -393,14 +470,12 @@ router.get('/settings', quickcache.cacheFor(60 * 5), async (req, res) => {
   }
 });
 
-router.patch('/settings', async (req, res) => {
+router.patch('/settings', async (req: any, res: Response) => {
   try {
     const account = req.account;
     const new_settings = account.settings;
 
     if (new_settings == null) {
-      console.log('new settings null');
-
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 
@@ -408,29 +483,33 @@ router.patch('/settings', async (req, res) => {
       new_settings[key] = req.body[key];
     }
 
-    const attempt = await global.database.updateSettings(account.id, new_settings);
-
-    if (attempt) {
-      const settings = new_settings;
-
-      await dispatcher.dispatchEventTo(account.id, 'USER_SETTINGS_UPDATE', settings);
-
-      if (req.body.status) {
-        const userSessions = global.userSessions.get(account.id);
-
-        if (userSessions && userSessions.size > 0) {
-          for (const session of userSessions) {
-            session.presence.status = req.body.status.toLowerCase();
-          }
-
-          await userSessions[0].dispatchPresenceUpdate(userSessions[0].presence.status);
-        }
+    await prisma.user.update({
+      where: {
+        id: account.id
+      },
+      data: {
+        settings: new_settings
       }
+    });
 
-      return res.status(204).send();
-    } else {
-      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    const settings = new_settings;
+
+    await dispatcher.dispatchEventTo(account.id, 'USER_SETTINGS_UPDATE', settings);
+
+    if (req.body.status) {
+      const userSessions = global.userSessions.get(account.id);
+
+      if (userSessions && userSessions.size > 0) {
+        for (const session of userSessions) {
+          session.presence.status = req.body.status.toLowerCase();
+        }
+
+        await userSessions[0].dispatchPresenceUpdate(userSessions[0].presence.status);
+      }
     }
+
+    return res.status(204).send();
+
   } catch (error) {
     logText(error, 'error');
 
@@ -438,7 +517,7 @@ router.patch('/settings', async (req, res) => {
   }
 });
 
-router.get(/\/settings-proto\/.*/, async (req, res) => {
+router.get(/\/settings-proto\/.*/, async (req: any, res: Response) => {
   try {
     const account = req.account;
 
@@ -472,7 +551,7 @@ router.get(/\/settings-proto\/.*/, async (req, res) => {
   }
 });
 
-router.patch(/\/settings-proto\/.*/, async (req, res) => {
+router.patch(/\/settings-proto\/.*/, async (req: any, res: Response) => {
   try {
     const account = req.account;
 
@@ -492,40 +571,41 @@ router.patch(/\/settings-proto\/.*/, async (req, res) => {
   }
 });
 
-router.put('/notes/:userid', async (req, res) => {
-  //updateNoteForUserId
+router.put('/notes/:userid', async (req: any, res: Response) => {
   try {
     const account = req.account;
     const user = req.user;
 
     if (!user) {
-      return res.status(404).json({
-        code: 404,
-        message: 'Unknown User',
-      });
+      return res.status(404).json(errors.response_404.UNKNOWN_USER);
     }
 
-    let new_notes = null;
-
-    if (req.body.note && req.body.note.length > 1) {
-      new_notes = req.body.note;
-    }
+    const noteInput = req.body.note;
+    const new_notes = (noteInput && noteInput.trim().length > 0) ? noteInput : null;
 
     if (new_notes && new_notes.length > 250) {
-      return res.status(400).json({
+      return res.status(400).json(({
         code: 400,
         message: 'User notes must be between 1 and 250 characters.',
-      });
+      }));
     }
 
-    const tryUpdate = await global.database.updateNoteForUserId(account.id, user.id, new_notes);
-
-    if (!tryUpdate) {
-      return res.status(500).json({
-        code: 500,
-        message: 'Internal Server Error',
-      });
-    }
+    await prisma.userNote.upsert({
+      where: {
+        user_id_author_id: {
+          user_id: user.id,
+          author_id: account.id,
+        },
+      },
+      update: {
+        note: new_notes,
+      },
+      create: {
+        user_id: user.id,
+        author_id: account.id,
+        note: new_notes,
+      },
+    });
 
     await dispatcher.dispatchEventTo(account.id, 'USER_NOTE_UPDATE', {
       id: user.id,
@@ -536,28 +616,26 @@ router.put('/notes/:userid', async (req, res) => {
   } catch (error) {
     logText(error, 'error');
 
-    return res.status(500).json({
-      code: 500,
-      message: 'Internal Server Error',
-    });
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
 }); //too little for its own file
 
 //Leaving guilds in late 2016
 
-router.get('/mentions', quickcache.cacheFor(60 * 5), async (req, res) => {
+router.get('/mentions', quickcache.cacheFor(60 * 5), async (req: any, res: Response) => {
   try {
     const account = req.account;
     const limit = req.query.limit ?? 25;
     const guild_id = req.query.guild_id ?? null;
-    const include_roles = req.query.roles == 'true' ?? false;
-    const include_everyone_mentions = req.query.everyone == 'true' ?? true;
+    const include_roles = (req.query.roles ?? "") === 'true';
+    const include_everyone_mentions = req.query.everyone !== 'false';
     const before = req.query.before ?? null;
 
     if (!guild_id) {
       return res.status(200).json([]); //wtf why does this crash?
     }
 
+    //to-do move this function to use prisma
     const recentMentions = await global.database.getRecentMentions(
       account.id,
       before,
@@ -575,19 +653,19 @@ router.get('/mentions', quickcache.cacheFor(60 * 5), async (req, res) => {
   }
 });
 
-router.get('/activities', (req, res) => {
+router.get('/activities', (_req: any, res: Response) => {
   return res.status(200).json([]);
 });
 
-router.get('/applications/:applicationid/entitlements', (req, res) => {
+router.get('/applications/:applicationid/entitlements', (_req: any, res: Response) => {
   return res.status(200).json([]);
 });
 
-router.get('/activities/statistics/applications', (req, res) => {
+router.get('/activities/statistics/applications', (_req: any, res: Response) => {
   return res.status(200).json([]);
 });
 
-router.get('/library', (req, res) => {
+router.get('/library', (_req: any, res: Response) => {
   return res.status(200).json([
     {
       id: '1279311572212178955',
@@ -596,26 +674,26 @@ router.get('/library', (req, res) => {
   ]);
 });
 
-router.get('/feed', (req, res) => {
+router.get('/feed', (_req: any, res: Response) => {
   return res.status(200).json([]);
 });
 
-router.get('/feed/settings', (req, res) => {
+router.get('/feed/settings', (_req: any, res: Response) => {
   return res.status(200).json([]);
 });
 
-router.get('/entitlements/gifts', (req, res) => {
+router.get('/entitlements/gifts', (_req: any, res: Response) => {
   return res.status(200).json([]);
 });
 
-router.get('/affinities/users', (req, res) => {
+router.get('/affinities/users', (_req: any, res: Response) => {
   return res.status(200).json({
     user_affinities: [],
     inverse_user_affinities: [],
   });
 });
 
-router.get('/affinities/guilds', (req, res) => {
+router.get('/affinities/guilds', (_req: any, res: Response) => {
   return res.status(200).json({
     guild_affinities: [],
   });
@@ -632,7 +710,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     1,
   ),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       const code = req.body.code;
       const secret = req.body.secret;
@@ -643,14 +721,33 @@ router.post(
           message: 'Code and secret is required to enable TOTP',
         }); //figure this one out too
       }
+  
+      let user_mfa: any = await prisma.user.findUnique({
+        where: {
+          id: req.account.id,
+        },
+        select: {
+          mfa_enabled: true,
+          mfa_secret: true
+        }
+      });
 
-      const user_mfa = await global.database.getUserMfa(req.account.id);
+      if (!user_mfa) {
+        user_mfa = {
+          mfa_enabled: false,
+          mfa_secret: null,
+        };
+      }
 
       if (user_mfa.mfa_enabled) {
         return res.status(400).json(errors.response_400.TWOFA_ALREADY_ENABLED);
       }
 
-      const valid = await global.database.validateTotpCode(req.account.id, code, secret); //I KNOW I KNOW
+      const valid = totp.verify({
+        secret: user_mfa.mfa_secret || secret,
+        encoding: 'base32',
+        token: code,
+      });  //I KNOW I KNOW
 
       if (!valid) {
         return res.status(400).json({
@@ -659,7 +756,15 @@ router.post(
         }); //to-do find the actual error msgs
       }
 
-      await global.database.updateUserMfa(req.account.id, 1, secret);
+      await prisma.user.update({
+        where: {
+          id: req.account.id
+        },
+        data: {
+          mfa_enabled: true,
+          mfa_secret: secret
+        }
+      });
 
       const returnedObj = globalUtils.sanitizeObject(req.account, [
         'settings',
@@ -703,7 +808,7 @@ router.post(
     global.config.ratelimit_config.registration.timeFrame,
     1,
   ),
-  async (req, res) => {
+  async (req: any, res: Response) => {
     try {
       const code = req.body.code;
 
@@ -714,13 +819,32 @@ router.post(
         });
       }
 
-      const user_mfa = await global.database.getUserMfa(req.account.id);
+      let user_mfa: any = await prisma.user.findUnique({
+        where: {
+          id: req.account.id,
+        },
+        select: {
+          mfa_enabled: true,
+          mfa_secret: true
+        }
+      });
+
+      if (!user_mfa) {
+        user_mfa = {
+          mfa_enabled: false,
+          mfa_secret: null,
+        };
+      }
 
       if (!user_mfa.mfa_enabled) {
         return res.status(400).json(errors.response_400.TWOFA_NOT_ENABLED);
       }
 
-      const valid = await global.database.validateTotpCode(req.account.id, code); //I KNOW I KNOW
+      const valid = totp.verify({
+        secret: user_mfa.mfa_secret,
+        encoding: 'base32',
+        token: code,
+      });  //I KNOW I KNOW
 
       if (!valid) {
         return res.status(400).json({
@@ -729,7 +853,15 @@ router.post(
         }); //to-do find the actual error msgs
       }
 
-      await global.database.updateUserMfa(req.account.id, 0, null);
+      await prisma.user.update({
+        where: {
+          id: req.account.id
+        },
+        data: {
+          mfa_enabled: false,
+          mfa_secret: null
+        }
+      });
 
       const returnedObj = globalUtils.sanitizeObject(req.account, [
         'settings',

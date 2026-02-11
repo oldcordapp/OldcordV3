@@ -1,11 +1,13 @@
 import { createHmac, randomBytes } from 'crypto';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 
 import encode from './base64url.js';
 import dispatcher from './dispatcher.js';
 import { logText } from './logger.ts';
 import { deconstruct, generate } from './snowflake.js';
 import { prisma } from "../prisma.ts";
+import md5 from './md5.ts';
+import { compareSync, genSalt, hash } from 'bcrypt';
 
 const configPath = './config.json';
 
@@ -28,6 +30,218 @@ const globalUtils = {
     : false,
   generateSsrc(): number {
     return randomBytes(4).readUInt32BE(0);
+  },
+  updateAccount: async (account: any, avatar: string | null, username: string, discriminator: string, password: string | null, new_pw: string | null, new_em: string | null): Promise<number> => {
+    try {
+      let new_avatar = account.avatar;
+      let new_username = account.username;
+      let new_discriminator = account.discriminator;
+      let new_email = account.email;
+      let new_password = account.password;
+      let new_token = account.token;
+
+      if (!password && !new_pw && !new_em) {
+        if (avatar != null && avatar.includes('data:image/')) {
+          const extension = avatar.split('/')[1].split(';')[0];
+          const imgData = avatar.replace(`data:image/${extension};base64,`, '');
+          const name = generateString(30);
+          const name_hash = md5(name);
+
+          const validExtension = extension === 'jpeg' ? 'jpg' : extension;
+
+          new_avatar = name_hash.toString();
+
+          if (!existsSync(`./www_dynamic/avatars/${account.id}`)) {
+            mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
+          }
+
+          writeFileSync(
+            `./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`,
+            imgData,
+            'base64',
+          );
+
+          await prisma.user.update({
+            where: {
+              id: account.id
+            },
+            data: {
+              avatar: new_avatar
+            }
+          });
+        } else if (avatar != new_avatar) {
+          await prisma.user.update({
+            where: {
+              id: account.id
+            },
+            data: {
+              avatar: null
+            }
+          });
+        }
+
+        return 3;
+      } //avatar change only
+
+      if (new_em != null) {
+        new_email = new_em;
+      }
+
+      if (new_pw != null) {
+        new_password = new_pw;
+      }
+
+      if (username != null) {
+        new_username = username;
+      }
+
+      if (avatar != null && avatar != account.avatar) {
+        new_avatar = avatar;
+      }
+
+      let userCount = await prisma.user.count({
+        where: {
+          username: new_username
+        }
+      });
+
+      if (
+        userCount > 0 &&
+        userCount >= 9998 &&
+        account.username != new_username
+      ) {
+        return 1;
+      }
+
+      if (discriminator) {
+        const parsedDiscriminator = parseInt(discriminator);
+
+        if (
+          isNaN(parsedDiscriminator) ||
+          parsedDiscriminator < 1 ||
+          parsedDiscriminator > 9999 ||
+          discriminator.length !== 4
+        ) {
+          return 0;
+        }
+
+        const existsAlready = await prisma.user.count({
+          where: {
+            username: new_username,
+            discriminator: discriminator,
+            NOT: {
+              id: account.id,
+            },
+          },
+        });
+
+        if (existsAlready === 0) {
+          new_discriminator = discriminator;
+        } else return 0;
+      }
+
+      if (
+        (new_email != account.email &&
+          new_password != account.password &&
+          new_username != account.username &&
+          new_discriminator != account.discriminator) ||
+        new_email != account.email ||
+        new_password != account.password ||
+        new_username != account.username ||
+        new_discriminator != account.discriminator
+      ) {
+        if (new_avatar != null && new_avatar.includes('data:image/')) {
+          const extension = new_avatar.split('/')[1].split(';')[0];
+          const imgData = new_avatar.replace(`data:image/${extension};base64,`, '');
+          const name = generateString(30);
+          const name_hash = md5(name);
+
+          const validExtension = extension === 'jpeg' ? 'jpg' : extension;
+
+          new_avatar = name_hash.toString();
+
+          if (!existsSync(`./www_dynamic/avatars/${account.id}`)) {
+            mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
+          }
+
+          writeFileSync(
+            `./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`,
+            imgData,
+            'base64',
+          );
+        }
+
+        if (new_pw != null && new_password != account.password) {
+          if (account.password) {
+            const checkPassword = compareSync(password!, account.password);
+
+            if (!checkPassword) {
+              return 2; //invalid password
+            }
+          }
+
+          const salt = await genSalt(10);
+          const newPwHash = await hash(new_password, salt);
+          const token = generateToken(account.id, newPwHash);
+
+          new_token = token;
+          new_password = newPwHash;
+        } else {
+          const checkPassword = compareSync(password!, account.password);
+
+          if (!checkPassword) {
+            return 2; //invalid password
+          }
+        }
+
+        await prisma.user.update({
+          where: {
+            id: account.id
+          },
+          data: {
+            username: new_username,
+            discriminator: new_discriminator,
+            email: new_email,
+            password: new_password,
+            avatar: new_avatar,
+            token: new_token
+          }
+        });
+      } else if (new_avatar != null && new_avatar.includes('data:image/')) {
+        const extension = new_avatar.split('/')[1].split(';')[0];
+        const imgData = new_avatar.replace(`data:image/${extension};base64,`, '');
+        const name = generateString(30);
+        const name_hash = md5(name);
+
+        const validExtension = extension === 'jpeg' ? 'jpg' : extension;
+
+        new_avatar = name_hash.toString();
+
+        if (!existsSync(`./www_dynamic/avatars/${account.id}`)) {
+          mkdirSync(`./www_dynamic/avatars/${account.id}`, { recursive: true });
+        }
+
+        writeFileSync(
+          `./www_dynamic/avatars/${account.id}/${name_hash}.${validExtension}`,
+          imgData,
+          'base64',
+        );
+
+        await prisma.user.update({
+          where: {
+            id: account.id
+          },
+          data: {
+            avatar: new_avatar
+          }
+        })
+      } //check if they changed avatar while entering their pw? (dumbie u dont need to do that)
+
+      return 3; //success
+    } catch (error) {
+      logText(error, 'error');
+      return -1;
+    }
   },
   createSystemMessage: async (guild_id: string, channel_id: string, type: number, props: any = []) => {
     //type 1 needs a different body for it to work, look into that later

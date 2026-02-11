@@ -1,27 +1,28 @@
 import express from 'express';
 
-import { authMiddleware, instanceMiddleware } from '../helpers/middlewares.js';
+import { authMiddleware, instanceMiddleware } from '../helpers/middlewares.ts';
 const app = express();
-import { config, generateGatewayURL } from '../helpers/globalutils.js';
+import { config, generateGatewayURL } from '../helpers/globalutils.ts';
 import activities from './activities.ts';
-import admin from './admin.js';
-import auth from './auth.js';
-import channels from './channels.js';
-import connections from './connections.js';
-import entitlements from './entitlements.js';
-import gifs from './gifs.js';
+import admin from './admin.ts';
+import auth from './auth.ts';
+import channels from './channels.ts';
+import connections from './connections.ts';
+import entitlements from './entitlements.ts';
+import gifs from './gifs.ts';
 import guilds from './guilds.js';
-import integrations from './integrations.js';
+import integrations from './integrations.ts';
 import invites from './invites.js';
-import oauth2 from './oauth2/index.js';
-import reports from './reports.js';
+import oauth2 from './oauth2/index.ts';
+import reports from './reports.ts';
 import spacebarPing from "./spacebar-compat/ping.ts";
 import spacebarPolicies from './spacebar-compat/policies.ts';
-import store from './store.js';
+import store from './store.ts';
 import tutorial from './tutorial.ts';
-import users from './users/index.js';
+import users from './users/index.ts';
 import voice from './voice.ts';
 import webhooks from './webhooks.js';
+import type { Request, Response } from "express";
 
 global.config = config;
 //just in case
@@ -29,20 +30,20 @@ global.config = config;
 app.use('/auth', auth);
 app.use('/connections', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), connections);
 
-app.get('/incidents/unresolved.json', (req, res) => {
+app.get('/incidents/unresolved.json', (_req: Request, res: Response) => {
   return res.status(200).json({
     scheduled_maintenances: [],
     incidents: [],
   });
 });
 
-app.get('/scheduled-maintenances/upcoming.json', (req, res) => {
+app.get('/scheduled-maintenances/upcoming.json', (_req: Request, res: Response) => {
   return res.status(200).json({
     scheduled_maintenances: [],
   });
 });
 
-app.get('/scheduled-maintenances/active.json', (req, res) => {
+app.get('/scheduled-maintenances/active.json', (_req: Request, res: Response) => {
   return res.status(200).json({
     scheduled_maintenances: [],
     incidents: [],
@@ -53,37 +54,37 @@ app.use('/policies', spacebarPolicies);
 
 app.use('/ping', spacebarPing);
 
-app.get('/experiments', (req, res) => {
+app.get('/experiments', (_req: Request, res: Response) => {
   return res.status(200).json({ assignments: [] });
 });
 
-app.get('/promotions', (req, res) => {
+app.get('/promotions', (_req: Request, res: Response) => {
   return res.status(200).json([]);
 });
 
-app.get('/applications', (req, res) => {
+app.get('/applications', (_req: Request, res: Response) => {
   return res.status(200).json([]);
 });
 
-app.get('/activities', (req, res) => {
+app.get('/activities', (_req: Request, res: Response) => {
   return res.status(200).json([]);
 });
 
-app.get('/applications/detectable', (req, res) => {
+app.get('/applications/detectable', (_req: Request, res: Response) => {
   return res.status(200).json([]);
 });
 
-app.get('/games', (req, res) => {
+app.get('/games', (_req: Request, res: Response) => {
   return res.status(200).json([]);
 });
 
-app.get('/gateway', (req, res) => {
+app.get('/gateway', (req: Request, res: Response) => {
   return res.status(200).json({
     url: generateGatewayURL(req),
   });
 });
 
-app.get('/gateway/bot', (req, res) => {
+app.get('/gateway/bot', (req: Request, res: Response) => {
   return res.status(200).json({
     url: generateGatewayURL(req),
     shards: 0,
@@ -96,7 +97,7 @@ app.get('/gateway/bot', (req, res) => {
   });
 });
 
-app.get('/voice/ice', (req, res) => {
+app.get('/voice/ice', (_req: Request, res: Response) => {
   return res.status(200).json({
     servers: [
       {
@@ -127,11 +128,11 @@ app.use('/oauth2', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), oauth2);
 app.use('/store', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), store);
 app.use('/integrations', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), integrations);
 
-app.use('/track', (_, res) => {
+app.use('/track', (_req: Request, res: Response) => {
   return res.status(204).send();
 });
 
-app.use('/science', (_, res) => {
+app.use('/science', (_req: Request, res: Response) => {
   return res.status(204).send();
 });
 

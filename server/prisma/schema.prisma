@@ -67,12 +67,12 @@ model Relationship {
 }
 
 model UserNote {
-  author_id String?
-  user_id   String?
+  author_id String
+  user_id   String
   note      String?
 
+  @@id([user_id, author_id])
   @@map("user_notes")
-  @@ignore
 }
 
 model GuildSubscription {
