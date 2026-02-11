@@ -34,9 +34,7 @@ const globalUtils = {
     return `${_config.secure ? 'wss' : 'ws'}://${baseUrl}${_config.includePortInWsUrl && (_config.secure ? _config.ws_port != 443 : _config.ws_port != 80) ? `:${_config.ws_port}` : ''}`;
   },
   generateRTCServerURL: () => {
-    return _config.signaling_server_url == ''
-      ? _config.base_url + ':' + _config.signaling_server_port
-      : _config.signaling_server_url;
+    return _config.base_url + ':' + _config.signaling_server_port;
   },
   unavailableGuildsStore: [],
   generateString: (length) => {

@@ -6,8 +6,6 @@
   "gateway_url": "",
   "assets_cdn_url": "https://cdn.oldcordapp.com",
   "media_server_public_ip": false,
-  "signaling_server_url": "",
-  "signaling_server_port": 5000,
   "udp_server_port": 6000,
   "port": 1337,
   "ws_port": 1337,
@@ -32,7 +30,9 @@
   "sync_only": true,
   "mr_server": {
     "enabled": false,
-    "port": 4444,
+    "agents": [
+      "ws://127.0.0.1:4444"
+    ],
     "config": {
       "speaking_throttle_ms": 150
     }

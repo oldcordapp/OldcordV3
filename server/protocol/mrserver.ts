@@ -1,4 +1,4 @@
-import { WebSocketServer } from 'ws';
+import { WebSocket } from 'ws';
 
 import { mrHandlers, OPCODES } from '../handlers/mr.ts';
 import { logText } from '../helpers/utils/logger.ts';
@@ -7,17 +7,15 @@ import { type GatewayPayload, GatewayPayloadSchema } from '../types/gateway.ts';
 // TODO: Replace all String() or "as type" conversions with better ones
 
 const mrServer = {
-  port: null as number | null,
   debug_logs: false,
   servers: new Map(),
   emitter: null,
-  signalingServer: null as WebSocketServer | null,
   debug(message) {
     if (!this.debug_logs) {
       return;
     }
 
-    logText(message, 'MR_SIGNALING_SERVER');
+    logText(message, 'MPA_CLIENT');
   },
   getRandomMediaServer() {
     const serverEntries = Array.from(this.servers.entries());
@@ -38,7 +36,7 @@ const mrServer = {
     };
   },
   async handleClientConnect(socket) {
-    this.debug(`Media server has connected`);
+    this.debug(`Connected to a media server`);
 
     socket.send(
       JSON.stringify({
@@ -58,7 +56,7 @@ const mrServer = {
       ),
       reset: () => {
         if (socket.hb.timeout != null) {
-          clearInterval(socket.hb.timeout);
+          clearTimeout(socket.hb.timeout);
         }
 
         socket.hb.timeout = setTimeout(
@@ -92,8 +90,9 @@ const mrServer = {
 
     this.debug(`Lost connection to a media server -> Removing from store...`);
 
-    this.servers.delete(socket.public_ip);
-    socket = null;
+    if (socket.public_ip) {
+      this.servers.delete(socket.public_ip);
+    }
   },
   async handleClientMessage(socket, data) {
     try {
@@ -109,18 +108,35 @@ const mrServer = {
       socket.close(4000, 'Invalid payload');
     }
   },
-  start(server, port, debug_logs) {
-    this.port = port;
+  connectToAgent(url) {
+    this.debug(`Attempting to connect to media agent at ${url}`);
+    const socket = new WebSocket(url);
+
+    socket.on('open', () => {
+        this.handleClientConnect(socket);
+    });
+
+    socket.on('error', (err) => {
+        this.debug(`Error from media agent at ${url}: ${err.message}`);
+    });
+
+    socket.on('close', () => {
+        this.debug(`Media agent at ${url} disconnected. Retrying in 5s...`);
+        setTimeout(() => this.connectToAgent(url), 5000);
+    });
+  },
+  start(debug_logs) {
     this.debug_logs = debug_logs;
-    this.signalingServer = new WebSocketServer({
-      server: server,
-    });
+    
+    const agents = (global as any).config.mr_server.agents || [];
+    
+    if (agents.length === 0) {
+        this.debug('No media agents configured.');
+    }
 
-    this.signalingServer.on('listening', async () => {
-      this.debug(`Server up on port ${this.port}`);
-    });
-
-    this.signalingServer.on('connection', this.handleClientConnect.bind(this));
+    for (const agentUrl of agents) {
+        this.connectToAgent(agentUrl);
+    }
   },
 };
 

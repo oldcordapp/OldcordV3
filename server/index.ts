@@ -174,7 +174,6 @@ async function startServers() {
 
     const httpServer = certificates ? https.createServer(certificates) : createServer();
     const rtcHttpServer = certificates ? https.createServer(certificates) : createServer();
-    const mrHttpServer = certificates ? https.createServer(certificates) : createServer();
     
     let gatewayServer;
 
@@ -188,11 +187,10 @@ async function startServers() {
     global.rtcServer.start(rtcHttpServer, config.signaling_server_port, config.debug_logs.rtc ?? true);
 
     await new Promise<void>((resolve) => rtcHttpServer.listen(config.signaling_server_port, () => resolve()));
-    await new Promise<void>((resolve) => mrHttpServer.listen(config.mr_server.port, () => resolve()));
 
     if (global.using_media_relay) {
       global.mrServer = mrServer;
-      global.mrServer.start(mrHttpServer, config.mr_server.port, config.debug_logs.mr ?? true);
+      global.mrServer.start(config.debug_logs.mr ?? true);
     } else {
       await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs.media ?? true);
     }
