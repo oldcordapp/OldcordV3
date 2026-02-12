@@ -791,7 +791,7 @@ const globalUtils = {
       };
     }
 
-    if (client_build_date <= new Date(2017, 0, 23) && msg.type === 7 && guild) {
+    if (client_build_date <= new Date(2017, 0, 23) && msg.type === 7) {
       msg.content = `${msg.author.username} has joined the server!`;
       msg.type = 0;
       msg.author = {
