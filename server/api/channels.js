@@ -654,6 +654,30 @@ router.put(
       //Add recipient
       channel.recipients.push(recipient);
 
+      if (channel.type === 1) {
+        //create group dm
+
+        channel ??= await global.database.createChannel(
+          null,
+          null,
+          3,
+          0,
+          channel.recipients,
+          account.id,
+        );
+
+        await globalUtils.pingPrivateChannel(channel);
+
+        const add_msg = await global.database.createSystemMessage(null, channel.id, 1, [
+          sender,
+          recipient,
+        ]);
+
+        await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', add_msg);
+
+        return res.status(204).send();
+      }      
+
       if (!(await global.database.updateChannelRecipients(channel.id, channel.recipients)))
         throw 'Failed to update recipients list in channel';
 
