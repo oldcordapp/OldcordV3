@@ -409,6 +409,7 @@ class session {
                 permission_overwrites: [],
                 nsfw: false,
                 rate_limit_per_user: 0,
+                position: 0
               },
             ];
 

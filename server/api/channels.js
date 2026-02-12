@@ -620,7 +620,7 @@ router.put(
 
       const channel = req.channel;
 
-      if (channel.type !== 3) {
+      if (channel.type !== 3 && channel.type !== 1) {
         return res.status(403).json({
           code: 403,
           message: 'Cannot add members to this type of channel.',
