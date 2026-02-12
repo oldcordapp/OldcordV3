@@ -110,8 +110,9 @@ There are some features we need help with, if you're up for the task, feel free 
   - `autojoin:GUILDID` - Automatically makes new users join a specific guild upon registration (e.g., `"autojoin:1413791197947867136"`)
 - `includePortInUrl`: If set to `false` will force the server to use ports 443/80 instead of the instance port. Good for reverse proxies.
 - `includePortInWsUrl`: If set to `false` will force the server gateway to use ports 443/80 instead of the instance port. Good for reverse proxies.
-- `tenor_api_key`: Needed if you want `/tenor` support. You can get an API key [here](https://tenor.com/developer/dashboard).
+- `klipy_api_key`: Needed if you want `/tenor` support. You can get an API key [here](https://partner.klipy.com/).
 - `auto_embed_urls`: Set to `true` if you want urls included in message content to automatically embed.
+  z
 
 ## FAQ
 

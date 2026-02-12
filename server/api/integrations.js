@@ -23,14 +23,14 @@ router.get(
     try {
       const query = req.query.q;
 
-      if (!query || !global.config.tenor_api_key) {
+      if (!query || !global.config.klipy_api_key) {
         return res.json([]);
       }
 
       const baseUrl = 'https://api.klipy.com/v2/search';
       const params = new URLSearchParams({
         q: query,
-        key: global.config.tenor_api_key,
+        key: global.config.klipy_api_key,
         limit: 50,
         media_filter: 'tinygif',
       }).toString();

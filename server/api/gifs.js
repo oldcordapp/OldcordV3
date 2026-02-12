@@ -10,17 +10,17 @@ router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {
     //let provider = req.query.provider || 'tenor';
     //fuck giphy
 
-    if (!global.config.tenor_api_key) {
+    if (!global.config.klipy_api_key) {
       return res.status(200).json({ categories: [], gifs: [] });
     }
 
     const catRes = await fetch(
-      `https://api.klipy.com/v2/categories?key=${global.config.tenor_api_key}&type=featured`,
+      `https://api.klipy.com/v2/categories?key=${global.config.klipy_api_key}&type=featured`,
     );
     const catData = await catRes.json();
 
     const trendRes = await fetch(
-      `https://api.klipy.com/v2/featured?key=${global.config.tenor_api_key}&limit=10&media_filter=tinygif`,
+      `https://api.klipy.com/v2/featured?key=${global.config.klipy_api_key}&limit=10&media_filter=tinygif`,
     );
     const trendData = await trendRes.json();
 
@@ -52,12 +52,12 @@ router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {
 
 router.get('/trending-gifs', cacheFor(60 * 5, true), async (req, res) => {
   try {
-    if (!global.config.tenor_api_key) {
+    if (!global.config.klipy_api_key) {
       return res.status(200).json([]);
     }
 
     const response = await fetch(
-      `https://api.klipy.com/v2/featured?key=${global.config.tenor_api_key}&limit=50&media_filter=tinymp4,gif`,
+      `https://api.klipy.com/v2/featured?key=${global.config.klipy_api_key}&limit=50&media_filter=tinymp4,gif`,
     );
     const data = await response.json();
 
@@ -85,7 +85,7 @@ router.get('/trending-gifs', cacheFor(60 * 5, true), async (req, res) => {
 
 router.get('/search', cacheFor(60 * 5, true), async (req, res) => {
   try {
-    if (!global.config.tenor_api_key) {
+    if (!global.config.klipy_api_key) {
       return res.status(200).json([]);
     }
 
@@ -94,7 +94,7 @@ router.get('/search', cacheFor(60 * 5, true), async (req, res) => {
     const mediaFilter = req.query.media_format?.includes('mp4') ? 'tinymp4,gif' : 'tinygif,gif';
     const params = new URLSearchParams({
       q: query,
-      key: global.config.tenor_api_key,
+      key: global.config.klipy_api_key,
       limit: limit,
       media_filter: mediaFilter,
       contentfilter: 'medium',

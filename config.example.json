@@ -27,7 +27,7 @@
   "require_friendship_for_dm": false,
   "auto_embed_urls": false,
   "mfa_required_for_admin": false,
-  "tenor_api_key": "",
+  "klipy_api_key": "",
   "infinite_boosts": true,
   "sync_only": true,
   "mr_server": {
