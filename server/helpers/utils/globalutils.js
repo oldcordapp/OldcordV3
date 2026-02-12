@@ -803,6 +803,30 @@ const globalUtils = {
       };
     }
 
+    if (client_build_date < new Date(2018, 5, 29) && msg.type === 2) {
+      msg.content = `${msg.author.username} has left the group.`;
+      msg.type = 0;
+      msg.author = {
+        username: 'Oldcord',
+        discriminator: '0000',
+        bot: true,
+        id: '643945264868098049',
+        avatar: null,
+      };
+    }
+
+    if (client_build_date < new Date(2018, 5, 29) && msg.type === 1) {
+      msg.content = `${msg.author.username} added ${msg.mentions[0].username} to the group.`;
+      msg.type = 0;
+      msg.author = {
+        username: 'Oldcord',
+        discriminator: '0000',
+        bot: true,
+        id: '643945264868098049',
+        avatar: null,
+      };
+    }
+
     return msg;
   },
   personalizeChannelObject: (req, channel, user = null) => {

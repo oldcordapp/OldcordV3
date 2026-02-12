@@ -657,23 +657,33 @@ router.put(
       if (channel.type === 1) {
         //create group dm
 
-        channel ??= await global.database.createChannel(
+        let newRecipients = [...channel.recipients];
+
+        newRecipients = newRecipients.map(recipient => {
+          return globalUtils.miniUserObject(recipient);
+        });
+
+        const newGroupChannel = await global.database.createChannel(
           null,
           null,
           3,
           0,
-          channel.recipients,
+          newRecipients,
           sender.id,
         );
 
-        await globalUtils.pingPrivateChannel(channel);
+        if (!newGroupChannel) throw 'Failed to create group channel';
 
-        const add_msg = await global.database.createSystemMessage(null, channel.id, 1, [
-          sender,
-          recipient,
-        ]);
+        await globalUtils.pingPrivateChannel(newGroupChannel);
 
-        await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', add_msg);
+        const add_msg = await global.database.createSystemMessage(
+          null, 
+          newGroupChannel.id,
+          1, 
+          [sender, recipient]
+        );
+
+        await dispatcher.dispatchEventInPrivateChannel(newGroupChannel, 'MESSAGE_CREATE', add_msg);
 
         return res.status(204).send();
       }      
