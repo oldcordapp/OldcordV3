@@ -825,7 +825,7 @@ const globalUtils = {
         id: '643945264868098049',
         avatar: null,
       };
-    }
+    } //should we clear the mentions here?
 
     return msg;
   },

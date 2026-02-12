@@ -298,7 +298,9 @@ router.post(
         req.account,
       ]);
 
-      await dispatcher.dispatchEventInPrivateChannel(req.channel, 'MESSAGE_CREATE', call_msg);
+      await dispatcher.dispatchEventInPrivateChannel(req.channel, 'MESSAGE_CREATE', function () {
+          return globalUtils.personalizeMessageObject(call_msg, null, this.socket.client_build_date);
+      });
 
       return res.status(204).send();
     } catch (error) {
@@ -683,7 +685,9 @@ router.put(
           [sender, recipient]
         );
 
-        await dispatcher.dispatchEventInPrivateChannel(newGroupChannel, 'MESSAGE_CREATE', add_msg);
+        await dispatcher.dispatchEventInPrivateChannel(newGroupChannel, 'MESSAGE_CREATE', function () {
+           return globalUtils.personalizeMessageObject(add_msg, null, this.socket.client_build_date);
+        });
 
         return res.status(204).send();
       }      
@@ -704,7 +708,9 @@ router.put(
         recipient,
       ]);
 
-      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', add_msg);
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', function () {
+        return globalUtils.personalizeMessageObject(add_msg, null, this.socket.client_build_date);
+      });
 
       return res.status(204).send();
     } catch (error) {
@@ -766,7 +772,9 @@ router.delete(
         recipient,
       ]);
 
-      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', remove_msg);
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', function () {
+        return globalUtils.personalizeMessageObject(remove_msg, null, this.socket.client_build_date);
+      });
 
       return res.status(204).send();
     } catch (error) {
