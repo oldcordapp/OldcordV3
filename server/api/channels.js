@@ -663,7 +663,7 @@ router.put(
           3,
           0,
           channel.recipients,
-          account.id,
+          sender.id,
         );
 
         await globalUtils.pingPrivateChannel(channel);
