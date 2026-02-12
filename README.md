@@ -7,7 +7,7 @@
 An open-source reimplementation of the old (2015-2018) Discord backend, including an on-demand client patcher. <br>
 Contributions are highly encouraged! We'd love your help to clean and refactor the codebase!
 
-## ⚠️ Important Notices
+## Important Notices
 
 **Database Migrations**:
 
@@ -34,11 +34,17 @@ There are some features we need help with, if you're up for the task, feel free 
 
 ## Project Status & Features
 
-**Support Status for Features from Client Year**:
+**Backend Versions and Their Support Status**:
 
-- 🟢 **2015 - 2016**: Full support.
-- 🟠 **2017 - 2018**: In development, mostly supported. (To-dos like giphy support, etc)
-- ❎ **2019+**: No plans for support. Too much commercial crap in these versions, we're focused on preserving the classic Discord experience, completely free from telemetry and bloat.
+| Backend Version   | Support Status | Notes                                                                                                                                                   |
+| ----------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V2/V3 (2015-2016) | ✅             | Fully Supported                                                                                                                                         |
+| V4 (2016)         | ✅             | Fully Supported                                                                                                                                         |
+| V5 (2016)         | ✅             | Fully Supported                                                                                                                                         |
+| V6 (2016-2018)    | 🟠             | Work in progress, mostly supported. (To-dos like giphy support, etc)                                                                                    |
+| V6 (2019+)        | 🟠             | Work in progress, mostly supported. No plans to include most features from 2019+ as they might be considered useless and bloated for a chat application |
+| V7 (?)            | 🤡             | Doesn't look like anything to me                                                                                                                        |
+| V8-V10 (2021+)    | ⚠️             | Supported only for bot libraries and third party clients, refer to `V6 (2019+)` for feature support                                                     |
 
 **Voice & Video**:
 
@@ -52,6 +58,7 @@ There are some features we need help with, if you're up for the task, feel free 
 
 - **Quick note**: Creating/editing servers, editing profile options and other things might cause issues due to our focus on v2-v6 and supporting multiple different API versions.
 - **Compatibility**:
+  - **[Flicker](https://github.com/FlickerTeam/Client)**: ✅ Fully supported. Made by the people who made Oldcord!
   - **Fermi**: 🟠 Loads, but things are not working still. Work in progress
   - **Endcord**: 🟠 Loads, but things are not working still. Work in progress
 
