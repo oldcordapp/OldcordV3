@@ -41,6 +41,7 @@ function isSelectQuery(query) {
 
 function getTableFromQuery(query) {
   const match = query.match(/(?:FROM|INTO|UPDATE)\s+("?[\w.]+"?)/i);
+
   return match ? match[1].replace(/"/g, '') : null;
 }
 
@@ -56,7 +57,6 @@ function invalidateCacheForTable(tableName) {
   }
 }
 
-// Refactor by @TotallyLumi
 async function runQuery(queryString, values = []) {
   const query = {
     text: queryString,
@@ -69,6 +69,7 @@ async function runQuery(queryString, values = []) {
   try {
     const write = isWriteQuery(queryString);
 
+    // Handles the cache read
     if (!write && shouldCacheQuery(queryString)) {
       if (cache.has(cacheKey)) {
         return cache.get(cacheKey);
@@ -78,24 +79,29 @@ async function runQuery(queryString, values = []) {
     const result = await client.query(query);
     const rows = result.rows;
 
+    // Handles cache invalidation
     if (write) {
       const tableName = getTableFromQuery(queryString);
+
       if (tableName) {
         invalidateCacheForTable(tableName);
       }
     }
 
+    // Handles cache store
     if (!write && shouldCacheQuery(queryString)) {
       cache.set(cacheKey, rows);
     }
+
     return rows.length === 0 ? null : rows;
 
   } catch (error) {
     logText(
       `Query error: ${queryString}, values: ${JSON.stringify(values)} - ${error}`,
-      'error'
+      'error',
     );
-    throw error;
+
+    throw error; // Throws an error instead of returning null sliently
   } finally {
     client.release();
   }
