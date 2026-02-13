@@ -29,70 +29,73 @@ const db_config = config.db_config;
 
 const pool = new Pool(db_config);
 
-const cache = {};
+const cache = new Map();
 
+function isWriteQuery(query) {
+  return /^(INSERT|UPDATE|DELETE)/i.test(query.trim());
+}
+
+function isSelectQuery(query) {
+  return /^SELECT/i.test(query.trim());
+}
+
+function getTableFromQuery(query) {
+  const match = query.match(/(?:FROM|INTO|UPDATE)\s+("?[\w.]+"?)/i);
+  return match ? match[1].replace(/"/g, '') : null;
+}
+
+function shouldCacheQuery(query) {
+  return isSelectQuery(query);
+}
+
+function invalidateCacheForTable(tableName) {
+  for (const key of cache.keys()) {
+    if (key.includes(`"${tableName}"`) || key.includes(tableName)) {
+      cache.delete(key);
+    }
+  }
+}
+
+// Refactor by @TotallyLumi
 async function runQuery(queryString, values = []) {
-  //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
-  // TODO pls refactor all this shit my brain will explode help
-
   const query = {
     text: queryString,
     values: values,
   };
 
   const cacheKey = JSON.stringify(query);
-
   const client = await pool.connect();
 
-  let isWriteQuery = false;
-
   try {
-    isWriteQuery = /INSERT\s+INTO|UPDATE|DELETE\s+FROM/i.test(queryString);
+    const write = isWriteQuery(queryString);
 
-    if (isWriteQuery) await client.query('BEGIN');
-
-    if (/SELECT\s+\*\s+FROM/i.test(queryString)) {
-      if (cache[cacheKey]) {
-        return cache[cacheKey];
-      }
-    }
-
-    if (isWriteQuery) {
-      const tableNameMatch = queryString.match(/(?:FROM|INTO|UPDATE)\s+(\S+)/i);
-      const tableName = tableNameMatch ? tableNameMatch[1] : null;
-
-      if (tableName) {
-        for (const key in cache) {
-          if (key.includes(tableName)) {
-            delete cache[key];
-          }
-        }
+    if (!write && shouldCacheQuery(queryString)) {
+      if (cache.has(cacheKey)) {
+        return cache.get(cacheKey);
       }
     }
 
     const result = await client.query(query);
     const rows = result.rows;
 
-    if (/SELECT\s+\*\s+FROM/i.test(queryString) && rows.length > 0) {
-      cache[cacheKey] = rows;
+    if (write) {
+      const tableName = getTableFromQuery(queryString);
+      if (tableName) {
+        invalidateCacheForTable(tableName);
+      }
     }
 
-    if (isWriteQuery) {
-      await client.query('COMMIT');
+    if (!write && shouldCacheQuery(queryString)) {
+      cache.set(cacheKey, rows);
     }
-
     return rows.length === 0 ? null : rows;
+
   } catch (error) {
-    if (isWriteQuery) {
-      await client.query('ROLLBACK');
-    }
-
     logText(
-      `Error with query: ${queryString}, values: ${JSON.stringify(values)} - ${error}`,
-      'error',
+      `Query error: ${queryString}, values: ${JSON.stringify(values)} - ${error}`,
+      'error'
     );
-
-    return null;
+    throw error;
   } finally {
     client.release();
   }
@@ -210,7 +213,7 @@ const database = {
       );
       if (!columnExists) {
         await database.runQuery(
-          `ALTER TABLE instance_info ADD COLUMN dm_restriction_applied BOOLEAN DEFAULT FALSE;`,
+          `ALTER TABLE instance_info ADD COLUMN IF NOT EXISTS dm_restriction_applied BOOLEAN DEFAULT FALSE;`,
         );
       }
 
@@ -710,7 +713,7 @@ const database = {
 
       await database.runQuery(
         `
-                UPDATE group_channels 
+                UPDATE group_channels
                 SET
                     icon = CASE WHEN icon = 'NULL' THEN NULL ELSE icon END,
                     name = CASE WHEN name = 'NULL' THEN NULL ELSE name END,
@@ -737,7 +740,7 @@ const database = {
                 SET
                     parent_id = CASE WHEN parent_id = 'NULL' THEN NULL ELSE parent_id END,
                     topic = CASE WHEN topic = 'NULL' THEN NULL ELSE topic END
-                WHERE parent_id = 'NULL' OR topic = 'NULL';    
+                WHERE parent_id = 'NULL' OR topic = 'NULL';
             `,
         [],
       );
@@ -1024,7 +1027,7 @@ const database = {
           try {
             await database.runQuery(
               `
-                            ALTER TABLE ${item.table} 
+                            ALTER TABLE ${item.table}
                             ALTER COLUMN ${item.column} DROP DEFAULT,
                             ALTER COLUMN ${item.column} TYPE BOOLEAN USING (${item.column}::integer::boolean),
                             ALTER COLUMN ${item.column} SET DEFAULT ${item.default ? 'TRUE' : 'FALSE'};
@@ -1040,7 +1043,7 @@ const database = {
       //#region fix an oopsie
       await database.runQuery(
         `
-                DELETE FROM messages 
+                DELETE FROM messages
                 WHERE guild_id::text LIKE '{"id":%';
             `,
         [],
@@ -3723,8 +3726,8 @@ const database = {
   ) => {
     try {
       let query = `
-            SELECT m.* FROM messages AS m 
-            WHERE 
+            SELECT m.* FROM messages AS m
+            WHERE
         `;
       const params = [];
       let paramIndex = 1;
@@ -4195,8 +4198,8 @@ const database = {
           const allOverrides =
             (await database.runQuery(
               `
-                        SELECT id, override_id, avatar_url, username 
-                        FROM webhook_overrides 
+                        SELECT id, override_id, avatar_url, username
+                        FROM webhook_overrides
                         WHERE id = ANY($1::text[])
                     `,
               [[...uniqueWebhookIds]],
@@ -5903,14 +5906,14 @@ const database = {
 
       await database.runQuery(
         `
-                UPDATE channels 
+                UPDATE channels
                 SET last_message_id = (
-                    SELECT message_id 
-                    FROM messages 
-                    WHERE channel_id = $1 
-                    ORDER BY message_id DESC 
+                    SELECT message_id
+                    FROM messages
+                    WHERE channel_id = $1
+                    ORDER BY message_id DESC
                     LIMIT 1
-                ) 
+                )
                 WHERE id = $1 AND last_message_id = $2
             `,
         [message.channel_id, message_id],
@@ -6121,7 +6124,7 @@ const database = {
     //type 1 needs a different body for it to work, look into that later
 
     /*
-        Msg type 
+        Msg type
             0 - default
             1 - recipient add to group (GROUP DM RELATED)
             2 - recipient removed from group (GROUP DM RELATED)
@@ -6492,7 +6495,7 @@ const database = {
       await database.runQuery('BEGIN');
 
       await database.runQuery(
-        `INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions) 
+        `INSERT INTO guilds (id, name, icon, region, owner_id, afk_channel_id, afk_timeout, creation_date, exclusions)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [id, name, icon, region, owner.id, null, 300, date, JSON.stringify(exclusions)],
       );
@@ -6803,8 +6806,8 @@ const database = {
     try {
       const pinRows = await database.runQuery(
         `
-                SELECT message_id FROM messages 
-                WHERE channel_id = $1 AND pinned = $2 
+                SELECT message_id FROM messages
+                WHERE channel_id = $1 AND pinned = $2
                 ORDER BY message_id DESC LIMIT 1
             `,
         [channel_id, true],
@@ -6819,8 +6822,8 @@ const database = {
       const ackRows = await database.runQuery(
         `
                 SELECT 1 FROM acknowledgements
-                WHERE user_id = $1 
-                AND channel_id = $2 
+                WHERE user_id = $1
+                AND channel_id = $2
                 AND message_id = $3
                 LIMIT 1
             `,
