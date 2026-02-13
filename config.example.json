@@ -1,0 +1,318 @@
+{
+  "token_secret": "35c8...",
+  "ack_secret": "19ac...",
+  "secure": false,
+  "base_url": "127.0.0.1",
+  "gateway_url": "",
+  "assets_cdn_url": "https://cdn.oldcordapp.com",
+  "media_server_public_ip": false,
+  "signaling_server_url": "",
+  "signaling_server_port": 5000,
+  "udp_server_port": 6000,
+  "port": 1337,
+  "ws_port": 1337,
+  "includePortInUrl": true,
+  "includePortInWsUrl": true,
+  "cache404s": false,
+  "serve_selector": true,
+  "intents_required": false,
+  "default_bot_intents": {
+    "value": 46847
+  },
+  "default_user_intents": {
+    "value": 67108863
+  },
+  "require_release_date_cookie": true,
+  "cache_authenticated_get_requests": true,
+  "require_friendship_for_dm": false,
+  "auto_embed_urls": false,
+  "mfa_required_for_admin": false,
+  "klipy_api_key": "",
+  "infinite_boosts": true,
+  "sync_only": true,
+  "mr_server": {
+    "enabled": false,
+    "agents": ["ws://127.0.0.1:4444"],
+    "config": {
+      "speaking_throttle_ms": 150
+    }
+  },
+  "default_client_build": "october_5_2017",
+  "debug_logs": {
+    "gateway": true,
+    "rtc": true,
+    "media": true,
+    "udp": true,
+    "dispatcher": true,
+    "mr": true,
+    "rest": true,
+    "errors": true,
+    "watchdog": false
+  },
+  "instance": {
+    "name": "Staging",
+    "description": "An oldcord v3 instance",
+    "environment": "staging",
+    "legal": {
+      "terms": "url",
+      "privacy": "url",
+      "instanceRules": "url",
+      "extras": {}
+    },
+    "flags": []
+  },
+  "cert_path": "",
+  "key_path": "",
+  "captcha_config": {
+    "type": "recaptchav2",
+    "secret_key": "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+    "site_key": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+    "enabled": true
+  },
+  "db_config": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "oldcord_v3",
+    "user": "postgres",
+    "password": "postgres_password"
+  },
+  "email_config": {
+    "fromAddress": "support@example.com",
+    "brevo-api-key": "",
+    "enabled": false
+  },
+  "limits": {
+    "username": {
+      "min": 2,
+      "max": 30
+    },
+    "password": {
+      "min": 8,
+      "max": 100
+    },
+    "email": {
+      "min": 1,
+      "max": 30
+    },
+    "nickname": {
+      "min": 2,
+      "max": 30
+    },
+    "guild_name": {
+      "min": 2,
+      "max": 30
+    },
+    "role_name": {
+      "min": 2,
+      "max": 30
+    },
+    "emoji_name": {
+      "min": 2,
+      "max": 30
+    },
+    "channel_name": {
+      "min": 2,
+      "max": 30
+    },
+    "attachments": {
+      "max_size": 25000000
+    },
+    "guilds_per_account": {
+      "max": 70
+    },
+    "invites_per_guild": {
+      "max": 100
+    },
+    "roles_per_guild": {
+      "max": 100
+    },
+    "channels_per_guild": {
+      "max": 100
+    },
+    "emojis_per_guild": {
+      "max": 200
+    },
+    "messages": {
+      "min": 1,
+      "max": 4000
+    }
+  },
+  "trusted_users": [],
+  "custom_invite_url": "",
+  "integration_config": [],
+  "ratelimit_config": {
+    "enabled": false,
+    "deep_mode": false,
+    "registration": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "subscriptions": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "reports": {
+      "maxPerTimeFrame": 10,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "bans": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "typing": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 60000,
+      "breakdown": "1000 * 60"
+    },
+    "updateChannel": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "deleteChannel": {
+      "maxPerTimeFrame": 5,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "tenorSearch": {
+      "maxPerTimeFrame": 250,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "createGuild": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "deleteGuild": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "updateGuild": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "messageSearching": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "createChannel": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "deleteInvite": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "useInvite": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "createInvite": {
+      "maxPerTimeFrame": 50,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "kickMember": {
+      "maxPerTimeFrame": 200,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "banMember": {
+      "maxPerTimeFrame": 200,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "updateMember": {
+      "maxPerTimeFrame": 200,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "updateNickname": {
+      "maxPerTimeFrame": 300,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "sendMessage": {
+      "maxPerTimeFrame": 5,
+      "timeFrame": 10000,
+      "breakdown": "1000 * 10"
+    },
+    "deleteMessage": {
+      "maxPerTimeFrame": 1000,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "updateMessage": {
+      "maxPerTimeFrame": 75,
+      "timeFrame": 30000,
+      "breakdown": "1000 * 30"
+    },
+    "ackMessage": {
+      "maxPerTimeFrame": 250,
+      "timeFrame": 10000,
+      "breakdown": "1000 * 10"
+    },
+    "addReaction": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 10000,
+      "breakdown": "1000 * 10"
+    },
+    "removeReaction": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 10000,
+      "breakdown": "1000 * 10"
+    },
+    "updateRole": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "deleteRole": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "createRole": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "createPrivateChannel": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "leaveGuild": {
+      "maxPerTimeFrame": 400,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "updateUsersGuildSettings": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "updateMe": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    },
+    "pins": {
+      "maxPerTimeFrame": 100,
+      "timeFrame": 3600000,
+      "breakdown": "1000 * 60 * 60"
+    }
+  },
+  "serveDesktopClient": false
+}
