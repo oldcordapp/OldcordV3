@@ -224,7 +224,7 @@ router.post(
               );
 
               await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, 'MESSAGE_CREATE', function () {
-                  return globalUtils.personalizeMessageObject(join_msg, guild, this.socket.client_build_date);
+                  return globalUtils.personalizeMessageObject(join_msg, guild, req.client_build_date);
               });
             }
           }
@@ -290,7 +290,7 @@ router.post(
             );
 
             await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, 'MESSAGE_CREATE', function () {
-                  return globalUtils.personalizeMessageObject(join_msg, guild, this.socket.client_build_date);
+                return globalUtils.personalizeMessageObject(join_msg, guild, req.client_build_date);
             });
           }
         }
