@@ -34,6 +34,155 @@ router.get('/', quickcache.cacheFor(60 * 5), async (req, res) => {
   }
 });
 
+const handleSendFriendRequest = async (res, sender, receiver, ourRelationshipObj, theirRelationshipObj) => {
+  let relationship = ourRelationshipObj;
+  let account = sender;
+  let user = receiver;
+  let targetRelationship = theirRelationshipObj;
+
+  //Prevent uh existing friendships from being overwritten + dont allow people who've blocked us to get a friend request
+  if (relationship.type !== 0 || targetRelationship.type === 2) {
+    return res.status(403).json({ code: 403, message: 'Failed to send friend request' });
+  }
+
+  //The following can be expanded to:
+  //if (relationship.type === 2 || relationship.type === 1) {return 403}
+  //if (targetRelationship.type === 2) {return 403}
+  //if (!user.settings.friend_source_flags) {return 403}
+  //if (!user.settings.friend_source_flags.all && !user.settings.friend_source_flags.mutual_friends && !user.settings.friend_source_flags.mutual_guilds) {return 403}
+  //
+  //It is compressed to not have repetetive lines. If you wish, revert this.
+
+  if (
+    relationship.type === 2 ||
+    relationship.type === 1 ||
+    targetRelationship.type === 2 ||
+    !user.settings.friend_source_flags ||
+    (!user.settings.friend_source_flags.all &&
+      !user.settings.friend_source_flags.mutual_friends &&
+      !user.settings.friend_source_flags.mutual_guilds)
+  ) {
+    return res.status(403).json({
+      code: 403,
+      message: 'Failed to send friend request',
+    });
+  } //figure these responses out
+
+  if (!user.settings.friend_source_flags.all) {
+    let isAllowed = false;
+
+    if (user.settings.friend_source_flags.mutual_guilds) {
+      const ourGuilds = await global.database.getUsersGuilds(account.id);
+      let compareWith = await global.database.getUsersGuilds(user.id);
+      
+      if (ourGuilds && compareWith) {
+        const compareIds = compareWith.map((i) => i.id);
+        const hasSharedGuild = ourGuilds.some(guild => compareIds.includes(guild.id));
+
+        if (hasSharedGuild) {
+           isAllowed = true;
+        }
+      }
+    }
+
+    if (!isAllowed && user.settings.friend_source_flags.mutual_friends) {
+      if (account.relationships && Array.isArray(account.relationships)) {
+        const friends = account.relationships.filter((item) => item.type === 1);
+        const targetFriendIds = user.relationships.map((i) => i.id);
+        
+        const hasSharedFriend = friends.some(f => targetFriendIds.includes(f.id));
+
+        if (hasSharedFriend) {
+           isAllowed = true;
+        }
+      }
+    }
+
+    if (!isAllowed) {
+      return res.status(403).json({
+        code: 403,
+        message: 'Failed to send friend request',
+      });
+    }
+  }
+
+  await global.database.addRelationship(account.id, 3, user.id);
+
+  await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
+    id: user.id,
+    type: 4,
+    user: globalUtils.miniUserObject(user),
+  });
+
+  await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_ADD', {
+    id: account.id,
+    type: 3,
+    user: globalUtils.miniUserObject(account),
+  });
+
+  return res.status(204).send();
+};
+
+const handleAcceptFriendRequest = async (res, sender, receiver, ourRelationshipObj, theirRelationshipObj) => {
+  let relationship = ourRelationshipObj;
+  let account = sender;
+  let user = receiver;
+  let targetRelationship = theirRelationshipObj;
+
+  if (relationship.type === 3) {
+    relationship.type = 1;
+
+    await global.database.modifyRelationship(account.id, relationship);
+
+    await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
+      id: user.id,
+      type: 1,
+      user: globalUtils.miniUserObject(user),
+    });
+
+    await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_ADD', {
+      id: account.id,
+      type: 1,
+      user: globalUtils.miniUserObject(account),
+    });
+
+    return res.status(204).send();
+  } else {
+    return res.status(400).json({
+      code: 400,
+      message: 'No pending friend request',
+    });
+  }
+};
+
+const handleBlockUser = async (res, sender, receiver, ourRelationshipObj, theirRelationshipObj) => {
+  let relationship = ourRelationshipObj;
+  let account = sender;
+  let user = receiver;
+  let targetRelationship = theirRelationshipObj;
+
+  if (relationship.type === 1) {
+    //ex-friend
+    relationship.type = 0; //cannot set this to 2 in the case that the user blocking is not the user that initiated the current relationship
+
+    await global.database.modifyRelationship(account.id, relationship);
+
+    await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_REMOVE', {
+      id: account.id,
+    });
+  }
+
+  await global.database.addRelationship(account.id, 2, user.id);
+
+  await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
+    id: user.id,
+    type: 2,
+    user: globalUtils.miniUserObject(user),
+  });
+
+  return res.status(204).send();
+};
+
 router.delete('/:userid', async (req, res) => {
   try {
     const account = req.account;
@@ -100,166 +249,19 @@ router.put('/:userid', async (req, res) => {
     }
 
     const body = req.body;
-    let action = 'SEND_FR';
     const relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
     const targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
       type: 0,
     };
 
-    if (relationship.type === 3) action = 'ACCEPT_FR';
-    if (body.type === 2) action = 'BLOCK';
+    const action = (body.type == 2) ? 'BLOCK' : (relationship.type === 3 ? 'ACCEPT_FR' : 'SEND_FR');
 
-    //The following can be expanded to:
-    //if (relationship.type === 2 || relationship.type === 1) {return 403}
-    //if (targetRelationship.type === 2) {return 403}
-    //if (!user.settings.friend_source_flags) {return 403}
-    //if (!user.settings.friend_source_flags.all && !user.settings.friend_source_flags.mutual_friends && !user.settings.friend_source_flags.mutual_guilds) {return 403}
-    //
-    //It is compressed to not have repetetive lines. If you wish, revert this.
     if (action === 'SEND_FR') {
-      //Prevent uh existing friendships from being overwritten + dont allow people who've blocked us to get a friend request
-      if (relationship.type !== 0 || targetRelationship.type === 2) {
-        return res.status(403).json({ code: 403, message: 'Failed to send friend request' });
-      }
-
-      if (
-        relationship.type === 2 ||
-        relationship.type === 1 ||
-        targetRelationship.type === 2 ||
-        !user.settings.friend_source_flags ||
-        (!user.settings.friend_source_flags.all &&
-          !user.settings.friend_source_flags.mutual_friends &&
-          !user.settings.friend_source_flags.mutual_guilds)
-      ) {
-        return res.status(403).json({
-          code: 403,
-          message: 'Failed to send friend request',
-        });
-      } //figure these responses out
-
-      if (!user.settings.friend_source_flags.all) {
-        //to-do: handle mutual_guilds, mutual_friends case
-
-        if (user.settings.friend_source_flags.mutual_guilds) {
-          const ourGuilds = await global.database.getUsersGuilds(account.id);
-
-          if (!ourGuilds) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
-          }
-
-          let compareWith = await global.database.getUsersGuilds(user.id);
-
-          compareWith = compareWith.map((i) => i.id);
-
-          if (compareWith.length === 0) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
-          }
-
-          const sharedGuilds = [];
-
-          for (var guild of ourGuilds) {
-            if (compareWith.includes(guild.id)) {
-              sharedGuilds.push(guild.id);
-            }
-          }
-
-          if (sharedGuilds.length === 0) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
-          }
-        }
-
-        if (user.settings.friend_source_flags.mutual_friends) {
-          const sharedFriends = [];
-
-          if (account.relationships && Array.isArray(account.relationships)) {
-            const friends = account.relationships.filter((item) => item.type === 1);
-
-            for (var friend of friends) {
-              if (user.relationships.map((i) => i.id).includes(friend.id)) {
-                sharedFriends.push(friend);
-              }
-            }
-
-            if (sharedFriends.length === 0) {
-              return res.status(403).json({
-                code: 403,
-                message: 'Failed to send friend request',
-              });
-            }
-          }
-        }
-      }
-
-      await global.database.addRelationship(account.id, 3, user.id);
-
-      await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
-        id: user.id,
-        type: 4,
-        user: globalUtils.miniUserObject(user),
-      });
-
-      await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_ADD', {
-        id: account.id,
-        type: 3,
-        user: globalUtils.miniUserObject(account),
-      });
-
-      return res.status(204).send();
+      return await handleSendFriendRequest(res, account, user, relationship, targetRelationship);
     } else if (action === 'ACCEPT_FR') {
-      if (relationship.type === 3) {
-        relationship.type = 1;
-
-        await global.database.modifyRelationship(account.id, relationship);
-
-        await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
-          id: user.id,
-          type: 1,
-          user: globalUtils.miniUserObject(user),
-        });
-
-        await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_ADD', {
-          id: account.id,
-          type: 1,
-          user: globalUtils.miniUserObject(account),
-        });
-
-        return res.status(204).send();
-      } else {
-        return res.status(400).json({
-          code: 400,
-          message: 'No pending friend request',
-        });
-      }
+      return await handleAcceptFriendRequest(res, account, user, relationship, targetRelationship);
     } else if (action === 'BLOCK') {
-      if (relationship.type === 1) {
-        //ex-friend
-        relationship.type = 0; //cannot set this to 2 in the case that the user blocking is not the user that initiated the current relationship
-
-        await global.database.modifyRelationship(account.id, relationship);
-
-        await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_REMOVE', {
-          id: account.id,
-        });
-      }
-
-      await global.database.addRelationship(account.id, 2, user.id);
-
-      await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
-        id: user.id,
-        type: 2,
-        user: globalUtils.miniUserObject(user),
-      });
-
-      return res.status(204).send();
+      return await handleBlockUser(res, account, user, relationship, targetRelationship);
     }
   } catch (error) {
     logText(error, 'error');
@@ -316,33 +318,11 @@ router.post('/', async (req, res) => {
       } //be very vague to protect the users privacy
 
       const relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
-
       const targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
         type: 0,
       };
 
-      if (relationship.type === 2 || relationship.type === 1 || targetRelationship.type === 2) {
-        return res.status(403).json({
-          code: 403,
-          message: 'Failed to send friend request',
-        });
-      }
-
-      await global.database.addRelationship(account.id, 3, user.id);
-
-      await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
-        id: user.id,
-        type: 4,
-        user: globalUtils.miniUserObject(user),
-      });
-
-      await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_ADD', {
-        id: account.id,
-        type: 3,
-        user: globalUtils.miniUserObject(account),
-      });
-
-      return res.status(204).send();
+      return await handleSendFriendRequest(res, account, user, relationship, targetRelationship);
     }
 
     if (username && discriminator) {
@@ -357,109 +337,11 @@ router.post('/', async (req, res) => {
       }
 
       const relationship = account.relationships.find((item) => item.id === user.id) ?? { type: 0 };
-
       const targetRelationship = user.relationships.find((item) => item.id === account.id) ?? {
         type: 0,
       };
 
-      if (relationship.type === 2 || relationship.type === 1 || targetRelationship.type === 2) {
-        return res.status(403).json({
-          code: 403,
-          message: 'Failed to send friend request',
-        });
-      }
-
-      if (!user.settings.friend_source_flags) {
-        return res.status(403).json({
-          code: 403,
-          message: 'Failed to send friend request',
-        });
-      }
-
-      if (
-        !user.settings.friend_source_flags.all &&
-        !user.settings.friend_source_flags.mutual_friends &&
-        !user.settings.friend_source_flags.mutual_guilds
-      ) {
-        return res.status(403).json({
-          code: 403,
-          message: 'Failed to send friend request',
-        });
-      }
-
-      if (!user.settings.friend_source_flags.all) {
-        //to-do: handle mutual_guilds, mutual_friends case
-
-        if (user.settings.friend_source_flags.mutual_guilds) {
-          const ourGuilds = await global.database.getUsersGuilds(account.id);
-
-          if (!ourGuilds) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
-          }
-
-          let compareWith = await global.database.getUsersGuilds(user.id);
-
-          compareWith = compareWith.map((i) => i.id);
-
-          if (compareWith.length === 0) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
-          }
-
-          const sharedGuilds = [];
-
-          for (var guild of ourGuilds) {
-            if (compareWith.includes(guild.id)) {
-              sharedGuilds.push(guild.id);
-            }
-          }
-
-          if (sharedGuilds.length === 0) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
-          }
-        }
-
-        if (user.settings.friend_source_flags.mutual_friends) {
-          const sharedFriends = [];
-
-          for (var friend of account.relationships.find((item) => item.type === 1)) {
-            if (user.relationships.map((i) => i.id).includes(friend.id)) {
-              sharedFriends.push(friend);
-            }
-          }
-
-          if (sharedFriends.length === 0) {
-            return res.status(403).json({
-              code: 403,
-              message: 'Failed to send friend request',
-            });
-          }
-        }
-      }
-
-      await global.database.addRelationship(account.id, 3, user.id);
-
-      await dispatcher.dispatchEventTo(account.id, 'RELATIONSHIP_ADD', {
-        id: user.id,
-        type: 4,
-        user: globalUtils.miniUserObject(user),
-      });
-
-      await dispatcher.dispatchEventTo(user.id, 'RELATIONSHIP_ADD', {
-        id: account.id,
-        type: 3,
-        user: globalUtils.miniUserObject(account),
-      });
-
-      return res.status(204).send();
+      return await handleSendFriendRequest(res, account, user, relationship, targetRelationship);
     }
   } catch (error) {
     logText(error, 'error');
