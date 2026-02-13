@@ -12,7 +12,7 @@ const OPCODES = {
   RESUME: 7,
   HEARTBEAT_INFO: 8,
   INVALID_SESSION: 9,
-  ICECANDIDATES: 10,
+  SIGNAL: 10,
   VIDEO: 12,
   DISCONNECT: 13,
 };
@@ -286,37 +286,24 @@ async function handleSelectProtocol(socket: any, packet: any) {
   }
 }
 
-async function handleICECandidates(socket: any, packet: any) {
-  if (
-    !global.rtcServer.protocolsMap.has(socket.userid) ||
-    global.rtcServer.protocolsMap.has(packet.d.user_id)
-  ) {
-    return;
-  }
+async function handleSignal(socket: any, packet: any) {
+  const userId = packet.d.user_id;
+  const voiceSession = socket.session;
 
-  const protocol = global.rtcServer.protocolsMap.get(socket.userid);
-  const theirProtocol = global.rtcServer.protocolsMap.get(packet.d.user_id);
-
-  if (protocol !== 'webrtc-p2p' || theirProtocol !== 'webrtc-p2p') {
-    global.rtcServer.debug(
-      `A client tried to send ICE candidates to another client, when one (or both) of them aren't using the webrtc-p2p protocol.`,
-    );
-    return;
-  }
-
-  const recipientId = packet.d.user_id;
-  const recipientSocket = global.rtcServer.clients.get(recipientId);
+  const recipientSocket = [...global.sessions.values()]
+    .find(s => s.user?.id === userId && s.server_id === voiceSession.server_id)
+    ?.socket;
 
   if (recipientSocket) {
     const forwardedPayload = { ...packet.d, user_id: socket.userid };
-    const forwardedMessage = { op: OPCODES.ICECANDIDATES, d: forwardedPayload };
+    const forwardedMessage = { op: OPCODES.SIGNAL, d: forwardedPayload };
 
     recipientSocket.send(JSON.stringify(forwardedMessage));
 
-    global.rtcServer.debug(`Forwarded ICE candidates from ${socket.userid} to ${recipientId}`);
+    global.rtcServer.debug(`Forwarded ICE candidates from ${socket.userid} to ${userId}`);
   } else {
     global.rtcServer.debug(
-      `Couldn't forward ICE candidates to recipient ${recipientId}, their corresponding websocket was not found.`,
+      `Couldn't forward ICE candidates to recipient ${userId}, their corresponding websocket was not found.`,
     );
   }
 }
@@ -661,7 +648,7 @@ const rtcHandlers = {
   [OPCODES.HEARTBEAT]: handleHeartbeat,
   [OPCODES.SPEAKING]: handleSpeaking,
   [OPCODES.RESUME]: handleResume,
-  [OPCODES.ICECANDIDATES]: handleICECandidates,
+  [OPCODES.SIGNAL]: handleSignal,
   [OPCODES.VIDEO]: handleVideo,
 };
 

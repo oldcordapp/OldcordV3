@@ -180,26 +180,23 @@ router.patch(
         req.body.name = req.body.name.replace(/ /g, '-');
       } //For when you just update group icons
 
-      channel.name = req.body.name ?? channel.name;
+      if ('name' in req.body) channel.name = req.body.name;
 
       if (channel.type !== 3 && channel.type !== 1) {
-        channel.position = req.body.position ?? channel.position;
+        if ('position' in req.body) channel.position = req.body.position;
 
         if (channel.type === 0) {
-          channel.topic = req.body.topic ?? channel.topic;
-          channel.nsfw = req.body.nsfw ?? channel.nsfw;
+          if ('topic' in req.body) channel.topic = req.body.topic;
+          if ('nsfw' in req.body) channel.nsfw = req.body.nsfw;
 
-          const rateLimit = req.body.rate_limit_per_user ?? channel.rate_limit_per_user;
-
-          channel.rate_limit_per_user = Math.min(Math.max(rateLimit, 0), 120);
+          if ('rate_limit_per_user' in req.body) {
+            channel.rate_limit_per_user = Math.min(Math.max(req.body.rate_limit_per_user, 0), 120);
+          }
         }
 
         if (channel.type === 2) {
-          const userLimit = req.body.user_limit ?? channel.user_limit;
-          channel.user_limit = Math.min(Math.max(userLimit, 0), 99);
-
-          const bitrate = req.body.bitrate ?? channel.bitrate;
-          channel.bitrate = Math.min(Math.max(bitrate, 8000), 96000);
+          if ('user_limit' in req.body) channel.user_limit = Math.min(Math.max(req.body.user_limit, 0), 99);
+          if ('bitrate' in req.body) channel.bitrate = Math.min(Math.max(req.body.bitrate, 8000), 96000)
         }
       } //do this for only guild channels
 
