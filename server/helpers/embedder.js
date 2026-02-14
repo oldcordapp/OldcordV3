@@ -200,11 +200,18 @@ const embedder = {
         url: url,
         description: videoDetails.description,
         title: videoDetails.title,
+        color: 16711680,
         thumbnail: {
           proxy_url: `/proxy/${encodeURIComponent(thumbnailUrl)}`,
           url: thumbnailUrl,
           width: thumbnailWidth,
           height: thumbnailHeight,
+        },
+        video: {
+          url: "https://www.youtube.com/embed/" + videoDetails.videoId,
+          width: 1280,
+          height: 720,
+          flags: 0
         },
         author: {
           url: channelUrl,
