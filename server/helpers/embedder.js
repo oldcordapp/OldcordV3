@@ -1,5 +1,6 @@
-import ytdl_core from '@distube/ytdl-core';
-const { getInfo } = ytdl_core;
+import { Innertube } from 'youtubei.js';
+const innertube = await Innertube.create();
+
 import { load } from 'cheerio';
 import path from 'fs';
 import { Jimp } from 'jimp';
@@ -73,6 +74,9 @@ const embedder = {
       const themeColor = $('meta[name="theme-color"]').attr('content');
       const ogTitle = $('meta[property="og:title"]').attr('content');
       let ogImage = $('meta[property="og:image"]').attr('content');
+
+      let { ogImageWidth, ogImageHeight } = [$('meta[property="og:image:width"]').attr('content'), $('meta[property="og:image:height"]').attr('content')];
+
       const twitterImage = $('meta[property="twitter:image"]').attr('content');
 
       if (!ogImage && twitterImage) {
@@ -126,8 +130,8 @@ const embedder = {
 
         embedObj.image = {
           url: full_img,
-          width: image_data.bitmap.width ?? 400,
-          height: image_data.bitmap.height ?? 400,
+          width: ogImageWidth ?? image_data.bitmap.width ?? 400,
+          height: ogImageHeight ?? image_data.bitmap.height ?? 400,
         };
       }
 
@@ -173,13 +177,14 @@ const embedder = {
   },
   embedYouTube: async (url) => {
     try {
-      const info = await getInfo(url);
-      const videoDetails = info.videoDetails;
-
-      const thumbnails = videoDetails.thumbnails;
+      const videoId = new URL(url).searchParams["q"] ?? new URL(url).pathname.slice(1);
+      const info = await innertube.getBasicInfo(videoId);
+      const basicInfo = info.basic_info;
+      console.log(basicInfo);
+      const thumbnails = basicInfo.thumbnail;
 
       const validThumbnails = thumbnails.filter(
-        (thumbnail) => thumbnail.width < 800 && thumbnail.height < 800,
+        (thumbnail) => thumbnail.width && thumbnail.height && thumbnail.width <= 800 && thumbnail.height <= 800,
       );
 
       const largestThumbnail = validThumbnails.reduce((largest, current) => {
@@ -191,15 +196,15 @@ const embedder = {
       const thumbnailUrl = largestThumbnail.url;
       const thumbnailWidth = largestThumbnail.width;
       const thumbnailHeight = largestThumbnail.height;
-      const uploader = videoDetails.author.name;
-      const channelUrl = videoDetails.author.channel_url;
+      const uploader = basicInfo.channel.name;
+      const channelUrl = basicInfo.channel.url;
 
       return {
         type: 'video',
         inlineMedia: true,
         url: url,
-        description: videoDetails.description,
-        title: videoDetails.title,
+        description: basicInfo.short_description,
+        title: basicInfo.title,
         color: 16711680,
         thumbnail: {
           proxy_url: `/proxy/${encodeURIComponent(thumbnailUrl)}`,
@@ -208,18 +213,18 @@ const embedder = {
           height: thumbnailHeight,
         },
         video: {
-          url: "https://www.youtube.com/embed/" + videoDetails.videoId,
-          width: 1280,
-          height: 720,
+          url: basicInfo.embed.iframe_url,
+          width: basicInfo.embed.width,
+          height: basicInfo.embed.height,
           flags: 0
         },
         author: {
-          url: channelUrl,
           name: uploader,
+          url: channelUrl,
         },
         provider: {
-          url: 'https://youtube.com',
           name: 'YouTube',
+          url: 'https://youtube.com',
         },
       };
     } catch (error) {
@@ -398,8 +403,8 @@ const embedder = {
               ? {
                 proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
                 url: result.image.url,
-                width: result.image.width > 800 ? 800 : result.image.width,
-                height: result.image.height > 800 ? 800 : result.image.height,
+                width: result.image.width > 1280 ? 1280 : result.image.width,
+                height: result.image.height > 720 ? 720 : result.image.height,
               }
               : null;
         }
