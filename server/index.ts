@@ -1,11 +1,13 @@
-import Snowflake from './helpers/utils/snowflake.js';
+import Snowflake from './helpers/snowflake.js';
 
 // this is needed because of discord kotlin sending in id as Number and not string, and it messes precision
 const originalJsonParse = JSON.parse;
 
-JSON.parse = (text: string, reviver?: JSONReviver): unknown => {
+JSON.parse = (text: string, reviver?: any): any => {
+  if (typeof text !== 'string') return text;
+
   try {
-    return originalJsonParse(text, function (key: string, value: any, context: JSONReviverContext) {
+    return originalJsonParse(text, function (key: string, value: any, context?: any) {
       let result = value;
 
       if (typeof value === 'number' && context?.source) {
@@ -15,15 +17,19 @@ JSON.parse = (text: string, reviver?: JSONReviver): unknown => {
           !Number.isSafeInteger(value) &&
           !rawValue.includes('.') &&
           !rawValue.toLowerCase().includes('e') &&
-          Snowflake.isValid(rawValue)
+          typeof Snowflake !== 'undefined' && Snowflake.isValid(rawValue)
         ) {
           result = rawValue;
         }
       }
 
-      return reviver ? reviver.call(this, key, result, context) : result;
+      if (reviver) {
+        return reviver.call(this, key, result, context);
+      }
+      return result;
     });
   } catch (e) {
+    console.error(e);
     return originalJsonParse(text, reviver);
   }
 };
@@ -39,16 +45,16 @@ import path from 'path';
 import router from './api/index.js';
 import gateway from './gateway.ts';
 import database from './helpers/database.js';
-import errors from './helpers/consts/errors.js';
-import globalUtils from './helpers/utils/globalutils.js';
-import { logText } from './helpers/utils/logger.ts';
+import errors from './helpers/errors.js';
+import globalUtils from './helpers/globalutils.js';
+import { logText } from './helpers/logger.ts';
 import {
   apiVersionMiddleware,
   assetsMiddleware,
   clientMiddleware,
   corsMiddleware,
 } from './helpers/middlewares.js';
-import permissions from './helpers/utils/permissions.js';
+import permissions from './helpers/permissions.js';
 const config = globalUtils.config;
 const app = express();
 import os from 'os';
@@ -56,9 +62,9 @@ import { Readable } from 'stream';
 
 import emailer from './helpers/emailer.js';
 import MediasoupSignalingDelegate from './helpers/webrtc/MediasoupSignalingDelegate.js';
-import mrServer from './protocol/mrserver.ts';
-import rtcServer from './protocol/rtcserver.ts';
-import udpServer from './protocol/udpserver.ts';
+import mrServer from './mrserver.ts';
+import rtcServer from './rtcserver.ts';
+import udpServer from './udpserver.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 
@@ -140,6 +146,30 @@ if (config.cert_path && config.cert_path !== '' && config.key_path && config.key
   };
 }
 
+//Prepare a HTTP server
+let httpServer: {
+  listen: (arg0: any, arg1: () => void) => void;
+  on: (arg0: string, arg1: any) => void;
+};
+if (certificates) httpServer = https.createServer(certificates);
+else httpServer = createServer();
+
+let gatewayServer: { listen: (arg0: any, arg1: () => void) => void };
+if (config.port == config.ws_port) {
+  //Reuse the HTTP server
+  gatewayServer = httpServer;
+} else {
+  //Prepare a separate HTTP server for the gateway
+  if (certificates) gatewayServer = https.createServer(certificates);
+  else gatewayServer = createServer();
+
+  gatewayServer.listen(config.ws_port, () => {
+    logText(`Gateway ready on port ${config.ws_port}`, 'GATEWAY');
+  });
+}
+
+gateway.ready(gatewayServer, config.debug_logs.gateway ?? true);
+
 //https://stackoverflow.com/a/15075395
 function getIPAddress() {
   const interfaces = os.networkInterfaces();
@@ -158,61 +188,51 @@ function getIPAddress() {
   return '0.0.0.0';
 }
 
-async function startServers() {
-  try {
-    let ip_address = getIPAddress();
+(async () => {
+  let ip_address = getIPAddress();
 
-    if (config.media_server_public_ip) {
-      try {
-        const try_get_ip = await fetch('https://checkip.amazonaws.com');
+  if (config.media_server_public_ip) {
+    const try_get_ip = await fetch('https://checkip.amazonaws.com');
 
-        ip_address = (await try_get_ip.text()).trim();
-      } catch (e) {
-        logText(`Failed to fetch public IP: ${e}`, 'error');
-      }
-    }
-
-    const httpServer = certificates ? https.createServer(certificates) : createServer();
-    const rtcHttpServer = certificates ? https.createServer(certificates) : createServer();
-    
-    let gatewayServer;
-
-    if (config.port == config.ws_port) {
-      gatewayServer = httpServer;
-    } else {
-      gatewayServer = certificates ? https.createServer(certificates) : createServer();
-    }
-
-    global.udpServer.start(config.udp_server_port, config.debug_logs.udp ?? true);
-    global.rtcServer.start(rtcHttpServer, config.signaling_server_port, config.debug_logs.rtc ?? true);
-
-    await new Promise<void>((resolve) => rtcHttpServer.listen(config.signaling_server_port, () => resolve()));
-
-    if (global.using_media_relay) {
-      global.mrServer = mrServer;
-      global.mrServer.start(config.debug_logs.mr ?? true);
-    } else {
-      await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs.media ?? true);
-    }
-
-    gateway.ready(gatewayServer, config.debug_logs.gateway ?? true);
-
-    if (gatewayServer !== httpServer) {
-      gatewayServer.listen(config.ws_port);
-    }
-
-    httpServer.listen(config.port, () => {
-      logText(`HTTP ready on port ${config.port}`, 'OLDCORD');
-    });
-
-    httpServer.on('request', app);
-  } catch (err) {
-    logText(`Failed to start services: ${err}`, 'error');
-    process.exit(1);
+    ip_address = await try_get_ip.text();
   }
-}
 
-startServers();
+  let rtcHttpServer: { listen: (arg0: any) => void };
+  let mrHttpServer: { listen: (arg0: any) => void };
+
+  if (certificates) {
+    rtcHttpServer = https.createServer(certificates);
+    mrHttpServer = https.createServer(certificates);
+  } else {
+    rtcHttpServer = createServer();
+    mrHttpServer = createServer();
+  }
+
+  rtcHttpServer.listen(config.signaling_server_port);
+  mrHttpServer.listen(config.mr_server.port);
+
+  global.udpServer.start(config.udp_server_port, config.debug_logs.udp ?? true);
+  global.rtcServer.start(
+    rtcHttpServer,
+    config.signaling_server_port,
+    config.debug_logs.rtc ?? true,
+  );
+
+  if (global.using_media_relay) {
+    global.mrServer = mrServer;
+    global.mrServer.start(mrHttpServer, config.mr_server.port, config.debug_logs.mr ?? true);
+  }
+
+  if (!global.using_media_relay) {
+    await global.mediaserver.start(ip_address, 5000, 6000, config.debug_logs.media ?? true);
+  }
+})();
+
+httpServer.listen(config.port, () => {
+  logText(`HTTP ready on port ${config.port}`, 'OLDCORD');
+});
+
+httpServer.on('request', app);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.text({ limit: '10mb' }));

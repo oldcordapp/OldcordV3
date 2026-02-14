@@ -1,0 +1,79 @@
+import { Snowflake as SapphireSnowflake } from '@sapphire/snowflake';
+import cluster from 'cluster';
+
+const EPOCH = 1420070400000n;
+const snowflakeInstance = new SapphireSnowflake(EPOCH);
+
+export interface DeconstructedSnowflake {
+  timestamp: number;
+  workerID: number;
+  processID: number;
+  increment: number;
+  binary: string;
+  date: Date;
+};
+
+class Snowflake {
+  static processId = BigInt(process.pid % 31);
+  static workerId = BigInt((cluster.worker?.id || 0) % 31);
+
+  constructor() {
+    throw new Error(`The ${this.constructor.name} class may not be instantiated.`);
+  }
+
+  static generate(): string {
+    return snowflakeInstance
+      .generate({
+        processId: Snowflake.processId,
+        workerId: Snowflake.workerId,
+      })
+      .toString();
+  }
+
+  static deconstruct(snowflake: string): DeconstructedSnowflake {
+    const deconstructed = snowflakeInstance.deconstruct(snowflake);
+    const timestampNum = Number(deconstructed.timestamp);
+
+    const res: DeconstructedSnowflake = {
+      timestamp: Number(deconstructed.timestamp),
+      workerID: Number(deconstructed.workerId),
+      processID: Number(deconstructed.processId),
+      increment: Number(deconstructed.increment),
+      binary: BigInt(snowflake).toString(2).padStart(64, '0'),
+      date: new Date(timestampNum)
+    };
+
+    return res;
+  }
+
+  static isValid(snowflake: string, maxAge: any = null): boolean {
+    if (!/^\d+$/.test(snowflake)) return false;
+    if (snowflake.length < 11) return false;
+
+    try {
+      const deconstructed = Snowflake.deconstruct(snowflake);
+
+      if (deconstructed.timestamp > Date.now() || deconstructed.timestamp < Number(EPOCH)) {
+        return false;
+      }
+
+      if (maxAge != null && Date.now() - deconstructed.timestamp > maxAge) {
+        return false;
+      }
+
+      if (deconstructed.workerID < 0 || deconstructed.workerID > 31) return false;
+      if (deconstructed.processID < 0 || deconstructed.processID > 31) return false;
+      if (deconstructed.increment < 0 || deconstructed.increment > 4095) return false;
+
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+}
+
+export const generate = Snowflake.generate;
+export const deconstruct = Snowflake.deconstruct;
+export const isValid = Snowflake.isValid;
+
+export default Snowflake;

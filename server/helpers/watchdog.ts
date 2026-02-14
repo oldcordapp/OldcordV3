@@ -1,8 +1,8 @@
 import { createHash } from 'crypto';
 
-import errors from './consts/errors.js';
-import globalUtils from './utils/globalutils.js';
-import { logText } from './utils/logger.ts';
+import errors from './errors.js';
+import globalUtils from './globalutils.js';
+import { logText } from './logger.ts';
 import type { IncomingHttpHeaders } from 'http';
 import type { NextFunction, Request, Response } from 'express';
 

@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import type { Response } from "express"
+import type { Request, Response } from "express"
 
-import { config, generateGatewayURL } from '../../helpers/utils/globalutils.js';
+import { config, generateGatewayURL } from '../../helpers/globalutils.js';
 const router = Router();
 
 router.get('/instance/domains', (req, res: Response) => {
@@ -13,7 +13,7 @@ router.get('/instance/domains', (req, res: Response) => {
   });
 });
 
-router.get('/instance/config', (res: Response) => {
+router.get('/instance/config', (_req: Request, res: Response) => {
   return res.json({
     limits_user_maxGuilds: null,
     limits_user_maxBio: null,

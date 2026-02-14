@@ -10,9 +10,9 @@ The AOT part of Oldplunger is still at `/www_assets/bootloader/patcher.js` which
 
 ## Roadmap
 
-- [x] Patch webpack
+- [ ] Patch webpack
 - [ ] Plugin api
-- [x] AOT and shims (for Electron Compat and use Oldcord API/Gateway)
+- [ ] AOT and shims (for Electron Compat and use Oldcord API/Gateway)
 
 ## How to make plugins
 

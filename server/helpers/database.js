@@ -4,8 +4,9 @@ import { promises as fsPromises } from 'fs';
 import { join } from 'path';
 import { Pool } from 'pg';
 import { totp } from 'speakeasy';
-
 import md5 from '../helpers/md5.ts';
+import { prisma } from '../prisma.ts';
+
 import { dispatchEventInChannel, dispatchEventInGuild } from './dispatcher.js';
 import { generateMsgEmbeds } from './embedder.js';
 import {
@@ -21,9 +22,9 @@ import {
   prepareAccountObject,
   SerializeOverwritesToString,
   usersToIDs,
-} from './utils/globalutils.js';
-import { logText } from './utils/logger.ts';
-import { deconstruct, generate } from './utils/snowflake.js';
+} from './globalutils.js';
+import { logText } from './logger.ts';
+import { deconstruct, generate } from './snowflake.js';
 
 const db_config = config.db_config;
 
@@ -33,7 +34,6 @@ const cache = {};
 
 async function runQuery(queryString, values = []) {
   //ngl chat gpt helped me fix the caching on this - and suggested i used multiple clients from a pool instead, hopefully this does something useful lol
-  // TODO pls refactor all this shit my brain will explode help
 
   const query = {
     text: queryString,
@@ -194,25 +194,12 @@ const database = {
   doescolumnExist,
   setupDatabase: async () => {
     try {
-      await database.runQuery(
-        `CREATE TABLE IF NOT EXISTS instance_info (version FLOAT, dm_restriction_applied BOOLEAN DEFAULT FALSE);`,
-        [],
-      );
+      await database.runQuery(`CREATE TABLE IF NOT EXISTS instance_info (version FLOAT);`, []);
 
       await database.runQuery(
-        `INSERT INTO instance_info (version, dm_restriction_applied) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,
-        [0.2, false],
-      );
-
-      const columnExists = await database.doescolumnExist(
-        'instance_info',
-        'dm_restriction_applied',
-      );
-      if (!columnExists) {
-        await database.runQuery(
-          `ALTER TABLE instance_info ADD COLUMN dm_restriction_applied BOOLEAN DEFAULT FALSE;`,
-        );
-      }
+        `INSERT INTO instance_info (version) SELECT ($1) WHERE NOT EXISTS (SELECT 1 FROM instance_info);`,
+        [0.2],
+      ); //for the people who update their instance but do not manually run the relationships migration script
 
       await performMigrations();
 
@@ -1048,22 +1035,29 @@ const database = {
 
       //#endregion
 
-      await database.runQuery(
-        `INSERT INTO channels (id, type, guild_id, parent_id, topic, last_message_id, permission_overwrites, name, position)
-                SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
-                WHERE NOT EXISTS (SELECT 1 FROM channels WHERE id = $1)`,
-        [
-          '643945264868098049',
-          0,
-          '643945264868098049',
-          '[OVERRIDENTOPIC]',
-          null,
-          '0',
-          null,
-          'please-read-me',
-          0,
-        ],
-      );
+      await prisma.guild.upsert({
+      where: { id: '643945264868098049' },
+      update: {},
+      create: {
+        id: '643945264868098049',
+        name: 'Overridden Guild',
+        owner_id: '643945264868098049'
+      }
+    });
+
+    await prisma.channel.upsert({
+      where: { id: '643945264868098049' },
+      update: {},
+      create: {
+        id: '643945264868098049',
+        type: 0,
+        guild_id: '643945264868098049',
+        topic: '[OVERRIDENTOPIC]',
+        name: 'please-read-me',
+        position: 0,
+        permission_overwrites: []
+      }
+    });
 
       await database.runQuery(
         `INSERT INTO messages (guild_id, message_id, channel_id, author_id, content, edited_timestamp, mention_everyone, nonce, timestamp, tts, embeds)
@@ -1107,81 +1101,6 @@ const database = {
       await database.runQuery(
         `CREATE INDEX CONCURRENTLY IF NOT EXISTS trgm_index_messages_content ON messages USING GIN (lower(content) gin_trgm_ops);`,
       );
-
-      const infoRows = await database.runQuery(
-        `SELECT dm_restriction_applied FROM instance_info LIMIT 1`,
-      );
-      const dmRestrictionApplied =
-        infoRows && infoRows.length > 0 ? infoRows[0].dm_restriction_applied : false;
-
-      if (config.require_friendship_for_dm) {
-        if (!dmRestrictionApplied) {
-          const users = await database.runQuery(`SELECT id, settings FROM users WHERE bot = false`);
-
-          if (users) {
-            for (const user of users) {
-              let settings = JSON.parse(user.settings);
-              let changed = false;
-
-              if (
-                settings.default_guilds_restricted === false ||
-                settings.default_guilds_restricted === undefined
-              ) {
-                settings.default_guilds_restricted = true;
-                changed = true;
-              }
-
-              if (settings.friend_source_flags) {
-                if (settings.friend_source_flags.all !== false) {
-                  settings.friend_source_flags.all = false;
-                  changed = true;
-                }
-                if (settings.friend_source_flags.mutual_friends !== true) {
-                  settings.friend_source_flags.mutual_friends = true;
-                  changed = true;
-                }
-                if (settings.friend_source_flags.mutual_guilds !== true) {
-                  settings.friend_source_flags.mutual_guilds = true;
-                  changed = true;
-                }
-              } else {
-                settings.friend_source_flags = {
-                  all: false,
-                  mutual_friends: true,
-                  mutual_guilds: true,
-                };
-                changed = true;
-              }
-
-              const userGuilds = await database.runQuery(
-                `SELECT guild_id FROM members WHERE user_id = $1`,
-                [user.id],
-              );
-
-              if (userGuilds) {
-                for (const guilds of userGuilds) {
-                  if (!settings.restricted_guilds.includes(guilds.guild_id)) {
-                    settings.restricted_guilds.push(guilds.guild_id);
-                    changed = true;
-                  }
-                }
-              }
-
-              if (changed) {
-                await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
-                  JSON.stringify(settings),
-                  user.id,
-                ]);
-              }
-            }
-          }
-          await database.runQuery(`UPDATE instance_info SET dm_restriction_applied = true`);
-        }
-      } else {
-        if (dmRestrictionApplied) {
-          await database.runQuery(`UPDATE instance_info SET dm_restriction_applied = false`);
-        }
-      }
 
       return true;
     } catch (error) {
@@ -4300,7 +4219,6 @@ const database = {
       return await Promise.all(
         messageRows.map(async (row) => {
           const isWebhook = row.author_id.includes('WEBHOOK_');
-          let author = null;
 
           if (isWebhook) {
             const webhookId = row.author_id.split('_')[1];
@@ -5531,23 +5449,6 @@ const database = {
         [guild.id, user_id, null, '[]', date, 0, 0],
       );
 
-      const userRows = await database.runQuery(`SELECT settings, bot FROM users WHERE id = $1`, [
-        user_id,
-      ]);
-
-      if (userRows && userRows.length > 0 && !userRows[0].bot) {
-        const settings = JSON.parse(userRows[0].settings);
-        if (settings.default_guilds_restricted) {
-          if (!settings.restricted_guilds.includes(guild.id)) {
-            settings.restricted_guilds.push(guild.id);
-            await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
-              JSON.stringify(settings),
-              user_id,
-            ]);
-          }
-        }
-      }
-
       return true;
     } catch (error) {
       logText(error, 'error');
@@ -6076,7 +5977,7 @@ const database = {
       ]);
 
       if (!rows || rows.length === 0) {
-        return {};
+        return {}; 
       }
 
       const notes = {};
@@ -6505,8 +6406,7 @@ const database = {
       ) {
         const tCatId = generate();
         const vCatId = generate();
-        const genTextId = id;
-        //const genTextId = generate();
+        const genTextId = generate();
         const genVoiceId = generate();
 
         await database.runQuery(
@@ -6737,26 +6637,6 @@ const database = {
           email_token ?? null,
         ],
       );
-
-      const userRows = await database.runQuery(`SELECT settings, bot FROM users WHERE id = $1`, [
-        id,
-      ]);
-
-      if (userRows && userRows.length > 0 && !userRows[0].bot) {
-        const settings = JSON.parse(userRows[0].settings);
-        if (config.require_friendship_for_dm) {
-          settings.default_guilds_restricted = true;
-          settings.friend_source_flags = {
-            all: false,
-            mutual_friends: true,
-            mutual_guilds: true,
-          };
-          await database.runQuery(`UPDATE users SET settings = $1 WHERE id = $2`, [
-            JSON.stringify(settings),
-            id,
-          ]);
-        }
-      }
 
       return {
         token: token,

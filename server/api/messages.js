@@ -7,16 +7,16 @@ import multer from 'multer';
 import { extname, join } from 'path';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/consts/errors.js';
-import globalUtils from '../helpers/utils/globalutils.js';
-import { logText } from '../helpers/utils/logger.ts';
+import errors from '../helpers/errors.js';
+import globalUtils from '../helpers/globalutils.js';
+import { logText } from '../helpers/logger.ts';
 import {
   channelPermissionsMiddleware,
   instanceMiddleware,
   rateLimitMiddleware,
 } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
-import Snowflake from '../helpers/utils/snowflake.js';
+import Snowflake from '../helpers/snowflake.js';
 import Watchdog from '../helpers/watchdog.js';
 import reactions from './reactions.js';
 
@@ -334,13 +334,21 @@ router.post(
             ourGuilds.some((og) => og.id === rg.id),
           );
 
+          if (recipient.bot && mutualGuilds.length === 0) {
+             return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
+          }
+
           if (!recipient.bot && !globalUtils.areWeFriends(account, recipient)) {
             const hasAllowedSharedGuild = mutualGuilds.some((guild) => {
-              const senderAllows = !(account.settings && account.settings.restricted_guilds.includes(guild.id));
-              const recipientAllows = !(recipient.settings && recipient.settings.restricted_guilds.includes(guild.id));
+              const senderAllows = !account.settings.restricted_guilds.includes(guild.id);
+              const recipientAllows = !recipient.settings.restricted_guilds.includes(guild.id);
 
               return senderAllows && recipientAllows;
             });
+
+            if (global.config.require_friendship_for_dm) {
+              return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
+            }
 
             if (mutualGuilds.length === 0 || !hasAllowedSharedGuild) {
               return res.status(403).json(errors.response_403.CANNOT_SEND_MESSAGES_TO_THIS_USER);
@@ -727,7 +735,7 @@ router.post(
       }
 
       const channel = req.channel;
-      const manual = req.body?.manual === true;
+      const manual = req.body.manual === true;
 
       const tryAck = await global.database.acknowledgeMessage(guy.id, channel.id, message.id, 0);
 
@@ -739,7 +747,7 @@ router.post(
         manual: manual, //This is for if someone clicks mark as read
       });
 
-      const ackToken = globalUtils.generateAckToken(guy.id, channel.id, message.id);
+      const ackToken = globalUtils.generateAckToken(guy.id, message.id);
 
       return res.status(200).json({
         token: ackToken

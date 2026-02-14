@@ -1,4 +1,4 @@
-import { generateSsrc, generateString, miniUserObject } from '../helpers/utils/globalutils.js';
+import { generateSsrc, generateString, miniUserObject } from '../helpers/globalutils.js';
 import session from '../helpers/session.js';
 
 const OPCODES = {
@@ -12,7 +12,7 @@ const OPCODES = {
   RESUME: 7,
   HEARTBEAT_INFO: 8,
   INVALID_SESSION: 9,
-  SIGNAL: 10,
+  ICECANDIDATES: 10,
   VIDEO: 12,
   DISCONNECT: 13,
 };
@@ -110,26 +110,7 @@ async function handleIdentify(socket: any, packet: any) {
       }),
     );
   } else {
-    let lat = 0;
-    let lon = 0;
-    
-    try {
-        const userIp = socket._socket.remoteAddress || socket.upgradeReq?.connection?.remoteAddress;
-        if (userIp && userIp !== '127.0.0.1' && userIp !== '::1') {
-             const response = await fetch(`http://ip-api.com/json/${userIp}`);
-             if (response.ok) {
-                 const data = await response.json() as any;
-                 if (data.status === 'success') {
-                     lat = data.lat;
-                     lon = data.lon;
-                 }
-             }
-        }
-    } catch (e) {
-        // Ignore
-    }
-
-    const mediaServer = global.mrServer.getClosestMediaServer(lat, lon);
+    const mediaServer = global.mrServer.getRandomMediaServer();
 
     if (mediaServer === null) {
       return;
@@ -286,24 +267,37 @@ async function handleSelectProtocol(socket: any, packet: any) {
   }
 }
 
-async function handleSignal(socket: any, packet: any) {
-  const userId = packet.d.user_id;
-  const voiceSession = socket.session;
+async function handleICECandidates(socket: any, packet: any) {
+  if (
+    !global.rtcServer.protocolsMap.has(socket.userid) ||
+    global.rtcServer.protocolsMap.has(packet.d.user_id)
+  ) {
+    return;
+  }
 
-  const recipientSocket = [...global.sessions.values()]
-    .find(s => s.user?.id === userId && s.server_id === voiceSession.server_id)
-    ?.socket;
+  const protocol = global.rtcServer.protocolsMap.get(socket.userid);
+  const theirProtocol = global.rtcServer.protocolsMap.get(packet.d.user_id);
+
+  if (protocol !== 'webrtc-p2p' || theirProtocol !== 'webrtc-p2p') {
+    global.rtcServer.debug(
+      `A client tried to send ICE candidates to another client, when one (or both) of them aren't using the webrtc-p2p protocol.`,
+    );
+    return;
+  }
+
+  const recipientId = packet.d.user_id;
+  const recipientSocket = global.rtcServer.clients.get(recipientId);
 
   if (recipientSocket) {
     const forwardedPayload = { ...packet.d, user_id: socket.userid };
-    const forwardedMessage = { op: OPCODES.SIGNAL, d: forwardedPayload };
+    const forwardedMessage = { op: OPCODES.ICECANDIDATES, d: forwardedPayload };
 
     recipientSocket.send(JSON.stringify(forwardedMessage));
 
-    global.rtcServer.debug(`Forwarded ICE candidates from ${socket.userid} to ${userId}`);
+    global.rtcServer.debug(`Forwarded ICE candidates from ${socket.userid} to ${recipientId}`);
   } else {
     global.rtcServer.debug(
-      `Couldn't forward ICE candidates to recipient ${userId}, their corresponding websocket was not found.`,
+      `Couldn't forward ICE candidates to recipient ${recipientId}, their corresponding websocket was not found.`,
     );
   }
 }
@@ -319,13 +313,10 @@ async function handleSpeaking(socket: any, packet: any) {
       }
 
       if (!socket.client.isProducingAudio()) {
-        if (!packet.d.speaking || !ssrc) {
-          return;
-        }
-
         global.rtcServer.debug(
-          `Client ${socket.userid} sent a speaking packet but has no audio producer. Attempting to initialize...`,
+          `Client ${socket.userid} sent a speaking packet but has no audio producer.`,
         );
+        return;
       }
 
       const incomingSSRCs = socket.client.getIncomingStreamSSRCs();
@@ -421,7 +412,7 @@ async function handleSpeaking(socket: any, packet: any) {
         }),
       );
 
-      mediaServer.socket.emitter.once('speaking-batch', (speaking_batch) => {
+      mediaServer.socket.emitter.on('speaking-batch', (speaking_batch) => {
         console.log(`Received speaking-batch for ${Object.keys(speaking_batch).length} clients.`);
 
         for (const [recipientId, speakingPacket] of Object.entries(speaking_batch)) {
@@ -648,7 +639,7 @@ const rtcHandlers = {
   [OPCODES.HEARTBEAT]: handleHeartbeat,
   [OPCODES.SPEAKING]: handleSpeaking,
   [OPCODES.RESUME]: handleResume,
-  [OPCODES.SIGNAL]: handleSignal,
+  [OPCODES.ICECANDIDATES]: handleICECandidates,
   [OPCODES.VIDEO]: handleVideo,
 };
 

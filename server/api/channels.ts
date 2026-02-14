@@ -1,0 +1,862 @@
+import { Router, type NextFunction } from 'express';
+
+import dispatcher from '../helpers/dispatcher.ts';
+import errors from '../helpers/errors.ts';
+import globalUtils from '../helpers/globalutils.ts';
+import { logText } from '../helpers/logger.ts';
+import {
+  channelMiddleware,
+  channelPermissionsMiddleware,
+  guildPermissionsMiddleware,
+  instanceMiddleware,
+  rateLimitMiddleware,
+} from '../helpers/middlewares.ts';
+import quickcache from '../helpers/quickcache.ts';
+import Watchdog from '../helpers/watchdog.ts';
+import messages from './messages.js';
+import pins from './pins.js';
+import { prisma } from '../prisma.ts';
+
+const router = Router({ mergeParams: true });
+const config = globalUtils.config;
+
+router.param('channelid', async (req: any, _res: any, next, channelid) => {
+  const guild = req.guild;
+
+  if (!guild) {
+    const channelData = await prisma.channel.findUnique({
+      where: { id: channelid }
+    });
+
+    if (channelData) {
+      req.channel = channelData;
+    } else {
+      req.channel = null;
+    }
+
+    return next();
+  }
+
+  req.member = req.guild.members.find((y: any) => y.user_id === req.account.id);
+
+  const channel = req.guild.channels.find((y: any) => y.id === channelid);
+
+  if (!channel) {
+    req.channel = null;
+
+    return next();
+  }
+
+  const typeInt = parseInt(channel.type);
+  if (req.channel_types_are_ints) {
+    channel.type = typeInt;
+  } else {
+    channel.type = typeInt === 2 ? 'voice' : 'text';
+  }
+
+  req.channel = channel;
+  next();
+});
+
+router.param('recipientid', async (req: any, _res: any, next: NextFunction, recipientid: string) => {
+  req.recipient = await global.database.getAccountByUserId(recipientid);
+
+  next();
+});
+
+router.get(
+  '/:channelid',
+  channelMiddleware,
+  channelPermissionsMiddleware('READ_MESSAGES'),
+  quickcache.cacheFor(60 * 5, true),
+  async (req: any, res) => {
+    return res
+      .status(200)
+      .json(globalUtils.personalizeChannelObject(req, req.channel, req.account)); //req.account is a dirty hack ok
+  },
+);
+
+router.post(
+  '/:channelid/typing',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  channelPermissionsMiddleware('SEND_MESSAGES'),
+  rateLimitMiddleware(
+    global.config.ratelimit_config.typing.maxPerTimeFrame,
+    global.config.ratelimit_config.typing.timeFrame,
+  ),
+  Watchdog.middleware(
+    global.config.ratelimit_config.typing.maxPerTimeFrame,
+    global.config.ratelimit_config.typing.timeFrame,
+    0.4,
+  ),
+  async (req: any, res) => {
+    try {
+      var payload = {
+        channel_id: req.params.channelid,
+        guild_id: req.channel.guild_id,
+        user_id: req.account.id,
+        timestamp: new Date().toISOString(),
+        member: req.member,
+      };
+
+      if (!req.guild) {
+        if (!req.channel.recipients) {
+          return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
+        }
+
+        payload.member = globalUtils.miniUserObject(req.account);
+
+        await dispatcher.dispatchEventInPrivateChannel(req.channel, 'TYPING_START', payload);
+      } else {
+        await dispatcher.dispatchEventInChannel(req.guild, req.channel.id, 'TYPING_START', payload);
+      }
+
+      return res.status(204).send();
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.patch(
+  '/:channelid',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  channelPermissionsMiddleware('MANAGE_CHANNELS'),
+  rateLimitMiddleware(
+    global.config.ratelimit_config.updateChannel.maxPerTimeFrame,
+    global.config.ratelimit_config.updateChannel.timeFrame,
+  ),
+  Watchdog.middleware(
+    global.config.ratelimit_config.updateChannel.maxPerTimeFrame,
+    global.config.ratelimit_config.updateChannel.timeFrame,
+    0.5,
+  ),
+  async (req: any, res) => {
+    try {
+      let channel = req.channel;
+
+      if (!channel.guild_id && channel.type !== 3) {
+        return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL); //Can only modify guild channels lol -- okay update, they can modify group channels too
+      }
+
+      if (req.body.icon) {
+        channel.icon = req.body.icon;
+      }
+
+      if (req.body.icon === null) {
+        channel.icon = null;
+      }
+
+      if (
+        req.body.name &&
+        (req.body.name.length < global.config.limits['channel_name'].min ||
+          req.body.name.length >= global.config.limits['channel_name'].max)
+      ) {
+        return res.status(400).json({
+          code: 400,
+          name: `Must be between ${global.config.limits['channel_name'].min} and ${global.config.limits['channel_name'].max} characters.`,
+        });
+      }
+
+      if (req.body.name) {
+        req.body.name = req.body.name.replace(/ /g, '-');
+      } //For when you just update group icons
+
+      channel.name = req.body.name ?? channel.name;
+
+      if (channel.type !== 3 && channel.type !== 1) {
+        channel.position = req.body.position ?? channel.position;
+
+        if (channel.type === 0) {
+          channel.topic = req.body.topic ?? channel.topic;
+          channel.nsfw = req.body.nsfw ?? channel.nsfw;
+
+          const rateLimit = req.body.rate_limit_per_user ?? channel.rate_limit_per_user;
+
+          channel.rate_limit_per_user = Math.min(Math.max(rateLimit, 0), 120);
+        }
+
+        if (channel.type === 2) {
+          const userLimit = req.body.user_limit ?? channel.user_limit;
+          channel.user_limit = Math.min(Math.max(userLimit, 0), 99);
+
+          const bitrate = req.body.bitrate ?? channel.bitrate;
+          channel.bitrate = Math.min(Math.max(bitrate, 8000), 96000);
+        }
+      } //do this for only guild channels
+
+      const outcome = await global.database.updateChannel(channel.id, channel);
+
+      if (!outcome) {
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      }
+
+      if (channel.type === 3) {
+        channel = outcome;
+
+        if (!channel) {
+          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+        }
+
+        await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+          return globalUtils.personalizeChannelObject(socket, channel);
+        });
+
+        return res.status(200).json(channel);
+      }
+
+      if (!req.channel_types_are_ints) {
+        channel.type = channel.type == 2 ? 'voice' : 'text';
+      }
+
+      await dispatcher.dispatchEventToAllPerms(
+        channel.guild_id,
+        channel.id,
+        'READ_MESSAGES',
+        'CHANNEL_UPDATE',
+        channel,
+      );
+
+      return res.status(200).json(channel);
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.get(
+  '/:channelid/invites',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  channelPermissionsMiddleware('MANAGE_CHANNELS'),
+  quickcache.cacheFor(60 * 5, true),
+  async (req, res) => {
+    try {
+      const invites = await global.database.getChannelInvites(req.params.channelid);
+
+      return res.status(200).json(invites);
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.get(
+  '/:channelid/call',
+  channelMiddleware,
+  quickcache.cacheFor(60 * 5, false),
+  async (req: any, res) => {
+    try {
+      if (!req.channel.recipients) {
+        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
+      }
+
+      return res.status(200).json({
+        ringable: true,
+      });
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+); //to-do figure out why this never gets to /ring
+
+router.post(
+  '/:channelid/call/ring',
+  channelMiddleware,
+  quickcache.cacheFor(60 * 5, false),
+  async (req: any, res) => {
+    try {
+      if (!req.channel.recipients) {
+        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
+      }
+
+      const call_msg = await global.database.createSystemMessage(null, req.channel.id, 3, [
+        req.account,
+      ]);
+
+      await dispatcher.dispatchEventInPrivateChannel(req.channel, 'MESSAGE_CREATE', call_msg);
+
+      return res.status(204).send();
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.post(
+  '/:channelid/invites',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  channelPermissionsMiddleware('CREATE_INSTANT_INVITE'),
+  async (req: any, res) => {
+    try {
+      const sender = req.account;
+
+      if (config.instance.flags.includes('NO_INVITE_CREATION')) {
+        return res.status(400).json({
+          code: 400,
+          message: 'Creating invites is not allowed.',
+        });
+      } //make an error code
+
+      const invites = await global.database.getChannelInvites(req.params.channelid);
+
+      if (invites.length >= global.config.limits['invites_per_guild'].max) {
+        return res.status(400).json({
+          code: 400,
+          message: `Maximum number of invites per guild exceeded (${global.config.limits['invites_per_guild'].max})`,
+        });
+      }
+
+      let max_age = 0;
+      let max_uses = 0;
+      let temporary = false;
+      let xkcdpass = false;
+      let regenerate = false;
+
+      if (req.body.max_age) {
+        max_age = req.body.max_age;
+      }
+
+      if (req.body.max_uses) {
+        max_uses = req.body.max_uses;
+      }
+
+      if (req.body.xkcdpass) {
+        xkcdpass = req.body.xkcdpass;
+      }
+
+      if (req.body.temporary) {
+        temporary = req.body.temporary;
+      }
+
+      if (req.body.regenerate) {
+        regenerate = true;
+      }
+
+      const invite = await global.database.createInvite(
+        req.guild,
+        req.channel,
+        sender,
+        temporary,
+        max_uses,
+        max_age,
+        xkcdpass,
+        regenerate,
+      );
+
+      if (invite == null) {
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      }
+
+      return res.status(200).json(invite);
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.use('/:channelid/messages', channelMiddleware, messages);
+
+router.get(
+  '/:channelid/webhooks',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  channelPermissionsMiddleware('MANAGE_WEBHOOKS'),
+  quickcache.cacheFor(60 * 5, true),
+  async (req: any, res) => {
+    try {
+      const guild = req.guild;
+
+      if (!guild) {
+        return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
+      }
+
+      const webhooks = guild.webhooks.filter((x) => x.channel_id === req.channel.id);
+
+      return res.status(200).json(webhooks);
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.post(
+  '/:channelid/webhooks',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  channelPermissionsMiddleware('MANAGE_WEBHOOKS'),
+  async (req: any, res) => {
+    try {
+      const account = req.account;
+      const guild = req.guild;
+
+      if (!guild) {
+        return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
+      }
+
+      if (!req.body.name) {
+        req.body.name = 'Captain Hook';
+      }
+
+      const name = req.body.name;
+
+      const webhook = await global.database.createWebhook(
+        guild,
+        account,
+        req.channel.id,
+        name,
+        null,
+      );
+
+      if (!webhook) {
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      }
+
+      return res.status(200).json(webhook);
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.put(
+  '/:channelid/permissions/:id',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  guildPermissionsMiddleware('MANAGE_ROLES'),
+  async (req: any, res) => {
+    try {
+      const id = req.params.id;
+      let type = req.body.type;
+
+      if (!type) {
+        type = 'role';
+      }
+
+      if (type != 'member' && type != 'role') {
+        return res.status(404).json({
+          code: 404,
+          message: 'Unknown Type',
+        });
+      } //figure out this response
+
+      let channel = req.channel;
+      const channel_overwrites = await global.database.getChannelPermissionOverwrites(
+        req.guild,
+        channel.id,
+      );
+      const overwrites = channel_overwrites;
+      const overwriteIndex = channel_overwrites.findIndex((x) => x.id == id);
+      let allow = 0;
+      let deny = 0;
+
+      const permissionValuesObject = global.permissions.toObject();
+      const permissionKeys = Object.keys(permissionValuesObject);
+      const keys = permissionKeys.map((key) => permissionValuesObject[key]);
+
+      for (const permValue of keys) {
+        if (req.body.allow & permValue) {
+          allow |= permValue;
+        }
+
+        if (req.body.deny & permValue) {
+          deny |= permValue;
+        }
+      }
+
+      if (overwriteIndex === -1) {
+        overwrites.push({
+          id: id,
+          allow: allow,
+          deny: deny,
+          type: type,
+        });
+      } else {
+        overwrites[overwriteIndex] = {
+          id: id,
+          allow: allow,
+          deny: deny,
+          type: type,
+        };
+      }
+
+      if (type == 'member') {
+        const member = req.guild.members.find((x) => x.id === id);
+
+        if (member == null) {
+          return res.status(404).json(errors.response_404.UNKNOWN_MEMBER);
+        }
+      } else if (type == 'role') {
+        const role = req.guild.roles.find((x) => x.id === id);
+
+        if (role == null) {
+          return res.status(404).json(errors.response_404.UNKNOWN_ROLE);
+        }
+      }
+
+      await global.database.updateChannelPermissionOverwrites(req.guild, channel.id, overwrites);
+
+      channel = await global.database.getChannelById(channel.id); //do this better
+
+      if (!req.channel_types_are_ints) {
+        channel.type = channel.type == 2 ? 'voice' : 'text';
+      }
+
+      await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'CHANNEL_UPDATE', channel);
+
+      return res.status(204).send();
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.delete(
+  '/:channelid/permissions/:id',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  guildPermissionsMiddleware('MANAGE_ROLES'),
+  async (req: any, res) => {
+    try {
+      const id = req.params.id;
+      const channel_id = req.params.channelid;
+
+      let channel = req.channel;
+      const channel_overwrites = await global.database.getChannelPermissionOverwrites(
+        req.guild,
+        channel.id,
+      );
+      const overwriteIndex = channel_overwrites.findIndex((x) => x.id == id);
+
+      if (!req.channel_types_are_ints) {
+        channel.type = channel.type == 2 ? 'voice' : 'text';
+      }
+
+      if (overwriteIndex === -1) {
+        await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'CHANNEL_UPDATE', channel);
+
+        return res.status(204).send();
+      }
+
+      await global.database.deleteChannelPermissionOverwrite(
+        req.guild,
+        channel_id,
+        channel_overwrites[overwriteIndex],
+      );
+
+      channel = await global.database.getChannelById(channel.id); //do this better
+
+      if (!channel?.guild_id) {
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      }
+
+      if (!req.channel_types_are_ints) {
+        channel.type = channel.type == 2 ? 'voice' : 'text';
+      }
+
+      await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'CHANNEL_UPDATE', channel);
+
+      return res.status(204).send();
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+//TODO: should have its own rate limit
+router.put(
+  '/:channelid/recipients/:recipientid',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  rateLimitMiddleware(
+    global.config.ratelimit_config.updateMember.maxPerTimeFrame,
+    global.config.ratelimit_config.updateMember.timeFrame,
+  ),
+  Watchdog.middleware(
+    global.config.ratelimit_config.updateMember.maxPerTimeFrame,
+    global.config.ratelimit_config.updateMember.timeFrame,
+    0.75,
+  ),
+  async (req: any, res) => {
+    try {
+      const sender = req.account;
+
+      const channel = req.channel;
+
+      if (channel.type !== 3) {
+        return res.status(403).json({
+          code: 403,
+          message: 'Cannot add members to this type of channel.',
+        });
+      } //find the error
+
+      if (!channel.recipients.find((x) => x.id === sender.id)) {
+        return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
+      }
+
+      if (channel.recipients.length > 9) {
+        return res.status(403).json({
+          code: 403,
+          message: 'Maximum number of members for group reached (10).',
+        });
+      }
+
+      const recipient = req.recipient;
+
+      if (recipient == null) {
+        return res.status(404).json(errors.response_404.UNKNOWN_USER);
+      }
+
+      if (!globalUtils.areWeFriends(sender, recipient)) {
+        return res.status(403).json({
+          code: 403,
+          message: 'You are not friends with the recipient.',
+        }); //figure this one out
+      }
+
+      //Add recipient
+      channel.recipients.push(recipient);
+
+      if (!(await global.database.updateChannelRecipients(channel.id, channel.recipients)))
+        throw 'Failed to update recipients list in channel';
+
+      //Notify everyone else
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+        return globalUtils.personalizeChannelObject(socket, channel);
+      });
+
+      //Notify new recipient
+      await globalUtils.pingPrivateChannelUser(channel, recipient.id);
+
+      const add_msg = await global.database.createSystemMessage(null, channel.id, 1, [
+        sender,
+        recipient,
+      ]);
+
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', add_msg);
+
+      return res.status(204).send();
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.delete(
+  '/:channelid/recipients/:recipientid',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  rateLimitMiddleware(
+    global.config.ratelimit_config.updateMember.maxPerTimeFrame,
+    global.config.ratelimit_config.updateMember.timeFrame,
+  ),
+  Watchdog.middleware(
+    global.config.ratelimit_config.updateMember.maxPerTimeFrame,
+    global.config.ratelimit_config.updateMember.timeFrame,
+    0.75,
+  ),
+  async (req: any, res) => {
+    try {
+      const sender = req.account;
+
+      const channel = req.channel;
+
+      if (channel.type !== 3) {
+        return res.status(403).json({
+          code: 403,
+          message: 'Cannot remove members from this type of channel.',
+        });
+      }
+
+      if (channel.owner_id !== sender.id) {
+        return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
+      }
+
+      const recipient = req.recipient;
+
+      if (recipient == null) {
+        return res.status(404).json(errors.response_404.UNKNOWN_USER);
+      }
+
+      //Remove recipient
+      channel.recipients = channel.recipients.filter((recip) => recip.id !== recipient.id);
+
+      if (!(await global.database.updateChannelRecipients(channel.id, channel.recipients)))
+        throw 'Failed to update recipients list in channel';
+
+      //Notify everyone else
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+        return globalUtils.personalizeChannelObject(socket, channel);
+      });
+
+      const remove_msg = await global.database.createSystemMessage(null, channel.id, 2, [
+        recipient,
+      ]);
+
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', remove_msg);
+
+      return res.status(204).send();
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.delete(
+  '/:channelid',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  channelMiddleware,
+  guildPermissionsMiddleware('MANAGE_CHANNELS'),
+  rateLimitMiddleware(
+    global.config.ratelimit_config.deleteChannel.maxPerTimeFrame,
+    global.config.ratelimit_config.deleteChannel.timeFrame,
+  ),
+  Watchdog.middleware(
+    global.config.ratelimit_config.deleteChannel.maxPerTimeFrame,
+    global.config.ratelimit_config.deleteChannel.timeFrame,
+    0.5,
+  ),
+  async (req: any, res) => {
+    try {
+      const sender = req.account;
+
+      const channel = req.channel;
+
+      if (channel.type !== 3 && channel.type !== 1) {
+        if (req.guild && req.guild.channels.length === 1) {
+          return res.status(400).json({
+            code: 400,
+            message: 'You cannot delete all channels in this server',
+          });
+        }
+      } //Should we let them delete all channels in the server?
+
+      if (channel.type == 1 || channel.type == 3) {
+        //Leaving a private channel
+        const userPrivateChannels = await global.database.getPrivateChannels(sender.id);
+
+        if (!userPrivateChannels) {
+          return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
+        }
+
+        //TODO: Elegant but inefficient
+        const newUserPrivateChannels = userPrivateChannels.filter((id) => id != channel.id);
+
+        if (newUserPrivateChannels.length == userPrivateChannels.length) {
+          return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
+        }
+
+        const tryUpdate = await global.database.setPrivateChannels(
+          sender.id,
+          newUserPrivateChannels,
+        );
+
+        if (!tryUpdate) {
+          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+        }
+
+        await dispatcher.dispatchEventTo(sender.id, 'CHANNEL_DELETE', {
+          id: channel.id,
+          guild_id: null,
+        });
+
+        if (channel.type == 3) {
+          const newRecipientsList = channel.recipients.filter(
+            (recipientObject) => recipientObject.id !== sender.id,
+          );
+
+          channel.recipients = newRecipientsList;
+
+          //handover logic
+          if (channel.owner_id === sender.id && newRecipientsList.length > 0) {
+            const newOwnerId = newRecipientsList[0].id;
+
+            channel.owner_id = newOwnerId;
+
+            if (!(await global.database.updateChannel(channel.id, channel, true))) {
+              throw 'Failed to transfer ownership of group channel';
+            }
+          } else if (newRecipientsList.length === 0) {
+            await global.database.deleteChannel(channel.id);
+            return res.status(204).send(); //delete group channel to free up the db
+          }
+
+          if (!(await global.database.updateChannelRecipients(channel.id, newRecipientsList)))
+            throw 'Failed to update recipients list in channel';
+
+          await dispatcher.dispatchEventInPrivateChannel(channel, 'CHANNEL_UPDATE', function (socket) {
+            return globalUtils.personalizeChannelObject(socket, channel);
+          });
+        }
+      } else {
+        //Deleting a guild channel
+        if (req.params.channelid == req.params.guildid) {
+          //TODO: Allow on 2018+ guilds
+          return res.status(403).json({
+            code: 403,
+            message: 'The main channel cannot be deleted.',
+          });
+        }
+
+        await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'CHANNEL_DELETE', {
+          id: channel.id,
+          guild_id: channel.guild_id,
+        });
+
+        if (!(await global.database.deleteChannel(channel.id))) {
+          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+        }
+      }
+
+      return res.status(204).send();
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  },
+);
+
+router.use(
+  '/:channelid/pins',
+  instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
+  rateLimitMiddleware(
+    global.config.ratelimit_config.pins.maxPerTimeFrame,
+    global.config.ratelimit_config.pins.timeFrame,
+  ),
+  pins,
+  Watchdog.middleware(
+    global.config.ratelimit_config.pins.maxPerTimeFrame,
+    global.config.ratelimit_config.pins.timeFrame,
+    0.2,
+  ),
+);
+
+export default router;
