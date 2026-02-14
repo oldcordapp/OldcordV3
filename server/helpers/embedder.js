@@ -1,5 +1,6 @@
-import ytdl_core from '@distube/ytdl-core';
-const { getInfo } = ytdl_core;
+import { Innertube } from 'youtubei.js';
+const innertube = await Innertube.create();
+
 import { load } from 'cheerio';
 import path from 'fs';
 import { Jimp } from 'jimp';
@@ -62,17 +63,20 @@ const embedder = {
       const videoWidth =
         parseInt(
           $('meta[property="og:video:width"]').attr('content') ||
-            $('meta[property="twitter:player:width"]').attr('content'),
+          $('meta[property="twitter:player:width"]').attr('content'),
         ) || 480;
       const videoHeight =
         parseInt(
           $('meta[property="og:video:height"]').attr('content') ||
-            $('meta[property="twitter:player:height"]').attr('content'),
+          $('meta[property="twitter:player:height"]').attr('content'),
         ) || 270;
       const description = $('meta[name="description"]').attr('content');
       const themeColor = $('meta[name="theme-color"]').attr('content');
       const ogTitle = $('meta[property="og:title"]').attr('content');
       let ogImage = $('meta[property="og:image"]').attr('content');
+
+      let { ogImageWidth, ogImageHeight } = [$('meta[property="og:image:width"]').attr('content'), $('meta[property="og:image:height"]').attr('content')];
+
       const twitterImage = $('meta[property="twitter:image"]').attr('content');
 
       if (!ogImage && twitterImage) {
@@ -126,8 +130,8 @@ const embedder = {
 
         embedObj.image = {
           url: full_img,
-          width: image_data.bitmap.width ?? 400,
-          height: image_data.bitmap.height ?? 400,
+          width: ogImageWidth ?? image_data.bitmap.width ?? 400,
+          height: ogImageHeight ?? image_data.bitmap.height ?? 400,
         };
       }
 
@@ -173,13 +177,14 @@ const embedder = {
   },
   embedYouTube: async (url) => {
     try {
-      const info = await getInfo(url);
-      const videoDetails = info.videoDetails;
-
-      const thumbnails = videoDetails.thumbnails;
+      const videoId = new URL(url).searchParams["q"] ?? new URL(url).pathname.slice(1);
+      const info = await innertube.getBasicInfo(videoId);
+      const basicInfo = info.basic_info;
+      console.log(basicInfo);
+      const thumbnails = basicInfo.thumbnail;
 
       const validThumbnails = thumbnails.filter(
-        (thumbnail) => thumbnail.width < 800 && thumbnail.height < 800,
+        (thumbnail) => thumbnail.width && thumbnail.height && thumbnail.width <= 800 && thumbnail.height <= 800,
       );
 
       const largestThumbnail = validThumbnails.reduce((largest, current) => {
@@ -191,28 +196,35 @@ const embedder = {
       const thumbnailUrl = largestThumbnail.url;
       const thumbnailWidth = largestThumbnail.width;
       const thumbnailHeight = largestThumbnail.height;
-      const uploader = videoDetails.author.name;
-      const channelUrl = videoDetails.author.channel_url;
+      const uploader = basicInfo.channel.name;
+      const channelUrl = basicInfo.channel.url;
 
       return {
         type: 'video',
         inlineMedia: true,
         url: url,
-        description: videoDetails.description,
-        title: videoDetails.title,
+        description: basicInfo.short_description,
+        title: basicInfo.title,
+        color: 16711680,
         thumbnail: {
           proxy_url: `/proxy/${encodeURIComponent(thumbnailUrl)}`,
           url: thumbnailUrl,
           width: thumbnailWidth,
           height: thumbnailHeight,
         },
+        video: {
+          url: basicInfo.embed.iframe_url,
+          width: basicInfo.embed.width,
+          height: basicInfo.embed.height,
+          flags: 0
+        },
         author: {
-          url: channelUrl,
           name: uploader,
+          url: channelUrl,
         },
         provider: {
-          url: 'https://youtube.com',
           name: 'YouTube',
+          url: 'https://youtube.com',
         },
       };
     } catch (error) {
@@ -277,26 +289,67 @@ const embedder = {
       if (!embed.title) {
         const urlObj = new URL(url);
 
-        urlObj.search = '';
+        // urlObj.search = '';
+        // Query string should not be removed, many websites use it to differentiate between pages.
+        // For example, forums use showthread.php?p=... for threads, which should be embedded individually.
+
         urlObj.hash = '';
 
-        url = urlObj.toString(); //im lazy ok
+        url = urlObj.toString(); // im lazy ok
 
-        const result = await embedder.getEmbedInfo(url);
+        var result;
 
-        if (result == null) {
-          continue;
+        if (!url.startsWith('https://klipy.com')) {
+          result = await embedder.getEmbedInfo(url);
+
+          if (result == null) {
+            continue;
+          }
+
+          embed = {
+            type: 'rich',
+            url: url,
+            color: result.color,
+            description: result.description,
+            title: result.title,
+          };
         }
 
-        embed = {
-          type: 'rich',
-          url: url,
-          color: result.color,
-          description: result.description,
-          title: result.title,
-        };
+        if (url.startsWith('https://klipy.com/gifs/')) {
+          var slug = urlObj.pathname.split("/gifs/")[1]; // TODO: This can probaby be done better
+          var apiUrl = `https://api.klipy.com/api/v1/${global.config.klipy_api_key}/gifs/${slug}`;
 
-        if (url.startsWith('https://tenor.com')) {
+          console.log("Requesting klipy gif", apiUrl)
+
+          result = await fetch(apiUrl, {
+            headers: {
+              'User-Agent': 'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)',
+            },
+          }).then(r => r.json());
+
+          embed.type = 'gifv';
+
+          embed.provider = {
+            name: 'Klipy',
+            url: 'https://klipy.com'
+          };
+
+          var thumb = result.data.file.sm.jpg;
+          embed.thumbnail = {
+            proxy_url: thumb.url,
+            url: thumb.url,
+            width: thumb.width,
+            height: thumb.height
+          };
+
+          var video = result.data.file.hd.mp4;
+          embed.video = {
+            url: video.url,
+            proxy_url: video.url,
+            width: video.width,
+            height: video.height
+          };
+        } else if (url.startsWith('https://tenor.com')) {
           embed.type = 'gifv';
           embed.provider = {
             name: 'Tenor',
@@ -305,7 +358,7 @@ const embedder = {
 
           if (result.image) {
             embed.thumbnail = {
-              proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
+              proxy_url: result.image.url,
               url: result.image.url,
               width: result.image.width,
               height: result.image.height,
@@ -314,7 +367,7 @@ const embedder = {
             if (result.video) {
               embed.video = {
                 url: result.video.url,
-                proxy_url: `/proxy/${encodeURIComponent(result.video.url)}`,
+                proxy_url: result.video.url,
                 width: result.video.width,
                 height: result.video.height,
               };
@@ -348,14 +401,14 @@ const embedder = {
           embed.image =
             result.image != null
               ? {
-                  proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
-                  url: result.image.url,
-                  width: result.image.width > 800 ? 800 : result.image.width,
-                  height: result.image.height > 800 ? 800 : result.image.height,
-                }
+                proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
+                url: result.image.url,
+                width: result.image.width > 1280 ? 1280 : result.image.width,
+                height: result.image.height > 720 ? 720 : result.image.height,
+              }
               : null;
         }
-      } //This could probably be done better
+      } // TODO: This is a hot mess
 
       ret.push(embed);
 
