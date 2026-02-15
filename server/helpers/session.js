@@ -601,26 +601,28 @@ class session {
       const guildSettings = await global.database.getUsersGuildSettings(this.user.id);
       const notes = await global.database.getNotesByAuthorId(this.user.id);
 
-      this.relationships = this.user.relationships;
+      if (!this.user.bot) {
+        this.relationships = this.user.relationships;
 
-      for (const rel of this.relationships) {
+        for (const rel of this.relationships ?? []) {
           const friendId = rel.id || rel.user?.id;
 
           if (!friendId) continue;
 
           const friendSessions = global.userSessions.get(friendId);
-          
-          if (friendSessions && friendSessions.length > 0) {
-              const activePresence = friendSessions[friendSessions.length - 1].presence;
-              
-              this.presences.push({
-                  user: { id: friendId },
-                  status: activePresence.status === 'invisible' ? 'offline' : activePresence.status,
-                  activities: []
-              });
-          }
-      }
 
+          if (friendSessions && friendSessions.length > 0) {
+            const activePresence = friendSessions[friendSessions.length - 1].presence;
+
+            this.presences.push({
+              user: { id: friendId },
+              status: activePresence.status === 'invisible' ? 'offline' : activePresence.status,
+              activities: []
+            });
+          }
+        }
+      }
+      
       this.application = await global.database.getApplicationById(this.user.id);
 
       this.readyUp({
