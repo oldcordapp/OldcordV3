@@ -399,8 +399,6 @@ router.patch('/settings', async (req, res) => {
     const new_settings = account.settings;
 
     if (new_settings == null) {
-      console.log('new settings null');
-
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
 

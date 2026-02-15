@@ -214,6 +214,22 @@ class session {
       await dispatcher.dispatchEventInGuild(guild, 'PRESENCE_UPDATE', guildSpecificPresence);
       await lazyRequest.syncMemberList(guild, this.user.id);
     }
+
+    for(let x = 0; x < this.relationships.length; x++) {
+      const broadcastStatus = presence.status === 'invisible' ? 'offline' : presence.status;
+      const friend = this.relationships[x];
+
+      const friendSpecificPresence = {
+        status: broadcastStatus,
+        game_id: presence.game_id || null,
+        activities: [],
+        guild_id: null,
+        user: globalUtils.miniUserObject(this.user),
+        roles: []
+      };
+
+      await dispatcher.dispatchEventTo(friend.id, "PRESENCE_UPDATE", friendSpecificPresence);
+    }
   }
   async dispatchSelfUpdate() {
     if (this.type !== 'gateway') {
@@ -466,25 +482,6 @@ class session {
             continue;
           }
 
-          let guild_presences = guild.presences;
-
-          if (guild_presences.length == 0) continue;
-
-          if (guild_presences.length >= 100) {
-            guild_presences = [guild_presences.find((x) => x.user.id === this.user.id)];
-          }
-
-          for (let presence of guild_presences) {
-            if (this.presences.find((x) => x.user.id === presence.user.id)) continue;
-
-            this.presences.push({
-              game_id: null,
-              user: globalUtils.miniUserObject(presence.user),
-              activities: [],
-              status: presence.status,
-            });
-          }
-
           //if (guild.members.length >= 100) {
           //guild.members = [
           //guild.members.find(x => x.id === this.user.id)
@@ -601,6 +598,24 @@ class session {
       const notes = await global.database.getNotesByAuthorId(this.user.id);
 
       this.relationships = this.user.relationships;
+
+      for (const rel of this.relationships) {
+          const friendId = rel.id || rel.user?.id;
+
+          if (!friendId) continue;
+
+          const friendSessions = global.userSessions.get(friendId);
+          
+          if (friendSessions && friendSessions.length > 0) {
+              const activePresence = friendSessions[friendSessions.length - 1].presence;
+              
+              this.presences.push({
+                  user: { id: friendId },
+                  status: activePresence.status === 'invisible' ? 'offline' : activePresence.status,
+                  activities: []
+              });
+          }
+      }
 
       this.application = await global.database.getApplicationById(this.user.id);
 

@@ -180,7 +180,6 @@ const embedder = {
       const videoId = new URL(url).searchParams["q"] ?? new URL(url).pathname.slice(1);
       const info = await innertube.getBasicInfo(videoId);
       const basicInfo = info.basic_info;
-      console.log(basicInfo);
       const thumbnails = basicInfo.thumbnail;
 
       const validThumbnails = thumbnails.filter(
@@ -318,8 +317,6 @@ const embedder = {
         if (url.startsWith('https://klipy.com/gifs/')) {
           var slug = urlObj.pathname.split("/gifs/")[1]; // TODO: This can probaby be done better
           var apiUrl = `https://api.klipy.com/api/v1/${global.config.klipy_api_key}/gifs/${slug}`;
-
-          console.log("Requesting klipy gif", apiUrl)
 
           result = await fetch(apiUrl, {
             headers: {
