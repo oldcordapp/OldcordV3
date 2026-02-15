@@ -229,7 +229,7 @@ const database = {
                 claimed BOOLEAN DEFAULT TRUE,
                 mfa_enabled BOOLEAN DEFAULT FALSE,
                 mfa_secret TEXT DEFAULT NULL,
-                premium BOOLEAN DEFAULT TRUE,
+                premium BOOLEAN DEFAULT FALSE,
                 created_at TEXT DEFAULT NULL,
                 avatar TEXT DEFAULT NULL,
                 bot BOOLEAN DEFAULT FALSE,
@@ -1878,6 +1878,31 @@ const database = {
     } catch (error) {
       logText(error, 'error');
 
+      return null;
+    }
+  },
+  getUserPremiumState: async (user_id) => {
+    try {
+      const r = await database.runQuery(`
+        SELECT premium FROM users WHERE id = $1`
+      , [user_id]);
+      return { premium:r };
+    } catch (error) {
+      logText(error, 'error');
+      return null;
+    }
+  },
+  setUserPremium: async (user_id, v) => {
+    const sameState = await database.getUserPremiumState(user_id);
+    if (v ===sameState) return v; // just return the same instead of reupdating it
+    try {
+      await database.runQuery(`
+        UPDATE users SET premium = $1 WHERE id = $2`,
+        [String(v), user_id]
+      );
+      return v;
+    } catch (error) {
+      logText(error,'error');
       return null;
     }
   },
