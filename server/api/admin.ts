@@ -13,6 +13,15 @@ import { prisma } from '../prisma.ts';
 import { deconstruct, generate } from '../helpers/snowflake.ts';
 //PRIVILEGE: 1 - (JANITOR) [Can only flag things for review], 2 - (MODERATOR) [Can only delete messages, mute users, and flag things for review], 3 - (ADMIN) [Free reign, can review flags, disable users, delete servers, etc], 4 - (INSTANCE OWNER) - [Can add new admins, manage staff, etc]
 
+interface PublicAccount {
+  id: string;
+  username: string;
+  email: string;
+
+  staff_details?: unknown;
+  needs_mfa: boolean;
+}
+
 router.param('userid', async (req: any, _res: any, next: NextFunction, userid: string) => {
   req.user = await prisma.user.findUnique({
     where: {
@@ -42,7 +51,7 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req: any, res: any
     const [userRet, guilds] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userid },
-        select: { 
+        select: {
             id: true,
             username: true,
             discriminator: true,
@@ -59,7 +68,7 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req: any, res: any
             last_login_ip: true,
             private_channels: true,
             guild_settings: true,
-         } 
+         }
       }),
 
       prisma.guild.findMany({
@@ -183,7 +192,7 @@ router.get('/bots/:userid', staffAccessMiddleware(3), async (req: any, res: any)
     if (!userRet) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
     }
-    
+
     userRet.owner = globalUtils.miniUserObject(userRet.owner);
 
     const userWithGuilds = {
@@ -234,7 +243,33 @@ router.get('/guilds/:guildid', staffAccessMiddleware(3), async (req: any, res: a
   }
 });
 
-router.get('/@me', staffAccessMiddleware(1), async (req: any, res: any) => {
+function toPublicAccount(account: PublicAccount, staffDetails: unknown, needsMfa: boolean): PublicAccount {
+  return {
+    id: account.id,
+    username: account.username,
+    email: account.email,
+    staff_details: staffDetails,
+    needs_mfa: needsMfa,
+  };
+}
+
+router.get('/@me', staffAccessMiddleware(1), async (req: any, res: any): Promise<Response> => {
+  try {
+    const publicAccount = toPublicAccount(
+      req.account,
+      req.staff_details,
+      global.config.mfa_required_for_admin as boolean
+    );
+
+    return res.status(200).json(publicAccount);
+  } catch (error) {
+    logText(error, 'error');
+
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+  }
+});
+
+/* router.get('/@me', staffAccessMiddleware(1), async (req: any, res: any) => {
   try {
     const ret = req.account;
 
@@ -258,7 +293,7 @@ router.get('/@me', staffAccessMiddleware(1), async (req: any, res: any) => {
 
     return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
-});
+}); */
 
 router.get('/reports', staffAccessMiddleware(1), async (_req: any, res: any) => {
   try {
@@ -447,7 +482,7 @@ router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (
       })
 
       await dispatcher.dispatchLogoutTo(req.params.userid);
-      
+
       return res.status(200).json(audit_entry);
     } catch (error) {
       logText(error, 'error');
@@ -484,7 +519,7 @@ router.get('/staff', staffAccessMiddleware(4), async (_req: any, res: any) => {
       avatar: s.user.avatar,
       staff_details: {
         privilege: s.privilege,
-        audit_log: s.audit_log ?? [], 
+        audit_log: s.audit_log ?? [],
       },
     })));
   } catch (error) {
@@ -500,7 +535,7 @@ router.get('/staff/audit-logs', staffAccessMiddleware(4), async (_req: any, res:
       where: {
         audit_log: {
           not: {
-            equals: [] 
+            equals: []
           }
         }
       },
@@ -518,7 +553,7 @@ router.get('/staff/audit-logs', staffAccessMiddleware(4), async (_req: any, res:
 
     return res.status(200).json(staffWithLogs.flatMap((staff) => {
       const entries = (staff.audit_log as any[]) ?? [];
-      
+
       return entries.map((logEntry) => ({
         ...logEntry,
         actioned_by: {
@@ -629,11 +664,11 @@ router.post('/staff/:userid', staffAccessMiddleware(4), async (req: any, res: an
     }
 
     const updatedStaff = await prisma.staff.update({
-      where: { 
-        user_id: user.id 
+      where: {
+        user_id: user.id
       },
-      data: { 
-        privilege: privilege 
+      data: {
+        privilege: privilege
       },
       include: {
         user: {
