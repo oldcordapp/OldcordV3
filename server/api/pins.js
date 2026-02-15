@@ -1,10 +1,11 @@
 import { Router } from 'express';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
-import { logText } from '../helpers/logger.ts';
+import errors from '../helpers/consts/errors.js';
+import { logText } from '../helpers/utils/logger.ts';
 import { channelMiddleware } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
+import globalUtils from '../helpers/utils/globalutils.js';
 
 const router = Router({ mergeParams: true });
 
@@ -59,7 +60,9 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
 
       const pin_msg = await global.database.createSystemMessage(null, channel.id, 6, [req.account]);
 
-      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', pin_msg);
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', function () {
+        return globalUtils.personalizeMessageObject(pin_msg, null, this.socket.client_build_date);
+      });
     } else {
       await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'MESSAGE_UPDATE', message);
       await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'CHANNEL_PINS_UPDATE', {
@@ -71,7 +74,9 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
         req.account,
       ]);
 
-      await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'MESSAGE_CREATE', pin_msg);
+      await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'MESSAGE_CREATE', function () {
+        return globalUtils.personalizeMessageObject(pin_msg, req.guild, this.socket.client_build_date);
+      });
     }
 
     return res.status(204).send();

@@ -16,11 +16,11 @@ const OPCODES = {
 async function handleIdentify(socket: any, packet: any) {
   const public_ip = packet.d.public_ip;
   const public_port = packet.d.public_port;
+  const lat = packet.d.lat || 0;
+  const lon = packet.d.lon || 0;
   const timestamp = packet.d.timestamp;
 
   global.mrServer.debug(`New media server has connected! Added to internal store.`);
-
-  //to-do find a proper & fast way to lookup these public ips to serve whats close to a user
 
   socket.public_ip = public_ip;
   socket.public_port = public_port;
@@ -29,6 +29,8 @@ async function handleIdentify(socket: any, packet: any) {
   global.mrServer.servers.set(public_ip, {
     socket: socket,
     port: public_port,
+    lat: lat,
+    lon: lon,
     seen_at: timestamp,
   });
 

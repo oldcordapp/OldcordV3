@@ -1,8 +1,8 @@
 import udp from 'dgram';
 import sodium from 'libsodium-wrappers';
 
-import { OPCODES } from './handlers/rtc.ts';
-import { logText } from './helpers/logger.ts';
+import { OPCODES } from '../handlers/rtc.ts';
+import { logText } from '../helpers/utils/logger.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 

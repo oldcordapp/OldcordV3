@@ -1,5 +1,5 @@
 import dispatcher from '../helpers/dispatcher.js';
-import globalUtils from '../helpers/globalutils.js';
+import globalUtils from '../helpers/utils/globalutils.js';
 import lazyRequest from '../helpers/lazyRequest.js';
 import session from '../helpers/session.js';
 
@@ -116,6 +116,8 @@ async function handleVoiceState(socket, packet) {
         1,
       );
 
+      global.guild_voice_states.set(socket.current_guild.id, voiceStates);
+
       await dispatcher.dispatchEventInGuild(socket.current_guild, 'VOICE_STATE_UPDATE', {
         channel_id: channel_id,
         guild_id: socket.current_guild.id, //must be guild id even if they left the vc and they dont send any guild id
@@ -214,6 +216,8 @@ async function handleVoiceState(socket, packet) {
         suppress: false,
       });
     }
+
+    global.guild_voice_states.set(guild_id, voiceStates);
   }
 
   if (!socket.inCall && socket.current_guild != null) {

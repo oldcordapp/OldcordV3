@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
-import { logText } from '../helpers/logger.ts';
+import { logText } from '../helpers/utils/logger.ts';
 import { rateLimitMiddleware } from '../helpers/middlewares.js';
 import { cacheFor } from '../helpers/quickcache.js';
 const router = Router({ mergeParams: true });
-import { response_500 } from '../helpers/errors.js';
+import { response_500 } from '../helpers/consts/errors.js';
 import { middleware } from '../helpers/watchdog.js';
 
 router.get(
@@ -23,14 +23,14 @@ router.get(
     try {
       const query = req.query.q;
 
-      if (!query || !global.config.tenor_api_key) {
+      if (!query || !global.config.klipy_api_key) {
         return res.json([]);
       }
 
-      const baseUrl = 'https://tenor.googleapis.com/v2/search';
+      const baseUrl = 'https://api.klipy.com/v2/search';
       const params = new URLSearchParams({
         q: query,
-        key: global.config.tenor_api_key,
+        key: global.config.klipy_api_key,
         limit: 50,
         media_filter: 'tinygif',
       }).toString();

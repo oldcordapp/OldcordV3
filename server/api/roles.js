@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
-import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.ts';
+import errors from '../helpers/consts/errors.js';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import { guildPermissionsMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
 import Watchdog from '../helpers/watchdog.js';

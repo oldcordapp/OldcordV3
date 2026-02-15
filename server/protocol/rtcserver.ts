@@ -2,9 +2,9 @@ import sodium from 'libsodium-wrappers';
 import { EventEmitter } from 'node:events';
 import { WebSocketServer } from 'ws';
 
-import { OPCODES, rtcHandlers } from './handlers/rtc.ts';
-import { logText } from './helpers/logger.ts';
-import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
+import { OPCODES, rtcHandlers } from '../handlers/rtc.ts';
+import { logText } from '../helpers/utils/logger.ts';
+import { type GatewayPayload, GatewayPayloadSchema } from '../types/gateway.ts';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 
@@ -118,13 +118,21 @@ const rtcServer = {
       server: server,
     });
 
-    this.signalingServer.on('listening', async () => {
-      await sodium.ready;
-
-      this.debug(`Server up on port ${this.port}`);
+    sodium.ready.then(() => {
+        this.debug("Sodium ready");
     });
 
-    this.signalingServer.on('connection', this.handleClientConnect.bind(this));
+    server.on('listening', () => {
+        this.debug(`Server up on port ${this.port}`);
+    });
+
+    this.signalingServer.on('connection', (socket, req) => {
+        this.handleClientConnect(socket, req);
+    });
+
+    this.signalingServer.on('error', (err) => {
+        logText(`WebSocket Server Error: ${err.message}`, 'error');
+    });
   },
 };
 

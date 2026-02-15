@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
-import globalUtils from '../helpers/globalutils.js';
-import { logText } from '../helpers/logger.ts';
+import errors from '../helpers/consts/errors.js';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import {
   channelMiddleware,
   channelPermissionsMiddleware,
@@ -180,26 +180,23 @@ router.patch(
         req.body.name = req.body.name.replace(/ /g, '-');
       } //For when you just update group icons
 
-      channel.name = req.body.name ?? channel.name;
+      if ('name' in req.body) channel.name = req.body.name;
 
       if (channel.type !== 3 && channel.type !== 1) {
-        channel.position = req.body.position ?? channel.position;
+        if ('position' in req.body) channel.position = req.body.position;
 
         if (channel.type === 0) {
-          channel.topic = req.body.topic ?? channel.topic;
-          channel.nsfw = req.body.nsfw ?? channel.nsfw;
+          if ('topic' in req.body) channel.topic = req.body.topic;
+          if ('nsfw' in req.body) channel.nsfw = req.body.nsfw;
 
-          const rateLimit = req.body.rate_limit_per_user ?? channel.rate_limit_per_user;
-
-          channel.rate_limit_per_user = Math.min(Math.max(rateLimit, 0), 120);
+          if ('rate_limit_per_user' in req.body) {
+            channel.rate_limit_per_user = Math.min(Math.max(req.body.rate_limit_per_user, 0), 120);
+          }
         }
 
         if (channel.type === 2) {
-          const userLimit = req.body.user_limit ?? channel.user_limit;
-          channel.user_limit = Math.min(Math.max(userLimit, 0), 99);
-
-          const bitrate = req.body.bitrate ?? channel.bitrate;
-          channel.bitrate = Math.min(Math.max(bitrate, 8000), 96000);
+          if ('user_limit' in req.body) channel.user_limit = Math.min(Math.max(req.body.user_limit, 0), 99);
+          if ('bitrate' in req.body) channel.bitrate = Math.min(Math.max(req.body.bitrate, 8000), 96000)
         }
       } //do this for only guild channels
 
@@ -298,7 +295,9 @@ router.post(
         req.account,
       ]);
 
-      await dispatcher.dispatchEventInPrivateChannel(req.channel, 'MESSAGE_CREATE', call_msg);
+      await dispatcher.dispatchEventInPrivateChannel(req.channel, 'MESSAGE_CREATE', function () {
+          return globalUtils.personalizeMessageObject(call_msg, null, this.socket.client_build_date);
+      });
 
       return res.status(204).send();
     } catch (error) {
@@ -620,7 +619,7 @@ router.put(
 
       const channel = req.channel;
 
-      if (channel.type !== 3) {
+      if (channel.type !== 3 && channel.type !== 1) {
         return res.status(403).json({
           code: 403,
           message: 'Cannot add members to this type of channel.',
@@ -654,6 +653,42 @@ router.put(
       //Add recipient
       channel.recipients.push(recipient);
 
+      if (channel.type === 1) {
+        //create group dm
+
+        let newRecipients = [...channel.recipients];
+
+        newRecipients = newRecipients.map(recipient => {
+          return globalUtils.miniUserObject(recipient);
+        });
+
+        const newGroupChannel = await global.database.createChannel(
+          null,
+          null,
+          3,
+          0,
+          newRecipients,
+          sender.id,
+        );
+
+        if (!newGroupChannel) throw 'Failed to create group channel';
+
+        await globalUtils.pingPrivateChannel(newGroupChannel);
+
+        const add_msg = await global.database.createSystemMessage(
+          null, 
+          newGroupChannel.id,
+          1, 
+          [sender, recipient]
+        );
+
+        await dispatcher.dispatchEventInPrivateChannel(newGroupChannel, 'MESSAGE_CREATE', function () {
+           return globalUtils.personalizeMessageObject(add_msg, null, this.socket.client_build_date);
+        });
+
+        return res.status(204).send();
+      }      
+
       if (!(await global.database.updateChannelRecipients(channel.id, channel.recipients)))
         throw 'Failed to update recipients list in channel';
 
@@ -670,7 +705,9 @@ router.put(
         recipient,
       ]);
 
-      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', add_msg);
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', function () {
+        return globalUtils.personalizeMessageObject(add_msg, null, this.socket.client_build_date);
+      });
 
       return res.status(204).send();
     } catch (error) {
@@ -732,7 +769,9 @@ router.delete(
         recipient,
       ]);
 
-      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', remove_msg);
+      await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', function () {
+        return globalUtils.personalizeMessageObject(remove_msg, null, this.socket.client_build_date);
+      });
 
       return res.status(204).send();
     } catch (error) {
@@ -830,14 +869,7 @@ router.delete(
           });
         }
       } else {
-        //Deleting a guild channel
-        if (req.params.channelid == req.params.guildid) {
-          //TODO: Allow on 2018+ guilds
-          return res.status(403).json({
-            code: 403,
-            message: 'The main channel cannot be deleted.',
-          });
-        }
+        //Deleting a guild channel - Why didn't we allow this before?
 
         await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'CHANNEL_DELETE', {
           id: channel.id,

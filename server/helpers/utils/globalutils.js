@@ -2,7 +2,7 @@ import { createHmac, randomBytes } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
 
 import encode from './base64url.js';
-import dispatcher from './dispatcher.js';
+import dispatcher from '../dispatcher.js';
 import { logText } from './logger.ts';
 
 const configPath = './config.json';
@@ -34,9 +34,7 @@ const globalUtils = {
     return `${_config.secure ? 'wss' : 'ws'}://${baseUrl}${_config.includePortInWsUrl && (_config.secure ? _config.ws_port != 443 : _config.ws_port != 80) ? `:${_config.ws_port}` : ''}`;
   },
   generateRTCServerURL: () => {
-    return _config.signaling_server_url == ''
-      ? _config.base_url + ':' + _config.signaling_server_port
-      : _config.signaling_server_url;
+    return _config.signaling_server_url === '' ? _config.base_url + ':' + _config.signaling_server_port : _config.signaling_server_url;
   },
   unavailableGuildsStore: [],
   generateString: (length) => {
@@ -793,7 +791,7 @@ const globalUtils = {
       };
     }
 
-    if (client_build_date <= new Date(2017, 0, 23) && msg.type === 7 && guild) {
+    if (client_build_date <= new Date(2017, 0, 23) && msg.type === 7) {
       msg.content = `${msg.author.username} has joined the server!`;
       msg.type = 0;
       msg.author = {
@@ -804,6 +802,30 @@ const globalUtils = {
         avatar: null,
       };
     }
+
+    if (client_build_date < new Date(2018, 5, 29) && msg.type === 2) {
+      msg.content = `${msg.author.username} has left the group.`;
+      msg.type = 0;
+      msg.author = {
+        username: 'Oldcord',
+        discriminator: '0000',
+        bot: true,
+        id: '643945264868098049',
+        avatar: null,
+      };
+    }
+
+    if (client_build_date < new Date(2018, 5, 29) && msg.type === 1) {
+      msg.content = `${msg.author.username} added ${msg.mentions[0].username} to the group.`;
+      msg.type = 0;
+      msg.author = {
+        username: 'Oldcord',
+        discriminator: '0000',
+        bot: true,
+        id: '643945264868098049',
+        avatar: null,
+      };
+    } //should we clear the mentions here?
 
     return msg;
   },

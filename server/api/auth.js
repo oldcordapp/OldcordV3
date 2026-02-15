@@ -1,10 +1,10 @@
 import { Router } from 'express';
 const router = Router();
 import dispatcher from '../helpers/dispatcher.js';
-import errors from '../helpers/errors.js';
-import globalUtils from '../helpers/globalutils.js';
+import errors from '../helpers/consts/errors.js';
+import globalUtils from '../helpers/utils/globalutils.js';
 import lazyRequest from '../helpers/lazyRequest.js';
-import { logText } from '../helpers/logger.ts';
+import { logText } from '../helpers/utils/logger.ts';
 import { instanceMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 import { verify } from '../helpers/recaptcha.js';
 import Watchdog from '../helpers/watchdog.js';
@@ -223,12 +223,9 @@ router.post(
                 [account],
               );
 
-              await dispatcher.dispatchEventInChannel(
-                guild,
-                guild.system_channel_id,
-                'MESSAGE_CREATE',
-                join_msg,
-              );
+              await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, 'MESSAGE_CREATE', function () {
+                  return globalUtils.personalizeMessageObject(join_msg, guild, req.client_build_date);
+              });
             }
           }
         }
@@ -292,12 +289,9 @@ router.post(
               [account],
             );
 
-            await dispatcher.dispatchEventInChannel(
-              guild,
-              guild.system_channel_id,
-              'MESSAGE_CREATE',
-              join_msg,
-            );
+            await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, 'MESSAGE_CREATE', function () {
+                return globalUtils.personalizeMessageObject(join_msg, guild, req.client_build_date);
+            });
           }
         }
       }
