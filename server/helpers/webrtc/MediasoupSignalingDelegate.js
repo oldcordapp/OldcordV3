@@ -119,7 +119,7 @@ class MediasoupSignalingDelegate {
             value: remoteDTLS.fingerprint,
           },
         ],
-        role: 'client',
+        role: 'server',
       },
     });
 
@@ -133,6 +133,7 @@ class MediasoupSignalingDelegate {
     const iceCandidate = iceCandidates[0];
     const dltsParamters = transport.dtlsParameters;
     const fingerprint = dltsParamters.fingerprints.find((x) => x.algorithm === 'sha-256');
+
     if (!fingerprint) {
       return Promise.reject(new Error('Fingerprint not found'));
     }
@@ -150,7 +151,7 @@ class MediasoupSignalingDelegate {
       sdpLines.push(`a=ice-ufrag:${iceParameters.usernameFragment}`);
       sdpLines.push(`a=ice-pwd:${iceParameters.password}`);
       sdpLines.push(`a=fingerprint:sha-256 ${fingerprint.value}`);
-      sdpLines.push('a=setup:active');
+      sdpLines.push('a=setup:passive');
       sdpLines.push('a=mid:0');
       sdpLines.push('a=sendrecv');
       sdpLines.push('a=rtcp-mux');
