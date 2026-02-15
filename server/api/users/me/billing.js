@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { AVAILABLE_PLANS_ID } from '../../../helpers/consts/subscriptions.js';
+import { AVAILABLE_PLANS_ID } from '../../../helpers/subscriptions.js'
 import Snowflake from '../../../helpers/utils/snowflake.js';
 
 router.param('guildid', async (req, _, next, guildid) => {
