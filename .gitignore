@@ -11,3 +11,4 @@ oldplunger/src/plugins/plugins.js
 *.swp
 *.pem
 *.log
+.env
