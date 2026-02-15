@@ -215,20 +215,24 @@ class session {
       await lazyRequest.syncMemberList(guild, this.user.id);
     }
 
-    for(let x = 0; x < this.relationships.length; x++) {
-      const broadcastStatus = presence.status === 'invisible' ? 'offline' : presence.status;
-      const friend = this.relationships[x];
+    if (!this.user.bot) {
+      if (this.relationships && Array.isArray(this.relationships) && this.relationships.length > 0) {
+        for (let x = 0; x < this.relationships.length; x++) {
+          const broadcastStatus = presence.status === 'invisible' ? 'offline' : presence.status;
+          const friend = this.relationships[x];
 
-      const friendSpecificPresence = {
-        status: broadcastStatus,
-        game_id: presence.game_id || null,
-        activities: [],
-        guild_id: null,
-        user: globalUtils.miniUserObject(this.user),
-        roles: []
-      };
+          const friendSpecificPresence = {
+            status: broadcastStatus,
+            game_id: presence.game_id || null,
+            activities: [],
+            guild_id: null,
+            user: globalUtils.miniUserObject(this.user),
+            roles: []
+          };
 
-      await dispatcher.dispatchEventTo(friend.id, "PRESENCE_UPDATE", friendSpecificPresence);
+          await dispatcher.dispatchEventTo(friend.id, "PRESENCE_UPDATE", friendSpecificPresence);
+        }
+      }
     }
   }
   async dispatchSelfUpdate() {

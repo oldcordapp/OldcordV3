@@ -14,6 +14,7 @@ router.get('/subscriptions', async (req, res) => {
 
   return res.status(200).json(subscriptions);
 });
+
 router.post('/subscriptions', async (req, res) => {//TODO: check if the payment source is valid/exists (because why not)
   const acc = req.account;
   const { payment_gateway_plan_id: plan, payment_source_id: cardID } = req.body;
@@ -21,10 +22,15 @@ router.post('/subscriptions', async (req, res) => {//TODO: check if the payment 
   if (plan === AVAILABLE_PLANS_ID.premium_month_tier_2 || plan === AVAILABLE_PLANS_ID.premium_year_tier_2){
     // TODO make the nitro badge dynamic
     const gotPremium = await global.database.setUserPremium(acc.id, true);
-    if (gotPremium===null) return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+
+    if (gotPremium === null) {
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
   };
 
-  return res.status(200).json({success:true});
+  return res.status(200).json({
+    success: true
+  });
 });
 
 router.get('/payment-sources', (req, res) => {
