@@ -49,7 +49,7 @@ router.get(
           const media = gif.media_formats?.tinygif;
           return {
             type: 'gif',
-            src: media?.url || null,
+            src: `/proxy/` + encodeURIComponent(media?.url || null),
             url: gif.itemurl,
             width: gif.width,
             height: 100,

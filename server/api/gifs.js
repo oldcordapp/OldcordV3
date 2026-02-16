@@ -33,7 +33,7 @@ router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {
     const gifs = (trendData.results || []).map((gif) => ({
       type: 'gif',
       id: gif.id,
-      src: gif.media_formats.tinygif.url,
+      src: `/proxy/${encodeURIComponent(gif.media_formats.tinygif.url)}`,
       url: gif.itemurl,
       width: gif.media_formats.tinygif.dims[0],
       height: gif.media_formats.tinygif.dims[1],
@@ -67,7 +67,7 @@ router.get('/trending-gifs', cacheFor(60 * 5, true), async (req, res) => {
       return {
         type: 'gif',
         id: gif.id,
-        src: video.url,
+        src: `/proxy/${encodeURIComponent(video.url)}`,
         url: gif.itemurl,
         width: video.dims[0],
         height: video.dims[1],
@@ -110,7 +110,7 @@ router.get('/search', cacheFor(60 * 5, true), async (req, res) => {
       return {
         type: 'gif',
         id: gif.id,
-        src: media.url,
+        src: `/proxy/${encodeURIComponent(media.url)}`,
         url: gif.itemurl,
         width: media.dims[0],
         height: media.dims[1],

@@ -325,6 +325,7 @@ const embedder = {
           }).then(r => r.json());
 
           embed.type = 'gifv';
+          embed.url = url;
 
           embed.provider = {
             name: 'Klipy',
@@ -333,7 +334,7 @@ const embedder = {
 
           var thumb = result.data.file.sm.jpg;
           embed.thumbnail = {
-            proxy_url: thumb.url,
+            proxy_url: `/proxy/${encodeURIComponent(thumb.url)}`,
             url: thumb.url,
             width: thumb.width,
             height: thumb.height
@@ -342,7 +343,7 @@ const embedder = {
           var video = result.data.file.hd.mp4;
           embed.video = {
             url: video.url,
-            proxy_url: video.url,
+            proxy_url: `/proxy/${encodeURIComponent(video.url)}`,
             width: video.width,
             height: video.height
           };
@@ -355,7 +356,7 @@ const embedder = {
 
           if (result.image) {
             embed.thumbnail = {
-              proxy_url: result.image.url,
+             proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
               url: result.image.url,
               width: result.image.width,
               height: result.image.height,
@@ -364,7 +365,7 @@ const embedder = {
             if (result.video) {
               embed.video = {
                 url: result.video.url,
-                proxy_url: result.video.url,
+                 proxy_url: `/proxy/${encodeURIComponent(result.video.url)}`,
                 width: result.video.width,
                 height: result.video.height,
               };
