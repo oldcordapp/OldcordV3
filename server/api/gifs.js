@@ -44,7 +44,7 @@ router.get('/trending', cacheFor(60 * 5, true), async (req, res) => {
       gifs: gifs,
     });
   } catch (error) {
-    logText(err, 'error');
+    logText(error, 'error');
 
     return res.status(500).json(response_500.INTERNAL_SERVER_ERROR);
   }
