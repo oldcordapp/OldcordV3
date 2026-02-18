@@ -67,7 +67,7 @@ router.get('/trending-gifs', cacheFor(60 * 5, true), async (req, res) => {
       return {
         type: 'gif',
         id: gif.id,
-        src: `/proxy/${encodeURIComponent(video.url)}`,
+        src: encodeURIComponent(video.url),
         url: gif.itemurl,
         width: video.dims[0],
         height: video.dims[1],

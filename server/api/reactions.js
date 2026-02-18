@@ -272,7 +272,7 @@ router.put(
           'ADD_REACTIONS',
         );
 
-        if (!canAdd) {
+        if (!canAdd && req.channel.type !== 1 && req.channel.type !== 3) { //skip dms and group dms
           return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
         }
       }
