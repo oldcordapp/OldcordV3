@@ -343,7 +343,7 @@ const embedder = {
           var video = result.data.file.hd.mp4;
           embed.video = {
             url: video.url,
-            proxy_url: encodeURIComponent(video.url),
+            proxy_url: video.url,
             width: video.width,
             height: video.height
           };
@@ -365,7 +365,7 @@ const embedder = {
             if (result.video) {
               embed.video = {
                 url: result.video.url,
-                proxy_url: encodeURIComponent(result.video.url),
+                proxy_url: result.video.url,
                 width: result.video.width,
                 height: result.video.height,
               };
@@ -386,7 +386,7 @@ const embedder = {
             },
             video: {
               url: url,
-              proxy_url: encodeURIComponent(url),
+              proxy_url: url,
               width: result.image?.width ?? 400,
               height: result.image?.height ?? 400,
             },
