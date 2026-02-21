@@ -240,8 +240,7 @@ const Watchdog = {
 
           await new Promise((resolve) => setTimeout(resolve, block));
 
-          next();
-          return;
+          return next();
         }
       }
 
