@@ -1,30 +1,68 @@
 import { createHash } from 'crypto';
+import type { NextFunction, Request, Response } from 'express';
+import type { IncomingHttpHeaders } from 'http';
 
 import errors from './consts/errors.js';
 import globalUtils from './utils/globalutils.js';
 import { logText } from './utils/logger.ts';
-import type { IncomingHttpHeaders } from 'http';
-import type { NextFunction, Request, Response } from 'express';
+
+interface RateLimitEntry {
+  count: number;
+  timer: NodeJS.Timeout | null;
+  sus_score: number;
+  windowStart: number;
+}
 
 export interface WatchdogFingerprint {
-  fingerprint: string | null,
-  reason: string
+  fingerprint: string | null;
+  reason: string;
 }
+
+interface WatchdogConfig {
+  ratelimit_config: {
+    enabled: boolean;
+    deep_mode: boolean;
+  };
+  trusted_users: string[];
+}
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    fingerprint?: string;
+    account?: {
+      id: string;
+      bot: boolean;
+    };
+    is_staff?: boolean;
+  }
+}
+
+type TripCallback = (
+  data: {
+    sus_score: number;
+    maxPerTimeFrame: number;
+    timeFrame: number;
+    path: string;
+    method: string;
+  },
+  req: Request,
+) => void;
 
 const Watchdog = {
   numHeadersThreshold: 10,
   susScoreDecayTime: 24 * 60 * 60 * 1000, //to-do: add this to the config somewhere
-  susScoreDecayStore: new Map(),
-  rateLimitStore: new Map(),
+  susScoreDecayStore: new Map<string, NodeJS.Timeout>(),
+  rateLimitStore: new Map<string, RateLimitEntry>(),
   normalizeHeader: (name: string): string => {
     return name.toLowerCase().trim();
   },
-  getFingerprint: (url: string, baseUrl: string, protocol: string, headers: IncomingHttpHeaders): WatchdogFingerprint => {
-    if (
-      typeof headers !== 'object' ||
-      headers === null ||
-      Object.entries(headers).length < Watchdog.numHeadersThreshold
-    ) {
+  getFingerprint: (
+    url: string,
+    baseUrl: string,
+    protocol: string,
+    headers: IncomingHttpHeaders,
+  ): WatchdogFingerprint => {
+    if (Object.entries(headers).length < Watchdog.numHeadersThreshold) {
       return {
         fingerprint: null,
         reason: "The client didn't reach the number of headers threshold",
@@ -70,7 +108,7 @@ const Watchdog = {
 
     for (const name of presentHeaders) {
       const value = headers[name];
-      const normalizedValue = (Array.isArray(value) ? value.join(',') : value || '').trim();
+      const normalizedValue = (Array.isArray(value) ? value.join(',') : (value ?? '')).trim();
 
       if (['user-agent', 'accept', 'accept-language', 'x-super-properties'].includes(name)) {
         to_fingerprint += `${name}=${normalizedValue};`;
@@ -92,39 +130,43 @@ const Watchdog = {
 
     return Math.floor(Math.random() * (max - min + 1)) + min;
   },
-  middleware: (maxPerTimeFrame: number, timeFrame: number, sus_weight: number = 0.2, onTrip: Function | null = null) => {
+  middleware: (
+    maxPerTimeFrame: number,
+    timeFrame: number,
+    sus_weight = 0.2,
+    onTrip: ((data: any, req: Request) => void) | null = null,
+  ) => {
     if (typeof maxPerTimeFrame !== 'number' || typeof timeFrame !== 'number') {
       throw new Error('Missing maxPerTimeFrame and timeFrame for initialization of the Watchdog.');
     }
 
-    return async function (req: Request, res: Response, next: NextFunction) {
-      if (!global.config.ratelimit_config.enabled) {
-        return next();
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const config = (global as any).config as WatchdogConfig;
+      if (!config.ratelimit_config.enabled || !config.ratelimit_config.deep_mode) {
+        next();
+        return;
       }
 
-      if (!global.config.ratelimit_config.deep_mode) {
-        return next();
-      }
+      const acc = req.account;
+      const isStaff = req.is_staff;
 
-      if (
-        req.account &&
-        (req.account.bot || global.config.trusted_users.includes(req.account.id) || req.is_staff)
-      ) {
-        return next();
+      if (acc && (acc.bot || (acc.id && config.trusted_users.includes(acc.id)) || isStaff)) {
+        next();
+        return;
       }
 
       if (!req.fingerprint) {
+        const protocol = req.headers['x-forwarded-proto']?.toString() ?? req.protocol;
         const fingerprint_outcome = Watchdog.getFingerprint(
           req.originalUrl,
           req.baseUrl,
-          req.headers['x-forwarded-proto']?.toString() || req.protocol,
+          protocol,
           req.headers,
         );
-        const fingerprint = fingerprint_outcome.fingerprint;
 
-        if (fingerprint === null) {
+        if (fingerprint_outcome.fingerprint === null) {
           logText(
-            `Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - on ${req.method} ${req.originalUrl} - auto blocking them for security of the instance.`,
+            `Failed to fingerprint: ${req.ip ?? 'unknown'} (${fingerprint_outcome.reason}) - on ${req.method} ${req.originalUrl}`,
             'watchdog',
           );
 
@@ -135,24 +177,14 @@ const Watchdog = {
           });
         }
 
-        req.fingerprint = fingerprint;
+        req.fingerprint = fingerprint_outcome.fingerprint;
       }
 
       const { fingerprint } = req;
 
-      if (!fingerprint) {
-        return res.status(429).json({
-          ...errors.response_429.WATCHDOG_BLOCKED,
-          retry_after: 999999999999,
-          global: true,
-        });
-      }
-
       let entry = Watchdog.rateLimitStore.get(fingerprint);
 
-      if (!entry) {
-        entry = { count: 0, timer: null, sus_score: 0, windowStart: Date.now() };
-      }
+      entry ??= { count: 0, timer: null, sus_score: 0, windowStart: Date.now() };
 
       entry.count++;
 
@@ -165,11 +197,11 @@ const Watchdog = {
         let retryAfterSeconds = Math.max(0, Math.ceil(timeRemaining / 1000));
 
         logText(
-          `Fingerprint: ${fingerprint} exceeded ${maxPerTimeFrame} reqs in ${timeFrame}ms on ${req.method} ${req.originalUrl} from IP: ${req.ip}`,
+          `Fingerprint: ${fingerprint} exceeded ${String(maxPerTimeFrame)} reqs in ${String(timeFrame)}ms on ${req.method} ${req.originalUrl} from IP: ${String(req.ip)}`,
           'watchdog',
         );
 
-        if (onTrip !== null) {
+        if (onTrip) {
           onTrip(
             {
               sus_score: entry.sus_score,
@@ -202,19 +234,23 @@ const Watchdog = {
           const block = Watchdog.getRandomRange(600, 10000);
 
           logText(
-            `Fingerprint: ${fingerprint} is scoring high on ${req.method} ${req.originalUrl}. Blocking them from proceeding for ~${block / 1000} seconds.`,
+            `Fingerprint: ${fingerprint} is scoring high on ${req.method} ${req.originalUrl}. Blocking them from proceeding for ~${String(block / 1000)} seconds.`,
             'watchdog',
           );
 
           await new Promise((resolve) => setTimeout(resolve, block));
 
-          return next();
+          next();
+          return;
         }
       }
 
       if (entry.timer === null) {
         entry.timer = setTimeout(() => {
-          logText(`Resetting count for ${fingerprint}. Sus score: ${entry.sus_score}`, 'watchdog');
+          logText(
+            `Resetting count for ${fingerprint}. Sus score: ${String(entry.sus_score)}`,
+            'watchdog',
+          );
 
           const existingEntry = Watchdog.rateLimitStore.get(fingerprint);
 
@@ -238,7 +274,7 @@ const Watchdog = {
       res.setHeader('X-RateLimit-Remaining-WD', maxPerTimeFrame - entry.count);
       res.setHeader('X-RateLimit-Reset-WD', Math.floor((entry.windowStart + timeFrame) / 1000));
 
-      return next();
+      next();
     };
   },
   setSusScoreDecay: (fingerprint: string) => {
@@ -250,7 +286,7 @@ const Watchdog = {
 
     const decayTimer = setTimeout(() => {
       logText(
-        `Clearing sus_score and entry for ${fingerprint} after ${Watchdog.susScoreDecayTime}ms.`,
+        `Clearing sus_score and entry for ${fingerprint} after ${String(Watchdog.susScoreDecayTime)}ms.`,
         'watchdog',
       );
 
@@ -264,16 +300,18 @@ const Watchdog = {
   },
 };
 
-export const {
-  numHeadersThreshold,
-  susScoreDecayTime,
-  susScoreDecayStore,
-  rateLimitStore,
-  normalizeHeader,
-  getFingerprint,
-  getRandomRange,
-  middleware,
-  setSusScoreDecay,
-} = Watchdog;
+export const numHeadersThreshold = Watchdog.numHeadersThreshold;
+export const susScoreDecayTime = Watchdog.susScoreDecayTime;
+export const susScoreDecayStore = Watchdog.susScoreDecayStore;
+export const rateLimitStore = Watchdog.rateLimitStore;
+export const normalizeHeader = (name: string) => Watchdog.normalizeHeader(name);
+export const getFingerprint = (u: string, b: string, p: string, h: IncomingHttpHeaders) =>
+  Watchdog.getFingerprint(u, b, p, h);
+export const getRandomRange = (min: number, max: number) => Watchdog.getRandomRange(min, max);
+export const middleware = (max: number, t: number, w?: number, trip?: TripCallback | null) =>
+  Watchdog.middleware(max, t, w, trip);
+export const setSusScoreDecay = (f: string) => {
+  Watchdog.setSusScoreDecay(f);
+};
 
 export default Watchdog;
