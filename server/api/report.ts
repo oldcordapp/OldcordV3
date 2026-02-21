@@ -1,4 +1,4 @@
-import { rateLimitMiddleware } from '@/helpers/middlewares.js';
+import { rateLimitMiddleware } from '../helpers/middlewares.js';
 import errors from '../helpers/consts/errors.js';
 import { logText } from '../helpers/utils/logger.ts';
 import type { Response } from 'express';
