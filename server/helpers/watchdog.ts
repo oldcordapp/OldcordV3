@@ -124,7 +124,7 @@ const Watchdog = {
 
         if (fingerprint === null) {
           logText(
-            `Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - auto blocking them for security of the instance.`,
+            `Failed to fingerprint: ${req.ip} (${fingerprint_outcome.reason}) - on ${req.method} ${req.originalUrl} - auto blocking them for security of the instance.`,
             'watchdog',
           );
 
@@ -165,7 +165,7 @@ const Watchdog = {
         let retryAfterSeconds = Math.max(0, Math.ceil(timeRemaining / 1000));
 
         logText(
-          `Fingerprint: ${fingerprint} exceeded ${maxPerTimeFrame} reqs in ${timeFrame}ms from IP: ${req.ip}`,
+          `Fingerprint: ${fingerprint} exceeded ${maxPerTimeFrame} reqs in ${timeFrame}ms on ${req.method} ${req.originalUrl} from IP: ${req.ip}`,
           'watchdog',
         );
 
@@ -202,7 +202,7 @@ const Watchdog = {
           const block = Watchdog.getRandomRange(600, 10000);
 
           logText(
-            `Fingerprint: ${fingerprint} is scoring high. Blocking them from proceeding for ~${block / 1000} seconds.`,
+            `Fingerprint: ${fingerprint} is scoring high on ${req.method} ${req.originalUrl}. Blocking them from proceeding for ~${block / 1000} seconds.`,
             'watchdog',
           );
 
