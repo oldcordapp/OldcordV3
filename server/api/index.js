@@ -22,6 +22,7 @@ import tutorial from './tutorial.js';
 import users from './users/index.js';
 import voice from './voice.ts';
 import webhooks from './webhooks.js';
+import report from './report.ts'
 
 global.config = config;
 //just in case
@@ -126,6 +127,7 @@ app.use('/webhooks', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), webhooks);
 app.use('/oauth2', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), oauth2);
 app.use('/store', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), store);
 app.use('/integrations', instanceMiddleware('VERIFIED_EMAIL_REQUIRED'), integrations);
+app.use('/report', instanceMiddleware("VERIFIED_EMAIL_REQUIRED"), report);
 
 app.use('/track', (_, res) => {
   return res.status(204).send();
