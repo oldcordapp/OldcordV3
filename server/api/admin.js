@@ -137,7 +137,7 @@ router.get('/@me', staffAccessMiddleware(1), async (req, res) => {
     const ret = req.account;
 
     ret.staff_details = req.staff_details;
-    ret.needs_mfa = global.config.mfa_required_for_admin;
+    ret.needs_mfa = global.config.mfa_required_for_admin || global.config.instance.flags.includes("MFA_FOR_ADMIN");
 
     return res
       .status(200)

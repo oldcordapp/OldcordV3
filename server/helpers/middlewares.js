@@ -285,7 +285,7 @@ function staffAccessMiddleware(privilege_needed) {
         return res.status(401).json(errors.response_401.UNAUTHORIZED);
       }
 
-      if (!account.mfa_enabled && global.config.mfa_required_for_admin) {
+      if (!account.mfa_enabled && (global.config.mfa_required_for_admin || global.config.instance.flags.includes("MFA_FOR_ADMIN"))) {
         if (req.method === 'GET' && req.url.endsWith('/@me')) {
           return next();
         } //Exclude from the admin info get request
@@ -543,7 +543,7 @@ function guildPermissionsMiddleware(permission) {
     }
 
     if (guild.owner_id == sender.id || (req.is_staff && req.staff_details.privilege >= 3)) {
-      if (!sender.mfa_enabled && global.config.mfa_required_for_admin && req.is_staff) {
+      if (!sender.mfa_enabled && (global.config.mfa_required_for_admin || global.config.instance.flags.includes("MFA_FOR_ADMIN")) && req.is_staff) {
         return res.status(403).json(errors.response_403.MFA_REQUIRED); //move this to its own error code
       }
 
@@ -581,7 +581,7 @@ function channelPermissionsMiddleware(permission) {
       }
 
       if (req.is_staff && req.staff_details.privilege >= 3) {
-        if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
+        if (!sender.mfa_enabled && (global.config.mfa_required_for_admin || global.config.instance.flags.includes("MFA_FOR_ADMIN"))) {
           return res.status(403).json(errors.response_403.MFA_REQUIRED);
         }
 
@@ -600,7 +600,7 @@ function channelPermissionsMiddleware(permission) {
     }
 
     if (req.is_staff && req.staff_details.privilege >= 3) {
-      if (!sender.mfa_enabled && global.config.mfa_required_for_admin) {
+      if (!sender.mfa_enabled && (global.config.mfa_required_for_admin || global.config.instance.flags.includes("MFA_FOR_ADMIN"))) {
         return res.status(403).json(errors.response_403.MFA_REQUIRED);
       }
 

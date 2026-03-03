@@ -223,7 +223,7 @@ const lazyRequest = {
         .filter((g) => g.id !== 'offline')
         .reduce((acc, g) => acc + g.count, 0);
 
-      if (global.config.sync_only) {
+      if (global.config.sync_only || global.config.instance.flags.includes("SYNC_ONLY")) {
         ops = subData.ranges.map((range) => ({
           op: 'SYNC',
           range: range,
@@ -291,7 +291,7 @@ const lazyRequest = {
 
       let ops = [];
 
-      if (global.config.sync_only) {
+      if (global.config.sync_only || global.config.instance.flags.includes("SYNC_ONLY")) {
         ops = subData.ranges.map((range) => ({
           op: 'SYNC',
           range: range,
@@ -398,7 +398,7 @@ const lazyRequest = {
 
           let ops = [];
 
-          if (global.config.sync_only) {
+          if (global.config.sync_only || global.config.instance.flags.includes("SYNC_ONLY")) {
             ops = subData.ranges.map((range) => {
               return {
                 op: 'SYNC',

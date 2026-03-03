@@ -1114,7 +1114,7 @@ const database = {
       const dmRestrictionApplied =
         infoRows && infoRows.length > 0 ? infoRows[0].dm_restriction_applied : false;
 
-      if (config.require_friendship_for_dm) {
+      if (config.require_friendship_for_dm || config.instance.flags.includes("FRIENDSHIP_FOR_DM")) {
         if (!dmRestrictionApplied) {
           const users = await database.runQuery(`SELECT id, settings FROM users WHERE bot = false`);
 
@@ -6769,7 +6769,7 @@ const database = {
 
       if (userRows && userRows.length > 0 && !userRows[0].bot) {
         const settings = JSON.parse(userRows[0].settings);
-        if (config.require_friendship_for_dm) {
+        if (config.require_friendship_for_dm || config.instance.flags.includes("FRIENDSHIP_FOR_DM")) {
           settings.default_guilds_restricted = true;
           settings.friend_source_flags = {
             all: false,

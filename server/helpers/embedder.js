@@ -252,7 +252,7 @@ const embedder = {
       }
     }
 
-    if (!global.config.auto_embed_urls) {
+    if (!global.config.auto_embed_urls || !global.config.instance.flags.includes("EMBED_URLS")) {
       return ret;
     }
 

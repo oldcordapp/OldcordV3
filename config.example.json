@@ -24,12 +24,7 @@
   },
   "require_release_date_cookie": true,
   "cache_authenticated_get_requests": true,
-  "require_friendship_for_dm": false,
-  "auto_embed_urls": false,
-  "mfa_required_for_admin": false,
   "klipy_api_key": "",
-  "infinite_boosts": true,
-  "sync_only": true,
   "mr_server": {
     "enabled": false,
     "agents": ["ws://127.0.0.1:4444"],
@@ -59,7 +54,7 @@
       "instanceRules": "url",
       "extras": {}
     },
-    "flags": []
+    "flags": ["INFINITE_BOOSTS", "SYNC_ONLY", "BOOSTING_ENABLED"]
   },
   "cert_path": "",
   "key_path": "",
