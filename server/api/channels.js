@@ -31,7 +31,7 @@ router.param('channelid', async (req, res, next, channelid) => {
 
     /*
         if (req.guild === null) {
-            req.channel = await global.database.getChannelById(channelid); 
+            req.channel = await global.database.getChannelById(channelid);
         } else {
             let found_channel = req.guild.channels.filter(y => y.type === 0 && y.id === channelid && global.permissions.hasChannelPermissionTo(y, req.guild, req.account.id, "READ_MESSAGES"));
 
@@ -599,14 +599,13 @@ router.delete(
   },
 );
 
-//TODO: should have its own rate limit
 router.put(
   '/:channelid/recipients/:recipientid',
   instanceMiddleware('VERIFIED_EMAIL_REQUIRED'),
   channelMiddleware,
   rateLimitMiddleware(
-    global.config.ratelimit_config.updateMember.maxPerTimeFrame,
-    global.config.ratelimit_config.updateMember.timeFrame,
+    global.config.ratelimit_config.addDmRecipient.maxPerTimeFrame, // No clue, if "addDmRecipient" is a good name for this.
+    global.config.ratelimit_config.addDmRecipient.timeFrame,
   ),
   Watchdog.middleware(
     global.config.ratelimit_config.updateMember.maxPerTimeFrame,
@@ -676,9 +675,9 @@ router.put(
         await globalUtils.pingPrivateChannel(newGroupChannel);
 
         const add_msg = await global.database.createSystemMessage(
-          null, 
+          null,
           newGroupChannel.id,
-          1, 
+          1,
           [sender, recipient]
         );
 
@@ -687,7 +686,7 @@ router.put(
         });
 
         return res.status(204).send();
-      }      
+      }
 
       if (!(await global.database.updateChannelRecipients(channel.id, channel.recipients)))
         throw 'Failed to update recipients list in channel';

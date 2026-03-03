@@ -556,7 +556,7 @@ router.put(
     if (!tryBoostServer) {
       return res.status(400).json({
         code: 404,
-        message: 'Failed to boost. Please try again.', //find the actual fail msg??
+        message: 'Server Boost failed', //Possibly the correct message from when server boosting first came out.
       });
     }
 

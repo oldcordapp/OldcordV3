@@ -185,7 +185,7 @@ router.post('/:webhookid/:webhooktoken', async (req, res) => {
     const override_id = Snowflake.generate();
 
     let embeds = [];
-    const MAX_EMBEDS = 10; //to-do make this configurable
+    const MAX_EMBEDS = global.config.limits.embeds.max;
 
     const proxyUrl = (url) => {
       return url ? `/proxy/${encodeURIComponent(url)}` : null;
