@@ -1,4 +1,5 @@
 import { Router, type NextFunction } from 'express';
+import type { Prisma } from '../generated/prisma/client/client.ts';
 
 import { logText } from '../helpers/logger.ts';
 import { staffAccessMiddleware } from '../helpers/middlewares.ts';
@@ -29,8 +30,8 @@ router.param('userid', async (req: any, _res: any, next: NextFunction, userid: s
     },
     include: {
       staff: true,
-    }
-  });
+    },
+  } as any);
 
   req.is_user_staff = req.user && (req.user.flags & (1 << 0)) === 1 << 0;
 
@@ -82,7 +83,7 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req: any, res: any
           name: true,
           icon: true
         }
-      })
+      } as any)
     ]); //guys. you wont believe what i just found out
 
     if (!userRet) {
@@ -106,9 +107,9 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req: any, res: any
           }
         }
       }
-    });
+    } as any);
 
-    const formattedBots = bots.map(bot => ({
+    const formattedBots = bots.map((bot: any) => ({
       avatar: bot.avatar,
       discriminator: bot.discriminator,
       username: bot.username,
@@ -116,14 +117,14 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req: any, res: any
       public: bot.public,
       require_code_grant: bot.require_code_grant,
       application: {
-        id: bot.application.id,
-        name: bot.application.name,
-        icon: bot.application.icon,
-        description: bot.application.description,
+        id: bot.application?.id,
+        name: bot.application?.name,
+        icon: bot.application?.icon,
+        description: bot.application?.description,
         redirect_uris: [],
         rpc_application_state: 0,
         rpc_origins: [],
-        owner: bot.application.owner?.toPublic()
+        owner: bot.application?.owner?.toPublic()
       },
     }));
 
@@ -152,6 +153,19 @@ router.get('/users/:userid', staffAccessMiddleware(3), async (req: any, res: any
   }
 });
 
+type ApplicationWithOwner = Prisma.ApplicationGetPayload<{
+  select: {
+    id: true;
+    owner_id: true;
+    name: true;
+    icon: true;
+    description: true;
+  };
+  include: {
+    owner: true;
+  };
+}>;
+
 router.get('/bots/:userid', staffAccessMiddleware(3), async (req: any, res: any) => {
   try {
     const userid = req.params.userid;
@@ -160,19 +174,29 @@ router.get('/bots/:userid', staffAccessMiddleware(3), async (req: any, res: any)
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
     } // there is no point renaming this shit tbh
 
-    const [userRet, guilds] = await Promise.all([
+    const [userRet, guilds]: [ApplicationWithOwner | null, Prisma.GuildGetPayload<{
+      select: {
+        id: true;
+        name: true;
+        icon: true;
+      }
+    }>[]] = await Promise.all([
       prisma.application.findUnique({
-        where: { id: userid },
+        where: {
+          id: userid
+        },
         select: {
           id: true,
           owner_id: true,
           name: true,
           icon: true,
           description: true,
+          botId: true,
+        },
+        include: {
           owner: true,
           bot: true,
-          botId: true
-        }
+        },
       }),
 
       prisma.guild.findMany({
@@ -186,14 +210,16 @@ router.get('/bots/:userid', staffAccessMiddleware(3), async (req: any, res: any)
           name: true,
           icon: true
         }
-      })
+      }),
     ]);
 
     if (!userRet) {
       return res.status(404).json(errors.response_404.UNKNOWN_APPLICATION);
     }
 
-    userRet.owner = globalUtils.miniUserObject(userRet.owner);
+    if (userRet.owner != null) {
+      userRet.owner = globalUtils.miniUserObject(userRet.owner);
+    }
 
     const userWithGuilds = {
       ...userRet,
@@ -219,9 +245,6 @@ router.get('/guilds/:guildid', staffAccessMiddleware(3), async (req: any, res: a
     const guildRet = await prisma.guild.findUnique({
       where: {
         id: guildid
-      },
-      include: {
-        owner: true
       }
     });
 
@@ -229,13 +252,18 @@ router.get('/guilds/:guildid', staffAccessMiddleware(3), async (req: any, res: a
       return res.status(404).json(errors.response_404.UNKNOWN_GUILD);
     }
 
-    const owner = guildRet.owner;
+    const owner = await prisma.user.findUnique({
+      where: {
+        id: guildRet.owner_id
+      }
+    });
 
+    let guildWithOwner: any = guildRet;
     if (owner != null) {
-      guildRet.owner = globalUtils.miniUserObject(owner);
+      guildWithOwner.owner = globalUtils.miniUserObject(owner);
     } //this fucking sucks ass and we need to fix this ASAP.
 
-    return res.status(200).json(guildRet);
+    return res.status(200).json(guildWithOwner);
   } catch (error) {
     logText(error, 'error');
 
@@ -268,32 +296,6 @@ router.get('/@me', staffAccessMiddleware(1), async (req: any, res: any): Promise
     return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
   }
 });
-
-/* router.get('/@me', staffAccessMiddleware(1), async (req: any, res: any) => {
-  try {
-    const ret = req.account;
-
-    ret.staff_details = req.staff_details;
-    ret.needs_mfa = global.config.mfa_required_for_admin;
-
-    return res
-      .status(200)
-      .json(
-        globalUtils.sanitizeObject(ret, [
-          'settings',
-          'token',
-          'password',
-          'relationships',
-          'disabled_until',
-          'disabled_reason',
-        ]),
-      ); //to-do make this not fucking suck
-  } catch (error) {
-    logText(error, 'error');
-
-    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-  }
-}); */
 
 router.get('/reports', staffAccessMiddleware(1), async (_req: any, res: any) => {
   try {
@@ -378,7 +380,7 @@ router.delete('/guilds/:guildid', staffAccessMiddleware(3), async (req: any, res
       include: {
         members: true
       }
-    });
+    } as any);
 
     await dispatcher.dispatchEventInGuild(deletedGuild, 'GUILD_DELETE', {
       id: guildid,
@@ -442,6 +444,7 @@ router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (
       } // Safety net
 
       let disabled_until = until ?? 'FOREVER';
+      let disabled_reason = req.body.disabled_reason || audit_log_reason;
 
       await prisma.user.update({
         where: {
@@ -449,7 +452,7 @@ router.post('/users/:userid/moderate/disable', staffAccessMiddleware(3), async (
         },
         data: {
           disabled_until: disabled_until,
-          disabled_reason: 'Spam'
+          disabled_reason: disabled_reason
         }
       });  //to-do actually do this properly
 
@@ -920,7 +923,7 @@ router.delete('/messages/:messageid', staffAccessMiddleware(2), async (req: any,
       include: {
         members: true
       }
-    });
+    } as any);
 
     if (!guildRet) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
