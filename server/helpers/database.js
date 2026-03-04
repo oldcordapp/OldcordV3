@@ -1120,7 +1120,7 @@ const database = {
       const dmRestrictionApplied =
         infoRows && infoRows.length > 0 ? infoRows[0].dm_restriction_applied : false;
 
-      if (config.require_friendship_for_dm || config.instance.flags.includes("FRIENDSHIP_FOR_DM")) {
+      if (config.require_friendship_for_dm || config.instance.flags.includes('FRIENDSHIP_FOR_DM')) {
         if (!dmRestrictionApplied) {
           const users = await database.runQuery(`SELECT id, settings FROM users WHERE bot = false`);
 
@@ -1661,7 +1661,7 @@ const database = {
         WHERE m.guild_id = $1 
         AND (u.username ILIKE $2 || '%' OR m.nick ILIKE $2 || '%')
         LIMIT $3`,
-        [guildId, usernameQuery, userLimit || 10]
+        [guildId, usernameQuery, userLimit || 10],
       );
 
       if (!rows || rows.length === 0) {
@@ -1700,12 +1700,12 @@ const database = {
             user: { id: row.user_id_real },
             status: 'offline',
             activities: [],
-            client_status: {}
+            client_status: {},
           };
 
           if (sessions && sessions.length > 0) {
             const session = sessions[sessions.length - 1];
-            
+
             if (session.presence) {
               presence = session.presence;
             }
@@ -1718,10 +1718,9 @@ const database = {
         members: members,
         presences: presences,
         chunk_index: 0,
-        chunk_count: 1
+        chunk_count: 1,
       };
-    }
-    catch(error) {
+    } catch (error) {
       logText(error, 'error');
       return { members: [], presences: [], chunk_index: 0, chunk_count: 1 };
     }
@@ -1965,10 +1964,12 @@ const database = {
   },
   getUserPremiumState: async (user_id) => {
     try {
-      const r = await database.runQuery(`
-        SELECT premium FROM users WHERE id = $1`
-      , [user_id]);
-      return { premium:r };
+      const r = await database.runQuery(
+        `
+        SELECT premium FROM users WHERE id = $1`,
+        [user_id],
+      );
+      return { premium: r };
     } catch (error) {
       logText(error, 'error');
       return null;
@@ -1976,15 +1977,16 @@ const database = {
   },
   setUserPremium: async (user_id, v) => {
     const sameState = await database.getUserPremiumState(user_id);
-    if (v ===sameState) return v; // just return the same instead of reupdating it
+    if (v === sameState) return v; // just return the same instead of reupdating it
     try {
-      await database.runQuery(`
+      await database.runQuery(
+        `
         UPDATE users SET premium = $1 WHERE id = $2`,
-        [String(v), user_id]
+        [String(v), user_id],
       );
       return v;
     } catch (error) {
-      logText(error,'error');
+      logText(error, 'error');
       return null;
     }
   },
@@ -4032,7 +4034,7 @@ const database = {
       }
 
       if (needsReverse) {
-          messageRows.reverse();
+        messageRows.reverse();
       }
 
       const messageIds = messageRows.map((row) => row.message_id);
@@ -6857,7 +6859,10 @@ const database = {
 
       if (userRows && userRows.length > 0 && !userRows[0].bot) {
         const settings = JSON.parse(userRows[0].settings);
-        if (config.require_friendship_for_dm || config.instance.flags.includes("FRIENDSHIP_FOR_DM")) {
+        if (
+          config.require_friendship_for_dm ||
+          config.instance.flags.includes('FRIENDSHIP_FOR_DM')
+        ) {
           settings.default_guilds_restricted = true;
           settings.friend_source_flags = {
             all: false,

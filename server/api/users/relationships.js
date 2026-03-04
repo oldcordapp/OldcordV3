@@ -34,11 +34,17 @@ router.get('/', quickcache.cacheFor(60 * 5), async (req, res) => {
   }
 });
 
-const handleSendFriendRequest = async (res, sender, receiver, ourRelationshipObj, theirRelationshipObj) => {
-  let relationship = ourRelationshipObj;
-  let account = sender;
-  let user = receiver;
-  let targetRelationship = theirRelationshipObj;
+const handleSendFriendRequest = async (
+  res,
+  sender,
+  receiver,
+  ourRelationshipObj,
+  theirRelationshipObj,
+) => {
+  const relationship = ourRelationshipObj;
+  const account = sender;
+  const user = receiver;
+  const targetRelationship = theirRelationshipObj;
 
   //Prevent uh existing friendships from being overwritten + dont allow people who've blocked us to get a friend request
   if (relationship.type !== 0 || targetRelationship.type === 2) {
@@ -73,14 +79,14 @@ const handleSendFriendRequest = async (res, sender, receiver, ourRelationshipObj
 
     if (user.settings.friend_source_flags.mutual_guilds) {
       const ourGuilds = await global.database.getUsersGuilds(account.id);
-      let compareWith = await global.database.getUsersGuilds(user.id);
-      
+      const compareWith = await global.database.getUsersGuilds(user.id);
+
       if (ourGuilds && compareWith) {
         const compareIds = compareWith.map((i) => i.id);
-        const hasSharedGuild = ourGuilds.some(guild => compareIds.includes(guild.id));
+        const hasSharedGuild = ourGuilds.some((guild) => compareIds.includes(guild.id));
 
         if (hasSharedGuild) {
-           isAllowed = true;
+          isAllowed = true;
         }
       }
     }
@@ -89,11 +95,11 @@ const handleSendFriendRequest = async (res, sender, receiver, ourRelationshipObj
       if (account.relationships && Array.isArray(account.relationships)) {
         const friends = account.relationships.filter((item) => item.type === 1);
         const targetFriendIds = user.relationships.map((i) => i.id);
-        
-        const hasSharedFriend = friends.some(f => targetFriendIds.includes(f.id));
+
+        const hasSharedFriend = friends.some((f) => targetFriendIds.includes(f.id));
 
         if (hasSharedFriend) {
-           isAllowed = true;
+          isAllowed = true;
         }
       }
     }
@@ -123,11 +129,17 @@ const handleSendFriendRequest = async (res, sender, receiver, ourRelationshipObj
   return res.status(204).send();
 };
 
-const handleAcceptFriendRequest = async (res, sender, receiver, ourRelationshipObj, theirRelationshipObj) => {
-  let relationship = ourRelationshipObj;
-  let account = sender;
-  let user = receiver;
-  let targetRelationship = theirRelationshipObj;
+const handleAcceptFriendRequest = async (
+  res,
+  sender,
+  receiver,
+  ourRelationshipObj,
+  theirRelationshipObj,
+) => {
+  const relationship = ourRelationshipObj;
+  const account = sender;
+  const user = receiver;
+  const targetRelationship = theirRelationshipObj;
 
   if (relationship.type === 3) {
     relationship.type = 1;
@@ -156,10 +168,10 @@ const handleAcceptFriendRequest = async (res, sender, receiver, ourRelationshipO
 };
 
 const handleBlockUser = async (res, sender, receiver, ourRelationshipObj, theirRelationshipObj) => {
-  let relationship = ourRelationshipObj;
-  let account = sender;
-  let user = receiver;
-  let targetRelationship = theirRelationshipObj;
+  const relationship = ourRelationshipObj;
+  const account = sender;
+  const user = receiver;
+  const targetRelationship = theirRelationshipObj;
 
   if (relationship.type === 1) {
     //ex-friend
@@ -254,7 +266,7 @@ router.put('/:userid', async (req, res) => {
       type: 0,
     };
 
-    const action = (body.type == 2) ? 'BLOCK' : (relationship.type === 3 ? 'ACCEPT_FR' : 'SEND_FR');
+    const action = body.type == 2 ? 'BLOCK' : relationship.type === 3 ? 'ACCEPT_FR' : 'SEND_FR';
 
     if (action === 'SEND_FR') {
       return await handleSendFriendRequest(res, account, user, relationship, targetRelationship);

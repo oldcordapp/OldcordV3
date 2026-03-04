@@ -195,8 +195,10 @@ router.patch(
         }
 
         if (channel.type === 2) {
-          if ('user_limit' in req.body) channel.user_limit = Math.min(Math.max(req.body.user_limit, 0), 99);
-          if ('bitrate' in req.body) channel.bitrate = Math.min(Math.max(req.body.bitrate, 8000), 96000)
+          if ('user_limit' in req.body)
+            channel.user_limit = Math.min(Math.max(req.body.user_limit, 0), 99);
+          if ('bitrate' in req.body)
+            channel.bitrate = Math.min(Math.max(req.body.bitrate, 8000), 96000);
         }
       } //do this for only guild channels
 

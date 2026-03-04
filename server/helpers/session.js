@@ -216,7 +216,11 @@ class session {
     }
 
     if (!this.user.bot) {
-      if (this.relationships && Array.isArray(this.relationships) && this.relationships.length > 0) {
+      if (
+        this.relationships &&
+        Array.isArray(this.relationships) &&
+        this.relationships.length > 0
+      ) {
         for (let x = 0; x < this.relationships.length; x++) {
           const broadcastStatus = presence.status === 'invisible' ? 'offline' : presence.status;
           const friend = this.relationships[x];
@@ -227,10 +231,10 @@ class session {
             activities: [],
             guild_id: null,
             user: globalUtils.miniUserObject(this.user),
-            roles: []
+            roles: [],
           };
 
-          await dispatcher.dispatchEventTo(friend.id, "PRESENCE_UPDATE", friendSpecificPresence);
+          await dispatcher.dispatchEventTo(friend.id, 'PRESENCE_UPDATE', friendSpecificPresence);
         }
       }
     }
@@ -617,12 +621,12 @@ class session {
             this.presences.push({
               user: { id: friendId },
               status: activePresence.status === 'invisible' ? 'offline' : activePresence.status,
-              activities: []
+              activities: [],
             });
           }
         }
       }
-      
+
       this.application = await global.database.getApplicationById(this.user.id);
 
       this.readyUp({

@@ -1,4 +1,5 @@
 import { Innertube } from 'youtubei.js';
+
 const innertube = await Innertube.create();
 
 import { load } from 'cheerio';
@@ -63,19 +64,22 @@ const embedder = {
       const videoWidth =
         parseInt(
           $('meta[property="og:video:width"]').attr('content') ||
-          $('meta[property="twitter:player:width"]').attr('content'),
+            $('meta[property="twitter:player:width"]').attr('content'),
         ) || 480;
       const videoHeight =
         parseInt(
           $('meta[property="og:video:height"]').attr('content') ||
-          $('meta[property="twitter:player:height"]').attr('content'),
+            $('meta[property="twitter:player:height"]').attr('content'),
         ) || 270;
       const description = $('meta[name="description"]').attr('content');
       const themeColor = $('meta[name="theme-color"]').attr('content');
       const ogTitle = $('meta[property="og:title"]').attr('content');
       let ogImage = $('meta[property="og:image"]').attr('content');
 
-      let { ogImageWidth, ogImageHeight } = [$('meta[property="og:image:width"]').attr('content'), $('meta[property="og:image:height"]').attr('content')];
+      const { ogImageWidth, ogImageHeight } = [
+        $('meta[property="og:image:width"]').attr('content'),
+        $('meta[property="og:image:height"]').attr('content'),
+      ];
 
       const twitterImage = $('meta[property="twitter:image"]').attr('content');
 
@@ -177,13 +181,14 @@ const embedder = {
   },
   embedYouTube: async (url) => {
     try {
-      const videoId = new URL(url).searchParams["q"] ?? new URL(url).pathname.slice(1);
+      const videoId = new URL(url).searchParams['q'] ?? new URL(url).pathname.slice(1);
       const info = await innertube.getBasicInfo(videoId);
       const basicInfo = info.basic_info;
       const thumbnails = basicInfo.thumbnail;
 
       const validThumbnails = thumbnails.filter(
-        (thumbnail) => thumbnail.width && thumbnail.height && thumbnail.width <= 800 && thumbnail.height <= 800,
+        (thumbnail) =>
+          thumbnail.width && thumbnail.height && thumbnail.width <= 800 && thumbnail.height <= 800,
       );
 
       const largestThumbnail = validThumbnails.reduce((largest, current) => {
@@ -215,7 +220,7 @@ const embedder = {
           url: basicInfo.embed.iframe_url,
           width: basicInfo.embed.width,
           height: basicInfo.embed.height,
-          flags: 0
+          flags: 0,
         },
         author: {
           name: uploader,
@@ -252,7 +257,7 @@ const embedder = {
       }
     }
 
-    if (!global.config.auto_embed_urls || !global.config.instance.flags.includes("EMBED_URLS")) {
+    if (!global.config.auto_embed_urls || !global.config.instance.flags.includes('EMBED_URLS')) {
       return ret;
     }
 
@@ -315,21 +320,22 @@ const embedder = {
         }
 
         if (url.startsWith('https://klipy.com/gifs/')) {
-          var slug = urlObj.pathname.split("/gifs/")[1]; // TODO: This can probaby be done better
+          var slug = urlObj.pathname.split('/gifs/')[1]; // TODO: This can probaby be done better
           var apiUrl = `https://api.klipy.com/api/v1/${global.config.klipy_api_key}/gifs/${slug}`;
 
           result = await fetch(apiUrl, {
             headers: {
-              'User-Agent': 'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)',
+              'User-Agent':
+                'Bot: Mozilla/5.0 (compatible; Oldcordbot/2.0; +https://oldcordapp.com)',
             },
-          }).then(r => r.json());
+          }).then((r) => r.json());
 
           embed.type = 'gifv';
           embed.url = url;
 
           embed.provider = {
             name: 'Klipy',
-            url: 'https://klipy.com'
+            url: 'https://klipy.com',
           };
 
           var thumb = result.data.file.sm.jpg;
@@ -337,7 +343,7 @@ const embedder = {
             proxy_url: `/proxy/${encodeURIComponent(thumb.url)}`,
             url: thumb.url,
             width: thumb.width,
-            height: thumb.height
+            height: thumb.height,
           };
 
           var video = result.data.file.hd.mp4;
@@ -345,7 +351,7 @@ const embedder = {
             url: video.url,
             proxy_url: video.url,
             width: video.width,
-            height: video.height
+            height: video.height,
           };
         } else if (url.startsWith('https://tenor.com')) {
           embed.type = 'gifv';
@@ -356,7 +362,7 @@ const embedder = {
 
           if (result.image) {
             embed.thumbnail = {
-             proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
+              proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
               url: result.image.url,
               width: result.image.width,
               height: result.image.height,
@@ -399,11 +405,11 @@ const embedder = {
           embed.image =
             result.image != null
               ? {
-                proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
-                url: result.image.url,
-                width: result.image.width > 1280 ? 1280 : result.image.width,
-                height: result.image.height > 720 ? 720 : result.image.height,
-              }
+                  proxy_url: `/proxy/${encodeURIComponent(result.image.url)}`,
+                  url: result.image.url,
+                  width: result.image.width > 1280 ? 1280 : result.image.width,
+                  height: result.image.height > 720 ? 720 : result.image.height,
+                }
               : null;
         }
       } // TODO: This is a hot mess

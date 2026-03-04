@@ -1,7 +1,8 @@
 import { Router } from 'express';
 
 const router = Router();
-import { AVAILABLE_PLANS_ID } from '../../../helpers/subscriptions.js'
+
+import { AVAILABLE_PLANS_ID } from '../../../helpers/subscriptions.js';
 
 import Snowflake from '../../../helpers/utils/snowflake.js';
 
@@ -17,21 +18,25 @@ router.get('/subscriptions', async (req, res) => {
   return res.status(200).json(subscriptions);
 });
 
-router.post('/subscriptions', async (req, res) => {//TODO: check if the payment source is valid/exists (because why not)
+router.post('/subscriptions', async (req, res) => {
+  //TODO: check if the payment source is valid/exists (because why not)
   const acc = req.account;
   const { payment_gateway_plan_id: plan, payment_source_id: cardID } = req.body;
 
-  if (plan === AVAILABLE_PLANS_ID.premium_month_tier_2 || plan === AVAILABLE_PLANS_ID.premium_year_tier_2){
+  if (
+    plan === AVAILABLE_PLANS_ID.premium_month_tier_2 ||
+    plan === AVAILABLE_PLANS_ID.premium_year_tier_2
+  ) {
     // TODO make the nitro badge dynamic
     const gotPremium = await global.database.setUserPremium(acc.id, true);
 
     if (gotPremium === null) {
       return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
     }
-  };
+  }
 
   return res.status(200).json({
-    success: true
+    success: true,
   });
 });
 

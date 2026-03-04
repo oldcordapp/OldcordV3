@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import errors from '../helpers/consts/errors.js';
 import dispatcher from '../helpers/dispatcher.js';
 import globalUtils from '../helpers/utils/globalutils.js';
+
 /*
   PRIVILEGE:
     1 - (JANITOR) [Can only flag things for review],
@@ -139,7 +140,9 @@ router.get('/@me', staffAccessMiddleware(1), async (req, res) => {
     const ret = req.account;
 
     ret.staff_details = req.staff_details;
-    ret.needs_mfa = global.config.mfa_required_for_admin || global.config.instance.flags.includes("MFA_FOR_ADMIN");
+    ret.needs_mfa =
+      global.config.mfa_required_for_admin ||
+      global.config.instance.flags.includes('MFA_FOR_ADMIN');
 
     return res
       .status(200)

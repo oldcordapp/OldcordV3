@@ -551,13 +551,13 @@ router.put(
     1,
   ),
   async (req, res) => {
-    if (!global.config.instance.flags.includes("BOOSTING_ENABLED")) {
+    if (!global.config.instance.flags.includes('BOOSTING_ENABLED')) {
       return res.status(404).json({
         code: 404,
-        message: "Endpoint not found"
-      })
+        message: 'Endpoint not found',
+      });
     }
-    
+
     const tryBoostServer = await global.database.createGuildSubscription(req.account, req.guild);
 
     if (!tryBoostServer) {
@@ -585,11 +585,11 @@ router.delete(
   ),
   async (req, res) => {
     try {
-      if (!global.config.instance.flags.includes("BOOSTING_ENABLED")) {
+      if (!global.config.instance.flags.includes('BOOSTING_ENABLED')) {
         return res.status(404).json({
           code: 404,
-          message: "Endpoint not found"
-        })
+          message: 'Endpoint not found',
+        });
       }
 
       if (!req.subscription) {
@@ -612,13 +612,13 @@ router.get(
   guildMiddleware,
   quickcache.cacheFor(60 * 5, true),
   async (req, res) => {
-    if (!global.config.instance.flags.includes("BOOSTING_ENABLED")) {
+    if (!global.config.instance.flags.includes('BOOSTING_ENABLED')) {
       return res.status(404).json({
         code: 404,
-        message: "Endpoint not found"
-      })
+        message: 'Endpoint not found',
+      });
     }
-    
+
     const guild_subscriptions = await global.database.getGuildSubscriptions(req.guild);
 
     return res.status(200).json(guild_subscriptions);

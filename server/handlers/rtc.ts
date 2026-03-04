@@ -290,9 +290,9 @@ async function handleSignal(socket: any, packet: any) {
   const userId = packet.d.user_id;
   const voiceSession = socket.session;
 
-  const recipientSocket = [...global.sessions.values()]
-    .find(s => s.user?.id === userId && s.server_id === voiceSession.server_id)
-    ?.socket;
+  const recipientSocket = [...global.sessions.values()].find(
+    (s) => s.user?.id === userId && s.server_id === voiceSession.server_id,
+  )?.socket;
 
   if (recipientSocket) {
     const forwardedPayload = { ...packet.d, user_id: socket.userid };
