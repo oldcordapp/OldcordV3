@@ -11,7 +11,7 @@ let erlpack = null;
 try {
   const erlpackModule = await import('erlpack');
   erlpack = erlpackModule.default || erlpackModule;
-} catch (e) {
+} catch (_e) {
   logText('erlpack is not installed, desktop clients will not be able to connect.', 'warning');
   erlpack = null;
 }
@@ -576,14 +576,14 @@ class session {
       };
 
       const chans = this.user.bot
-        ? await database.getBotPrivateChannels(this.user.id)
-        : await database.getPrivateChannels(this.user.id);
+        ? await global.database.getBotPrivateChannels(this.user.id)
+        : await global.database.getPrivateChannels(this.user.id);
       const filteredDMs = [];
 
       const users = new Set();
 
       for (const chan_id of chans) {
-        let chan = await database.getChannelById(chan_id);
+        let chan = await global.database.getChannelById(chan_id);
 
         if (!chan) continue;
 
