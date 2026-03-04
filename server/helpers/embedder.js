@@ -257,18 +257,22 @@ const embedder = {
       }
     }
 
-    if (!global.config.auto_embed_urls || !global.config.instance.flags.includes('EMBED_URLS')) {
+    if (
+      global.config.auto_embed_urls === undefined ||
+      !global.config.auto_embed_urls ||
+      !global.config.instance.flags.includes('EMBED_URLS')
+    ) {
       return ret;
     }
 
     const urls = content.match(/https?:\/\/[^\s]+/g);
 
-    if (urls == null || urls.length > 5 || urls.length == 0) {
+    if (urls == null || urls.length > 5 || urls.length === 0) {
       return ret;
     }
 
     for (var url of urls) {
-      const checkCache = embedder.embed_cache.find((x) => x.url == url);
+      const checkCache = embedder.embed_cache.find((x) => x.url === url);
 
       if (checkCache && !force) {
         ret.push(checkCache.embed);
@@ -283,7 +287,7 @@ const embedder = {
       }
 
       if (
-        (global.config.custom_invite_url != '' && url.includes(global.config.custom_invite_url)) ||
+        (global.config.custom_invite_url !== '' && url.includes(global.config.custom_invite_url)) ||
         url.includes('/invite/') ||
         url.includes('/gifts/')
       ) {

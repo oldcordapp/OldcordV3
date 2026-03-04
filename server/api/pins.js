@@ -74,13 +74,18 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
         req.account,
       ]);
 
-      await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'MESSAGE_CREATE', function () {
-        return globalUtils.personalizeMessageObject(
-          pin_msg,
-          req.guild,
-          this.socket.client_build_date,
-        );
-      });
+      await dispatcher.dispatchuEventInChannel(
+        req.guild,
+        channel.id,
+        'MESSAGE_CREATE',
+        function () {
+          return globalUtils.personalizeMessageObject(
+            pin_msg,
+            req.guild,
+            this.socket.client_build_date,
+          );
+        },
+      );
     }
 
     return res.status(204).send();

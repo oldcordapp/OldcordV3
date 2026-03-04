@@ -127,7 +127,7 @@ router.post(
           const payload = JSON.parse(req.body.payload_json);
 
           req.body = { ...req.body, ...payload };
-        } catch (e) {
+        } catch {
           return res.status(400).json({ message: 'Invalid payload_json format' });
         }
       }
@@ -288,12 +288,12 @@ router.post(
           return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
         }
 
-        if (req.channel.type == 1) {
+        if (req.channel.type === 1) {
           //DM channel
 
           //Need a complete user object for the relationships
           const recipientID =
-            req.channel.recipients[req.channel.recipients[0].id == author.id ? 1 : 0].id;
+            req.channel.recipients[req.channel.recipients[0].id === author.id ? 1 : 0].id;
           const recipient = await global.database.getAccountByUserId(recipientID);
 
           if (!recipient) {
@@ -302,8 +302,8 @@ router.post(
 
           const ourFriends = account.relationships;
           const theirFriends = recipient.relationships;
-          let ourRelationshipState = ourFriends?.find((x) => x.user.id == recipient.id);
-          let theirRelationshipState = theirFriends?.find((x) => x.user.id == account.id);
+          let ourRelationshipState = ourFriends?.find((x) => x.user.id === recipient.id);
+          let theirRelationshipState = theirFriends?.find((x) => x.user.id === account.id);
 
           if (!account.bot && !ourRelationshipState) {
             ourFriends.push({
@@ -312,7 +312,7 @@ router.post(
               user: globalUtils.miniUserObject(recipient),
             });
 
-            ourRelationshipState = ourFriends.find((x) => x.user.id == recipient.id);
+            ourRelationshipState = ourFriends.find((x) => x.user.id === recipient.id);
           }
 
           if (!recipient.bot && !theirRelationshipState) {
@@ -322,7 +322,7 @@ router.post(
               user: globalUtils.miniUserObject(account),
             });
 
-            theirRelationshipState = theirFriends.find((x) => x.user.id == account.id);
+            theirRelationshipState = theirFriends.find((x) => x.user.id === account.id);
           }
 
           if (ourRelationshipState?.type === 2 || theirRelationshipState?.type === 2) {
@@ -436,7 +436,7 @@ router.post(
             .replace(/[^A-Za-z0-9_\-.()[\]]/g, '');
           file_detail.filename = file_detail.name;
 
-          if (!file_detail.name || file_detail.name == '') {
+          if (!file_detail.name || file_detail.name === '') {
             return res.status(403).json({
               code: 403,
               message: 'Invalid filename',
@@ -484,7 +484,7 @@ router.post(
                     folder: attachmentDir,
                   });
               });
-            } catch (error) {
+            } catch {
               file_detail.width = 500;
               file_detail.height = 500;
             }
@@ -499,7 +499,7 @@ router.post(
                   file_detail.width = image.bitmap.width;
                   file_detail.height = image.bitmap.height;
                 }
-              } catch (error) {
+              } catch {
                 file_detail.width = 500;
                 file_detail.height = 500;
 
@@ -609,7 +609,7 @@ router.delete(
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      if (channel.recipients && message.author.id != guy.id) {
+      if (channel.recipients && message.author.id !== guy.id) {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
       }
 
@@ -650,7 +650,7 @@ router.patch(
   ),
   async (req, res) => {
     try {
-      if (req.body.content && req.body.content == '') {
+      if (req.body.content && req.body.content === '') {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
       }
 
@@ -668,7 +668,7 @@ router.patch(
         return res.status(404).json(errors.response_404.UNKNOWN_CHANNEL);
       }
 
-      if (message.author.id != caller.id) {
+      if (message.author.id !== caller.id) {
         return res.status(403).json(errors.response_403.MISSING_PERMISSIONS);
       }
 
@@ -702,7 +702,7 @@ router.patch(
       else
         await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'MESSAGE_UPDATE', message);
 
-      return res.status(204).send();
+      return res.status(200).json(message);
     } catch (error) {
       logText(error, 'error');
 
