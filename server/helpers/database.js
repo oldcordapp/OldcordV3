@@ -4002,6 +4002,7 @@ const database = {
       let query = `SELECT * FROM messages WHERE channel_id = $1 `;
       const params = [id];
       let paramIndex = 2;
+      let needsReverse = false;
 
       if (before_id && after_id) {
         query += `AND message_id < $${paramIndex++} AND message_id > $${paramIndex++} ORDER BY message_id DESC LIMIT $${paramIndex}`;
@@ -4012,6 +4013,7 @@ const database = {
       } else if (after_id) {
         query += `AND message_id > $${paramIndex++} ORDER BY message_id ASC LIMIT $${paramIndex}`;
         params.push(after_id, limit);
+        needsReverse = true;
       } else {
         query += `ORDER BY message_id DESC LIMIT $${paramIndex}`;
         params.push(limit);
@@ -4023,7 +4025,7 @@ const database = {
         return [];
       }
 
-      if (after_id) {
+      if (needsReverse) {
           messageRows.reverse();
       }
 
@@ -4359,7 +4361,7 @@ const database = {
                     UNION ALL
                     (SELECT * FROM messages WHERE channel_id = $1 AND message_id > $2 ORDER BY message_id ASC LIMIT $4)
                 ) AS combined_messages
-                ORDER BY message_id ASC`,
+                ORDER BY message_id DESC`,
         [channel_id, message_id, actualLimit + 1, actualLimit],
       ); //So select all messages before the around id descending limited by half the sandwich limit, then add it on with the other query to select where its above the 2nd id ascending, then sort the final msgs by ascending order (oldest -> newest)
 
