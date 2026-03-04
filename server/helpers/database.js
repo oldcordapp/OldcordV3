@@ -1644,6 +1644,82 @@ const database = {
       return null;
     }
   },
+  op8getGuildMemberChunks: async (guildId, usernameQuery, userLimit, includePresences = false) => {
+    try {
+      const rows = await database.runQuery(
+        `SELECT 
+          m.guild_id, m.user_id, m.nick, m.roles, m.joined_at, m.deaf, m.mute, 
+          u.username, u.discriminator, u.id AS user_id_real, u.avatar, u.bot, u.flags 
+        FROM members AS m 
+        INNER JOIN users AS u ON u.id = m.user_id 
+        WHERE m.guild_id = $1 
+        AND (u.username ILIKE $2 || '%' OR m.nick ILIKE $2 || '%')
+        LIMIT $3`,
+        [guildId, usernameQuery, userLimit || 10]
+      );
+
+      if (!rows || rows.length === 0) {
+        return { members: [], presences: [], chunk_index: 0, chunk_count: 1 };
+      }
+
+      const members = [];
+      const presences = [];
+
+      for (const row of rows) {
+        const miniUser = {
+          username: row.username,
+          discriminator: row.discriminator,
+          id: row.user_id_real,
+          avatar: row.avatar,
+          bot: row.bot,
+          flags: row.flags,
+          premium: true,
+        };
+
+        const member = {
+          user: miniUser,
+          nick: row.nick,
+          roles: JSON.parse(row.roles) ?? [],
+          joined_at: row.joined_at,
+          deaf: row.deaf,
+          mute: row.mute,
+        };
+
+        members.push(member);
+
+        if (includePresences) {
+          const sessions = global.userSessions.get(row.user_id_real);
+
+          let presence = {
+            user: { id: row.user_id_real },
+            status: 'offline',
+            activities: [],
+            client_status: {}
+          };
+
+          if (sessions && sessions.length > 0) {
+            const session = sessions[sessions.length - 1];
+            
+            if (session.presence) {
+              presence = session.presence;
+            }
+          }
+          presences.push(presence);
+        }
+      }
+
+      return {
+        members: members,
+        presences: presences,
+        chunk_index: 0,
+        chunk_count: 1
+      };
+    }
+    catch(error) {
+      logText(error, 'error');
+      return { members: [], presences: [], chunk_index: 0, chunk_count: 1 };
+    }
+  },
   op12getGuildMembersAndPresences: async (guild) => {
     try {
       if (guild && guild.members.length !== 0) {
@@ -3934,7 +4010,7 @@ const database = {
         query += `AND message_id < $${paramIndex++} ORDER BY message_id DESC LIMIT $${paramIndex}`;
         params.push(before_id, limit);
       } else if (after_id) {
-        query += `AND message_id > $${paramIndex++} ORDER BY message_id DESC LIMIT $${paramIndex}`;
+        query += `AND message_id > $${paramIndex++} ORDER BY message_id ASC LIMIT $${paramIndex}`;
         params.push(after_id, limit);
       } else {
         query += `ORDER BY message_id DESC LIMIT $${paramIndex}`;
@@ -3945,6 +4021,10 @@ const database = {
 
       if (messageRows === null || messageRows.length === 0) {
         return [];
+      }
+
+      if (after_id) {
+          messageRows.reverse();
       }
 
       const messageIds = messageRows.map((row) => row.message_id);

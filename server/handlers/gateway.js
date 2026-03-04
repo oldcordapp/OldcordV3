@@ -9,6 +9,7 @@ const OPCODES = {
   PRESENCE: 3,
   VOICESTATE: 4,
   RESUME: 6,
+  REQUEST_GUILD_MEMBERS: 8,
   INVALID_SESSION: 9,
   HEARTBEAT_INFO: 10,
   HEARTBEAT_ACK: 11,
@@ -259,6 +260,35 @@ async function handleOp12GetGuildMembersAndPresences(socket, packet) {
   }
 }
 
+async function handleOp8GuildMemberChunks(socket, packet) {
+   if (!socket.session) return;
+
+   const rawGuildId = packet.d.guild_id;
+   const guild_id = Array.isArray(rawGuildId) ? rawGuildId[0] : rawGuildId;
+   const usernameQuery = packet.d.query;
+   const userLimit = packet.d.limit;
+   const presences = packet.d.presences;
+   const usersGuilds = socket.session.guilds;
+
+   if (!usersGuilds || !usersGuilds.some(x => x.id === guild_id)) return;
+
+   const op8 = await global.database.op8getGuildMemberChunks(guild_id, usernameQuery, userLimit, presences);
+   const filteredPresences = op8.presences.map(presence => ({
+      user: { id: presence.user.id },
+      status: presence.status,
+      activities: presence.activities || [],
+      game: presence.game || null
+   }));
+
+   socket.session.dispatch('GUILD_MEMBERS_CHUNK', {
+      guild_id: guild_id,
+      members: op8.members,
+      chunk_index: op8.chunk_index,
+      chunk_count: op8.chunk_count,
+      presences: filteredPresences
+   });
+}
+
 async function handleOp14GetGuildMemberChunks(socket, packet) {
   //This new rewritten code was mainly inspired by spacebar if you couldn't tell since their OP 14 is more stable than ours at the moment.
   //TO-DO: add support for shit like INSERT and whatnot (hell)
@@ -346,6 +376,7 @@ const gatewayHandlers = {
   [OPCODES.PRESENCE]: handlePresence,
   [OPCODES.VOICESTATE]: handleVoiceState,
   [OPCODES.LAZYFETCH]: handleOp12GetGuildMembersAndPresences,
+  [OPCODES.REQUEST_GUILD_MEMBERS]: handleOp8GuildMemberChunks,
   [OPCODES.MEMBERCHUNKS]: handleOp14GetGuildMemberChunks,
   [OPCODES.RESUME]: handleResume,
 };
