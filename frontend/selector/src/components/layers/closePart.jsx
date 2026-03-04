@@ -1,6 +1,5 @@
-import { useCallback, useEffect } from 'react';
-
 import Xmark from '@oldcord/frontend-shared/assets/xmark.svg?react';
+import { useCallback, useEffect } from 'react';
 
 import './closePart.css';
 

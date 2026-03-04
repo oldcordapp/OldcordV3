@@ -1,6 +1,12 @@
 import { compareSync, genSalt, hash } from 'bcrypt';
-import { existsSync, mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
-import { promises as fsPromises } from 'fs';
+import {
+  existsSync,
+  promises as fsPromises,
+  mkdirSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'fs';
 import { join } from 'path';
 import { Pool } from 'pg';
 import { totp } from 'speakeasy';

@@ -1,7 +1,9 @@
 import { Router } from 'express';
 
 import { logText } from '../../helpers/utils/logger.ts';
+
 const router = Router({ mergeParams: true });
+
 import errors from '../../helpers/consts/errors.js';
 
 router.param('applicationid', async (req, res, next, applicationid) => {

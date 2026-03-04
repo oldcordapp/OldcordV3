@@ -1,7 +1,8 @@
 import contentDisposition from 'content-disposition';
-import { Router, static as expressStatic } from 'express';
+import { static as expressStatic, Router } from 'express';
 import { closeSync, existsSync, openSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
+
 const router = Router();
 
 const distributionFolder = join(process.cwd(), 'distribution');

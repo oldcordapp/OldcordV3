@@ -1,16 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
-
 import DropdownList from '@oldcord/frontend-shared/components/dropdownList';
 import InfoCard from '@oldcord/frontend-shared/components/infoCard';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
 import { useUnsavedChanges } from '@oldcord/frontend-shared/hooks/unsavedChangesHandler';
+import { useCallback, useEffect, useState } from 'react';
 
 import OptionsCard from '../../../../components/shared/optionsCard';
 import { builds } from '../../../../constants/builds';
 import { PATCHES } from '../../../../constants/patches';
 import { useOldplugerPlugins } from '../../../../hooks/oldplungerPluginsHandler';
-import { convertBuildIds } from '../../../../lib/convertBuildIds';
-import { convertBuildId } from '../../../../lib/convertBuildIds';
+import { convertBuildId, convertBuildIds } from '../../../../lib/convertBuildIds';
 import cookieManager from '../../../../lib/cookieManager';
 import localStorageManager from '../../../../lib/localStorageManager';
 

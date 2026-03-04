@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-
 import Button from '@oldcord/frontend-shared/components/button';
 import Modal from '@oldcord/frontend-shared/components/modal';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import { useEffect, useState } from 'react';
 
 export default function ({ isOpen, onClose, onConfirm, environment }) {
   const [displayedEnvironment, setDisplayedEnvironment] = useState(environment);

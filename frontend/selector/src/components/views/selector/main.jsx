@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
-
 import Button from '@oldcord/frontend-shared/components/button';
 import Card from '@oldcord/frontend-shared/components/card';
 import DropdownList from '@oldcord/frontend-shared/components/dropdownList';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import { useEffect, useState } from 'react';
 
 import Download from '../../../assets/download.svg?react';
 import { builds } from '../../../constants/builds';

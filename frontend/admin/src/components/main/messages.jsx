@@ -1,7 +1,6 @@
+import Button from '@oldcord/frontend-shared/components/button';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-import Button from '@oldcord/frontend-shared/components/button';
 
 import DefaultAvatar from '../../assets/default-avatar.png';
 import Ic_dots from '../../assets/ic_dots.svg?react';

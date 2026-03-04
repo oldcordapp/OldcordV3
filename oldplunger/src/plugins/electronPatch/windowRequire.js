@@ -19,7 +19,7 @@ const alreadyShimmed = [];
 const moduleCache = {};
 
 export default (moduleName) => {
-  if (moduleCache.hasOwnProperty(moduleName)) {
+  if (Object.hasOwn(moduleCache, moduleName)) {
     return moduleCache[moduleName];
   }
 

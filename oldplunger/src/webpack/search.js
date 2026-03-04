@@ -28,7 +28,7 @@ const filterModules =
     const foundModules = [];
 
     for (const mod in modules) {
-      if (modules.hasOwnProperty(mod)) {
+      if (Object.hasOwn(modules, mod)) {
         const module = modules[mod].exports;
 
         if (!module) continue;

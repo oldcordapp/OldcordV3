@@ -1,6 +1,8 @@
 import { json, Router } from 'express';
 import ffmpeg from 'fluent-ffmpeg';
+
 const { ffprobe } = ffmpeg;
+
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { Jimp } from 'jimp';
 import multer from 'multer';
@@ -431,7 +433,7 @@ router.post(
 
           file_detail.name = globalUtils
             .replaceAll(file.originalname, ' ', '_')
-            .replace(/[^A-Za-z0-9_\-.()\[\]]/g, '');
+            .replace(/[^A-Za-z0-9_\-.()[\]]/g, '');
           file_detail.filename = file_detail.name;
 
           if (!file_detail.name || file_detail.name == '') {

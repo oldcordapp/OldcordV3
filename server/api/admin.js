@@ -2,7 +2,9 @@ import { Router } from 'express';
 
 import { staffAccessMiddleware } from '../helpers/middlewares.js';
 import { logText } from '../helpers/utils/logger.ts';
+
 const router = Router({ mergeParams: true });
+
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -671,7 +673,7 @@ router.post('/settings', staffAccessMiddleware(4), async (req, res) => {
     const configJson = JSON.parse(readFileSync(configFile, { encoding: 'utf-8' }));
 
     for (const key in settingsToChange) {
-      if (settingsToChange.hasOwnProperty(key)) {
+      if (Object.hasOwn(settingsToChange, key)) {
         configJson[key] = settingsToChange[key];
       }
     }

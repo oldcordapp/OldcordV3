@@ -229,7 +229,7 @@
 }
 
 .modal-content .scroller li::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 7px;

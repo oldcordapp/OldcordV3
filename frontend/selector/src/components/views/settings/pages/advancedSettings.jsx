@@ -1,7 +1,6 @@
-import { useState } from 'react';
-
 import Button from '@oldcord/frontend-shared/components/button';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import { useState } from 'react';
 
 import ToggleSetting from '../../../../components/shared/toggleSetting';
 import cookieManager from '../../../../lib/cookieManager';

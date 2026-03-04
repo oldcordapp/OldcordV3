@@ -1,6 +1,5 @@
-import { useId } from 'react';
-
 import ToggleSwitch from '@oldcord/frontend-shared/components/toggleSwitch';
+import { useId } from 'react';
 
 import './toggleSetting.css';
 

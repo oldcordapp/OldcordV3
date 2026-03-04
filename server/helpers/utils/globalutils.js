@@ -311,7 +311,7 @@ const globalUtils = {
   },
   replaceAll: (str, find, replace) => {
     if (typeof find === 'string') {
-      find = find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escape special characters
+      find = find.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escape special characters
       find = new RegExp(find, 'g');
     } else if (!(find instanceof RegExp)) {
       throw new TypeError('find must be a string or a RegExp');
@@ -613,7 +613,7 @@ const globalUtils = {
           }
           break;
 
-        case '<':
+        case '<': {
           if (text[i++] != '@') break; //Ignore non-user mentions
 
           //Check type (optional)
@@ -657,8 +657,9 @@ const globalUtils = {
           if (snowflake && snowflake.length > 0) targetArray.push(snowflake);
 
           break;
+        }
 
-        case '`':
+        case '`': {
           let startTicks = 1;
           const startIndex = i;
           if (text[i++] == '`') {
@@ -685,6 +686,7 @@ const globalUtils = {
           }
           if (!success) i = startIndex;
           break;
+        }
       }
     }
 

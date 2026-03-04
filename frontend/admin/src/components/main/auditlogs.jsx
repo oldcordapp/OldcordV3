@@ -8,6 +8,7 @@ import Avatar from './avatar';
 import Paginator from './paginator';
 import ResultsCard from './resultscard';
 import Sidebar from './sidebar';
+
 const AuditLogs = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);

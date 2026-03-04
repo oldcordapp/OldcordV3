@@ -1,6 +1,5 @@
-import React from 'react';
-
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import React from 'react';
 
 import changlogImage from '../../assets/changelogImage.png';
 

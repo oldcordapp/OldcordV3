@@ -1,9 +1,8 @@
-import { useEffect, useRef } from 'react';
-
 import {
   UnsavedChangesHandler,
   useUnsavedChanges,
 } from '@oldcord/frontend-shared/hooks/unsavedChangesHandler';
+import { useEffect, useRef } from 'react';
 
 import layerConfig from './components/layerConfig';
 import PrimaryLayer from './components/layers/primaryLayer';

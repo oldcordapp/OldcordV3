@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+
 const Channel = ({ name, id, type, position }) => {
   const navigate = useNavigate();
   const targetPath = `/messages?channelid=${id}`;

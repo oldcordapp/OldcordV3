@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-
 import Card from '@oldcord/frontend-shared/components/card';
 import { Text } from '@oldcord/frontend-shared/components/textComponent';
+import { useEffect, useState } from 'react';
 
 import { CHANGELOGS, videos } from '../../../constants/buildChangelogs';
 import { convertBuildId } from '../../../lib/convertBuildIds';

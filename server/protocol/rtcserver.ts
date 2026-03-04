@@ -1,5 +1,5 @@
-import sodium from 'libsodium-wrappers';
 import { EventEmitter } from 'node:events';
+import sodium from 'libsodium-wrappers';
 import { WebSocketServer } from 'ws';
 
 import { OPCODES, rtcHandlers } from '../handlers/rtc.ts';
