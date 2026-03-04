@@ -644,7 +644,7 @@ class session {
           id: this.user.id,
           username: this.user.username,
           avatar: this.user.avatar,
-          email: this.user.email,
+          email: this.user.email || null,
           discriminator: this.user.discriminator,
           verified: this.user.verified || true,
           bot: this.user.bot || false,
