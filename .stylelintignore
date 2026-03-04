@@ -1,6 +1,0 @@
-node_modules
-www_dynamic
-www_static/assets/selector/*
-www_static/assets/admin/*
-www_static/assets/oldplunger/*
-dist_server/*
