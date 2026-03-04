@@ -1,7 +1,7 @@
 import dispatcher from '../helpers/dispatcher.js';
-import globalUtils from '../helpers/utils/globalutils.js';
 import lazyRequest from '../helpers/lazyRequest.js';
 import session from '../helpers/session.js';
+import globalUtils from '../helpers/utils/globalutils.js';
 
 const OPCODES = {
   HEARTBEAT: 1,

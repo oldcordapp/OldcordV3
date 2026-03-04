@@ -1,32 +1,27 @@
 import { Router } from 'express';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
+import { guildMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares.js';
 import globalUtils from '../helpers/utils/globalutils.js';
 import { logText } from '../helpers/utils/logger.ts';
-import { guildMiddleware, guildPermissionsMiddleware } from '../helpers/middlewares.js';
 import Snowflake from '../helpers/utils/snowflake.js';
 const router = Router({ mergeParams: true });
-import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/consts/errors.js';
+import dispatcher from '../helpers/dispatcher.js';
 import quickcache from '../helpers/quickcache.js';
 
-router.get(
-  '/',
-  guildMiddleware,
-  guildPermissionsMiddleware('MANAGE_EMOJIS'),
-  async (req, res) => {
-    try {
-      const guild = req.guild;
-      const emojis = guild.emojis;
+router.get('/', guildMiddleware, guildPermissionsMiddleware('MANAGE_EMOJIS'), async (req, res) => {
+  try {
+    const guild = req.guild;
+    const emojis = guild.emojis;
 
-      return res.status(200).json(emojis);
-    } catch (error) {
-      logText(error, 'error');
+    return res.status(200).json(emojis);
+  } catch (error) {
+    logText(error, 'error');
 
-      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
-    }
-  },
-);
+    return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+  }
+});
 
 router.post('/', guildMiddleware, guildPermissionsMiddleware('MANAGE_EMOJIS'), async (req, res) => {
   try {

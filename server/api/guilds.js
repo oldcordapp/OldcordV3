@@ -1,10 +1,8 @@
 import { Router } from 'express';
 
-import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/consts/errors.js';
-import globalUtils from '../helpers/utils/globalutils.js';
+import dispatcher from '../helpers/dispatcher.js';
 import lazyRequest from '../helpers/lazyRequest.js';
-import { logText } from '../helpers/utils/logger.ts';
 import {
   guildMiddleware,
   guildPermissionsMiddleware,
@@ -12,6 +10,8 @@ import {
   rateLimitMiddleware,
 } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import Watchdog from '../helpers/watchdog.js';
 import bans from './bans.js';
 import emojis from './emojis.js';

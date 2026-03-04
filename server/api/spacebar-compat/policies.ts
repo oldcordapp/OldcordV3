@@ -1,5 +1,5 @@
+import type { Response } from 'express';
 import { Router } from 'express';
-import type { Response } from "express"
 
 import { config, generateGatewayURL } from '../../helpers/utils/globalutils.js';
 const router = Router();

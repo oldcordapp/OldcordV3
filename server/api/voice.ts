@@ -1,5 +1,6 @@
+import type { Response } from 'express';
 import { Router } from 'express';
-import type { Response } from "express";
+
 import { getRegions } from '../helpers/utils/globalutils.js';
 
 const router = Router({ mergeParams: true });

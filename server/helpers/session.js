@@ -1,9 +1,9 @@
 import { constants, deflateSync } from 'zlib';
 
 import dispatcher from './dispatcher.js';
-import globalUtils from './utils/globalutils.js';
 import Intents from './intents/intents.js';
 import lazyRequest from './lazyRequest.js';
+import globalUtils from './utils/globalutils.js';
 import { logText } from './utils/logger.ts';
 
 let erlpack = null;
@@ -389,7 +389,7 @@ class session {
           }; //bots cant get this here idk
         }
       } else {
-        for (let guild of this.guilds) {
+        for (const guild of this.guilds) {
           if (guild.unavailable) {
             this.guilds = this.guilds.filter((x) => x.id !== guild.id);
 
@@ -415,7 +415,7 @@ class session {
           }
 
           if (guild.region != 'everything' && !globalUtils.canUseServer(year, guild.region)) {
-            let msgid = `12792182114301050${Math.round(Math.random() * 100).toString()}`;
+            const msgid = `12792182114301050${Math.round(Math.random() * 100).toString()}`;
 
             guild.channels = [
               {
@@ -429,7 +429,7 @@ class session {
                 permission_overwrites: [],
                 nsfw: false,
                 rate_limit_per_user: 0,
-                position: 0
+                position: 0,
               },
             ];
 
@@ -504,7 +504,7 @@ class session {
             }),
           );
 
-          for (let channel of guild.channels) {
+          for (const channel of guild.channels) {
             if ((year === 2017 && month < 9) || year < 2017) {
               if (channel.type === 4) {
                 guild.channels = guild.channels.filter((x) => x.id !== channel.id);
@@ -680,7 +680,7 @@ class session {
         _trace: [JSON.stringify(['oldcord-v3', { micros: 0, calls: ['oldcord-v3'] }])],
       });
 
-      for (let guild of this.unavailable_guilds) {
+      for (const guild of this.unavailable_guilds) {
         await this.dispatch('GUILD_DELETE', {
           id: guild.id,
           unavailable: true,
@@ -688,7 +688,7 @@ class session {
       }
 
       if (this.user.bot) {
-        for (let guild of this.guilds) {
+        for (const guild of this.guilds) {
           if (guild.unavailable) {
             await this.dispatch(
               'GUILD_CREATE',

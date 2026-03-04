@@ -22,21 +22,21 @@ const logText = (text: any, type: string) => {
     }; //compatibility
   }
 
-  if (!global.config.debug_logs['errors'] && type === 'error') {
+  if (!global.config.debug_logs.errors && type === 'error') {
     return;
   }
 
-  if (!global.config.debug_logs['dispatcher'] && type === 'dispatcher') {
+  if (!global.config.debug_logs.dispatcher && type === 'dispatcher') {
     return;
   }
 
-  if (!global.config.debug_logs['watchdog'] && type === 'watchdog') {
+  if (!global.config.debug_logs.watchdog && type === 'watchdog') {
     return;
   }
 
   const restTags = ['oldcord', 'debug', 'emailer'];
 
-  if (!global.config.debug_logs['rest'] && restTags.includes(type.toLowerCase())) {
+  if (!global.config.debug_logs.rest && restTags.includes(type.toLowerCase())) {
     return;
   }
 

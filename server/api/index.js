@@ -15,7 +15,7 @@ import integrations from './integrations.js';
 import invites from './invites.js';
 import oauth2 from './oauth2/index.js';
 import reports from './reports.js';
-import spacebarPing from "./spacebar-compat/ping.ts";
+import spacebarPing from './spacebar-compat/ping.ts';
 import spacebarPolicies from './spacebar-compat/policies.ts';
 import store from './store.js';
 import tutorial from './tutorial.js';

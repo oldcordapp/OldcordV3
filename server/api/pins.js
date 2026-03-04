@@ -1,11 +1,11 @@
 import { Router } from 'express';
 
-import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/consts/errors.js';
-import { logText } from '../helpers/utils/logger.ts';
+import dispatcher from '../helpers/dispatcher.js';
 import { channelMiddleware } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
 import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 
 const router = Router({ mergeParams: true });
 
@@ -75,7 +75,11 @@ router.put('/:messageid', channelMiddleware, async (req, res) => {
       ]);
 
       await dispatcher.dispatchEventInChannel(req.guild, channel.id, 'MESSAGE_CREATE', function () {
-        return globalUtils.personalizeMessageObject(pin_msg, req.guild, this.socket.client_build_date);
+        return globalUtils.personalizeMessageObject(
+          pin_msg,
+          req.guild,
+          this.socket.client_build_date,
+        );
       });
     }
 

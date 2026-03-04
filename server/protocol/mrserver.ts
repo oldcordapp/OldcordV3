@@ -43,46 +43,44 @@ const mrServer = {
     }
 
     if (!lat || !lon) {
-        return this.getRandomMediaServer();
+      return this.getRandomMediaServer();
     }
 
     let closestServer: any = null;
     let minDistance = Infinity;
 
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-        var R = 6371;
-        var dLat = deg2rad(lat2-lat1);
-        var dLon = deg2rad(lon2-lon1); 
-        var a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2)
-            ; 
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-        var d = R * c;
-        return d;
+      const R = 6371;
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const d = R * c;
+      return d;
     }
 
     function deg2rad(deg) {
-        return deg * (Math.PI/180)
+      return deg * (Math.PI / 180);
     }
 
     for (const [ip, server] of serverEntries) {
-        if (server.lat === 0 && server.lon === 0) continue;
+      if (server.lat === 0 && server.lon === 0) continue;
 
-        const dist = getDistanceFromLatLonInKm(lat, lon, server.lat, server.lon);
-        if (dist < minDistance) {
-            minDistance = dist;
-            closestServer = {
-                ip: ip,
-                socket: server.socket,
-                port: server.port
-            };
-        }
+      const dist = getDistanceFromLatLonInKm(lat, lon, server.lat, server.lon);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestServer = {
+          ip: ip,
+          socket: server.socket,
+          port: server.port,
+        };
+      }
     }
 
     if (!closestServer) {
-        return this.getRandomMediaServer();
+      return this.getRandomMediaServer();
     }
 
     return closestServer;
@@ -165,29 +163,31 @@ const mrServer = {
     const socket = new WebSocket(url);
 
     socket.on('open', () => {
-        this.handleClientConnect(socket);
+      this.handleClientConnect(socket);
     });
 
     socket.on('error', (err) => {
-        this.debug(`Error from media agent at ${url}: ${err.message}`);
+      this.debug(`Error from media agent at ${url}: ${err.message}`);
     });
 
     socket.on('close', () => {
-        this.debug(`Media agent at ${url} disconnected. Retrying in 5s...`);
-        setTimeout(() => this.connectToAgent(url), 5000);
+      this.debug(`Media agent at ${url} disconnected. Retrying in 5s...`);
+      setTimeout(() => {
+        this.connectToAgent(url);
+      }, 5000);
     });
   },
   start(debug_logs) {
     this.debug_logs = debug_logs;
-    
+
     const agents = (global as any).config.mr_server.agents || [];
-    
+
     if (agents.length === 0) {
-        this.debug('No media agents configured.');
+      this.debug('No media agents configured.');
     }
 
     for (const agentUrl of agents) {
-        this.connectToAgent(agentUrl);
+      this.connectToAgent(agentUrl);
     }
   },
 };

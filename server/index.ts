@@ -38,16 +38,16 @@ import path from 'path';
 
 import router from './api/index.js';
 import gateway from './gateway.ts';
-import database from './helpers/database.js';
 import errors from './helpers/consts/errors.js';
-import globalUtils from './helpers/utils/globalutils.js';
-import { logText } from './helpers/utils/logger.ts';
+import database from './helpers/database.js';
 import {
   apiVersionMiddleware,
   assetsMiddleware,
   clientMiddleware,
   corsMiddleware,
 } from './helpers/middlewares.js';
+import globalUtils from './helpers/utils/globalutils.js';
+import { logText } from './helpers/utils/logger.ts';
 import permissions from './helpers/utils/permissions.js';
 const config = globalUtils.config;
 const app = express();
@@ -174,7 +174,7 @@ async function startServers() {
 
     const httpServer = certificates ? https.createServer(certificates) : createServer();
     const rtcHttpServer = certificates ? https.createServer(certificates) : createServer();
-    
+
     let gatewayServer;
 
     if (config.port == config.ws_port) {
@@ -184,9 +184,17 @@ async function startServers() {
     }
 
     global.udpServer.start(config.udp_server_port, config.debug_logs.udp ?? true);
-    global.rtcServer.start(rtcHttpServer, config.signaling_server_port, config.debug_logs.rtc ?? true);
+    global.rtcServer.start(
+      rtcHttpServer,
+      config.signaling_server_port,
+      config.debug_logs.rtc ?? true,
+    );
 
-    await new Promise<void>((resolve) => rtcHttpServer.listen(config.signaling_server_port, () => resolve()));
+    await new Promise<void>((resolve) =>
+      rtcHttpServer.listen(config.signaling_server_port, () => {
+        resolve();
+      }),
+    );
 
     if (global.using_media_relay) {
       global.mrServer = mrServer;

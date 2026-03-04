@@ -62,7 +62,11 @@ const Watchdog = {
     protocol: string,
     headers: IncomingHttpHeaders,
   ): WatchdogFingerprint => {
-    if (Object.entries(headers).length < Watchdog.numHeadersThreshold) {
+    if (
+      typeof headers !== 'object' ||
+      headers === null ||
+      Object.entries(headers).length < Watchdog.numHeadersThreshold
+    ) {
       return {
         fingerprint: null,
         reason: "The client didn't reach the number of headers threshold",
@@ -134,7 +138,7 @@ const Watchdog = {
     maxPerTimeFrame: number,
     timeFrame: number,
     sus_weight = 0.2,
-    onTrip: ((data: any, req: Request) => void) | null = null,
+    onTrip: Function | null = null,
   ) => {
     if (typeof maxPerTimeFrame !== 'number' || typeof timeFrame !== 'number') {
       throw new Error('Missing maxPerTimeFrame and timeFrame for initialization of the Watchdog.');
@@ -240,7 +244,8 @@ const Watchdog = {
 
           await new Promise((resolve) => setTimeout(resolve, block));
 
-          return next();
+          next();
+          return;
         }
       }
 

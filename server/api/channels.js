@@ -1,9 +1,7 @@
 import { Router } from 'express';
 
-import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/consts/errors.js';
-import globalUtils from '../helpers/utils/globalutils.js';
-import { logText } from '../helpers/utils/logger.ts';
+import dispatcher from '../helpers/dispatcher.js';
 import {
   channelMiddleware,
   channelPermissionsMiddleware,
@@ -12,6 +10,8 @@ import {
   rateLimitMiddleware,
 } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import Watchdog from '../helpers/watchdog.js';
 import messages from './messages.js';
 import pins from './pins.js';
@@ -296,7 +296,7 @@ router.post(
       ]);
 
       await dispatcher.dispatchEventInPrivateChannel(req.channel, 'MESSAGE_CREATE', function () {
-          return globalUtils.personalizeMessageObject(call_msg, null, this.socket.client_build_date);
+        return globalUtils.personalizeMessageObject(call_msg, null, this.socket.client_build_date);
       });
 
       return res.status(204).send();
@@ -657,7 +657,7 @@ router.put(
 
         let newRecipients = [...channel.recipients];
 
-        newRecipients = newRecipients.map(recipient => {
+        newRecipients = newRecipients.map((recipient) => {
           return globalUtils.miniUserObject(recipient);
         });
 
@@ -674,16 +674,22 @@ router.put(
 
         await globalUtils.pingPrivateChannel(newGroupChannel);
 
-        const add_msg = await global.database.createSystemMessage(
-          null,
-          newGroupChannel.id,
-          1,
-          [sender, recipient]
-        );
+        const add_msg = await global.database.createSystemMessage(null, newGroupChannel.id, 1, [
+          sender,
+          recipient,
+        ]);
 
-        await dispatcher.dispatchEventInPrivateChannel(newGroupChannel, 'MESSAGE_CREATE', function () {
-           return globalUtils.personalizeMessageObject(add_msg, null, this.socket.client_build_date);
-        });
+        await dispatcher.dispatchEventInPrivateChannel(
+          newGroupChannel,
+          'MESSAGE_CREATE',
+          function () {
+            return globalUtils.personalizeMessageObject(
+              add_msg,
+              null,
+              this.socket.client_build_date,
+            );
+          },
+        );
 
         return res.status(204).send();
       }
@@ -769,7 +775,11 @@ router.delete(
       ]);
 
       await dispatcher.dispatchEventInPrivateChannel(channel, 'MESSAGE_CREATE', function () {
-        return globalUtils.personalizeMessageObject(remove_msg, null, this.socket.client_build_date);
+        return globalUtils.personalizeMessageObject(
+          remove_msg,
+          null,
+          this.socket.client_build_date,
+        );
       });
 
       return res.status(204).send();

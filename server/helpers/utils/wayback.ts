@@ -1,8 +1,8 @@
 import { logText } from './logger.ts';
 
 interface WaybackTimestampsResponse {
-  first_ts: string | null,
-  last_ts: string | null
+  first_ts: string | null;
+  last_ts: string | null;
 }
 
 export function convertTimestampToCustomFormat(timestamp: string): string {

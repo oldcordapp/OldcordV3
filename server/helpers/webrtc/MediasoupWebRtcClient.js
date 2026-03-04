@@ -39,13 +39,17 @@ class MediasoupWebRtcClient {
       return { audio_ssrc: 0, video_ssrc: 0, rtx_ssrc: 0 };
     }
 
-    const audioConsumer = this.consumers.find(c => c.appData.user_id === user_id && c.kind === 'audio');
-    const videoConsumer = this.consumers.find(c => c.appData.user_id === user_id && c.kind === 'video');
+    const audioConsumer = this.consumers.find(
+      (c) => c.appData.user_id === user_id && c.kind === 'audio',
+    );
+    const videoConsumer = this.consumers.find(
+      (c) => c.appData.user_id === user_id && c.kind === 'video',
+    );
 
     return {
-        audio_ssrc: audioConsumer?.rtpParameters?.encodings?.[0]?.ssrc ?? 0,
-        video_ssrc: videoConsumer?.rtpParameters?.encodings?.[0]?.ssrc ?? 0,
-        rtx_ssrc: videoConsumer?.rtpParameters?.encodings?.[0]?.rtx?.ssrc ?? 0,
+      audio_ssrc: audioConsumer?.rtpParameters?.encodings?.[0]?.ssrc ?? 0,
+      video_ssrc: videoConsumer?.rtpParameters?.encodings?.[0]?.ssrc ?? 0,
+      rtx_ssrc: videoConsumer?.rtpParameters?.encodings?.[0]?.rtx?.ssrc ?? 0,
     };
   }
 
@@ -253,7 +257,7 @@ class MediasoupWebRtcClient {
 
     if (!producer) return;
 
-    if (this.consumers.find(c => c.producerId === producer.id)) return;
+    if (this.consumers.find((c) => c.producerId === producer.id)) return;
 
     const consumer = await this.transport.consume({
       producerId: producer.id,
@@ -279,7 +283,7 @@ class MediasoupWebRtcClient {
     );
 
     if (type === 'video') {
-       await consumer.resume();
+      await consumer.resume();
     }
 
     this.consumers?.push(consumer);

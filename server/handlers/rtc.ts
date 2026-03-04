@@ -1,5 +1,5 @@
-import { generateSsrc, generateString, miniUserObject } from '../helpers/utils/globalutils.js';
 import session from '../helpers/session.js';
+import { generateSsrc, generateString, miniUserObject } from '../helpers/utils/globalutils.js';
 
 const OPCODES = {
   IDENTIFY: 0,
@@ -112,21 +112,21 @@ async function handleIdentify(socket: any, packet: any) {
   } else {
     let lat = 0;
     let lon = 0;
-    
+
     try {
-        const userIp = socket._socket.remoteAddress || socket.upgradeReq?.connection?.remoteAddress;
-        if (userIp && userIp !== '127.0.0.1' && userIp !== '::1') {
-             const response = await fetch(`http://ip-api.com/json/${userIp}`);
-             if (response.ok) {
-                 const data = await response.json() as any;
-                 if (data.status === 'success') {
-                     lat = data.lat;
-                     lon = data.lon;
-                 }
-             }
+      const userIp = socket._socket.remoteAddress || socket.upgradeReq?.connection?.remoteAddress;
+      if (userIp && userIp !== '127.0.0.1' && userIp !== '::1') {
+        const response = await fetch(`http://ip-api.com/json/${userIp}`);
+        if (response.ok) {
+          const data = (await response.json()) as any;
+          if (data.status === 'success') {
+            lat = data.lat;
+            lon = data.lon;
+          }
         }
+      }
     } catch (e) {
-        // Ignore
+      // Ignore
     }
 
     const mediaServer = global.mrServer.getClosestMediaServer(lat, lon);
@@ -460,7 +460,7 @@ async function handleVideo(socket, packet) {
     audio_ssrc: audio_ssrc,
     video_ssrc: video_ssrc,
     rtx_ssrc: rtx_ssrc,
-    user_id: ""
+    user_id: '',
   };
 
   const protocol = global.rtcServer.protocolsMap.get(socket.userid);

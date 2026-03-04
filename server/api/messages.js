@@ -6,16 +6,16 @@ import { Jimp } from 'jimp';
 import multer from 'multer';
 import { extname, join } from 'path';
 
-import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/consts/errors.js';
-import globalUtils from '../helpers/utils/globalutils.js';
-import { logText } from '../helpers/utils/logger.ts';
+import dispatcher from '../helpers/dispatcher.js';
 import {
   channelPermissionsMiddleware,
   instanceMiddleware,
   rateLimitMiddleware,
 } from '../helpers/middlewares.js';
 import quickcache from '../helpers/quickcache.js';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import Snowflake from '../helpers/utils/snowflake.js';
 import Watchdog from '../helpers/watchdog.js';
 import reactions from './reactions.js';
@@ -336,8 +336,12 @@ router.post(
 
           if (!recipient.bot && !globalUtils.areWeFriends(account, recipient)) {
             const hasAllowedSharedGuild = mutualGuilds.some((guild) => {
-              const senderAllows = !(account.settings && account.settings.restricted_guilds.includes(guild.id));
-              const recipientAllows = !(recipient.settings && recipient.settings.restricted_guilds.includes(guild.id));
+              const senderAllows = !(
+                account.settings && account.settings.restricted_guilds.includes(guild.id)
+              );
+              const recipientAllows = !(
+                recipient.settings && recipient.settings.restricted_guilds.includes(guild.id)
+              );
 
               return senderAllows && recipientAllows;
             });
@@ -742,7 +746,7 @@ router.post(
       const ackToken = globalUtils.generateAckToken(guy.id, channel.id, message.id);
 
       return res.status(200).json({
-        token: ackToken
+        token: ackToken,
       });
     } catch (error) {
       logText(error, 'error');

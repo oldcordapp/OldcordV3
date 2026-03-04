@@ -1,12 +1,12 @@
 import { Router } from 'express';
 const router = Router();
-import dispatcher from '../helpers/dispatcher.js';
 import errors from '../helpers/consts/errors.js';
-import globalUtils from '../helpers/utils/globalutils.js';
+import dispatcher from '../helpers/dispatcher.js';
 import lazyRequest from '../helpers/lazyRequest.js';
-import { logText } from '../helpers/utils/logger.ts';
 import { instanceMiddleware, rateLimitMiddleware } from '../helpers/middlewares.js';
 import { verify } from '../helpers/recaptcha.js';
+import globalUtils from '../helpers/utils/globalutils.js';
+import { logText } from '../helpers/utils/logger.ts';
 import Watchdog from '../helpers/watchdog.js';
 
 global.config = globalUtils.config;
@@ -223,9 +223,18 @@ router.post(
                 [account],
               );
 
-              await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, 'MESSAGE_CREATE', function () {
-                  return globalUtils.personalizeMessageObject(join_msg, guild, req.client_build_date);
-              });
+              await dispatcher.dispatchEventInChannel(
+                guild,
+                guild.system_channel_id,
+                'MESSAGE_CREATE',
+                function () {
+                  return globalUtils.personalizeMessageObject(
+                    join_msg,
+                    guild,
+                    this.socket.client_build_date,
+                  );
+                },
+              );
             }
           }
         }
@@ -289,9 +298,18 @@ router.post(
               [account],
             );
 
-            await dispatcher.dispatchEventInChannel(guild, guild.system_channel_id, 'MESSAGE_CREATE', function () {
-                return globalUtils.personalizeMessageObject(join_msg, guild, req.client_build_date);
-            });
+            await dispatcher.dispatchEventInChannel(
+              guild,
+              guild.system_channel_id,
+              'MESSAGE_CREATE',
+              function () {
+                return globalUtils.personalizeMessageObject(
+                  join_msg,
+                  guild,
+                  this.socket.client_build_date,
+                );
+              },
+            );
           }
         }
       }
@@ -553,7 +571,7 @@ router.post('/fingerprint', (req, res) => {
     req.originalUrl,
     req.baseUrl,
     req.headers['x-forwarded-proto'] || req.protocol,
-    req.headers
+    req.headers,
   );
 
   return res.status(200).json({

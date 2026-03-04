@@ -2,11 +2,11 @@ import { WebSocketServer } from 'ws';
 import zlib from 'zlib';
 
 import { gatewayHandlers, OPCODES } from './handlers/gateway.js';
+import database from './helpers/database.js';
 import dispatcher from './helpers/dispatcher.js';
 import globalUtils from './helpers/utils/globalutils.js';
 import { logText } from './helpers/utils/logger.ts';
 import { type GatewayPayload, GatewayPayloadSchema } from './types/gateway.ts';
-import database from './helpers/database.js';
 
 // TODO: Replace all String() or "as type" conversions with better ones
 
@@ -248,7 +248,7 @@ const gateway = {
   handleClientClose: async function (socket, code) {
     if (socket.user) {
       global.guild_voice_states.forEach(async (states, guildId) => {
-        const idx = states.findIndex(s => s.user_id === socket.user.id);
+        const idx = states.findIndex((s) => s.user_id === socket.user.id);
         if (idx !== -1) {
           const oldState = states.splice(idx, 1)[0];
 

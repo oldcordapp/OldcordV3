@@ -119,19 +119,19 @@ const rtcServer = {
     });
 
     sodium.ready.then(() => {
-        this.debug("Sodium ready");
+      this.debug('Sodium ready');
     });
 
     server.on('listening', () => {
-        this.debug(`Server up on port ${this.port}`);
+      this.debug(`Server up on port ${this.port}`);
     });
 
     this.signalingServer.on('connection', (socket, req) => {
-        this.handleClientConnect(socket, req);
+      this.handleClientConnect(socket, req);
     });
 
     this.signalingServer.on('error', (err) => {
-        logText(`WebSocket Server Error: ${err.message}`, 'error');
+      logText(`WebSocket Server Error: ${err.message}`, 'error');
     });
   },
 };

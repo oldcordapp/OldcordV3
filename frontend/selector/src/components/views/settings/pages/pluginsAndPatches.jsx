@@ -85,9 +85,9 @@ export default function () {
     const currentPendingPlugins =
       type === 'oldplunger' ? getPendingItems('oldplunger') : pendingChangePlugins;
 
-    const isTogglingOn = !(type === 'legacy' ? currentPendingPatches : currentPendingPlugins).includes(
-      itemKey,
-    );
+    const isTogglingOn = !(
+      type === 'legacy' ? currentPendingPatches : currentPendingPlugins
+    ).includes(itemKey);
 
     if (isTogglingOn) {
       const incompatiblePatches = itemConstants.incompatiblePatches || [];

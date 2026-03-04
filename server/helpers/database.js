@@ -1120,7 +1120,7 @@ const database = {
 
           if (users) {
             for (const user of users) {
-              let settings = JSON.parse(user.settings);
+              const settings = JSON.parse(user.settings);
               let changed = false;
 
               if (
