@@ -278,7 +278,7 @@ const Watchdog = {
       res.setHeader('X-RateLimit-Remaining-WD', maxPerTimeFrame - entry.count);
       res.setHeader('X-RateLimit-Reset-WD', Math.floor((entry.windowStart + timeFrame) / 1000));
 
-      next();
+      return next();
     };
   },
   setSusScoreDecay: (fingerprint: string) => {
