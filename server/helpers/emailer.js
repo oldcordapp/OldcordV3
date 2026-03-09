@@ -118,7 +118,7 @@ class emailer {
   async sendForgotPassword(to, emailToken, account) {
     try {
       let htmlContent = readFileSync(
-        './www_static/assets/emails/password-reset-request-for-discord.html',
+        './www_static/assets/emails/2018/password-reset.html', // 2018
         'utf8',
       ); //to-do: have variety based on client year
 
