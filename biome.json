@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -32,7 +32,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": false,
+      "preset": "none",
       "correctness": {
         "noUndeclaredVariables": "off"
       },
@@ -106,7 +106,10 @@
             "useAwait": "error",
             "useNamespaceKeyword": "error",
             "noEmptyBlockStatements": "error",
-            "useAdjacentOverloadSignatures": "error"
+            "useAdjacentOverloadSignatures": "error",
+            "noDuplicateEnumValues": "error",
+            "noForIn": "error",
+            "noUnnecessaryConditions": "error"
           },
           "complexity": {
             "noBannedTypes": "error",
@@ -115,19 +118,15 @@
             "noUselessThisAlias": "error",
             "noUselessTypeConstraint": "error",
             "useLiteralKeys": "error",
-            "useOptionalChain": "error"
+            "useOptionalChain": "error",
+            "useArrayFind": "error"
           },
           "correctness": {
             "noUnusedVariables": "error"
           },
           "nursery": {
-            "noDuplicateEnumValues": "error",
             "noFloatingPromises": "error",
-            "noForIn": "error",
             "noMisusedPromises": "error",
-            "noUnnecessaryConditions": "error",
-            "useConsistentEnumValueType": "error",
-            "useFind": "error",
             "useNullishCoalescing": "error",
             "useRegexpExec": "error"
           },
@@ -144,7 +143,8 @@
             "useConsistentArrayType": "error",
             "useConsistentTypeDefinitions": "error",
             "useForOf": "error",
-            "useShorthandFunctionType": "error"
+            "useShorthandFunctionType": "error",
+            "useConsistentEnumValueType": "error"
           }
         },
         "domains": {
@@ -160,7 +160,7 @@
       "linter": {
         "rules": {
           "a11y": {
-            "recommended": true,
+            "preset": "recommended",
             "noAccessKey": "error",
             "noAriaUnsupportedElements": "error",
             "noAutofocus": "error",
@@ -191,7 +191,8 @@
             "useValidAriaProps": "error",
             "useValidAriaRole": "error",
             "useValidAriaValues": "error",
-            "useValidAutocomplete": "error"
+            "useValidAutocomplete": "error",
+            "noAmbiguousAnchorText": "off"
           },
           "correctness": {
             "useExhaustiveDependencies": "warn",
@@ -199,17 +200,15 @@
             "noChildrenProp": "error",
             "useJsxKeyInIterable": "error"
           },
-          "nursery": {
-            "noUnknownAttribute": "error",
-            "noAmbiguousAnchorText": "off"
-          },
+          "nursery": {},
           "security": {
             "noBlankTarget": "error",
             "noDangerouslySetInnerHtmlWithChildren": "error"
           },
           "suspicious": {
             "noCommentText": "error",
-            "noDuplicateJsxProps": "error"
+            "noDuplicateJsxProps": "error",
+            "noUnknownAttribute": "error"
           },
           "style": {
             "useComponentExportOnlyModules": "error"
@@ -424,11 +423,10 @@
             "noUnreachable": "off",
             "noUnreachableSuper": "off"
           },
-          "nursery": {
-            "useSpread": "error"
-          },
+          "nursery": {},
           "style": {
-            "useConst": "error"
+            "useConst": "error",
+            "useSpreadOverApply": "error"
           },
           "suspicious": {
             "noClassAssign": "off",
