@@ -10,7 +10,7 @@
     "checkJs": false,
     "maxNodeModuleJsDepth": 0,
     "strict": true,
-    "noImplicitAny": true, // TODO: set this to true whenever we migrate to TypeScript fully
+    "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
@@ -23,7 +23,6 @@
     "rewriteRelativeImportExtensions": true,
     "sourceMap": true,
     "declaration": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
