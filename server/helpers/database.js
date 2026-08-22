@@ -2157,6 +2157,7 @@ const database = {
         id: rows[0].id,
         verified: rows[0].verified,
         email_token: token,
+        email: rows[0].email
       };
     } catch (error) {
       logText(error, 'error');
@@ -7106,6 +7107,27 @@ const database = {
       logText(error, 'error');
 
       return false;
+    }
+  },
+  changePassword: async (id, new_password) => {
+    try {
+      const salt = await genSalt(10);
+      const newPwHash = await hash(new_password, salt);
+      const token = generateToken(id, newPwHash);
+
+      await database.runQuery(
+          `UPDATE users SET verified = $1, password = $2, token = $3 WHERE id = $4`,
+          [
+            1,
+            newPwHash,
+            token,
+            id,
+          ],
+        );
+        
+        return token;
+    } catch (error) {
+      return null;
     }
   },
   updateAccount: async (account, avatar, username, discriminator, password, new_pw, new_em) => {

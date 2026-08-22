@@ -73,7 +73,11 @@
   },
   "email_config": {
     "fromAddress": "support@example.com",
-    "brevo-api-key": "",
+    "api-key": "",
+    "username":"admin@box.example.com",
+    "password":"",
+    "platform": "mailinabox",
+    "host":"box.example.com",
     "enabled": false
   },
   "limits": {

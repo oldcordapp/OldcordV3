@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-
+import nodemailer from "nodemailer";
 import { replaceAll } from './utils/globalutils.js';
 import { logText } from './utils/logger.ts';
 
@@ -11,9 +11,9 @@ class emailer {
 
     this.max_per_timeframe = max_per_timeframe;
     this.timeframe_ms = timeframe_ms;
-
     this.config = config;
-
+    this.year = '2018';
+    this.mode = 'mailinabox';
     this.ratelimited = false;
     this.ratelimitedWhen = null;
     this.sentRLNotice = false;
@@ -49,34 +49,56 @@ class emailer {
   async trySendEmail(to, subject, content) {
     try {
       if (this.ratelimited) return false;
+      if (!this.config.enabled || !this.config || !this.config.platform) return false;
 
-      if (!this.config.enabled || !this.config) return false;
-
-      const mailOptions = {
-        sender: {
-          email: this.config.fromAddress,
-        },
-        to: [
-          {
-            email: to,
+      if (this.config.platform.toLowerCase() === "brevo") {
+        const mailOptions = {
+          sender: {
+            email: this.config.fromAddress,
           },
-        ],
-        subject: subject,
-        htmlContent: content,
-      };
+          to: [
+            {
+              email: to,
+            },
+          ],
+          subject: subject,
+          htmlContent: content,
+        };
 
-      const result = await fetch('https://api.brevo.com/v3/smtp/email', {
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': this.config['brevo-api-key'],
-        },
-        method: 'POST',
-        body: JSON.stringify(mailOptions),
-      });
+        const result = await fetch('https://api.brevo.com/v3/smtp/email', {
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': this.config['api-key'],
+          },
+          method: 'POST',
+          body: JSON.stringify(mailOptions),
+        });
 
-      if (!result.ok) return false;
+        if (!result.ok) return false;
 
-      return true;
+        return true;
+      } else if (this.config.platform.toLowerCase() === "mailinabox") {
+        const transporter = nodemailer.createTransport({
+          host: this.config.host,
+          port: 587,
+          secure: false,
+          auth: {
+            user: this.config.username,
+            pass: this.config.password,
+          },
+        });
+
+         await transporter.sendMail({
+            from: this.config.fromAddress,
+            to: to,
+            subject: subject,
+            html: content
+        });
+
+        return true;
+      }
+
+      return false;
     } catch (error) {
       logText(error, 'error');
 
@@ -85,7 +107,7 @@ class emailer {
   }
   async sendRegistrationEmail(to, emailToken, account) {
     try {
-      let htmlContent = readFileSync('./www_static/assets/emails/verify-email.html', 'utf8');
+      let htmlContent = readFileSync(`./www_static/assets/emails/${this.year}/verify-email.html`, 'utf8');
 
       htmlContent = replaceAll(htmlContent, '[username]', account.username);
       htmlContent = replaceAll(htmlContent, '[discriminator]', account.discriminator);
@@ -118,7 +140,7 @@ class emailer {
   async sendForgotPassword(to, emailToken, account) {
     try {
       let htmlContent = readFileSync(
-        './www_static/assets/emails/2018/password-reset.html', // 2018
+        `./www_static/assets/emails/${this.year}/password-reset.html`, // 2018
         'utf8',
       ); //to-do: have variety based on client year
 

@@ -312,6 +312,10 @@ async function authMiddleware(req, res, next) {
       return next();
     } //exclude webhooks and invites from this
 
+    if (req.url.includes('/auth/reset') && req.method === "POST") {
+      return next();
+    } //Exclude pw resets from this
+
     if (spacebarApis.includes(req.path)) {
       return next();
     } // exclude spacebar related apis

@@ -484,6 +484,67 @@ router.post(
   },
 );
 
+router.post("/reset", rateLimitMiddleware(
+  global.config.ratelimit_config.registration.maxPerTimeFrame,
+  global.config.ratelimit_config.registration.timeFrame,
+),
+  Watchdog.middleware(
+    global.config.ratelimit_config.registration.maxPerTimeFrame,
+    global.config.ratelimit_config.registration.timeFrame,
+    0.4,
+  ), async (req, res) => {
+    try {
+      const token = req.body.token;
+
+      if (!token) {
+        return res.status(400).json({
+          code: 400,
+          token: 'This field is required.',
+        });
+      }
+
+      const password = req.body.password;
+
+      if (!password) {
+         return res.status(400).json({
+          code: 400,
+          password: 'This field is required.',
+        });
+      }
+
+      const account = await global.database.checkEmailToken(token);
+
+      if (!account) {
+         return res.status(400).json({
+          code: 400,
+          message: 'Invalid password reset token.',
+        });
+      } //to-do: figure out this error msg from 2017
+
+      const tryUseEmailToken = await global.database.useEmailToken(account.id, token);
+
+      if (!tryUseEmailToken) {
+        return res.status(400).json({
+          token: 'Invalid password reset token.',
+        });
+      } //YES I KNOW IM LAZY THOUGH. THIS IS INEFFICIENT AS FUCK SINCE ITS LEGIT THE SAME SHIT CALLED TIWCE. This should verify them though, and if it doesn't, the next function will... lol.....
+
+      let newToken = await global.database.changePassword(account.id, password);
+
+      if (!newToken) {
+        return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+      }
+      
+      return res.status(200).json({
+        token: newToken
+      });
+    } catch (error) {
+      logText(error, 'error');
+
+      return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+    }
+  });
+
 router.post(
   '/forgot',
   rateLimitMiddleware(
@@ -522,7 +583,23 @@ router.post(
         });
       } //figure this original one out from 2017
 
-      //let emailToken = globalUtils.generateString(60);
+      let emailToken = globalUtils.generateString(60);
+
+      //|| !account.verified
+      if (!global.config.email_config.enabled ) {
+        emailToken = null;
+      }
+
+      if (emailToken != null) {
+        await global.emailer.sendForgotPassword(req.body.email, emailToken, account);
+
+        const tryUpdate = await global.database.updateEmailToken(account.id, emailToken);
+
+        if (!tryUpdate) {
+          return res.status(500).json(errors.response_500.INTERNAL_SERVER_ERROR);
+        }
+      }
+
       //to-do: but basically, handle the case if the user is unverified - then verify them aswell as reset pw
 
       return res.status(204).send();
